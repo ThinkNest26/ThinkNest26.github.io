@@ -939,3 +939,22 @@ a.gp-post { display: block; color: inherit; }
 .hub-row .btn.outline { border: 1px solid var(--red); }
 @media (max-width: 760px) { .hub-row { grid-template-columns: auto 1fr; } .hub-status, .hub-row .btn { grid-column: 1 / -1; } }
 .hub-row b { font-size: 1rem; } .hub-row .btn { font-size: .9rem; }
+/* ===== Sidebar with sections and drop-downs ===== */
+.side nav.nav2 { display: grid; gap: 4px; padding: 10px 14px 24px; }
+.nav2-top { display: flex; align-items: center; gap: 12px; width: 100%; background: none; border: 0; color: rgba(255,255,255,.88); font: inherit; font-weight: 600; font-size: .98rem; padding: 11px 14px; border-radius: 12px; cursor: pointer; text-align: left; text-decoration: none; }
+.nav2-top:hover, .nav2-top:focus-visible { background: rgba(255,255,255,.08); color: #fff; }
+.nav2-top.active, .nav2-sec.has-active > .nav2-toggle { background: rgba(255,255,255,.12); color: #fff; }
+.nav2-ic { width: 24px; text-align: center; font-size: 1.1rem; }
+.nav2-arrow { margin-left: auto; transition: transform .2s; font-size: .85rem; opacity: .8; }
+.nav2-toggle[aria-expanded=true] .nav2-arrow { transform: rotate(180deg); }
+.nav2-sub { list-style: none; margin: 2px 0 6px; padding: 0 0 0 36px; display: grid; gap: 2px; border-left: 2px solid rgba(255,255,255,.12); margin-left: 26px; }
+.nav2-sub[hidden] { display: none; }
+.nav2-sub a { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,.75); padding: 8px 12px; border-radius: 10px; font-size: .92rem; text-decoration: none; }
+.nav2-sub a:hover, .nav2-sub a:focus-visible { background: rgba(255,255,255,.08); color: #fff; }
+.nav2-sub a.active { background: var(--red); color: #fff; font-weight: 700; }
+.nav2-sub .nav-dot { margin-left: auto; }
+.side nav.nav2 a.nav2-top { padding: 11px 14px; border-left: 0; font-size: .98rem; font-weight: 600; }
+.side nav.nav2 a.nav2-top.active { background: rgba(255,255,255,.12); }
+.side nav.nav2 .nav2-sub a { padding: 8px 12px; border-left: 0; font-size: .92rem; font-weight: 500; gap: 8px; }
+.side nav.nav2 .nav2-sub a.active { background: var(--red); font-weight: 700; }
+.side nav.nav2 .nav2-sub { padding-left: 10px; }

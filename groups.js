@@ -7,6 +7,7 @@ const gTag = r => r === 'teacher' || r === 'school_leader' ? '<span class="role-
 
 // Teachers, parents and the admin use their own menus on these pages
 function swapMenu(role) {
+  if (window.buildNav) return window.buildNav(role === 'school_leader' ? 'teacher' : role);
   const nav = document.querySelector('.side nav'); if (!nav) return;
   let items = null, title = '';
   if (['teacher', 'school_leader', 'admin'].includes(role)) {

@@ -18,7 +18,8 @@ async function startCommunity() {
   const { user, profile: me } = await initShell();
   const isAdmin = me.role === 'admin';
   // Teachers and the admin get their own menu
-  if (['teacher', 'school_leader', 'admin'].includes(me.role)) {
+  if (window.buildNav) window.buildNav(me.role === 'school_leader' ? 'teacher' : me.role);
+  else if (['teacher', 'school_leader', 'admin'].includes(me.role)) {
     document.querySelector('.side nav').innerHTML = `<h5 class="first">Teacher</h5><ul>
       ${isAdmin ? '<li><a href="admin.html"><span>Approvals</span></a></li>' : ''}
       <li><a href="teacher-dashboard.html"><span>Dashboard</span></a></li><li><a href="teacher-courses.html"><span>My Courses</span></a></li>
@@ -27,7 +28,7 @@ async function startCommunity() {
       <h5>Others</h5><ul><li><a href="#" id="logout"><span>Log out</span></a></li></ul>`;
     document.getElementById('logout').addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; });
   }
-  if (me.role === 'parent') {
+  if (!window.buildNav && me.role === 'parent') {
     document.querySelector('.side nav').innerHTML = `<h5 class="first">Parent</h5><ul>
       <li><a href="parent-dashboard.html"><span>My children</span></a></li><li><a href="add-child.html"><span>Add a child</span></a></li>
       <li><a href="community.html" class="active" aria-current="page"><span>Community</span></a></li><li><a href="parent-settings.html"><span>Account Settings</span></a></li></ul>
