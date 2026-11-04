@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contact us – Think Nest</title>
+  <link rel="icon" href="images/tn-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=19">
+  <link rel="stylesheet" href="app.css?v=19">
+</head>
+<body class="auth">
+  <header class="app-top">
+    <a href="index.html"><img src="images/tn-logo-dark.png" alt="Think Nest home" class="app-top-logo"></a>
+    <a href="index.html" class="app-exit">Exit</a>
+  </header>
+    <main class="auth-bg">
+    <div class="auth-card wide-card">
+      <img src="images/tn-bird.png" alt="" class="bird">
+      <h1>Contact us</h1>
+      <p class="auth-sub">Questions about courses, your account, or working with Think Nest? Send us a message and we’ll reply by email.</p>
+      <div class="note big-note" id="sent-note" hidden><b>Thank you! 📬</b><br>Your message has been sent. We usually reply within two working days.</div>
+      <form class="auth-form" id="contact-form" action="https://formsubmit.co/thinknest2026@gmail.com" method="POST" novalidate>
+        <input type="hidden" name="_subject" value="New message from the Think Nest website">
+        <input type="hidden" name="_template" value="table">
+        <input type="hidden" name="_next" id="contact-next" value="">
+        <input type="text" name="_honey" class="sr" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <div class="two">
+          <label>Your name <input type="text" name="Name" autocomplete="name" required></label>
+          <label>Your email <input type="email" name="email" autocomplete="email" required></label>
+        </div>
+        <div class="two">
+          <label>I am a
+            <select name="I am a" required><option value="">Choose</option><option>Parent or guardian</option><option>Student</option><option>Teacher</option><option>School</option><option>Other</option></select>
+          </label>
+          <label>Topic
+            <select name="Topic" required><option value="">Choose</option><option>Courses and classes</option><option>My account or logging in</option><option>Working with Think Nest</option><option>Safety or a concern</option><option>Privacy or deleting data</option><option>Something else</option></select>
+          </label>
+        </div>
+        <label>Message <textarea name="Message" rows="5" maxlength="3000" required placeholder="How can we help?"></textarea></label>
+        <p class="note">Students: please don’t include your phone number or home address. If you’re under 18, it’s best to ask a parent or guardian to contact us.</p>
+        <p class="form-error" id="contact-error" role="alert" hidden></p>
+        <button class="btn btn-red auth-btn">Send message</button>
+      </form>
+      <p class="switch"><a href="index.html">‹ Back to the home page</a></p>
+    </div>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js?v=19"></script>
+  <script>
+    const cf = document.getElementById('contact-form'), cerr = document.getElementById('contact-error');
+    document.getElementById('contact-next').value = location.href.split('?')[0] + '?sent=1';
+    if (location.search.includes('sent=1')) { cf.hidden = true; document.getElementById('sent-note').hidden = false; }
+    cf.addEventListener('submit', e => {
+      for (const el of cf.querySelectorAll('[required]')) {
+        if (!el.value.trim() || !el.checkValidity()) { e.preventDefault(); el.focus(); return showError(cerr, el.type === 'email' ? 'Enter a valid email address.' : 'Please fill in every box.'); }
+      }
+      cf.querySelector('button').textContent = 'Sending…';
+    });
+  </script>
+</body>
+</html>
