@@ -68,7 +68,6 @@ async function openItemBuilder(lesson, course, onSaved) {
     draw();
   }
   const aiRow = (label) => `<div class="ai-row panel"><div class="obj-filters">
-      <label>What should it teach? <input type="text" id="ai-obj" maxlength="500" value="${esc(lesson.objective_text || '')}" placeholder="The learning objective"></label>
       ${['quiz', 'worksheet', 'video', 'flashcards'].includes(st.kind) ? `<label>How many <select id="ai-count">${(st.kind === 'flashcards' ? [6, 8, 10, 12, 15] : [3, 5, 8, 10, 12, 15]).map(n => `<option${n === (st.kind === 'video' ? 5 : 8) ? ' selected' : ''}>${n}</option>`).join('')}</select></label>` : ''}
       ${st.kind === 'activities' ? '<label>How many <select id="ai-count"><option>1</option><option>2</option><option selected>3</option><option>4</option></select></label>' : ''}
       <label>Difficulty <select id="ai-level"><option value="easier (support)">Easier</option><option value="on level" selected>On level</option><option value="harder (challenge)">Harder</option></select></label>
@@ -110,14 +109,17 @@ async function openItemBuilder(lesson, course, onSaved) {
     body.innerHTML = `<button type="button" class="link-btn" data-back-menu>‹ All tools</button>
       <div class="item-form">
         <label>Title students will see <input type="text" id="it-title" maxlength="200" value="${esc(st.title)}" placeholder="For example: Fractions practice"></label>
+        <div class="panel op-box" id="it-obj"></div>
         ${f}
         <label>Instructions for students (optional) <textarea id="it-instr" rows="2" maxlength="1000">${esc(st.instructions)}</textarea></label>
         <label class="due">Due date (optional) <input type="date" id="it-due" value="${esc(st.due)}"></label>
         <div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-back-menu>Cancel</button><button type="button" class="btn btn-red auth-btn" id="it-save">Add to lesson</button></div>
       </div>`;
+    st.picker = objectivePicker(body.querySelector('#it-obj'), course, st.objective || lesson.objective_text || '');
   }
   // keep typed values when redrawing
   function capture() {
+    if (st.picker) st.objective = st.picker.value();
     const v = id => { const el = body.querySelector('#' + id); return el ? el.value : undefined; };
     if (v('it-title') !== undefined) st.title = v('it-title');
     if (v('it-instr') !== undefined) st.instructions = v('it-instr');
@@ -162,8 +164,8 @@ async function openItemBuilder(lesson, course, onSaved) {
 
   async function runAi(btn) {
     capture();
-    const obj = body.querySelector('#ai-obj').value.trim();
-    if (!obj) return say('Type what it should teach (the learning objective) first.');
+    const obj = st.objective;
+    if (!obj) return say('Choose a learning objective first, or write your own.');
     const kindMap = { quiz: 'quiz', worksheet: 'worksheet', exit: 'exit', video: 'quiz', writing: 'writing', flashcards: 'flashcards', activities: 'activities' };
     const cnt = body.querySelector('#ai-count');
     btn.disabled = true; const label = btn.textContent; btn.textContent = 'Gemini is writing… (up to 30 seconds)';
@@ -215,6 +217,7 @@ async function openItemBuilder(lesson, course, onSaved) {
         Object.assign(d, { path, name: file.name, type: file.type, size: file.size });
       }
       if (st.instructions.trim()) d.instructions = st.instructions.trim();
+      if (st.objective) d.objective = st.objective;
       const { data: pos } = await db.from('lesson_items').select('position').eq('lesson_id', lesson.id).order('position', { ascending: false }).limit(1);
       const { data: it, error } = await db.from('lesson_items').insert({ lesson_id: lesson.id, kind: k, title: st.title.trim(), data: d, due_date: st.due || null, position: ((pos && pos[0] && pos[0].position) || 0) + 1 }).select().single();
       if (error) throw error;
@@ -240,7 +243,7 @@ async function loadTeacherItems(lessons, course) {
     let box = document.getElementById('items-' + l.id);
     if (!box) { box = document.createElement('div'); box.id = 'items-' + l.id; box.className = 'items-row'; host.after(box); }
     const items = byLesson[l.id] || [];
-    box.innerHTML = items.map(i => `<div class="item-chip" id="item-${i.id}"><span>${TOOL(i.kind).ic}</span><b>${esc(i.title)}</b><span class="meta">${esc(TOOL(i.kind).name)}${i.due_date ? ' · due ' + new Date(i.due_date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''}</span>
+    box.innerHTML = items.map(i => `<div class="item-chip" id="item-${i.id}" title="${esc(i.data.objective ? '🎯 ' + i.data.objective : '')}"><span>${TOOL(i.kind).ic}</span><b>${esc(i.title)}</b><span class="meta">${esc(TOOL(i.kind).name)}${i.data.objective ? ' · 🎯' : ''}${i.due_date ? ' · due ' + new Date(i.due_date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''}</span>
         ${MARKABLE.includes(i.kind) && !(i.kind === 'file' && !i.data.handin) && !(i.kind === 'video' && !(i.data.questions || []).length) ? `<button type="button" class="pill pill-live" data-iresults="${i.id}">Results</button>` : ''}
         <button type="button" class="link-btn" data-idel="${i.id}">Delete</button></div>`).join('') +
       `<button type="button" class="pill pill-soft big add-item" data-iadd="${l.id}">+ Add to this lesson</button>`;
@@ -311,7 +314,7 @@ function handInBox(item, resp, opts = {}) {
     <button class="btn btn-red auth-btn">${opts.label || (resp ? 'Hand in again' : 'Hand in')}</button></form>`;
 }
 function itemViewHtml(item, resp) {
-  const d = item.data || {}, instr = d.instructions ? `<p class="quiz-instr">${esc(d.instructions)}</p>` : '';
+  const d = item.data || {}, instr = (d.objective ? `<p class="obj-line">🎯 <b>Learning objective:</b> ${esc(d.objective)}</p>` : '') + (d.instructions ? `<p class="quiz-instr">${esc(d.instructions)}</p>` : '');
   const sc = (d.success_criteria || []).length ? `<div class="sc-box"><b>Success criteria</b><ul>${d.success_criteria.map(s => `<li>${esc(s)}</li>`).join('')}</ul></div>` : '';
   const due = item.due_date ? `<p class="meta">📅 Due ${new Date(item.due_date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</p>` : '';
   const done = resultBox(resp);

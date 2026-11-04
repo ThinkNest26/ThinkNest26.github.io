@@ -753,3 +753,11 @@ a.pending-row { color: inherit; }
 .item-form .act-edit-top input[type=number] { width: 72px; }
 .item-form .act-edit-top input[type=text] { flex: 1; min-width: 180px; width: auto; }
 .item-form .act-edit label { display: grid; gap: 6px; font-weight: 600; font-size: .9rem; }
+
+/* objective chooser */
+.op { display: grid; gap: 10px; }
+.op-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.op label { display: grid; gap: 6px; font-weight: 600; font-size: .9rem; color: #2F3241; }
+.op select, .op input { font: inherit; font-weight: 400; border: 1px solid #C9CCDA; border-radius: 8px; padding: 9px 12px; width: 100%; background: #fff; }
+.op-box { background: #F1F3FD; border: 0; }
+.item-form label.remember.row { display: flex !important; justify-content: flex-start; grid-template-columns: none; }

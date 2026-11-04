@@ -21,12 +21,7 @@ function initLessonBuilder(course) {
   const box = document.getElementById('lesson-extra');
   let objectives = [], material = null, key = [];
   box.innerHTML = `
-    <div class="lb-objective">
-      <label>Learning objective
-        <select id="lb-obj"><option value="">No objective</option></select></label>
-      <input type="text" id="lb-own" maxlength="500" placeholder="Type your own objective" hidden>
-      <p class="meta" id="lb-course-info"></p>
-    </div>
+    <div class="lb-objective" id="lb-picker"></div>
     <fieldset class="lb-kind"><legend>Add a worksheet, test or activities (optional)</legend>
       <label class="remember"><input type="radio" name="lb-kind" value="" checked> None</label>
       <label class="remember"><input type="radio" name="lb-kind" value="worksheet"> 📝 Worksheet</label>
@@ -43,28 +38,10 @@ function initLessonBuilder(course) {
       <div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" id="lb-manual">Write it myself</button><button type="button" class="btn btn-red auth-btn" id="lb-ai">✨ Create with Gemini</button></div>
       <div id="lb-editor" class="lb-editor"></div>
     </div>`;
-  const sel = box.querySelector('#lb-obj'), own = box.querySelector('#lb-own'), gen = box.querySelector('#lb-gen'), editor = box.querySelector('#lb-editor');
+  const gen = box.querySelector('#lb-gen'), editor = box.querySelector('#lb-editor');
+  let picker = objectivePicker(box.querySelector('#lb-picker'), course);
   // Materials are now added with "+ Add to this lesson" (materials.js), so the old single-material picker is hidden
   if (typeof openItemBuilder === 'function') { box.querySelector('.lb-kind').hidden = true; box.insertAdjacentHTML('beforeend', '<p class="note">💡 After you add the lesson, click <b>+ Add to this lesson</b> under it to add worksheets, quizzes, Google Forms, videos, writing tasks, flashcards and more.</p>'); }
-  const info = box.querySelector('#lb-course-info');
-
-  async function loadObjectives() {
-    if (!course.curriculum || !course.grade) {
-      info.innerHTML = 'Set this course’s <b>curriculum, grade and subject</b> (click <b>Edit details</b> at the top) to see matching objectives.';
-      sel.innerHTML = '<option value="">No objective</option><option value="own">✏️ Write my own objective…</option>'; return;
-    }
-    const { data } = await db.from('objectives').select('*').eq('curriculum', course.curriculum).eq('grade', course.grade).order('subject').order('topic', { nullsFirst: false }).order('id');
-    objectives = data || [];
-    const match = objectives.filter(o => sameSubject(o.subject, course.subject));
-    const list = match.length ? match : objectives;
-    info.textContent = `${lCurName(course.curriculum)} · ${course.grade}${course.subject ? ' · ' + course.subject : ''}` + (course.subject && !match.length && objectives.length ? ' (no objectives for this subject yet, so all subjects are shown)' : '');
-    const groups = {};
-    list.forEach(o => { const g = o.subject + (o.topic ? ' · ' + o.topic : ''); (groups[g] = groups[g] || []).push(o); });
-    sel.innerHTML = '<option value="">No objective</option>' + Object.entries(groups).map(([s, os]) => `<optgroup label="${esc(s)}">${os.map(o => `<option value="${o.id}">${esc(o.text)}</option>`).join('')}</optgroup>`).join('') + '<option value="own">✏️ Write my own objective…</option>';
-  }
-  sel.addEventListener('change', () => { own.hidden = sel.value !== 'own'; if (!own.hidden) own.focus(); });
-  loadObjectives();
-
   const kind = () => (box.querySelector('input[name=lb-kind]:checked') || {}).value || '';
   box.querySelectorAll('input[name=lb-kind]').forEach(r => r.addEventListener('change', () => {
     gen.hidden = !kind();
@@ -73,10 +50,7 @@ function initLessonBuilder(course) {
     material = null; key = []; editor.innerHTML = '';
   }));
 
-  function objectiveText() {
-    if (sel.value === 'own') return own.value.trim();
-    const o = objectives.find(x => String(x.id) === sel.value); return o ? o.text : '';
-  }
+  function objectiveText() { return picker.value(); }
   box.querySelector('#lb-ai').addEventListener('click', async e => {
     const obj = objectiveText();
     if (!obj) return say('Choose or write a learning objective first.');
@@ -157,8 +131,8 @@ function initLessonBuilder(course) {
     // what to save with the lesson; returns null if something needs fixing
     payload() {
       const obj = objectiveText(), k = kind();
-      if (sel.value === 'own' && !obj) { say('Type your objective, or choose one from the list.'); return null; }
-      const out = { objective_id: sel.value && sel.value !== 'own' ? Number(sel.value) : null, objective_text: obj || null, material_kind: null, material: null, key: null };
+      if (picker.isOwnEmpty()) { say('Type your objective, or choose one from the list.'); return null; }
+      const out = { objective_id: picker.id(), objective_text: obj || null, material_kind: null, material: null, key: null };
       if (k && material) {
         if (k === 'activities') {
           if (!material.items.length || material.items.some(a => !String(a.name || '').trim() || !(a.steps || []).length)) { say('Every activity needs a name and at least one step.'); return null; }
@@ -171,8 +145,8 @@ function initLessonBuilder(course) {
       } else if (k && !material) { say('Click “Create with Gemini” or “Write it myself” first, or choose None.'); return null; }
       return out;
     },
-    reset() { sel.value = ''; own.hidden = true; own.value = ''; box.querySelector('input[name=lb-kind][value=""]').checked = true; gen.hidden = true; material = null; key = []; editor.innerHTML = ''; },
-    setCourse(c) { course = c; loadObjectives(); }
+    reset() { picker = objectivePicker(box.querySelector('#lb-picker'), course); box.querySelector('input[name=lb-kind][value=""]').checked = true; gen.hidden = true; material = null; key = []; editor.innerHTML = ''; },
+    setCourse(c) { course = c; picker = objectivePicker(box.querySelector('#lb-picker'), course); }
   };
 }
 
