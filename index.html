@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=42">
-  <link rel="stylesheet" href="paths.css?v=42">
+  <link rel="stylesheet" href="style.css?v=43">
+  <link rel="stylesheet" href="paths.css?v=43">
 </head>
 <body>
 
@@ -24,7 +24,7 @@
           <li class="nav-drop"><button type="button" class="nav-drop-btn" aria-expanded="false" aria-controls="dd-about">About <span aria-hidden="true">▾</span></button>
             <ul class="nav-dd" id="dd-about">
               <li><a href="#about">About Think Nest</a></li>
-              <li><a href="#founders">Our founders</a></li>
+              <li><a href="about.html">Our founders</a></li>
               <li><a href="careers.html">Careers</a></li>
               <li><a href="contact.html">Contact us</a></li>
             </ul></li>
@@ -166,7 +166,7 @@
     </section>
 
     <!-- ============ MEET THE FOUNDERS ============ -->
-    <section id="founders" class="founders container">
+    <section id="founders" class="founders container" hidden>
       <h2 class="title title-center">Meet the founders</h2>
       <p class="subtitle" id="home-fd-story">The people behind Think Nest</p>
       <div class="fd-grid" id="home-fd"></div>
@@ -225,22 +225,29 @@
   <script src="paths.js?v=36"></script>
   <script src="founders.js?v=41"></script>
   <script>
-    loadFounders().then(v => {
-      const box = document.getElementById('home-fd'), sec = document.getElementById('founders');
-      const people = v && (v.people || []).filter(p => p.name && p.name !== 'Founder name');
-      if (!people || !people.length) { sec.hidden = true; return; }
-      if (v.story) document.getElementById('home-fd-story').textContent = v.story.length > 220 ? v.story.slice(0, 217) + '…' : v.story;
-      box.innerHTML = people.map(founderCard).join('');
-    }).catch(() => { document.getElementById('founders').hidden = true; });
-    initPaths();
+    // Top menu drop-downs (kept separate so nothing else can stop them working)
     document.querySelectorAll('.nav-drop-btn').forEach(b => b.addEventListener('click', e => {
       e.stopPropagation();
       const open = b.getAttribute('aria-expanded') !== 'true';
       document.querySelectorAll('.nav-drop-btn').forEach(x => x.setAttribute('aria-expanded', 'false'));
       b.setAttribute('aria-expanded', String(open));
     }));
-    document.addEventListener('click', () => document.querySelectorAll('.nav-drop-btn').forEach(x => x.setAttribute('aria-expanded', 'false')));
+    document.addEventListener('click', e => { if (!e.target.closest('.nav-drop')) document.querySelectorAll('.nav-drop-btn').forEach(x => x.setAttribute('aria-expanded', 'false')); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.nav-drop-btn').forEach(x => x.setAttribute('aria-expanded', 'false')); });
+  </script>
+  <script>
+    try { if (typeof initPaths === 'function') initPaths(); } catch (e) { console.error(e); }
+    try {
+      const sec = document.getElementById('founders');
+      if (typeof loadFounders !== 'function') sec.hidden = true;
+      else loadFounders().then(v => {
+        const people = v && (v.people || []).filter(p => p.name && p.name !== 'Founder name');
+        if (!people || !people.length) { sec.hidden = true; return; }
+        sec.hidden = false;
+        if (v.story) document.getElementById('home-fd-story').textContent = v.story.length > 220 ? v.story.slice(0, 217) + '…' : v.story;
+        document.getElementById('home-fd').innerHTML = people.map(founderCard).join('');
+      }).catch(() => { sec.hidden = true; });
+    } catch (e) { console.error(e); }
   </script>
 </body>
 </html>
