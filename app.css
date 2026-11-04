@@ -697,3 +697,4 @@ a.pending-row { color: inherit; }
 .key-box ol { list-style: decimal; padding-left: 22px; margin-top: 8px; display: grid; gap: 6px; }
 @media print { .side, .app-bar, .footer, .tabs, .lesson:not(:has(+ .lesson-material:not([hidden]))), .step-buttons, .course-hero .btn { display: none !important; } .lesson-material { border: 0; } }
 .lesson-extra .lb-kind label.remember, .quiz-q label.remember { display: inline-flex !important; flex-direction: row !important; align-items: center; gap: 6px; }
+.imp-box { display: grid; gap: 10px; } .imp-box textarea { font-family: ui-monospace, Menlo, monospace; font-size: .85rem; }

@@ -11,6 +11,7 @@ function sameSubject(a, b) {
   a = String(a || '').toLowerCase().trim(); b = String(b || '').toLowerCase().trim();
   if (!a || !b) return false;
   if (a === b) return true;
+  if (b === 'science' && ['biology', 'chemistry', 'physics'].includes(a)) return true;
   return SUBJECT_GROUPS.some(g => g.includes(a) && g.includes(b));
 }
 const lCurName = k => (L_CURRICULA.find(c => c[0] === k) || [k, k])[1];
@@ -50,13 +51,13 @@ function initLessonBuilder(course) {
       info.innerHTML = 'Set this course’s <b>curriculum, grade and subject</b> (click <b>Edit details</b> at the top) to see matching objectives.';
       sel.innerHTML = '<option value="">No objective</option><option value="own">✏️ Write my own objective…</option>'; return;
     }
-    const { data } = await db.from('objectives').select('*').eq('curriculum', course.curriculum).eq('grade', course.grade).order('subject').order('id');
+    const { data } = await db.from('objectives').select('*').eq('curriculum', course.curriculum).eq('grade', course.grade).order('subject').order('topic', { nullsFirst: false }).order('id');
     objectives = data || [];
     const match = objectives.filter(o => sameSubject(o.subject, course.subject));
     const list = match.length ? match : objectives;
     info.textContent = `${lCurName(course.curriculum)} · ${course.grade}${course.subject ? ' · ' + course.subject : ''}` + (course.subject && !match.length && objectives.length ? ' (no objectives for this subject yet, so all subjects are shown)' : '');
     const groups = {};
-    list.forEach(o => (groups[o.subject] = groups[o.subject] || []).push(o));
+    list.forEach(o => { const g = o.subject + (o.topic ? ' · ' + o.topic : ''); (groups[g] = groups[g] || []).push(o); });
     sel.innerHTML = '<option value="">No objective</option>' + Object.entries(groups).map(([s, os]) => `<optgroup label="${esc(s)}">${os.map(o => `<option value="${o.id}">${esc(o.text)}</option>`).join('')}</optgroup>`).join('') + '<option value="own">✏️ Write my own objective…</option>';
   }
   sel.addEventListener('change', () => { own.hidden = sel.value !== 'own'; if (!own.hidden) own.focus(); });

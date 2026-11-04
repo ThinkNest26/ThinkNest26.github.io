@@ -31,7 +31,7 @@ async function startTeacherObjectives() {
   let objectives = [], chosen = null, plan = { success_criteria: [], items: [] };
 
   async function loadObjectives() {
-    const { data, error } = await db.from('objectives').select('*').eq('curriculum', pick.c.value).eq('grade', pick.g.value).order('subject').order('source').order('id');
+    const { data, error } = await db.from('objectives').select('*').eq('curriculum', pick.c.value).eq('grade', pick.g.value).order('subject').order('topic', { nullsFirst: false }).order('source').order('id');
     if (error) return say(friendly(error));
     objectives = data;
     const subjects = [...new Set(data.map(o => o.subject))];
@@ -44,7 +44,7 @@ async function startTeacherObjectives() {
     const s = pick.s.value, q = pick.q.value.trim().toLowerCase();
     const list = objectives.filter(o => (!s || o.subject === s) && (!q || o.text.toLowerCase().includes(q)));
     const groups = {};
-    list.forEach(o => (groups[o.subject] = groups[o.subject] || []).push(o));
+    list.forEach(o => { const g = o.subject + (o.topic ? ' · ' + o.topic : ''); (groups[g] = groups[g] || []).push(o); });
     document.getElementById('obj-list').innerHTML = list.length ? Object.entries(groups).map(([subj, items]) => `<div class="obj-group"><h4>${esc(subj)}</h4>${items.map(o => `
         <label class="obj-row ${chosen && chosen.id === o.id ? 'on' : ''}"><input type="radio" name="obj" value="${o.id}" ${chosen && chosen.id === o.id ? 'checked' : ''}>
           <span>${esc(o.text)}${o.source === 'teacher' ? ' <span class="role-tag">Added by a teacher</span>' : ''}</span>

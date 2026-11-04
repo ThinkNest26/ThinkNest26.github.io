@@ -114,3 +114,28 @@ async function startCurriculumAdmin() {
   document.getElementById('cur-view').addEventListener('click', () => window.open(`curriculum.html?c=${f.c.value}&g=${encodeURIComponent(f.g.value)}`, '_blank'));
   loadGrade(); loadIntro();
 }
+
+// ---------- Admin: import objectives from a spreadsheet ----------
+function startObjectiveImport() {
+  const f = document.getElementById('imp-form'), ta = document.getElementById('imp-text'), count = document.getElementById('imp-count');
+  if (!f) return;
+  const parse = () => ta.value.split(/\r?\n/).map(line => line.split(line.includes('\t') ? '\t' : /\s*[,;]\s*(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim()))
+    .filter(c => c.length >= 4 && c[c.length - 1] && !/^curriculum$/i.test(c[0]))
+    .map(c => c.length === 4 ? { curriculum: c[0], grade: c[1], subject: c[2], topic: '', text: c[3] } : { curriculum: c[0], grade: c[1], subject: c[2], topic: c[3], text: c.slice(4).join(', ') });
+  ta.addEventListener('input', () => { const n = parse().length; count.textContent = n ? n + ' objective' + (n === 1 ? '' : 's') + ' ready to import' : ''; });
+  f.addEventListener('submit', async e => {
+    e.preventDefault();
+    const rows = parse();
+    if (!rows.length) return say('Paste some rows first (five columns: Curriculum, Grade, Subject, Topic, Objective).');
+    const btn = f.querySelector('button'); btn.disabled = true; btn.textContent = 'Importing…';
+    let done = 0;
+    for (let i = 0; i < rows.length; i += 300) {
+      const { data, error } = await db.rpc('import_objectives', { rows: rows.slice(i, i + 300) });
+      if (error) { btn.disabled = false; btn.textContent = 'Import objectives'; return say(friendly(error)); }
+      done += data || 0;
+    }
+    btn.disabled = false; btn.textContent = 'Import objectives';
+    ta.value = ''; count.textContent = '';
+    say(done + ' objectives imported. Teachers can use them straight away.');
+  });
+}

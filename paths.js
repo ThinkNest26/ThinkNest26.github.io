@@ -16,7 +16,7 @@ function pathSubjectKey(s) {
   s = String(s || '').toLowerCase().trim();
   if (['maths', 'math', 'mathematics'].includes(s)) return 'maths';
   if (['english', 'english language arts', 'ela', 'literacy'].includes(s)) return 'english';
-  if (s.startsWith('science')) return 'science';
+  if (s.startsWith('science') || ['biology', 'chemistry', 'physics'].includes(s)) return 'science';
   if (s.startsWith('arabic')) return 'arabic';
   return s;
 }
@@ -107,7 +107,7 @@ async function drawPathStep() {
   else {
     const [row, objs] = await Promise.all([
       curGet(pathState.curriculum, pathState.grade),
-      db.from('objectives').select('subject, text').eq('curriculum', pathState.curriculum).eq('grade', pathState.grade).eq('source', 'bank').order('id')
+      db.from('objectives').select('subject, topic, text').eq('curriculum', pathState.curriculum).eq('grade', pathState.grade).eq('source', 'bank').order('id')
     ]);
     if (row) {
       const part = subjectPart(row.details, pathState.subject), prog = programmeDetail(pathState.curriculum, pathState.grade, pathState.subject);
@@ -119,8 +119,13 @@ async function drawPathStep() {
         <p class="cur-overview">${esc(row.overview || '')}</p>
         ${prog ? `<div class="cur-sub"><h4>${esc(PATH_SUBJECTS[pathState.subject].name)} this year</h4><p>${esc(prog)}</p></div>` : ''}
         ${part ? `<div class="cur-details one">${curDetailsHtml(part)}</div>` : ''}
-        ${list.length ? `<div class="cur-sub obj-sub"><h4>${myObjs.length ? 'Key learning objectives' : 'Skills students develop'} <span class="meta">(${list.length})</span></h4><ul>${list.slice(0, 6).map(o => `<li>${esc(o.text)}</li>`).join('')}</ul>
-          ${list.length > 6 ? `<details><summary>Show ${list.length - 6} more</summary><ul>${list.slice(6).map(o => `<li>${esc(o.text)}</li>`).join('')}</ul></details>` : ''}</div>` : ''}
+        ${list.length ? (() => {
+          const groups = {}; list.forEach(o => { const t = o.topic || o.subject; (groups[t] = groups[t] || []).push(o); });
+          const entries = Object.entries(groups);
+          const block = es => es.map(([t, os]) => `<h5>${esc(t)}</h5><ul>${os.map(o => `<li>${esc(o.text)}</li>`).join('')}</ul>`).join('');
+          return `<div class="cur-sub obj-sub"><h4>${myObjs.length ? 'Learning objectives this year' : 'Skills students develop'} <span class="meta">(${list.length})</span></h4>
+            ${block(entries.slice(0, 2))}${entries.length > 2 ? `<details><summary>Show all ${entries.length} topics</summary>${block(entries.slice(2))}</details>` : ''}</div>`;
+        })() : ''}
         ${also ? `<details class="also"><summary>More about this grade</summary>${curDetailsHtml(also)}</details>` : ''}
         <p class="meta"><a href="curriculum.html?c=${pathState.curriculum}&g=${encodeURIComponent(pathState.grade)}" target="_blank" rel="noopener">See the full ${esc(pathState.grade)} guide ↗</a></p>`;
     }
