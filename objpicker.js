@@ -6,7 +6,7 @@ const opSame = (a, b) => {
   a = String(a || '').toLowerCase().trim(); b = String(b || '').toLowerCase().trim();
   if (!a || !b) return false; if (a === b) return true;
   if (b === 'science' && ['biology', 'chemistry', 'physics'].includes(a)) return true;
-  const g = [['maths', 'math', 'mathematics', 'early math'], ['english', 'english language arts', 'literacy', 'early literacy']];
+  const g = [['maths', 'math', 'mathematics', 'early math', 'further maths'], ['english', 'english language arts', 'literacy', 'early literacy', 'english language', 'english literature']];
   return g.some(x => x.includes(a) && x.includes(b));
 };
 // Draws the chooser inside `host`. Returns { value(), id() }.

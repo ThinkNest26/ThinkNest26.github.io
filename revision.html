@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Revision Hub – Think Nest</title>
+  <link rel="icon" href="images/tn-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=36">
+  <link rel="stylesheet" href="app.css?v=36">
+</head>
+<body class="auth">
+  <header class="app-top">
+    <a href="index.html"><img src="images/tn-logo-dark.png" alt="Think Nest home" class="app-top-logo"></a>
+    <a href="index.html" class="app-exit">Exit</a>
+  </header>
+        <main class="cur-page">
+    <div class="cur-wrap">
+      <h1 class="title">Revision Hub</h1>
+      <p class="hint">Everything for IGCSE and A Level in one place: what each subject covers, how the exams work, revision tips and trusted free resources.</p>
+      <div class="tabs cur-tabs" role="tablist"><button role="tab" data-rl="igcse" aria-selected="true">IGCSE (Grades 9–10)</button><button role="tab" data-rl="alevel" aria-selected="false">A Level (Grades 11–12)</button></div>
+      <div class="rv-filter"><span class="meta">Exam board:</span><button class="chip on" data-rb="both">Both</button><button class="chip" data-rb="edexcel">Pearson Edexcel</button><button class="chip" data-rb="cambridge">Cambridge</button></div>
+      <section class="panel cur-intro" id="rv-intro"></section>
+      <section class="rv-grid" id="rv-grid"></section>
+      <section class="panel rv-detail" id="rv-detail" hidden></section>
+      <p class="note">Think Nest links to other websites to help students revise. We are not responsible for their content. Past papers and specifications belong to the exam boards.</p>
+    </div>
+  </main>
+  <script src="revision.js?v=38"></script>
+  <script>startRevision();</script>
+</body>
+</html>

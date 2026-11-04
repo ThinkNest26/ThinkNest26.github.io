@@ -6,7 +6,7 @@ const L_GRADES = ['KG1', 'KG2', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Gra
 const Q_TYPES = { multiple_choice: 'Multiple choice', true_false: 'True or false', fill_blank: 'Fill in the blank', short_answer: 'Short answer', long_answer: 'Written answer' };
 const KIND_NAMES = { worksheet: 'Worksheet', test: 'Test', activities: 'Activities' };
 // Subjects that mean the same thing in different curricula
-const SUBJECT_GROUPS = [['maths', 'math', 'mathematics', 'early math'], ['english', 'english language arts', 'literacy', 'early literacy'], ['science'], ['understanding the world']];
+const SUBJECT_GROUPS = [['maths', 'math', 'mathematics', 'early math'], ['english', 'english language arts', 'literacy', 'early literacy', 'english language', 'english literature'], ['science'], ['understanding the world']];
 function sameSubject(a, b) {
   a = String(a || '').toLowerCase().trim(); b = String(b || '').toLowerCase().trim();
   if (!a || !b) return false;

@@ -4,14 +4,14 @@
   const MENUS = {
     student: [
       { ic: '🏠', label: 'Dashboard', href: 'student-dashboard.html' },
-      { ic: '📚', label: 'Learning', items: [['my-courses.html', 'My Courses'], ['all-courses.html', 'All Courses'], ['my-activities.html', 'My Activities'], ['calendar.html', 'My Calendar'], ['mentors.html', 'Mentors'], ['recordings.html', 'My Recordings'], ['files.html', 'My Files']] },
+      { ic: '📚', label: 'Learning', items: [['my-courses.html', 'My Courses'], ['all-courses.html', 'All Courses'], ['my-activities.html', 'My Activities'], ['calendar.html', 'My Calendar'], ['revision.html', 'Revision Hub'], ['mentors.html', 'Mentors'], ['recordings.html', 'My Recordings'], ['files.html', 'My Files']] },
       { ic: '🏆', label: 'My Progress', items: [['rewards.html', 'My Rewards'], ['certificates.html', 'My Certificates']] },
       { ic: '💬', label: 'Community', items: [['community.html', 'Community'], ['classes.html', 'My Classes'], ['groups.html', 'Study Groups'], ['friends.html', 'My Friends'], ['messages.html', 'Messages']] },
       { ic: '⚙️', label: 'Account', items: [['settings.html', 'Account Settings'], ['contact.html', 'Contact Us'], ['#logout', 'Log out']] }
     ],
     teacher: [
       { ic: '🏠', label: 'Dashboard', href: 'teacher-dashboard.html' },
-      { ic: '📚', label: 'Teaching', items: [['teacher-courses.html', 'My Courses'], ['teacher-calendar.html', 'Live Classes'], ['teacher-objectives.html', 'Objectives & Activities']] },
+      { ic: '📚', label: 'Teaching', items: [['teacher-courses.html', 'My Courses'], ['teacher-calendar.html', 'Live Classes'], ['teacher-objectives.html', 'Objectives & Activities'], ['revision.html', 'Revision Hub']] },
       { ic: '🏫', label: 'My Classes', items: [['classes.html', 'My Classes'], ['teacher-attendance.html', 'Attendance'], ['groups.html', 'Study Groups']] },
       { ic: '💬', label: 'Community', items: [['community.html', 'Community'], ['messages.html', 'Messages'], ['teacher-requests.html', 'Session Requests']] },
       { ic: '⚙️', label: 'Account', items: [['teacher-settings.html', 'Account Settings'], ['contact.html', 'Contact Us'], ['index.html', 'Think Nest website'], ['#logout', 'Log out']] }

@@ -962,3 +962,28 @@ a.gp-post { display: block; color: inherit; }
 .side nav.nav2 .nav2-arrow svg { width: 16px; height: 16px; stroke: #fff; stroke-width: 2.6; fill: none; }
 .side nav.nav2 .nav2-toggle:hover .nav2-arrow { background: rgba(255,255,255,.25); }
 .side nav.nav2 .nav2-toggle[aria-expanded=true] .nav2-arrow { transform: rotate(180deg); background: var(--red); }
+/* ===== Revision Hub ===== */
+.rv-filter { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.rv-boards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 12px; }
+.rv-board { background: #F7F8FD; border-radius: 12px; padding: 12px 14px; }
+.rv-board b { color: #1D2026; }
+.rv-board p { margin-top: 4px; font-size: .92rem; line-height: 1.55; }
+.rv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+.rv-card { border: 0; border-top: 5px solid var(--c); background: #fff; border-radius: 14px; padding: 16px; font: inherit; cursor: pointer; display: grid; gap: 6px; justify-items: start; text-align: left; box-shadow: 0 4px 14px rgba(62,75,148,.07); transition: transform .15s; }
+.rv-card:hover { transform: translateY(-2px); }
+.rv-card.on { outline: 3px solid var(--c); }
+.rv-card b { color: #1D2026; }
+.rv-ic { font-size: 1.8rem; }
+.rv-detail { display: grid; gap: 14px; }
+.rv-dh { display: flex; gap: 14px; align-items: flex-start; border-left: 6px solid var(--c); padding-left: 14px; }
+.rv-dh h2 { color: #1D2026; }
+.rv-dh p { margin-top: 4px; color: #2F3241; }
+.rv-dh .link-btn { margin-left: auto; }
+.rv-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.rv-cols h3, .rv-detail > h3 { color: #1D2026; font-size: 1.05rem; margin-bottom: 8px; }
+.rv-cols ul { list-style: disc; padding-left: 20px; display: grid; gap: 5px; line-height: 1.5; margin-bottom: 12px; }
+.rv-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.rv-link { border: 1px solid #ECEEF6; border-radius: 12px; padding: 12px 14px; display: grid; gap: 4px; color: #2F3241; background: #FAFBFE; }
+.rv-link:hover { border-color: var(--blue); }
+.rv-link b { color: var(--blue); }
+@media (max-width: 760px) { .rv-cols { grid-template-columns: 1fr; } }
