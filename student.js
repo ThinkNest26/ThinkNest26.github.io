@@ -145,12 +145,12 @@ async function startCalendar() {
   const { user } = await initShell();
   const [ses, bk] = await Promise.all([
     db.from('sessions').select('*, courses(title), mentors(name)').order('starts_at'),
-    db.from('bookings').select('*, mentors(name, meeting_link)').eq('user_id', user.id).neq('status', 'cancelled').order('starts_at')
+    db.from('bookings').select('*, mentors(name, meeting_link)').eq('user_id', user.id).in('status', ['booked', 'pending', 'accepted', 'rejected']).order('starts_at')
   ]);
   if (ses.error) say(friendly(ses.error));
   const events = [
     ...(ses.data || []).map(s => ({ kind: 'class', at: new Date(s.starts_at), title: s.title, sub: [s.courses && s.courses.title, s.mentors && 'with ' + s.mentors.name].filter(Boolean).join(' · '), link: s.meeting_link })),
-    ...(bk.data || []).map(b => ({ kind: 'book', id: b.id, at: new Date(b.starts_at), title: 'Mentor session with ' + (b.mentors ? b.mentors.name : 'your mentor'), sub: b.note || '', link: b.mentors && b.mentors.meeting_link }))
+    ...(bk.data || []).map(b => ({ kind: 'book', id: b.id, status: b.status, at: new Date(b.starts_at), title: 'Mentor session with ' + (b.mentors ? b.mentors.name : 'your mentor'), sub: [b.status === 'pending' ? 'Waiting for the mentor to accept' : b.status === 'rejected' ? 'The mentor couldn’t take this session' : '', b.note || ''].filter(Boolean).join(' · '), link: b.status === 'pending' || b.status === 'rejected' ? null : b.mentors && b.mentors.meeting_link }))
   ].sort((a, b) => a.at - b.at);
 
   const dayKey = d => d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
@@ -190,7 +190,7 @@ async function startCalendar() {
         <div><h4>${esc(e.title)}</h4><span class="meta">${esc(e.sub)}</span><span class="when">${esc(when(e.at))}</span></div>
         <div class="event-actions"><span class="tag ${live ? 'tag-now' : ''}">${rel}</span>
         ${e.link ? `<a class="pill pill-live" href="${esc(e.link)}" target="_blank" rel="noopener">Join</a>` : ''}
-        ${e.kind === 'book' && e.at > Date.now() ? `<button class="pill pill-soft" data-cancel="${e.id}">Cancel</button>` : ''}</div>
+        ${e.status === 'pending' ? '<span class="tag tag-wait">Waiting</span>' : e.status === 'rejected' ? '<span class="tag">Declined</span>' : ''}${e.kind === 'book' && e.at > Date.now() && e.status !== 'rejected' ? `<button class="pill pill-soft" data-cancel="${e.id}">Cancel</button>` : ''}</div>
       </article>`;
     }).join('') : `<div class="empty-box"><p>${picked ? 'No classes or bookings on this day.' : 'Nothing booked yet.'}</p><a class="btn btn-red" href="mentors.html">Book a mentor session</a></div>`;
   }
@@ -205,7 +205,7 @@ async function startCalendar() {
   document.getElementById('events').addEventListener('click', async e => {
     const b = e.target.closest('[data-cancel]'); if (!b) return;
     if (!confirm('Cancel this mentor session?')) return;
-    const { error } = await db.from('bookings').update({ status: 'cancelled' }).eq('id', Number(b.dataset.cancel));
+    const { error } = await db.rpc('cancel_booking', { bid: Number(b.dataset.cancel) });
     if (error) return say(friendly(error));
     const i = events.findIndex(x => x.kind === 'book' && x.id === Number(b.dataset.cancel));
     events.splice(i, 1); drawMonth(); drawList(); say('Booking cancelled.');
@@ -246,11 +246,11 @@ async function startMentors() {
     const at = new Date(form.date.value + 'T' + form.time.value);
     if (isNaN(at) || at < new Date()) return showError(err, 'Choose a date and time in the future.');
     const save = document.getElementById('book-save'); save.disabled = true; save.textContent = 'Booking…';
-    const { error } = await db.from('bookings').insert({ user_id: user.id, mentor_id: mentorId, starts_at: at.toISOString(), note: form.note.value.trim() || null });
+    const { data: nb, error } = await db.from('bookings').insert({ user_id: user.id, mentor_id: mentorId, starts_at: at.toISOString(), note: form.note.value.trim() || null }).select().single();
     save.disabled = false; save.textContent = 'Book session';
     if (error) return showError(err, friendly(error));
     dlg.close();
-    say('Session booked for ' + when(at) + '. You’ll find it in My Calendar.');
+    say(nb && nb.status === 'pending' ? 'Request sent for ' + when(at) + '. You’ll see it in My Calendar once your mentor accepts.' : 'Session booked for ' + when(at) + '. You’ll find it in My Calendar.');
   });
 }
 

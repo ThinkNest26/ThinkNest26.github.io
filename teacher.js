@@ -25,20 +25,38 @@ async function initTeacher() {
   return { user: session.user, profile: p };
 }
 
+
+const T_OPTS = {
+  grade_levels: ['Early years (KG)', 'Primary', 'Middle school', 'High school', 'All grades'],
+  education_degree: ['Bachelor’s degree', 'Master’s degree', 'PhD', 'Teaching diploma', 'Other'],
+  teaching_method: ['Online', 'In person', 'Both'],
+  curriculum: ['IGCSE / Cambridge', 'American Curriculum', 'International Baccalaureate (IB)', 'Montessori', 'UAE MOE', 'Other']
+};
+function fillSelect(sel, list, value) {
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Select</option>' + list.map(o => `<option${o === value ? ' selected' : ''}>${o}</option>`).join('');
+}
+
 function tImg(c) { return c.image_url ? esc(c.image_url) : 'images/' + PHOTOS[c.id % PHOTOS.length] + '.png'; }
 
 // ---------- Teacher sign up (request) ----------
 function startTeacherSignup() {
   const f = document.getElementById('tsignup-form'), err = document.getElementById('tsignup-error');
+  Object.keys(T_OPTS).forEach(k => fillSelect(f[k], T_OPTS[k]));
+  const schoolName = f.querySelector('.school-name');
+  f.school_pick.addEventListener('change', () => { schoolName.hidden = f.school_pick.value !== 'A school'; });
   f.addEventListener('submit', async e => {
     e.preventDefault(); showError(err, '');
-    for (const el of f.querySelectorAll('input[required]')) {
+    for (const el of f.querySelectorAll('input[required], select[required]')) {
       if (!el.checkValidity()) { el.focus(); return showError(err, el.type === 'password' ? 'Choose a password with at least 8 characters.' : el.type === 'email' ? 'Enter a valid email address.' : 'Please fill in every required box.'); }
     }
+    const school = f.school_pick.value === 'A school' ? f.school.value.trim() : f.school_pick.value;
     const btn = f.querySelector('button[type=submit]'); btn.disabled = true; btn.textContent = 'Sending…';
     const { error } = await db.auth.signUp({
       email: f.email.value.trim(), password: f.password.value,
-      options: { data: { role: 'teacher', full_name: f.full_name.value.trim(), subject: f.subject.value.trim(), school: f.school.value.trim(), phone: f.phone.value.trim() } }
+      options: { data: { role: 'teacher', full_name: f.full_name.value.trim(), subject: f.subject.value.trim(), school, phone: f.phone.value.trim(),
+        grade_levels: f.grade_levels.value, education_degree: f.education_degree.value, teaching_method: f.teaching_method.value,
+        curriculum: f.curriculum.value, experience_years: f.experience_years.value, bio: f.bio.value.trim() } }
     });
     btn.disabled = false; btn.textContent = 'Send request';
     if (error) return showError(err, friendly(error));
@@ -80,6 +98,12 @@ async function startTeacherDashboard() {
   const { data: courses } = await db.from('courses').select('id, title').eq('teacher_id', user.id);
   const ids = (courses || []).map(c => c.id);
   document.getElementById('st-courses').textContent = ids.length;
+  const { data: myMentor } = await db.from('mentors').select('id').eq('teacher_id', user.id).maybeSingle();
+  if (myMentor) {
+    const { data: pend } = await db.from('bookings').select('id').eq('mentor_id', myMentor.id).eq('status', 'pending');
+    const n = (pend || []).length;
+    if (n) document.getElementById('req-box').innerHTML = `<a class="panel req-banner" href="teacher-requests.html"><span class="req-ic" aria-hidden="true">🙋</span><span><b>${n} session request${n === 1 ? '' : 's'}</b> waiting for your answer</span><span class="pill pill-live">Review →</span></a>`;
+  }
   if (!ids.length) {
     document.getElementById('events').innerHTML = '<div class="empty-box"><p>Start by creating your first course.</p><a class="btn btn-red" href="teacher-courses.html">Create a course</a></div>';
     return;
@@ -307,7 +331,7 @@ async function startAdmin() {
       <span class="initials">${esc((p.full_name || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</span>
       <div class="person-info"><h4>${esc(p.full_name || 'No name given')}</h4>
         <span class="meta">${[p.subject && 'Teaches ' + p.subject, p.school, p.phone].filter(Boolean).map(esc).join(' · ') || 'No details given'}</span>
-        <span class="meta">Requested ${new Date(p.created_at).toLocaleDateString('en-GB')}</span></div>
+        <span class="meta">${[p.grade_levels, p.curriculum, p.education_degree, p.teaching_method, p.experience_years != null ? p.experience_years + ' years’ experience' : ''].filter(Boolean).map(esc).join(' · ')}</span>${p.bio ? `<span class="meta bio">${esc(p.bio)}</span>` : ''}<span class="meta">Requested ${new Date(p.created_at).toLocaleDateString('en-GB')}</span></div>
       <div class="person-actions">${buttons}</div></article>`;
   async function load() {
     const [all, cs, en] = await Promise.all([
@@ -348,5 +372,91 @@ async function startAdmin() {
     if (error) { b.disabled = false; return say(friendly(error)); }
     say(act === 'approve_teacher' ? 'Approved! They can now log in to the teacher area.' : act === 'decline_teacher' ? 'Request declined.' : 'Teacher removed.');
     load();
+  });
+}
+
+
+// ---------- Session requests ----------
+async function startTeacherRequests() {
+  const { user } = await initTeacher();
+  const { data: m } = await db.from('mentors').select('*').eq('teacher_id', user.id).maybeSingle();
+  if (!m) {
+    document.getElementById('mentor-off').innerHTML = '<div class="empty-box"><p>Students can’t request sessions with you yet. Switch on <b>Mentor sessions</b> in Account Settings.</p><a class="btn btn-red" href="teacher-settings.html">Open Account Settings</a></div>';
+    document.getElementById('pending').innerHTML = ''; return;
+  }
+  async function load() {
+    const { data, error } = await db.from('bookings').select('*, profiles(full_name, grade, curriculum)').eq('mentor_id', m.id).in('status', ['pending', 'accepted']).gte('starts_at', new Date(Date.now() - 3600000).toISOString()).order('starts_at');
+    if (error) return say(friendly(error));
+    const pend = data.filter(b => b.status === 'pending'), acc = data.filter(b => b.status === 'accepted');
+    document.getElementById('n-pend').textContent = pend.length;
+    const nm = b => b.profiles ? b.profiles.full_name : 'A student';
+    document.getElementById('pending').innerHTML = pend.length ? pend.map(b => `<article class="panel person">
+        <span class="initials">${esc((nm(b) || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</span>
+        <div class="person-info"><h4>${esc(nm(b))} has requested a session with you</h4>
+          <span class="meta">${esc(when(b.starts_at))}${b.profiles && b.profiles.grade ? ' · ' + esc(b.profiles.grade) : ''}</span>
+          ${b.note ? `<span class="meta">“${esc(b.note)}”</span>` : ''}</div>
+        <div class="person-actions"><button class="pill pill-live" data-ans="1" data-id="${b.id}">Accept</button><button class="pill pill-soft danger" data-ans="0" data-id="${b.id}">Reject</button></div></article>`).join('')
+      : '<p class="empty">No requests waiting.</p>';
+    document.getElementById('accepted').innerHTML = acc.length ? acc.map(b => {
+      const [rel, live] = relative(b.starts_at);
+      return `<article class="event ev-book"><div><h4>Session with ${esc(nm(b))}</h4><span class="meta">${esc(b.note || '')}</span><span class="when">${esc(when(b.starts_at))}</span></div>
+        <div class="event-actions"><span class="tag ${live ? 'tag-now' : ''}">${rel}</span>${m.meeting_link ? `<a class="pill pill-live" href="${esc(m.meeting_link)}" target="_blank" rel="noopener">Start</a>` : ''}</div></article>`;
+    }).join('') : '<p class="empty">No accepted sessions coming up.</p>';
+  }
+  load();
+  document.getElementById('pending').addEventListener('click', async e => {
+    const b = e.target.closest('[data-ans]'); if (!b) return;
+    b.parentElement.querySelectorAll('button').forEach(x => x.disabled = true);
+    const { error } = await db.rpc('answer_booking', { bid: Number(b.dataset.id), ok: b.dataset.ans === '1' });
+    if (error) { b.parentElement.querySelectorAll('button').forEach(x => x.disabled = false); return say(friendly(error)); }
+    say(b.dataset.ans === '1' ? 'Accepted. It’s now in the student’s calendar.' : 'Request rejected.'); load();
+  });
+}
+
+// ---------- Teacher account settings ----------
+async function startTeacherSettings() {
+  const { user, profile: p } = await initTeacher();
+  const f = document.getElementById('tprofile-form');
+  Object.keys(T_OPTS).forEach(k => fillSelect(f[k], T_OPTS[k], p[k] || ''));
+  ['full_name', 'subject', 'phone', 'school', 'experience_years', 'bio'].forEach(k => { f[k].value = p[k] ?? ''; });
+  f.addEventListener('submit', async e => {
+    e.preventDefault();
+    const row = {}; ['full_name', 'subject', 'phone', 'school', 'bio', 'grade_levels', 'education_degree', 'teaching_method', 'curriculum'].forEach(k => row[k] = f[k].value.trim() || null);
+    row.experience_years = f.experience_years.value ? Number(f.experience_years.value) : null;
+    const { error } = await db.from('profiles').update(row).eq('id', user.id);
+    say(error ? friendly(error) : 'Your profile is saved.');
+  });
+
+  const mf = document.getElementById('mentor-form');
+  let { data: m } = await db.from('mentors').select('*').eq('teacher_id', user.id).maybeSingle();
+  mf.on.checked = !!m;
+  mf.subject.value = m ? m.subject || '' : (p.subject || '');
+  mf.bio.value = m ? m.bio || '' : '';
+  mf.meeting_link.value = m ? m.meeting_link || '' : '';
+  mf.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!mf.on.checked) {
+      if (m) {
+        if (!confirm('Stop offering mentor sessions? Students will no longer see you in Mentors.')) return;
+        const { error } = await db.from('mentors').delete().eq('id', m.id);
+        if (error) return say(friendly(error));
+        m = null;
+      }
+      return say('Mentor sessions are switched off.');
+    }
+    const row = { name: p.full_name || 'Teacher', subject: mf.subject.value.trim() || null, bio: mf.bio.value.trim() || null, meeting_link: mf.meeting_link.value.trim() || null, teacher_id: user.id };
+    const res = m ? await db.from('mentors').update(row).eq('id', m.id).select().single() : await db.from('mentors').insert(row).select().single();
+    if (res.error) return say(friendly(res.error));
+    m = res.data; say('Mentor settings saved. Students can now request sessions with you.');
+  });
+
+  const pf = document.getElementById('pw-form'), err = document.getElementById('pw-error');
+  pf.addEventListener('submit', async e => {
+    e.preventDefault(); showError(err, '');
+    if (pf.password.value.length < 8) return showError(err, 'Choose a password with at least 8 characters.');
+    if (pf.password.value !== pf.password2.value) return showError(err, 'The two passwords don’t match.');
+    const { error } = await db.auth.updateUser({ password: pf.password.value });
+    if (error) return showError(err, friendly(error));
+    pf.reset(); say('Your password has been changed.');
   });
 }
