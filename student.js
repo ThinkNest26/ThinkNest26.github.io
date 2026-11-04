@@ -352,6 +352,20 @@ async function startSettings() {
     const { error } = await db.from('profiles').update({ full_name: f.full_name.value.trim(), grade: f.grade.value, curriculum: f.curriculum.value, school: f.school.value.trim() }).eq('id', user.id);
     say(error ? friendly(error) : 'Your details are saved.');
   });
+  // Family code for parents
+  const fc = document.getElementById('family-code');
+  if (fc) {
+    fc.textContent = profile.family_code || '—';
+    const { data: links } = await db.from('parent_links').select('parent_id').eq('student_id', user.id);
+    const n = (links || []).length;
+    document.getElementById('family-parents').textContent = n ? n + (n === 1 ? ' parent is' : ' parents are') + ' linked to your account.' : 'No parent linked yet.';
+    document.getElementById('new-code').addEventListener('click', async () => {
+      if (!confirm('Make a new code? The old code will stop working. Parents already linked stay linked.')) return;
+      const { data, error } = await db.rpc('new_family_code');
+      if (error) return say(friendly(error));
+      fc.textContent = data; say('New family code made.');
+    });
+  }
   const pf = document.getElementById('pw-form'), err = document.getElementById('pw-error');
   pf.addEventListener('submit', async e => {
     e.preventDefault(); showError(err, '');

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Parent area – Think Nest</title>
+  <link rel="icon" href="images/tn-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=9">
+  <link rel="stylesheet" href="app.css?v=9">
+</head>
+<body class="app loading">
+  <aside class="side" id="side">
+    <a href="index.html" class="side-logo"><img src="images/tn-logo.png" alt="Think Nest home"></a>
+    <nav aria-label="Parent menu">
+      <h5 class="first">Parent</h5>
+      <ul><li><a href="parent-dashboard.html" class="active" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0 1 12 0M15 15a5 5 0 0 1 6 5"/></svg><span>My children</span></a></li></ul>
+      <h5>Others</h5>
+      <ul><li><a href="index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span>Think Nest website</span></a></li><li><a href="#" id="logout"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5v16h5"/><path d="M14 8l4 4-4 4M18 12H9"/></svg><span>Log out</span></a></li></ul>
+    </nav>
+  </aside>
+  <div class="app-main">
+    <header class="app-bar">
+      <button class="side-toggle" id="side-toggle" aria-label="Open menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <span class="bar-title">Parent area</span>
+      <div class="bar-right"><span class="initials" id="me-initials-small" title="Your profile"></span></div>
+    </header>
+    <main class="dash">
+      <div class="page-head"><h1 class="dash-h" id="hello">My children</h1></div>
+      <div class="kid-tabs" id="kid-tabs" role="tablist" aria-label="Choose a child"></div>
+      <section id="kid-view" hidden>
+        <section class="panel profile">
+          <span class="initials big" id="kid-initials" aria-hidden="true"></span>
+          <div><h2 class="t-name" id="kid-name"></h2><p id="kid-sub"></p></div>
+          <button class="pill pill-soft big danger" id="unlink">Remove from my account</button>
+        </section>
+        <section class="stats">
+          <div class="stat s1"><span class="stat-ic">📚</span><div><b id="k-courses">0</b><span>Courses</span></div></div>
+          <div class="stat s2"><span class="stat-ic">📈</span><div><b id="k-avg">0%</b><span>Average progress</span></div></div>
+          <div class="stat s3"><span class="stat-ic">🏅</span><div><b id="k-certs">0</b><span>Certificates</span></div></div>
+          <div class="stat s4"><span class="stat-ic">🗓️</span><div><b id="k-next">0</b><span>Coming up this week</span></div></div>
+        </section>
+        <h2 class="dash-h">Courses and progress</h2>
+        <section class="kid-courses" id="k-course-list"></section>
+        <h2 class="dash-h">Coming up</h2>
+        <section class="event-list" id="k-events"></section>
+        <h2 class="dash-h">Certificates</h2>
+        <section class="grid-cards" id="k-cert-list"></section>
+      </section>
+      <section class="panel add-kid" id="add-kid">
+        <h2>Add your child</h2>
+        <p>Ask your child to log in to Think Nest and open <b>Account Settings</b>. They’ll see a <b>family code</b>, a short code of 8 letters and numbers. Type it here to link their account to yours.</p>
+        <form class="inline-form row-form" id="link-form">
+          <label><span class="sr">Family code</span><input type="text" name="code" maxlength="12" placeholder="For example, 4F7A2C9B" autocomplete="off" required></label>
+          <button class="btn btn-red">Add child</button>
+        </form>
+        <p class="form-error" id="link-error" role="alert" hidden></p>
+      </section>
+    </main>
+
+    <footer class="footer app-footer">
+      <div class="container footer-inner">
+        <img src="images/tn-logo.png" alt="Think Nest" class="footer-logo">
+        <div class="footer-middle">
+          <ul class="footer-links">
+            <li><a href="index.html#about">About Us</a></li>
+            <li><a href="index.html#courses">Courses</a></li>
+            <li><a href="index.html#paths">Think Paths</a></li>
+          </ul>
+        </div>
+      </div>
+      <p class="copyright">Copyright © THINK NEST. All rights reserved.</p>
+    </footer>
+  </div>
+  <div class="side-shade" id="side-shade"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js?v=9"></script>
+  <script src="app.js?v=9"></script>
+  <script src="parent.js?v=9"></script>
+  <script>startParent();</script>
+</body>
+</html>

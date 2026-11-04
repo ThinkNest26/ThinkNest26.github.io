@@ -57,6 +57,7 @@ if (nextBtn) nextBtn.addEventListener('click', () => {
 async function homeFor(userId) {
   const { data: p } = await db.from('profiles').select('role, requested_role').eq('id', userId).maybeSingle();
   if (p && p.role === 'admin') return 'admin.html';
+  if (p && p.role === 'parent') return 'parent-dashboard.html';
   if (p && (p.role === 'teacher' || p.role === 'school_leader')) return 'teacher-dashboard.html';
   if (p && p.requested_role === 'teacher') return 'teacher-pending.html';
   return 'student-dashboard.html';

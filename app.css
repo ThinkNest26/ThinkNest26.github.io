@@ -316,3 +316,26 @@ a.pill { display: inline-block; }
 .pick-ic svg { width: 100px; height: 100px; }
 @media (max-width: 1100px) { .roles-pick { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 640px) { .roles-pick { grid-template-columns: repeat(2, 1fr); } .pick-ic, .pick-ic svg { width: 80px; height: 80px; } }
+
+/* ===== Parent area ===== */
+.kid-tabs { display: flex; gap: 10px; flex-wrap: wrap; margin: 6px 0 20px; }
+.kid-tabs button { font: inherit; font-weight: 600; display: flex; align-items: center; gap: 10px; padding: 8px 18px 8px 8px; border-radius: 30px; border: 1px solid #D9DBE8; background: var(--white); cursor: pointer; color: #2F3241; }
+.kid-tabs button .initials { width: 34px; height: 34px; font-size: .8rem; }
+.kid-tabs button[aria-selected="true"] { border: 2px solid var(--blue); background: #EEF0FB; }
+#kid-view .stats { margin-top: 20px; }
+.kid-courses { display: grid; gap: 12px; }
+.kid-course { display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; }
+.kid-course h4 { margin: 0 0 4px; }
+.kid-bar { display: flex; align-items: center; gap: 12px; min-width: 220px; }
+.kid-bar .bar { flex: 1; margin: 0; }
+.add-kid { margin-top: 34px; display: grid; gap: 12px; color: #2F3241; }
+.add-kid h2 { color: var(--blue); font-size: 1.3rem; }
+.row-form { flex-direction: row !important; align-items: center; margin-top: 4px !important; flex-wrap: wrap; }
+.row-form input { text-transform: uppercase; letter-spacing: .15em; font-weight: 700; max-width: 260px; }
+.family .code { font-size: 2rem; font-weight: 800; letter-spacing: .2em; color: var(--blue); background: #EEF0FB; border-radius: 10px; padding: 12px 18px; display: inline-block; }
+.family { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; color: #2F3241; }
+.family h2 { font-size: 1.2rem; color: #1D2026; }
+.settings-grid .family { grid-column: 1 / -1; }
+.app .add-kid { margin-top: 34px; }
+.row-form label { flex: 0 1 280px; }
+.row-form input::placeholder { text-transform: none; letter-spacing: 0; font-weight: 500; }
