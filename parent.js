@@ -155,6 +155,7 @@ async function startChild() {
     if (error) return say(friendly(error));
     window.open(data.signedUrl, '_blank', 'noopener');
   });
+  if (typeof childActivities === 'function') childActivities(kidId);
   const fr = await db.rpc('child_friends', { kid: kidId });
   const friends = fr.data || [];
   document.getElementById('k-friends').innerHTML = friends.length ? friends.map(f => `<div class="panel friend"><span class="initials">${esc(ini(f.full_name))}</span><div><b>${esc(f.full_name)}</b><span class="meta">${esc([f.grade, f.school].filter(Boolean).join(' · '))}</span><span class="meta">Friends since ${new Date(f.since).toLocaleDateString('en-GB')}</span></div></div>`).join('') : '<p class="empty">No friends added yet.</p>';
