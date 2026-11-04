@@ -336,7 +336,7 @@ async function startCertificates() {
     </article>`).join('') : '<div class="empty-box"><p>Finish a course to earn your first certificate.</p><a class="btn btn-red" href="my-courses.html">Go to my courses</a></div>';
   list.addEventListener('click', async e => {
     const b = e.target.closest('[data-file]'); if (!b) return;
-    const { data: s, error: er } = await db.storage.from('student-files').createSignedUrl(b.dataset.file, 600);
+    const { data: s, error: er } = await db.storage.from('certificates').createSignedUrl(b.dataset.file, 600);
     if (er) return say(friendly(er));
     window.open(s.signedUrl, '_blank', 'noopener');
   });

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Course – Think Nest</title>
+  <link rel="icon" href="images/tn-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=5">
+  <link rel="stylesheet" href="app.css?v=5">
+</head>
+<body class="app loading">
+  <aside class="side" id="side">
+    <a href="index.html" class="side-logo"><img src="images/tn-logo.png" alt="Think Nest home"></a>
+    <nav aria-label="Teacher menu">
+      <h5 class="first">Teacher</h5>
+      <ul><li><a href="teacher-dashboard.html"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>Dashboard</span></a></li><li><a href="teacher-courses.html" class="active" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h11a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3z"/><path d="M8 8h6M8 12h6"/></svg><span>My Courses</span></a></li><li><a href="teacher-calendar.html"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Live Classes</span></a></li></ul>
+      <h5>Others</h5>
+      <ul><li><a href="index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span>Think Nest website</span></a></li><li><a href="#" id="logout"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5v16h5"/><path d="M14 8l4 4-4 4M18 12H9"/></svg><span>Log out</span></a></li></ul>
+    </nav>
+  </aside>
+
+  <div class="app-main">
+    <header class="app-bar">
+      <button class="side-toggle" id="side-toggle" aria-label="Open menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <span class="bar-title">Teacher area</span>
+      <div class="bar-right"><span class="initials" id="me-initials-small" title="Your profile"></span></div>
+    </header>
+
+    <main class="dash">
+      <a href="teacher-courses.html" class="back-link">‹ My courses</a>
+      <section class="panel course-hero" id="hero"><p class="empty">Loading…</p></section>
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true" data-tab="t-lessons">Lessons</button>
+        <button role="tab" aria-selected="false" data-tab="t-students">Students</button>
+        <button role="tab" aria-selected="false" data-tab="t-recs">Recordings</button>
+      </div>
+      <section id="t-lessons" class="tab-panel">
+        <div class="lesson-list" id="lessons"></div>
+        <form class="panel inline-form" id="lesson-form">
+          <h3>Add a lesson</h3>
+          <label>Lesson title <input type="text" name="title" required></label>
+          <label>Video link (YouTube, optional) <input type="url" name="video_url" placeholder="https://youtube.com/..."></label>
+          <label>Worksheet link (optional) <input type="url" name="resource_url" placeholder="https://..."></label>
+          <button class="btn btn-red">Add lesson</button>
+        </form>
+      </section>
+      <section id="t-students" class="tab-panel" hidden>
+        <div class="panel table-wrap"><table class="t-table"><thead><tr><th>Student</th><th>Grade</th><th>Joined</th><th>Progress</th><th>Certificate</th></tr></thead><tbody id="students"></tbody></table></div>
+      </section>
+      <section id="t-recs" class="tab-panel" hidden>
+        <div class="grid-cards" id="recs"></div>
+        <form class="panel inline-form" id="rec-form">
+          <h3>Add a recording</h3>
+          <p class="hint">Upload the video to YouTube as <b>Unlisted</b>, then paste its link here.</p>
+          <label>Title <input type="text" name="title" required></label>
+          <label>YouTube link <input type="url" name="youtube_url" required placeholder="https://youtu.be/..."></label>
+          <label>Date recorded <input type="date" name="recorded_at"></label>
+          <button class="btn btn-red">Add recording</button>
+        </form>
+      </section>
+      <dialog id="cert-dialog" class="dlg">
+        <form id="cert-form" class="auth-form">
+          <h2 id="cert-title">Issue a certificate</h2>
+          <label>Certificate title <input type="text" name="title" required></label>
+          <label>Certificate file (PDF, optional) <input type="file" name="file" accept=".pdf,image/*"></label>
+          <p class="form-error" id="cert-error" role="alert" hidden></p>
+          <div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-close>Cancel</button><button class="btn btn-red auth-btn">Issue certificate</button></div>
+        </form>
+      </dialog>
+      <dialog id="course-dialog" class="dlg">
+        <form id="course-form" class="auth-form">
+          <h2 id="course-dlg-title">New course</h2>
+          <label>Course title <input type="text" name="title" required></label>
+          <label>Short description <textarea name="description" rows="3"></textarea></label>
+          <label>Category <select name="category"><option>Think Paths</option><option>Code. Build. Imagine</option><option>Other</option></select></label>
+          <label>Level <select name="level"><option>Beginner</option><option>Intermediate</option><option>Advanced</option><option>All levels</option></select></label>
+          <label>Length in weeks <input type="number" name="weeks" min="1" max="52"></label>
+          <label>Picture link (optional) <input type="url" name="image_url" placeholder="https://..."></label>
+          <p class="form-error" id="course-error" role="alert" hidden></p>
+          <div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-close>Cancel</button><button class="btn btn-red auth-btn">Save course</button></div>
+        </form>
+      </dialog>
+    </main>
+
+    <footer class="footer app-footer">
+      <div class="container footer-inner">
+        <img src="images/tn-logo.png" alt="Think Nest" class="footer-logo">
+        <div class="footer-middle">
+          <ul class="footer-links">
+            <li><a href="index.html#about">About Us</a></li>
+            <li><a href="index.html#courses">Courses</a></li>
+            <li><a href="index.html#paths">Think Paths</a></li>
+          </ul>
+        </div>
+      </div>
+      <p class="copyright">Copyright © THINK NEST. All rights reserved.</p>
+    </footer>
+  </div>
+  <div class="side-shade" id="side-shade"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js?v=5"></script>
+  <script src="app.js?v=5"></script>
+  <script src="teacher.js?v=5"></script>
+  <script>startTeacherCourse();</script>
+</body>
+</html>

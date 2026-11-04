@@ -54,9 +54,15 @@ if (nextBtn) nextBtn.addEventListener('click', () => {
 });
 
 // ===== Log in =====
+async function homeFor(userId) {
+  const { data: p } = await db.from('profiles').select('role, requested_role').eq('id', userId).maybeSingle();
+  if (p && (p.role === 'teacher' || p.role === 'school_leader')) return 'teacher-dashboard.html';
+  if (p && p.requested_role === 'teacher') return 'teacher-pending.html';
+  return 'student-dashboard.html';
+}
 async function startLoginPage() {
   const { data } = await db.auth.getSession();
-  if (data.session) { location.href = 'student-dashboard.html'; return; }
+  if (data.session) { location.href = await homeFor(data.session.user.id); return; }
   const form = document.getElementById('login-form');
   const err = document.getElementById('login-error');
   form.addEventListener('submit', async e => {
@@ -66,10 +72,10 @@ async function startLoginPage() {
     if (!email || !password) return showError(err, 'Enter your email and password.');
     const btn = form.querySelector('button[type=submit]');
     btn.disabled = true; btn.textContent = 'Logging in…';
-    const { error } = await db.auth.signInWithPassword({ email, password });
+    const { data: d, error } = await db.auth.signInWithPassword({ email, password });
     btn.disabled = false; btn.textContent = 'Log in';
     if (error) return showError(err, friendly(error));
-    location.href = 'student-dashboard.html';
+    location.href = await homeFor(d.user.id);
   });
 }
 
