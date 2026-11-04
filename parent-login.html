@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=14">
-  <link rel="stylesheet" href="app.css?v=14">
+  <link rel="stylesheet" href="style.css?v=17">
+  <link rel="stylesheet" href="app.css?v=17">
 </head>
 <body class="auth">
   <header class="app-top">
@@ -28,6 +28,7 @@
           <span class="pw"><input type="password" name="password" id="pw" autocomplete="current-password" placeholder="Enter your password" required>
           <button type="button" class="pw-eye" data-eye="pw" aria-label="Show password">👁</button></span>
         </label>
+        <a href="forgot.html" class="forgot">Forgot password?</a>
         <p class="form-error" id="login-error" role="alert" hidden></p>
         <button type="submit" class="btn btn-red auth-btn">Log in</button>
         <p class="switch">New to Think Nest? <a href="parent-signup.html">Create a parent account</a></p>
@@ -36,9 +37,9 @@
   </main>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=14"></script>
-  <script src="app.js?v=14"></script>
-  <script src="teacher.js?v=14"></script>
+  <script src="supabase-config.js?v=17"></script>
+  <script src="app.js?v=17"></script>
+  <script src="teacher.js?v=17"></script>
   <script>startLoginPage();</script>
 </body>
 </html>

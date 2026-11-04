@@ -30,6 +30,7 @@ function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;
 function friendly(err) {
   const m = (err && err.message || '').toLowerCase();
   if (m.includes('invalid login')) return 'That email and password don’t match. Check them and try again.';
+  if (m.includes('email not confirmed')) return 'Please confirm your email first. Open the email we sent you and click the link (check spam too).';
   if (m.includes('already registered') || m.includes('already been registered')) return 'An account with this email already exists. Try logging in instead.';
   if (m.includes('password')) return 'Choose a password with at least 8 characters.';
   if (m.includes('rate limit')) return 'Too many tries in a short time. Wait a few minutes and try again.';
@@ -129,7 +130,7 @@ function startSignupPage() {
     create.disabled = false; create.textContent = 'Create account';
     if (error) return showError(err, friendly(error));
     if (data.session) location.href = 'student-dashboard.html';
-    else { showError(err, ''); say('Account created! Please log in.'); setTimeout(() => location.href = 'login.html', 1500); }
+    else { document.getElementById('signup-form').innerHTML = '<div class="note big-note"><b>Almost done! 📧</b><br>We’ve sent an email to <b>' + esc(f.email.value.trim()) + '</b>. Click the link in it to confirm your account, then log in. Check your spam folder if you can’t see it.</div><a class="btn btn-red auth-btn" href="login.html">Go to log in</a>'; }
   });
   show(0);
 }
@@ -266,3 +267,36 @@ document.addEventListener('click', e => {
   const lo = e.target.closest('#logout');
   if (lo && !confirm('Are you sure you want to log out? Logging out will end your current session.')) { e.preventDefault(); e.stopImmediatePropagation(); }
 }, true);
+
+
+// ===== Forgot / reset password =====
+const SITE = 'https://thinknest26.github.io/';
+function startForgot() {
+  const f = document.getElementById('forgot-form'), err = document.getElementById('forgot-error');
+  f.addEventListener('submit', async e => {
+    e.preventDefault(); showError(err, '');
+    if (!f.email.checkValidity()) return showError(err, 'Enter a valid email address.');
+    const btn = f.querySelector('button'); btn.disabled = true; btn.textContent = 'Sending…';
+    const { error } = await db.auth.resetPasswordForEmail(f.email.value.trim(), { redirectTo: SITE + 'reset.html' });
+    btn.disabled = false; btn.textContent = 'Send reset link';
+    if (error) return showError(err, friendly(error));
+    document.getElementById('forgot-done').hidden = false;
+  });
+}
+function startReset() {
+  const f = document.getElementById('reset-form'), err = document.getElementById('reset-error'), sub = document.getElementById('reset-sub');
+  let ready = false;
+  const show = () => { if (ready) return; ready = true; sub.textContent = 'Type your new password below.'; f.hidden = false; f.password.focus(); };
+  db.auth.onAuthStateChange((ev, session) => { if (ev === 'PASSWORD_RECOVERY' || (session && location.hash.includes('type=recovery'))) show(); });
+  db.auth.getSession().then(({ data }) => { if (data.session) show(); });
+  setTimeout(() => { if (!ready) { sub.textContent = 'This reset link has expired or was already used.'; document.getElementById('reset-again').hidden = false; } }, 4000);
+  f.addEventListener('submit', async e => {
+    e.preventDefault(); showError(err, '');
+    if (f.password.value.length < 8) return showError(err, 'Choose a password with at least 8 characters.');
+    if (f.password.value !== f.password2.value) return showError(err, 'The two passwords don’t match.');
+    const { data, error } = await db.auth.updateUser({ password: f.password.value });
+    if (error) return showError(err, friendly(error));
+    say('Password changed. Taking you to your account…');
+    setTimeout(async () => { location.href = await homeFor(data.user.id); }, 1200);
+  });
+}

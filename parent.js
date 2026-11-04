@@ -24,7 +24,8 @@ function startParentSignup() {
     });
     btn.disabled = false; btn.textContent = 'Continue';
     if (error) return showError(err, friendly(error));
-    location.href = data.session ? 'parent-dashboard.html' : 'parent-login.html';
+    if (data.session) location.href = 'parent-dashboard.html';
+    else f.innerHTML = '<div class="note big-note"><b>Almost done! 📧</b><br>We’ve sent an email to <b>' + esc(f.email.value.trim()) + '</b>. Click the link in it to confirm your account, then log in. Check your spam folder if you can’t see it.</div><a class="btn btn-red auth-btn" href="parent-login.html">Go to log in</a>';
   });
 }
 
@@ -157,6 +158,12 @@ async function startChild() {
   const fr = await db.rpc('child_friends', { kid: kidId });
   const friends = fr.data || [];
   document.getElementById('k-friends').innerHTML = friends.length ? friends.map(f => `<div class="panel friend"><span class="initials">${esc(ini(f.full_name))}</span><div><b>${esc(f.full_name)}</b><span class="meta">${esc([f.grade, f.school].filter(Boolean).join(' · '))}</span><span class="meta">Friends since ${new Date(f.since).toLocaleDateString('en-GB')}</span></div></div>`).join('') : '<p class="empty">No friends added yet.</p>';
+  const gr = await db.rpc('child_groups', { kid: kidId });
+  const gs = gr.data || [];
+  document.getElementById('k-groups').innerHTML = gs.length ? gs.map(g => `<a class="panel group-card" href="group.html?id=${g.id}"><b>${esc(g.name)}</b><span class="meta">${g.members} member${g.members === 1 ? '' : 's'} · view only</span></a>`).join('') : '<p class="empty">Not in any study groups yet.</p>';
+  const cv = await db.rpc('child_conversations', { kid: kidId });
+  const chats = cv.data || [];
+  document.getElementById('k-chats').innerHTML = chats.length ? chats.map(c => `<a class="pending-row" href="messages.html?c=${c.id}"><span class="initials">${c.kind === 'group' ? '👥' : esc(ini(c.title))}</span><div><b>${c.kind === 'group' ? 'Group chat: ' : 'Chat with '}${esc(c.title || '')}</b><span class="meta">${c.messages} message${c.messages === 1 ? '' : 's'}${c.last_at ? ' · last ' + new Date(c.last_at).toLocaleDateString('en-GB') : ''}</span></div><span class="pill pill-soft">Read</span></a>`).join('') : '<p class="empty">No chats yet.</p>';
   document.getElementById('unlink').addEventListener('click', async () => {
     if (!confirm('Remove ' + (k.full_name || 'this child') + ' from your parent account? You can add them again later.')) return;
     const { error } = await db.from('parent_links').delete().eq('parent_id', user.id).eq('student_id', kidId);
