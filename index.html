@@ -21,15 +21,20 @@
       <button class="nav-toggle" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
       <div class="nav-menu">
         <ul class="nav-links">
-          <li><a href="#about">About Us</a></li>
-          <li><a href="about.html">Our founders</a></li>
+          <li class="nav-drop"><button type="button" class="nav-drop-btn" aria-expanded="false" aria-controls="dd-about">About <span aria-hidden="true">▾</span></button>
+            <ul class="nav-dd" id="dd-about">
+              <li><a href="#about">About Think Nest</a></li>
+              <li><a href="about.html">Our founders</a></li>
+              <li><a href="careers.html">Careers</a></li>
+              <li><a href="contact.html">Contact us</a></li>
+            </ul></li>
           <li><a href="#courses">Courses</a></li>
           <li><a href="#paths">Think Paths</a></li>
-          <li><a href="about.html">Meet the founders</a></li>
-          <li><a href="curriculum.html">Curriculum guide</a></li>
-          <li><a href="revision.html">Revision Hub</a></li>
-          <li><a href="careers.html">Careers</a></li>
-          <li><a href="contact.html">Contact</a></li>
+          <li class="nav-drop"><button type="button" class="nav-drop-btn" aria-expanded="false" aria-controls="dd-res">Resources <span aria-hidden="true">▾</span></button>
+            <ul class="nav-dd" id="dd-res">
+              <li><a href="curriculum.html">Curriculum guide</a></li>
+              <li><a href="revision.html">Revision Hub</a></li>
+            </ul></li>
         </ul>
         <div class="nav-buttons">
           <a href="careers.html" class="btn btn-red">Join as a Teacher</a>
@@ -210,6 +215,15 @@
   <script src="app.js?v=36"></script>
   <script src="curriculum.js?v=36"></script>
   <script src="paths.js?v=36"></script>
-  <script>initPaths();</script>
+  <script>initPaths();
+    document.querySelectorAll('.nav-drop-btn').forEach(b => b.addEventListener('click', e => {
+      e.stopPropagation();
+      const open = b.getAttribute('aria-expanded') !== 'true';
+      document.querySelectorAll('.nav-drop-btn').forEach(x => x.setAttribute('aria-expanded', 'false'));
+      b.setAttribute('aria-expanded', String(open));
+    }));
+    document.addEventListener('click', () => document.querySelectorAll('.nav-drop-btn').forEach(x => x.setAttribute('aria-expanded', 'false')));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.nav-drop-btn').forEach(x => x.setAttribute('aria-expanded', 'false')); });
+  </script>
 </body>
 </html>
