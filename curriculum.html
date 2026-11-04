@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Curriculum guide – Think Nest</title>
+  <link rel="icon" href="images/tn-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=20">
+  <link rel="stylesheet" href="app.css?v=20">
+</head>
+<body class="auth">
+  <header class="app-top">
+    <a href="index.html"><img src="images/tn-logo-dark.png" alt="Think Nest home" class="app-top-logo"></a>
+    <a href="index.html" class="app-exit">Exit</a>
+  </header>
+      <main class="cur-page">
+    <div class="cur-wrap">
+      <h1 class="title">Curriculum guide</h1>
+      <p class="hint">Choose a curriculum and a grade to see what students learn, from KG1 to Grade 12.</p>
+      <div class="tabs cur-tabs" role="tablist" id="cur-tabs"></div>
+      <section class="panel cur-intro" id="cur-intro"><p class="empty">Loading…</p></section>
+      <div class="cur-grades" id="cur-grades" aria-label="Choose a grade"></div>
+      <section class="panel cur-body" id="cur-body"></section>
+      <p class="note">These are summaries written by Think Nest to help families understand each curriculum. Schools may teach topics in a different order or add their own content. For the official documents, use the link above.</p>
+    </div>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js?v=20"></script>
+  <script src="app.js?v=20"></script>
+  <script src="curriculum.js?v=20"></script>
+  <script>startCurriculumPage();</script>
+</body>
+</html>

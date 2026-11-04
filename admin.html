@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=19">
-  <link rel="stylesheet" href="app.css?v=19">
+  <link rel="stylesheet" href="style.css?v=20">
+  <link rel="stylesheet" href="app.css?v=20">
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -38,6 +38,8 @@
       <h2 class="dash-h">Approved teachers <span class="count" id="n-teachers">0</span></h2>
       <section class="approve-list" id="teachers"></section>
       <details class="panel declined-box"><summary>Declined or removed <span class="count" id="n-declined">0</span></summary><section class="approve-list" id="declined"></section></details>
+      <h2 class="dash-h">Curriculum guide</h2>
+      <section class="panel req-row"><span>Edit the British, IB and American guides that students see when they choose their curriculum.</span><a class="btn btn-red" href="admin-curriculum.html">Open the editor</a></section>
       <h2 class="dash-h">Community settings</h2>
       <section class="panel" id="approval-setting"></section>
       <h2 class="dash-h">Reported community posts <span class="count" id="n-reports">0</span></h2>
@@ -71,13 +73,13 @@
   <div class="side-shade" id="side-shade"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=19"></script>
-  <script src="app.js?v=19"></script>
-  <script src="notify.js?v=19" defer></script>
-  <script src="teacher.js?v=19"></script>
+  <script src="supabase-config.js?v=20"></script>
+  <script src="app.js?v=20"></script>
+  <script src="notify.js?v=20" defer></script>
+  <script src="teacher.js?v=20"></script>
   <script>startAdmin();</script>
-  <script src="community.js?v=19"></script>
-  <script src="chat.js?v=19"></script>
+  <script src="community.js?v=20"></script>
+  <script src="chat.js?v=20"></script>
   <script>loadReports().then(loadGroupReports); loadMessageReview(); loadApprovalSetting();</script>
 </body>
 </html>
