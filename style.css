@@ -206,3 +206,7 @@ section { margin-top: 100px; }
   .jobs .job-grid, .form-grid, .form-grid-2 { grid-template-columns: 1fr; }
 }
 .jobs { margin-bottom: 100px; }
+/* keep the logo full size: it must never shrink when the menu is busy */
+.nav-logo { flex: 0 0 auto; display: block; }
+.nav-logo img { height: 72px; width: auto; min-width: 130px; object-fit: contain; display: block; }
+@media (max-width: 900px) { .nav-logo img { height: 56px; min-width: 100px; } }

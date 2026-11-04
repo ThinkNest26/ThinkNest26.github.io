@@ -99,3 +99,7 @@
 .founders .fd-more { text-align: center; margin-top: 8px; }
 .founders .fd-more .outline { border: 2px solid #F27A6F; }
 .founders[hidden] { display: none; }
+.nav-logo { flex: 0 0 auto; display: block; }
+.nav-logo img { height: 72px; width: auto; min-width: 130px; object-fit: contain; display: block; }
+.nav-logo img.missing { display: block !important; }
+@media (max-width: 900px) { .nav-logo img { height: 56px; min-width: 100px; } }
