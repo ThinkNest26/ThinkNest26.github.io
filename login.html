@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Student log in – Think Nest</title>
+  <link rel="icon" href="images/tn-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body class="auth">
+  <header class="app-top">
+    <a href="index.html"><img src="images/tn-logo-dark.png" alt="Think Nest home" class="app-top-logo"></a>
+    <a href="index.html" class="app-exit">Exit</a>
+  </header>
+  <main class="auth-bg">
+    <div class="auth-card">
+      <a href="start.html" class="not-me">‹ I’m not a student</a>
+      <img src="images/tn-bird.png" alt="" class="bird">
+      <h1>Welcome, Student!</h1>
+      <p class="auth-sub">Log in to explore lessons, track your progress, and grow your skills every day</p>
+      <form class="auth-form" id="login-form">
+        <label>Email
+          <input type="email" placeholder="Enter your email" required>
+        </label>
+        <label>Password
+          <span class="pw">
+            <input type="password" id="pw" placeholder="Enter your password" required>
+            <button type="button" class="pw-eye" id="pw-eye" aria-label="Show password">👁</button>
+          </span>
+        </label>
+        <a href="#" class="forgot" data-soon="Password reset">Forgot password?</a>
+        <label class="remember"><input type="checkbox"> Remember me</label>
+        <button type="submit" class="btn btn-red auth-btn">Log in</button>
+        <p class="switch">Don’t have an account? <a href="#" data-soon="Sign up">Sign up</a></p>
+        <p class="demo-note">Demo: type any email and password to see the student dashboard.</p>
+      </form>
+    </div>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
