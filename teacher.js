@@ -71,7 +71,8 @@ function courseDialog(onSaved) {
   f.addEventListener('submit', async e => {
     e.preventDefault(); showError(err, '');
     const row = { title: f.title.value.trim(), description: f.description.value.trim() || null, category: f.category.value, level: f.level.value,
-                  weeks: f.weeks.value ? Number(f.weeks.value) : null, image_url: f.image_url.value.trim() || null };
+                  weeks: f.weeks.value ? Number(f.weeks.value) : null, image_url: f.image_url.value.trim() || null,
+                  curriculum: f.curriculum ? f.curriculum.value || null : null, grade: f.grade ? f.grade.value || null : null, subject: f.subject ? f.subject.value.trim() || null : null };
     if (!row.title) return showError(err, 'Give the course a title.');
     let res;
     if (editing) res = await db.from('courses').update(row).eq('id', editing.id).select().single();
@@ -84,7 +85,7 @@ function courseDialog(onSaved) {
       editing = course; teacher = me;
       document.getElementById('course-dlg-title').textContent = course ? 'Edit course' : 'New course';
       f.reset();
-      if (course) ['title', 'description', 'category', 'level', 'weeks', 'image_url'].forEach(k => f[k].value = course[k] ?? '');
+      if (course) ['title', 'description', 'category', 'level', 'weeks', 'image_url', 'curriculum', 'grade', 'subject'].forEach(k => { if (f[k]) f[k].value = course[k] ?? ''; });
       showError(err, ''); dlg.showModal();
     }
   };
@@ -156,10 +157,12 @@ async function startTeacherCourse() {
   const hero = document.getElementById('hero');
   if (!course) { hero.innerHTML = '<p class="empty">This course could not be found, or it isn’t one of yours.</p>'; document.querySelector('.tabs').hidden = true; document.querySelectorAll('.tab-panel').forEach(p => p.hidden = true); return; }
   let c = course;
-  const dlg = courseDialog(saved => { c = saved; drawHero(); });
+  const dlg = courseDialog(saved => { c = saved; drawHero(); if (builder) builder.setCourse(c); });
+  let builder = null;
   function drawHero() {
     document.title = c.title + ' – Think Nest';
-    hero.innerHTML = `<img src="${tImg(c)}" alt=""><div><span class="meta">${esc(c.category || '')}${c.weeks ? ' · ' + c.weeks + ' weeks' : ''} · ${esc(c.level || '')}</span>
+    const cur = { british: 'British Curriculum', ib: 'IB', american: 'American Curriculum' }[c.curriculum] || '';
+    hero.innerHTML = `<img src="${tImg(c)}" alt=""><div><span class="meta">${esc([cur, c.grade, c.subject].filter(Boolean).join(' · ') || 'Set the curriculum, grade and subject in Edit details')}</span><span class="meta">${esc(c.category || '')}${c.weeks ? ' · ' + c.weeks + ' weeks' : ''} · ${esc(c.level || '')}</span>
       <h1>${esc(c.title)}</h1><p>${esc(c.description || '')}</p>
       <div class="row start"><button class="pill pill-soft big" id="edit-course">Edit details</button><button class="pill pill-soft big danger" id="del-course">Delete course</button></div></div>`;
     document.getElementById('edit-course').addEventListener('click', () => dlg.open(c, { id: user.id, full_name: profile.full_name }));
@@ -184,23 +187,35 @@ async function startTeacherCourse() {
     const { data } = await db.from('lessons').select('*').eq('course_id', id).order('position');
     lessons = data || [];
     document.getElementById('lessons').innerHTML = lessons.length ? lessons.map((l, k) => `<div class="lesson">
-        <b>${String(k + 1).padStart(2, '0')}</b><span class="lesson-title">${esc(l.title)}</span>
-        ${l.video_url ? '<span class="tag">Video</span>' : ''}${l.resource_url ? '<span class="tag">Worksheet</span>' : ''}
+        <b>${String(k + 1).padStart(2, '0')}</b><span class="lesson-title" id="lesson-${l.id}">${esc(l.title)}${l.objective_text ? `<span class="meta lesson-obj">🎯 ${esc(l.objective_text)}</span>` : ''}</span>
+        ${l.video_url ? '<span class="tag">Video</span>' : ''}${l.resource_url ? '<span class="tag">Link</span>' : ''}${l.material_kind ? `<span class="tag tag-kind">${{ worksheet: '📝 Worksheet', test: '✅ Test', activities: '🧩 Activities' }[l.material_kind]}</span>` : ''}
+        ${l.material_kind && l.material_kind !== 'activities' ? `<button class="pill pill-live" data-results="${l.id}">Results</button>` : ''}
         <button class="pill pill-soft" data-up="${l.id}" ${k === 0 ? 'disabled' : ''} aria-label="Move up">↑</button>
         <button class="pill pill-soft" data-down="${l.id}" ${k === lessons.length - 1 ? 'disabled' : ''} aria-label="Move down">↓</button>
         <button class="pill pill-soft" data-del-lesson="${l.id}">Delete</button></div>`).join('')
       : '<p class="empty">No lessons yet. Add the first one below.</p>';
   }
-  loadLessons();
+  await loadLessons();
   const lf = document.getElementById('lesson-form');
+  if (typeof initLessonBuilder === 'function' && document.getElementById('lesson-extra')) builder = initLessonBuilder(c);
   lf.addEventListener('submit', async e => {
     e.preventDefault();
-    const { error } = await db.from('lessons').insert({ course_id: id, position: lessons.length + 1, title: lf.title.value.trim(), video_url: lf.video_url.value.trim() || null, resource_url: lf.resource_url.value.trim() || null });
+    if (!lf.title.value.trim()) return say('Give the lesson a title.');
+    const extra = builder ? builder.payload() : { objective_id: null, objective_text: null, material_kind: null, material: null, key: null };
+    if (!extra) return;
+    const btn = lf.querySelector(':scope > button.btn-red'); if (btn) btn.disabled = true;
+    const { data: nl, error } = await db.from('lessons').insert({ course_id: id, position: lessons.length + 1, title: lf.title.value.trim(), video_url: lf.video_url.value.trim() || null, resource_url: lf.resource_url.value.trim() || null,
+      objective_id: extra.objective_id, objective_text: extra.objective_text, material_kind: extra.material_kind, material: extra.material }).select().single();
+    if (!error && extra.key) { const r = await db.from('lesson_keys').upsert({ lesson_id: nl.id, answers: extra.key }); if (r.error) say(friendly(r.error)); }
+    if (btn) btn.disabled = false;
     if (error) return say(friendly(error));
-    lf.reset(); say('Lesson added.'); loadLessons();
+    lf.reset(); if (builder) builder.reset(); say('Lesson added. Students in this course can see it now.'); loadLessons();
   });
+  const hm = location.hash.match(/^#lesson-(\d+)$/);
+  if (hm) { const l = lessons.find(x => x.id === Number(hm[1])); if (l && l.material_kind && l.material_kind !== 'activities') showLessonResults(l); }
   document.getElementById('lessons').addEventListener('click', async e => {
-    const up = e.target.closest('[data-up]'), down = e.target.closest('[data-down]'), del = e.target.closest('[data-del-lesson]');
+    const up = e.target.closest('[data-up]'), down = e.target.closest('[data-down]'), del = e.target.closest('[data-del-lesson]'), res = e.target.closest('[data-results]');
+    if (res) return showLessonResults(lessons.find(l => l.id === Number(res.dataset.results)));
     if (del) {
       if (!confirm('Delete this lesson?')) return;
       const { error } = await db.from('lessons').delete().eq('id', Number(del.dataset.delLesson));

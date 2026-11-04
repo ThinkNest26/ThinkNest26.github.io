@@ -113,13 +113,26 @@ async function startCourse() {
     if (!lessons.length) { box.innerHTML = '<p class="empty">Lessons for this course will be added soon.</p>'; return; }
     box.innerHTML = lessons.map(l => `<div class="lesson ${doneIds.has(l.id) ? 'is-done' : ''}">
         <b>${String(l.position).padStart(2, '0')}</b>
-        <span class="lesson-title">${esc(l.title)}</span>
+        <span class="lesson-title" id="lesson-${l.id}">${esc(l.title)}${l.objective_text ? `<span class="meta lesson-obj">🎯 ${esc(l.objective_text)}</span>` : ''}</span>
         ${l.video_url ? `<a href="${esc(l.video_url)}" target="_blank" rel="noopener" class="pill pill-soft">Watch</a>` : ''}
-        ${l.resource_url ? `<a href="${esc(l.resource_url)}" target="_blank" rel="noopener" class="pill pill-soft">Worksheet</a>` : ''}
+        ${l.resource_url ? `<a href="${esc(l.resource_url)}" target="_blank" rel="noopener" class="pill pill-soft">Link</a>` : ''}
+        ${l.material_kind ? `<button class="pill pill-live" data-open-lesson="${l.id}" data-label="${{ worksheet: '📝 Open worksheet', test: '✅ Open test', activities: '🧩 Open activities' }[l.material_kind]}">${{ worksheet: '📝 Open worksheet', test: '✅ Open test', activities: '🧩 Open activities' }[l.material_kind]}</button>` : ''}
         ${enrol ? `<label class="tick"><input type="checkbox" data-lesson="${l.id}" ${doneIds.has(l.id) ? 'checked' : ''}> Done</label>` : ''}
-      </div>`).join('');
+      </div>${l.material_kind ? `<div class="lesson-material panel" id="lm-${l.id}" hidden></div>` : ''}`).join('');
   }
   drawHero(); drawLessons();
+  if (typeof initStudentLessons === 'function') {
+    await initStudentLessons(lessons, id, () => !!enrol, async lid => {
+      if (doneIds.has(lid)) return;
+      doneIds.add(lid);
+      const cb = document.querySelector(`[data-lesson="${lid}"]`); if (cb) cb.checked = true;
+      const progress = Math.round(lessons.filter(l => doneIds.has(l.id)).length / lessons.length * 100);
+      const up = await db.from('enrollments').update({ progress }).eq('id', enrol.id).select().single();
+      if (!up.error) { enrol = up.data; drawHero(); }
+    });
+    const hm = location.hash.match(/^#lesson-(\d+)$/);
+    if (hm) { const b = document.querySelector(`[data-open-lesson="${hm[1]}"]`); if (b) { b.click(); b.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }
+  }
 
   document.getElementById('lessons').addEventListener('change', async e => {
     const box = e.target.closest('[data-lesson]'); if (!box) return;
