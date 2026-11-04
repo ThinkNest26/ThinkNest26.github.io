@@ -38,6 +38,43 @@ async function startCommunity() {
   document.getElementById('me-ini').textContent = iniOf(me.full_name || user.email);
   document.getElementById('post-body').placeholder = 'What’s on your mind' + (first ? ', ' + first : '') + '?';
 
+  // ----- welcome banner, rewards and tabs
+  const hour = new Date().getHours();
+  document.getElementById('hero-hello').textContent = (hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening') + (first ? ', ' + first : '') + ' 👋';
+  window.refreshHeroRewards = async () => {
+    if (me.role !== 'student' || typeof getRewards !== 'function') return;
+    const s = await getRewards(); if (!s) return;
+    document.getElementById('hero-rw').innerHTML = `<div class="hero-rw"><span class="rw-ic">${s.level.icon}</span><div><b>${esc(s.level.name)}</b><span>${s.total} Nest Points${s.streak ? ' · 🔥 ' + s.streak : ''}</span></div></div>`;
+    const sr = document.getElementById('side-rw'); sr.hidden = false; sr.innerHTML = '<h3>My rewards</h3>' + rewardMiniHtml(s);
+  };
+  refreshHeroRewards();
+  const { data: myGroups } = await db.rpc('my_groups');
+  const active = (myGroups || []).filter(g => g.my_status === 'active');
+  const studyGroups = active.filter(g => g.kind !== 'class'), classes = active.filter(g => g.kind === 'class');
+  const gIc = g => (g.name || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  document.getElementById('side-groups').innerHTML = `<h3>My groups &amp; classes</h3>${active.length ? active.map(g => `<a class="side-group" href="group.html?id=${g.id}"><span class="g-ic ${g.kind === 'class' ? 'cls' : ''}">${esc(gIc(g))}</span><span><b>${esc(g.name)}</b><span class="meta">${g.kind === 'class' ? '🏫 Class · ' : '👥 '}${g.members} members</span></span></a>`).join('') : '<p class="meta">You’re not in any groups yet.</p>'}
+    <a class="rw-link" href="groups.html">${me.role === 'student' ? '+ Create or join a study group' : 'Open Study Groups →'}</a>`;
+  if (classes.length && typeof leaderboardHtml === 'function') {
+    const lb = await leaderboardHtml(classes[0].id, classes[0].name);
+    if (lb) { const sb = document.getElementById('side-board'); sb.hidden = false; sb.innerHTML = lb; }
+  }
+  async function groupTab(list, boxId, emptyMsg) {
+    const box = document.getElementById(boxId);
+    if (!list.length) { box.innerHTML = `<div class="empty-box"><p>${emptyMsg}</p><a class="btn btn-red" href="groups.html">Go to Study Groups</a></div>`; return; }
+    const { data: gp } = await db.from('group_posts').select('id, group_id, author_name, author_role, body, created_at').in('group_id', list.map(g => g.id)).order('created_at', { ascending: false }).limit(25);
+    const name = id => (list.find(g => g.id === id) || {}).name || '';
+    box.innerHTML = `<div class="group-tiles">${list.map(g => `<a class="panel group-tile" href="group.html?id=${g.id}"><span class="g-ic big ${g.kind === 'class' ? 'cls' : ''}">${esc(gIc(g))}</span><b>${esc(g.name)}</b><span class="meta">${g.members} members${g.kind === 'class' ? ' · with ' + esc(g.owner_name || 'your teacher') : ''}</span><span class="tile-go">Open →</span></a>`).join('')}</div>
+      <h3 class="dash-h">Latest from your ${boxId === 'ct-classes' ? 'classes' : 'groups'}</h3>` +
+      ((gp || []).length ? gp.map(p => `<a class="panel post gp-post" href="group.html?id=${p.group_id}"><span class="pt-badge">${esc(name(p.group_id))}</span><header class="post-head"><span class="initials">${esc((p.author_name || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</span><div><b>${esc(p.author_name || 'Member')}</b> ${roleTag(p.author_role)}<span class="meta">${ago(p.created_at)}</span></div></header><p class="post-body">${esc(p.body.slice(0, 280))}${p.body.length > 280 ? '…' : ''}</p></a>`).join('') : '<p class="empty">No posts yet. Open a group to start the conversation.</p>');
+  }
+  document.querySelector('.comm-tabs').addEventListener('click', e => {
+    const b = e.target.closest('[data-ctab]'); if (!b) return;
+    document.querySelectorAll('[data-ctab]').forEach(x => x.setAttribute('aria-selected', x === b));
+    ['everyone', 'groups', 'classes'].forEach(t => document.getElementById('ct-' + t).hidden = t !== b.dataset.ctab);
+    if (b.dataset.ctab === 'groups') groupTab(studyGroups, 'ct-groups', me.role === 'student' ? 'You’re not in a study group yet. Create one and invite your friends!' : 'No study groups yet.');
+    if (b.dataset.ctab === 'classes') groupTab(classes, 'ct-classes', ['teacher', 'school_leader', 'admin'].includes(me.role) ? 'You haven’t made a class yet. Create one on the Study Groups page.' : 'You’re not in a class yet. Your teacher will add you.');
+  });
+
   const feed = document.getElementById('feed'), more = document.getElementById('more');
   let posts = [], oldest = null;
   const signed = {};
@@ -59,7 +96,8 @@ async function startCommunity() {
       ? (isMod && !mine ? `<div class="mod-bar"><span>⏳ Waiting for approval</span><span class="mod-actions"><button class="pill pill-live" data-approve>Approve</button><button class="pill pill-soft danger" data-reject>Don’t approve</button></span></div>`
                         : '<div class="mod-bar"><span>⏳ Waiting for a teacher to approve. Only you and teachers can see it for now.</span></div>')
       : st === 'rejected' ? '<div class="mod-bar rejected"><span>This post wasn’t approved, so only you can see it. You can delete it.</span></div>' : '';
-    return `<article class="panel post ${st !== 'published' ? 'post-' + st : ''}" data-post="${p.id}" id="post-${p.id}">${banner}
+    const PT = { question: ['❓', 'Question'], idea: ['💡', 'Idea'], celebrate: ['🎉', 'Celebration'], showcase: ['🏆', 'Showing my work'] }[p.post_type];
+    return `<article class="panel post ${st !== 'published' ? 'post-' + st : ''} ${p.post_type && p.post_type !== 'post' ? 'pt-' + p.post_type : ''}" data-post="${p.id}" id="post-${p.id}">${banner}${PT ? `<span class="pt-badge">${PT[0]} ${PT[1]}</span>` : ''}
       <header class="post-head"><span class="initials">${esc(iniOf(p.author_name))}</span>
         <div><b>${esc(p.author_name || 'Member')}</b> ${roleTag(p.author_role)}<span class="meta">${ago(p.created_at)}</span></div>
         <div class="post-menu">${mine || isAdmin ? `<button class="link-btn" data-del-post>Delete</button>` : ''}${!mine ? `<button class="link-btn" data-report>Report</button>` : ''}</div></header>
@@ -76,7 +114,9 @@ async function startCommunity() {
       </div>
     </article>`;
   }
-  const render = () => { feed.innerHTML = posts.length ? posts.map(postHtml).join('') : '<div class="empty-box"><p>No posts yet. Be the first to say hello! 👋</p></div>'; };
+  let filter = '';
+  const render = () => { const shown = filter ? posts.filter(p => p.post_type === filter) : posts; feed.innerHTML = shown.length ? shown.map(postHtml).join('') : `<div class="empty-box"><p>${filter ? 'No posts like this yet. Be the first!' : 'No posts yet. Be the first to say hello! 👋'}</p></div>`; };
+  document.getElementById('feed-filter').addEventListener('click', e => { const b = e.target.closest('[data-ff]'); if (!b) return; filter = b.dataset.ff; document.querySelectorAll('[data-ff]').forEach(x => x.classList.toggle('on', x === b)); render(); });
 
   async function load(older) {
     let q = db.from('posts').select('*, post_likes(user_id), post_comments(id, author_id, author_name, author_role, body, created_at)').or('status.eq.published,author_id.eq.' + user.id).order('created_at', { ascending: false }).limit(PAGE);
@@ -148,10 +188,12 @@ async function startCommunity() {
       const up = await db.storage.from('community').upload(image_path, f);
       if (up.error) { btn.disabled = false; btn.textContent = 'Post'; return say(friendly(up.error)); }
     }
-    const { data: np, error } = await db.from('posts').insert({ body, image_path }).select('status').single();
+    const ptype = (form.querySelector('input[name=ptype]:checked') || {}).value || 'post';
+    let { data: np, error } = await db.from('posts').insert({ body, image_path, post_type: ptype }).select('status').single();
+    if (error && String(error.message).includes('post_type')) ({ data: np, error } = await db.from('posts').insert({ body, image_path }).select('status').single());
     btn.disabled = false; btn.textContent = 'Post';
     if (error) return say(friendly(error));
-    form.reset(); picName.textContent = '';
+    form.reset(); picName.textContent = ''; if (typeof refreshHeroRewards === 'function') setTimeout(refreshHeroRewards, 800);
     say(np && np.status === 'pending' ? 'Sent! A teacher will check your post before everyone can see it.' : 'Posted!');
     load(false);
   });

@@ -156,6 +156,7 @@ async function startChild() {
     window.open(data.signedUrl, '_blank', 'noopener');
   });
   if (typeof childActivities === 'function') childActivities(kidId);
+  if (typeof getRewards === 'function') getRewards(kidId).then(s => { const b = document.getElementById('k-rewards'); if (b) b.innerHTML = s ? rewardMiniHtml(s, { link: false }) + `<details class="rw-kid-badges"><summary>Badges (${s.badges.filter(x => x.earned).length})</summary><div class="rw-badges small">${s.badges.filter(x => x.earned).map(x => `<div class="rw-badge on"><span>${x.ic}</span><b>${esc(x.name)}</b></div>`).join('') || '<p class="meta">No badges yet.</p>'}</div></details>` : '<p class="meta">No rewards yet.</p>'; });
   const fr = await db.rpc('child_friends', { kid: kidId });
   const friends = fr.data || [];
   document.getElementById('k-friends').innerHTML = friends.length ? friends.map(f => `<div class="panel friend"><span class="initials">${esc(ini(f.full_name))}</span><div><b>${esc(f.full_name)}</b><span class="meta">${esc([f.grade, f.school].filter(Boolean).join(' · '))}</span><span class="meta">Friends since ${new Date(f.since).toLocaleDateString('en-GB')}</span></div></div>`).join('') : '<p class="empty">No friends added yet.</p>';
