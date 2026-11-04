@@ -30,7 +30,7 @@ const T_OPTS = {
   grade_levels: ['Early years (KG)', 'Primary', 'Middle school', 'High school', 'All grades'],
   education_degree: ['Bachelor’s degree', 'Master’s degree', 'PhD', 'Teaching diploma', 'Other'],
   teaching_method: ['Online', 'In person', 'Both'],
-  curriculum: ['IGCSE / Cambridge', 'American Curriculum', 'International Baccalaureate (IB)', 'Montessori', 'UAE MOE', 'Other']
+  curriculum: ['British Curriculum (England / IGCSE)', 'American Curriculum', 'International Baccalaureate (IB)', 'Montessori', 'UAE MOE', 'Other']
 };
 function fillSelect(sel, list, value) {
   if (!sel) return;

@@ -84,6 +84,7 @@ async function startLoginPage() {
 
 // ===== Sign up (3 steps) =====
 function startSignupPage() {
+  if (typeof curriculumHelper === 'function') setTimeout(() => curriculumHelper(document.getElementById('signup-form'), 'cur-help'), 0);
   const form = document.getElementById('signup-form');
   const err = document.getElementById('signup-error');
   const steps = [...form.querySelectorAll('.step')];

@@ -568,3 +568,33 @@ a.pending-row { color: inherit; }
 .wide-card { max-width: 720px; }
 .auth-form select { font: inherit; border: 1px solid #2F3241; border-radius: 6px; padding: 12px 14px; width: 100%; background: #fff; }
 .privacy a:not(.btn) { color: var(--blue); text-decoration: underline; }
+/* ===== Curriculum guide ===== */
+.cur-page { background: #F5F6FB; min-height: calc(100vh - 88px); padding: 40px 20px 60px; }
+.cur-wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 18px; }
+.cur-tabs { flex-wrap: wrap; }
+.cur-intro h2 { color: #1D2026; font-size: 1.4rem; }
+.cur-intro p { margin-top: 8px; line-height: 1.65; color: #2F3241; }
+.cur-link { display: inline-block; margin-top: 10px; color: var(--blue); font-weight: 600; text-decoration: underline; }
+.cur-grades { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { border: 1px solid #D9DBE8; background: #fff; border-radius: 20px; padding: 8px 16px; font: inherit; font-weight: 600; color: #2F3241; cursor: pointer; }
+.chip:hover { border-color: var(--blue); }
+.chip.on { background: var(--blue); border-color: var(--blue); color: #fff; }
+.cur-body h3 { color: var(--blue); font-size: 1.5rem; margin-bottom: 6px; }
+.cur-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.cur-stage { background: #EEF0FB; color: var(--blue); font-weight: 700; border-radius: 20px; padding: 4px 14px; }
+.cur-overview { margin: 12px 0; line-height: 1.65; color: #2F3241; font-size: 1.02rem; }
+.cur-details { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-top: 8px; }
+.cur-sub { background: #FAFBFE; border: 1px solid #ECEEF6; border-radius: 12px; padding: 14px 16px; }
+.cur-sub h4 { color: #1D2026; margin-bottom: 8px; }
+.cur-sub ul { padding-left: 18px; display: grid; gap: 6px; color: #2F3241; line-height: 1.5; }
+.cur-help { background: #F1F3FD; border-radius: 12px; padding: 14px 16px; display: grid; gap: 6px; text-align: left; font-size: .92rem; }
+.cur-help b { color: var(--blue); }
+.cur-help .cur-overview { margin: 4px 0; font-size: .92rem; }
+.cur-help a { color: var(--blue); font-weight: 600; text-decoration: underline; }
+.cur-card { margin-top: 18px; }
+.cur-card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.cur-card-head h2 { color: #1D2026; font-size: 1.2rem; }
+.cur-editor { align-items: start; }
+.cur-editor .mono { font-family: ui-monospace, Menlo, monospace; font-size: .88rem; }
+.req-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.cur-sub ul { list-style: disc; } .cur-wrap > .title { justify-self: start; } .cur-head .cur-stage { display: inline-block; }
