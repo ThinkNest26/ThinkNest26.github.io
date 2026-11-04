@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=19">
-  <link rel="stylesheet" href="app.css?v=19">
+  <link rel="stylesheet" href="style.css?v=20">
+  <link rel="stylesheet" href="app.css?v=20">
 </head>
 <body class="auth">
   <header class="app-top">
@@ -39,15 +39,16 @@
           <label>Grade
             <select name="grade" required>
               <option value="">Select your grade</option>
-              <option>KG</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option>Grade 10</option><option>Grade 11</option><option>Grade 12</option>
+              <option>KG1</option><option>KG2</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option>Grade 10</option><option>Grade 11</option><option>Grade 12</option>
             </select>
           </label>
           <label>Curriculum
             <select name="curriculum" required>
               <option value="">Select your curriculum</option>
-              <option>IGCSE / Cambridge</option><option>American Curriculum</option><option>International Baccalaureate (IB)</option><option>Montessori</option><option>UAE MOE</option><option>Other</option>
+              <option>British Curriculum (England / IGCSE)</option><option>American Curriculum</option><option>International Baccalaureate (IB)</option><option>Montessori</option><option>UAE MOE</option><option>Other</option>
             </select>
           </label>
+          <div class="cur-help" id="cur-help" hidden aria-live="polite"></div>
           <label>School name <input type="text" name="school" placeholder="Your school (optional)"></label>
         </fieldset>
         <fieldset class="step" data-step="3" hidden>
@@ -69,8 +70,9 @@
   </main>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=19"></script>
-  <script src="app.js?v=19"></script>
+  <script src="supabase-config.js?v=20"></script>
+  <script src="app.js?v=20"></script>
+  <script src="curriculum.js?v=20"></script>
   <script>startSignupPage();</script>
 </body>
 </html>
