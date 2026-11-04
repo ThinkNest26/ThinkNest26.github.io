@@ -73,7 +73,10 @@ function courseDialog(onSaved) {
     const row = { title: f.title.value.trim(), description: f.description.value.trim() || null, category: f.category.value, level: f.level.value,
                   weeks: f.weeks.value ? Number(f.weeks.value) : null, image_url: f.image_url.value.trim() || null,
                   curriculum: f.curriculum ? f.curriculum.value || null : null, grade: f.grade ? f.grade.value || null : null, subject: f.subject ? f.subject.value.trim() || null : null };
-    if (!row.title) return showError(err, 'Give the course a title.');
+    if (f.subject && !row.subject) return showError(err, 'Choose a subject.');
+    if (f.curriculum && !row.curriculum) return showError(err, 'Choose a curriculum.');
+    if (f.grade && !row.grade) return showError(err, 'Choose a grade.');
+    if (!row.title) return showError(err, 'Give the course a name.');
     let res;
     if (editing) res = await db.from('courses').update(row).eq('id', editing.id).select().single();
     else res = await db.from('courses').insert({ ...row, teacher_id: teacher.id, teacher_name: teacher.full_name }).select().single();
@@ -87,6 +90,7 @@ function courseDialog(onSaved) {
       f.reset();
       if (course) ['title', 'description', 'category', 'level', 'weeks', 'image_url', 'curriculum', 'grade', 'subject'].forEach(k => { if (f[k]) f[k].value = course[k] ?? ''; });
       showError(err, ''); dlg.showModal();
+      if (typeof syncCourseForm === 'function') syncCourseForm(course);
     }
   };
 }

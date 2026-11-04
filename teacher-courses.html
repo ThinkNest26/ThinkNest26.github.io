@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=22">
-  <link rel="stylesheet" href="app.css?v=22">
+  <link rel="stylesheet" href="style.css?v=26">
+  <link rel="stylesheet" href="app.css?v=26">
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -33,18 +33,32 @@
       <div class="page-head"><h1 class="dash-h">My courses</h1><button class="btn btn-red" id="new-course">+ New course</button></div>
       <section class="grid-cards" id="list"><p class="empty">Loading…</p></section>
       <dialog id="course-dialog" class="dlg">
-        <form id="course-form" class="auth-form">
+        <form id="course-form" class="auth-form course-form-v2">
           <h2 id="course-dlg-title">New course</h2>
-          <label>Course title <input type="text" name="title" required></label>
-          <label>Short description <textarea name="description" rows="3"></textarea></label>
-          <div class="two"><label>Curriculum <select name="curriculum"><option value="">Choose</option><option value="british">British Curriculum</option><option value="ib">International Baccalaureate (IB)</option><option value="american">American Curriculum</option><option value="arabic_a">Arabic A (for Arabic speakers)</option><option value="arabic_b">Arabic B (for learners of Arabic)</option></select></label>
-          <label>Grade <select name="grade"><option value="">Choose</option><option>KG1</option><option>KG2</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option>Grade 10</option><option>Grade 11</option><option>Grade 12</option></select></label></div>
-          <label>Subject <input type="text" name="subject" list="subject-list" maxlength="60" placeholder="For example, Maths"></label>
-          <datalist id="subject-list"><option value="Maths"><option value="English"><option value="Science"><option value="Math"><option value="English Language Arts"><option value="Computing"><option value="Arabic"><option value="Islamic Education"><option value="Art"><option value="Music"><option value="PE"></datalist>
-          <label>Category <select name="category"><option>Think Paths</option><option>Code. Build. Imagine</option><option>Other</option></select></label>
-          <label>Level <select name="level"><option>Beginner</option><option>Intermediate</option><option>Advanced</option><option>All levels</option></select></label>
-          <label>Length in weeks <input type="number" name="weeks" min="1" max="52"></label>
-          <label>Picture link (optional) <input type="url" name="image_url" placeholder="https://..."></label>
+          <input type="hidden" name="subject"><input type="hidden" name="curriculum"><input type="hidden" name="grade">
+          <input type="hidden" name="category" value="Think Paths"><input type="hidden" name="level" value="All levels">
+          <div class="cf-step"><span class="cf-num">1</span><b>Subject</b></div>
+          <div class="cf-subjects" data-cf="subject">
+            <button type="button" data-v="English"><span>Aa</span>English</button>
+            <button type="button" data-v="Maths"><span>+×</span>Maths</button>
+            <button type="button" data-v="Science"><span>🔬</span>Science</button>
+            <button type="button" data-v="Arabic"><span>أب</span>Arabic</button>
+            <button type="button" data-v="other"><span>＋</span>Other</button>
+          </div>
+          <label class="cf-other" hidden>Which subject? <input type="text" id="cf-other" list="subject-list" maxlength="60" placeholder="For example, Computing or Biology"></label>
+          <datalist id="subject-list"><option value="Biology"><option value="Chemistry"><option value="Physics"><option value="Computing"><option value="Islamic Education"><option value="Social Studies"><option value="Art"><option value="Music"><option value="PE"><option value="French"></datalist>
+          <div class="cf-step"><span class="cf-num">2</span><b>Curriculum</b></div>
+          <div class="cur-grades" data-cf="curriculum"></div>
+          <div class="cf-step"><span class="cf-num">3</span><b>Grade</b></div>
+          <div class="cur-grades cf-grades" data-cf="grade"></div>
+          <div class="cf-step"><span class="cf-num">4</span><b>Course name</b></div>
+          <label><span class="sr">Course title</span><input type="text" name="title" required maxlength="120" placeholder="Choose a subject, curriculum and grade, and we’ll suggest a name"></label>
+          <details class="cf-more"><summary>More options (optional)</summary>
+            <label>Short description <textarea name="description" rows="3" placeholder="What will students do in this course?"></textarea></label>
+            <div class="two"><label>Length in weeks <input type="number" name="weeks" min="1" max="52" placeholder="For example, 10"></label>
+            <label>Picture link <input type="url" name="image_url" placeholder="https://... (a subject picture is used if empty)"></label></div>
+          </details>
+          <div class="cf-preview" id="cf-preview"></div>
           <p class="form-error" id="course-error" role="alert" hidden></p>
           <div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-close>Cancel</button><button class="btn btn-red auth-btn">Save course</button></div>
         </form>
@@ -68,10 +82,11 @@
   <div class="side-shade" id="side-shade"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=22"></script>
-  <script src="app.js?v=22"></script>
-  <script src="notify.js?v=22" defer></script>
-  <script src="teacher.js?v=22"></script>
+  <script src="supabase-config.js?v=26"></script>
+  <script src="app.js?v=26"></script>
+  <script src="notify.js?v=26" defer></script>
+  <script src="courseform.js?v=26"></script>
+  <script src="teacher.js?v=26"></script>
   <script>startTeacherCourses();</script>
 </body>
 </html>
