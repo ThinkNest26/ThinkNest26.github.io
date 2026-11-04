@@ -65,8 +65,18 @@ async function homeFor(userId) {
 }
 async function startLoginPage() {
   const { data } = await db.auth.getSession();
-  if (data.session) { location.href = await homeFor(data.session.user.id); return; }
   const form = document.getElementById('login-form');
+  if (data.session) {
+    const { data: p } = await db.from('profiles').select('full_name, role').eq('id', data.session.user.id).maybeSingle();
+    const who = (p && p.full_name) || data.session.user.email;
+    const roleName = { admin: 'admin', parent: 'parent', teacher: 'teacher', school_leader: 'school leader', student: 'student' }[p && p.role] || 'user';
+    const box = document.createElement('div');
+    box.className = 'note big-note signed-in';
+    box.innerHTML = `You’re already logged in as <b>${esc(who)}</b> (${roleName}).<div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" id="switch-acc">Log out and use another account</button><button type="button" class="btn btn-red auth-btn" id="go-home">Continue</button></div>`;
+    form.before(box); form.hidden = true;
+    document.getElementById('go-home').addEventListener('click', async () => { location.href = await homeFor(data.session.user.id); });
+    document.getElementById('switch-acc').addEventListener('click', async () => { await db.auth.signOut(); box.remove(); form.hidden = false; form.email.focus(); });
+  }
   const err = document.getElementById('login-error');
   form.addEventListener('submit', async e => {
     e.preventDefault();
