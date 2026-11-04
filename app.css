@@ -987,3 +987,29 @@ a.gp-post { display: block; color: inherit; }
 .rv-link:hover { border-color: var(--blue); }
 .rv-link b { color: var(--blue); }
 @media (max-width: 760px) { .rv-cols { grid-template-columns: 1fr; } }
+/* ===== Founders page ===== */
+.fd-main .cur-wrap { gap: 28px; }
+.fd-hero { text-align: center; display: grid; gap: 12px; justify-items: center; }
+.fd-story { max-width: 760px; font-size: 1.08rem; line-height: 1.7; color: #2F3241; }
+.fd-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 22px; }
+.fd-card { background: #fff; border-radius: 22px; padding: 28px 24px; text-align: center; display: grid; gap: 8px; justify-items: center; box-shadow: 0 10px 30px rgba(62,75,148,.08); border-top: 6px solid var(--c); }
+.fd-photo { width: 140px; height: 140px; border-radius: 50%; overflow: hidden; border: 5px solid #fff; box-shadow: 0 6px 18px rgba(0,0,0,.12); margin-bottom: 6px; }
+.fd-photo.sm { width: 80px; height: 80px; border-width: 3px; margin: 0; }
+.fd-photo img { width: 100%; height: 100%; object-fit: cover; }
+.fd-ini { width: 100%; height: 100%; display: grid; place-items: center; color: #fff; font-size: 2.4rem; font-weight: 800; }
+.fd-photo.sm .fd-ini { font-size: 1.4rem; }
+.fd-card h3 { color: #1D2026; font-size: 1.3rem; }
+.fd-role { color: var(--c); font-weight: 700; font-size: .95rem; }
+.fd-card p { color: #2F3241; line-height: 1.65; text-align: left; }
+.fd-link { color: var(--blue); font-weight: 700; text-decoration: underline; }
+.fd-cta { background: linear-gradient(120deg, #3E4B94, #6A78C9); color: #fff; border-radius: 22px; padding: 30px; text-align: center; display: grid; gap: 10px; justify-items: center; }
+.fd-cta h2 { color: #fff; }
+.fd-form { display: grid; gap: 16px; }
+.fd-edit { display: grid; gap: 12px; border: 1px solid #ECEEF6; }
+.fd-edit legend { font-weight: 800; color: var(--blue); padding: 0 6px; }
+.fd-edit label { display: grid; gap: 6px; font-weight: 600; font-size: .9rem; }
+.fd-edit input, .fd-edit textarea { font: inherit; font-weight: 400; border: 1px solid #C9CCDA; border-radius: 8px; padding: 9px 12px; width: 100%; }
+.fd-edit-top { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.fd-photo-btns { display: grid; gap: 6px; justify-items: start; }
+.fd-photo-btns .pill { cursor: pointer; }
+.fd-save { position: sticky; bottom: 0; background: #F5F6FB; padding: 10px 0; }

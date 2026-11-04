@@ -23,7 +23,7 @@
       { ic: '⚙️', label: 'Account', items: [['parent-settings.html', 'Account Settings'], ['contact.html', 'Contact Us'], ['#logout', 'Log out']] }
     ]
   };
-  MENUS.admin = [{ ic: '🛡️', label: 'Admin', items: [['admin.html', 'Approvals'], ['admin-curriculum.html', 'Curriculum editor']] }].concat(MENUS.teacher);
+  MENUS.admin = [{ ic: '🛡️', label: 'Admin', items: [['admin.html', 'Approvals'], ['admin-curriculum.html', 'Curriculum editor'], ['admin-founders.html', 'Founders page']] }].concat(MENUS.teacher);
   // pages that aren't in the menu, and which menu item they belong to
   const ALIAS = { 'course.html': 'my-courses.html', 'teacher-course.html': 'teacher-courses.html', 'group.html': 'groups.html', 'child.html': 'parent-dashboard.html' };
 
