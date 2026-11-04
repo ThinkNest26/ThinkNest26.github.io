@@ -150,3 +150,38 @@ async function attendanceOverviewFor(sid, hostId) {
   host.innerHTML = `<div class="att-cards">${Object.values(by).map(s => { const p = attPct(s); return `<div class="att-card"><span class="att-pct ${attClass(p)}">${p}%</span><b>${esc(s.name)}</b><span class="meta">✅ ${s.present} · ⏰ ${s.late} · ❌ ${s.absent} · 📝 ${s.excused}</span></div>`; }).join('')}</div>` +
     (recent.length ? `<p class="meta att-recent-h">Recent absences and late arrivals</p><ul class="att-recent">${recent.map(r => `<li>${ATT[r.status][0]} ${new Date(r.day + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} · ${esc(r.courses ? r.courses.title : r.study_groups ? r.study_groups.name : '')}${r.note ? ` · <i>${esc(r.note)}</i>` : ''}</li>`).join('')}</ul>` : '');
 }
+
+// ---------- Teachers: one place for every course and class ----------
+async function attendanceHub(hostId, opts = {}) {
+  const host = document.getElementById(hostId); if (!host) return;
+  const { data: { session } } = await db.auth.getSession();
+  const uid = session.user.id, today = todayDubai();
+  const [{ data: courses }, { data: groups }, { data: marks }] = await Promise.all([
+    db.from('courses').select('id, title, grade, subject').eq('teacher_id', uid).order('title'),
+    db.rpc('my_groups'),
+    db.from('attendance').select('course_id, group_id, status').eq('day', today)
+  ]);
+  const classes = (groups || []).filter(g => g.my_role === 'owner' && g.my_status === 'active' && (g.kind === 'class' || !opts.classesOnly));
+  const teacherGroups = classes.filter(g => g.kind === 'class').concat(classes.filter(g => g.kind !== 'class'));
+  const count = (k, v) => (marks || []).filter(m => m[k] === v);
+  const item = (type, id, title, sub) => {
+    const m = count(type === 'course' ? 'course_id' : 'group_id', id);
+    const done = m.length, absent = m.filter(x => x.status === 'absent').length, late = m.filter(x => x.status === 'late').length;
+    return `<div class="hub-row ${done ? 'done' : ''}"><span class="hub-ic">${type === 'course' ? '📘' : type === 'class' ? '🏫' : '👥'}</span>
+      <div><b>${esc(title)}</b><span class="meta">${esc(sub)}</span></div>
+      <span class="hub-status">${done ? `✅ Taken today · ${done} marked${absent ? ` · ❌ ${absent}` : ''}${late ? ` · ⏰ ${late}` : ''}` : '⏳ Not taken today'}</span>
+      <button type="button" class="btn ${done ? 'btn-white outline' : 'btn-red'}" data-hub="${type}" data-id="${id}" data-name="${esc(title)}">${done ? 'Open' : 'Take attendance'}</button></div>`;
+  };
+  const rows = (courses || []).map(c => item('course', c.id, c.title, ['Course', c.grade, c.subject].filter(Boolean).join(' · ')))
+    .concat(teacherGroups.map(g => item(g.kind === 'class' ? 'class' : 'group', g.id, g.name, (g.kind === 'class' ? 'Class' : 'Study group') + ' · ' + g.members + ' members')));
+  const notDone = rows.filter(r => !r.includes('class="hub-row done"')).length;
+  host.innerHTML = rows.length ? `<div class="hub-head"><b>Today, ${new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</b><span class="meta">${notDone ? notDone + ' register' + (notDone === 1 ? '' : 's') + ' still to take' : 'All registers taken today 🎉'}</span></div><div class="hub-list">${rows.join('')}</div>`
+    : '<div class="empty-box"><p>Create a course or a class first, then take attendance here.</p><a class="btn btn-red" href="teacher-courses.html">Go to My Courses</a></div>';
+  host.onclick = e => {
+    const b = e.target.closest('[data-hub]'); if (!b) return;
+    const id = Number(b.dataset.id);
+    openAttendanceDialog(b.dataset.hub === 'course' ? { cid: id, title: b.dataset.name } : { gid: id, title: b.dataset.name });
+    const d = document.getElementById('att-dialog');
+    d.addEventListener('close', () => attendanceHub(hostId, opts), { once: true });
+  };
+}

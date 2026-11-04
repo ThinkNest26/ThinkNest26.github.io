@@ -11,7 +11,7 @@ function swapMenu(role) {
   let items = null, title = '';
   if (['teacher', 'school_leader', 'admin'].includes(role)) {
     title = 'Teacher';
-    items = (role === 'admin' ? [['admin.html', 'Approvals']] : []).concat([['teacher-dashboard.html', 'Dashboard'], ['teacher-courses.html', 'My Courses'], ['teacher-calendar.html', 'Live Classes'], ['teacher-objectives.html', 'Objectives & Activities'], ['teacher-requests.html', 'Session Requests'], ['classes.html', 'My Classes'], ['groups.html', 'Study Groups'], ['messages.html', 'Messages'], ['community.html', 'Community'], ['teacher-settings.html', 'Account Settings']]);
+    items = (role === 'admin' ? [['admin.html', 'Approvals']] : []).concat([['teacher-dashboard.html', 'Dashboard'], ['teacher-courses.html', 'My Courses'], ['teacher-calendar.html', 'Live Classes'], ['teacher-objectives.html', 'Objectives & Activities'], ['teacher-requests.html', 'Session Requests'], ['classes.html', 'My Classes'], ['teacher-attendance.html', 'Attendance'], ['groups.html', 'Study Groups'], ['messages.html', 'Messages'], ['community.html', 'Community'], ['teacher-settings.html', 'Account Settings']]);
   } else if (role === 'parent') {
     title = 'Parent';
     items = [['parent-dashboard.html', 'My children'], ['add-child.html', 'Add a child'], ['community.html', 'Community'], ['parent-settings.html', 'Account Settings']];

@@ -22,7 +22,7 @@ async function startCommunity() {
     document.querySelector('.side nav').innerHTML = `<h5 class="first">Teacher</h5><ul>
       ${isAdmin ? '<li><a href="admin.html"><span>Approvals</span></a></li>' : ''}
       <li><a href="teacher-dashboard.html"><span>Dashboard</span></a></li><li><a href="teacher-courses.html"><span>My Courses</span></a></li>
-      <li><a href="teacher-calendar.html"><span>Live Classes</span></a></li><li><a href="teacher-objectives.html"><span>Objectives &amp; Activities</span></a></li><li><a href="teacher-requests.html"><span>Session Requests</span></a></li><li><a href="classes.html"><span>My Classes</span></a></li><li><a href="groups.html"><span>Study Groups</span></a></li><li><a href="messages.html"><span>Messages</span></a></li>
+      <li><a href="teacher-calendar.html"><span>Live Classes</span></a></li><li><a href="teacher-objectives.html"><span>Objectives &amp; Activities</span></a></li><li><a href="teacher-requests.html"><span>Session Requests</span></a></li><li><a href="classes.html"><span>My Classes</span></a></li><li><a href="teacher-attendance.html"><span>Attendance</span></a></li><li><a href="groups.html"><span>Study Groups</span></a></li><li><a href="messages.html"><span>Messages</span></a></li>
       <li><a href="community.html" class="active" aria-current="page"><span>Community</span></a></li><li><a href="teacher-settings.html"><span>Account Settings</span></a></li></ul>
       <h5>Others</h5><ul><li><a href="#" id="logout"><span>Log out</span></a></li></ul>`;
     document.getElementById('logout').addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; });

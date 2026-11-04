@@ -926,3 +926,16 @@ a.gp-post { display: block; color: inherit; }
 .att-h { font-size: 1.1rem; color: #1D2026; margin-bottom: 8px; }
 #my-att-box { margin-top: 16px; }
 @media (max-width: 900px) { .att-row { grid-template-columns: auto 1fr; } .att-btns, .att-note { grid-column: 1 / -1; } .att-b span { display: none; } }
+.hub-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.hub-head b { color: #1D2026; }
+.hub-list { display: grid; gap: 8px; }
+.hub-row { display: grid; grid-template-columns: auto 1fr auto auto; gap: 12px; align-items: center; border: 1px solid #ECEEF6; border-left: 5px solid #E3A43B; border-radius: 12px; padding: 10px 14px; background: #fff; }
+.hub-row.done { border-left-color: #2FA84F; }
+.hub-row > div { display: flex; flex-direction: column; }
+.hub-row b { color: #1D2026; }
+.hub-ic { font-size: 1.4rem; }
+.hub-status { font-size: .85rem; color: #2F3241; }
+.hub-row .btn { border: 0; cursor: pointer; font: inherit; font-weight: 700; padding: 9px 16px; }
+.hub-row .btn.outline { border: 1px solid var(--red); }
+@media (max-width: 760px) { .hub-row { grid-template-columns: auto 1fr; } .hub-status, .hub-row .btn { grid-column: 1 / -1; } }
+.hub-row b { font-size: 1rem; } .hub-row .btn { font-size: .9rem; }
