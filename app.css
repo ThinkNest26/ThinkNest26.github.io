@@ -308,3 +308,6 @@ a.pill { display: inline-block; }
 .declined-box { margin-top: 28px; }
 .declined-box summary { cursor: pointer; font-weight: 700; color: #2F3241; }
 .declined-box .approve-list { margin-top: 14px; }
+.admin-link { margin-top: 22px; font-size: .95rem; }
+.admin-link a { color: var(--blue); font-weight: 600; text-decoration: underline; }
+.admin-link a:hover { color: var(--red); }
