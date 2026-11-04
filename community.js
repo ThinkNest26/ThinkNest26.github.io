@@ -22,7 +22,7 @@ async function startCommunity() {
     document.querySelector('.side nav').innerHTML = `<h5 class="first">Teacher</h5><ul>
       ${isAdmin ? '<li><a href="admin.html"><span>Approvals</span></a></li>' : ''}
       <li><a href="teacher-dashboard.html"><span>Dashboard</span></a></li><li><a href="teacher-courses.html"><span>My Courses</span></a></li>
-      <li><a href="teacher-calendar.html"><span>Live Classes</span></a></li><li><a href="teacher-requests.html"><span>Session Requests</span></a></li>
+      <li><a href="teacher-calendar.html"><span>Live Classes</span></a></li><li><a href="teacher-requests.html"><span>Session Requests</span></a></li><li><a href="groups.html"><span>Study Groups</span></a></li><li><a href="messages.html"><span>Messages</span></a></li>
       <li><a href="community.html" class="active" aria-current="page"><span>Community</span></a></li><li><a href="teacher-settings.html"><span>Account Settings</span></a></li></ul>
       <h5>Others</h5><ul><li><a href="#" id="logout"><span>Log out</span></a></li></ul>`;
     document.getElementById('logout').addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; });
@@ -53,7 +53,13 @@ async function startCommunity() {
     const likes = p.post_likes || [], comments = (p.post_comments || []).slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     const liked = likes.some(l => l.user_id === user.id);
     const mine = p.author_id === user.id;
-    return `<article class="panel post" data-post="${p.id}">
+    const isMod = ['teacher', 'school_leader', 'admin'].includes(me.role);
+    const st = p.status || 'published';
+    const banner = st === 'pending'
+      ? (isMod && !mine ? `<div class="mod-bar"><span>⏳ Waiting for approval</span><span class="mod-actions"><button class="pill pill-live" data-approve>Approve</button><button class="pill pill-soft danger" data-reject>Don’t approve</button></span></div>`
+                        : '<div class="mod-bar"><span>⏳ Waiting for a teacher to approve. Only you and teachers can see it for now.</span></div>')
+      : st === 'rejected' ? '<div class="mod-bar rejected"><span>This post wasn’t approved, so only you can see it. You can delete it.</span></div>' : '';
+    return `<article class="panel post ${st !== 'published' ? 'post-' + st : ''}" data-post="${p.id}" id="post-${p.id}">${banner}
       <header class="post-head"><span class="initials">${esc(iniOf(p.author_name))}</span>
         <div><b>${esc(p.author_name || 'Member')}</b> ${roleTag(p.author_role)}<span class="meta">${ago(p.created_at)}</span></div>
         <div class="post-menu">${mine || isAdmin ? `<button class="link-btn" data-del-post>Delete</button>` : ''}${!mine ? `<button class="link-btn" data-report>Report</button>` : ''}</div></header>
@@ -73,7 +79,7 @@ async function startCommunity() {
   const render = () => { feed.innerHTML = posts.length ? posts.map(postHtml).join('') : '<div class="empty-box"><p>No posts yet. Be the first to say hello! 👋</p></div>'; };
 
   async function load(older) {
-    let q = db.from('posts').select('*, post_likes(user_id), post_comments(id, author_id, author_name, author_role, body, created_at)').order('created_at', { ascending: false }).limit(PAGE);
+    let q = db.from('posts').select('*, post_likes(user_id), post_comments(id, author_id, author_name, author_role, body, created_at)').or('status.eq.published,author_id.eq.' + user.id).order('created_at', { ascending: false }).limit(PAGE);
     if (older && oldest) q = q.lt('created_at', oldest);
     const { data, error } = await q;
     if (error) return say(friendly(error));
@@ -82,8 +88,30 @@ async function startCommunity() {
     if (posts.length) oldest = posts[posts.length - 1].created_at;
     more.hidden = data.length < PAGE;
     render();
-    if (!older) sideLists();
+    if (!older) { sideLists(); loadPending(); }
   }
+
+  // Teachers and the admin: posts waiting for approval
+  async function loadPending() {
+    const box = document.getElementById('pending');
+    if (!box || !['teacher', 'school_leader', 'admin'].includes(me.role)) return;
+    const { data } = await db.from('posts').select('*, post_likes(user_id), post_comments(id, author_id, author_name, author_role, body, created_at)').eq('status', 'pending').neq('author_id', user.id).order('created_at');
+    const list = data || [];
+    await picUrls(list);
+    box.hidden = !list.length;
+    box.innerHTML = list.length ? `<h2 class="dash-h">Waiting for approval <span class="count">${list.length}</span></h2><p class="hint">Student posts appear in the community after a teacher approves them.</p>` + list.map(postHtml).join('') : '';
+    if (location.hash === '#pending' && list.length) box.scrollIntoView({ behavior: 'smooth' });
+  }
+  document.getElementById('pending').addEventListener('click', async e => {
+    const art = e.target.closest('[data-post]'); if (!art) return;
+    const ok = !!e.target.closest('[data-approve]'), no = !!e.target.closest('[data-reject]');
+    if (!ok && !no) return;
+    if (no && !confirm('Don’t approve this post? The student will be told it wasn’t approved.')) return;
+    const { error } = await db.rpc('moderate_post', { pid: Number(art.dataset.post), ok });
+    if (error) return say(friendly(error));
+    say(ok ? 'Approved. It’s now in the community.' : 'Not approved. The student has been told.');
+    load(false);
+  });
   async function refreshOne(id) {
     const { data } = await db.from('posts').select('*, post_likes(user_id), post_comments(id, author_id, author_name, author_role, body, created_at)').eq('id', id).maybeSingle();
     const i = posts.findIndex(p => p.id === id);
@@ -120,10 +148,12 @@ async function startCommunity() {
       const up = await db.storage.from('community').upload(image_path, f);
       if (up.error) { btn.disabled = false; btn.textContent = 'Post'; return say(friendly(up.error)); }
     }
-    const { error } = await db.from('posts').insert({ body, image_path });
+    const { data: np, error } = await db.from('posts').insert({ body, image_path }).select('status').single();
     btn.disabled = false; btn.textContent = 'Post';
     if (error) return say(friendly(error));
-    form.reset(); picName.textContent = ''; say('Posted!'); load(false);
+    form.reset(); picName.textContent = '';
+    say(np && np.status === 'pending' ? 'Sent! A teacher will check your post before everyone can see it.' : 'Posted!');
+    load(false);
   });
   more.addEventListener('click', () => load(true));
 
@@ -172,7 +202,7 @@ async function startCommunity() {
     refreshOne(id);
   });
 
-  load(false);
+  load(false).then(() => { const m = location.hash.match(/^#post-(\d+)$/); if (m) { const el = document.getElementById('post-' + m[1]); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); el.classList.add('flash'); } } });
 }
 
 // ---------- Admin: reported posts (on the Approvals page) ----------
@@ -202,4 +232,40 @@ async function loadReports() {
       say('Report cleared.'); loadReports();
     }
   };
+}
+
+// Reported posts inside study groups (also on the Approvals page)
+async function loadGroupReports() {
+  const box = document.getElementById('reports'); if (!box) return;
+  const { data } = await db.from('group_reports').select('id, reason, created_at, post_id, group_posts(id, body, author_name, group_id)').order('created_at', { ascending: false });
+  const rows = (data || []).filter(r => r.group_posts);
+  if (!rows.length) return;
+  const n = document.getElementById('n-reports'); n.textContent = Number(n.textContent || 0) + rows.length;
+  if (box.querySelector('.empty')) box.innerHTML = '';
+  box.insertAdjacentHTML('beforeend', rows.map(r => `<article class="panel person" data-grep="${r.post_id}">
+      <div class="person-info"><h4>Study group post by ${esc(r.group_posts.author_name || 'a member')}</h4>
+        <span class="meta bio">“${esc(r.group_posts.body.slice(0, 200))}${r.group_posts.body.length > 200 ? '…' : ''}”</span>
+        <span class="meta">Reason: ${esc(r.reason || 'not given')} · ${new Date(r.created_at).toLocaleDateString('en-GB')}</span></div>
+      <div class="person-actions"><a class="pill pill-soft" href="group.html?id=${r.group_posts.group_id}">View group</a><button class="pill pill-soft danger" data-gremove>Remove post</button><button class="pill pill-soft" data-gkeep>Keep</button></div></article>`).join(''));
+  box.addEventListener('click', async e => {
+    const row = e.target.closest('[data-grep]'); if (!row) return;
+    const pid = Number(row.dataset.grep);
+    if (e.target.closest('[data-gremove]')) { if (!confirm('Remove this post?')) return; const { error } = await db.from('group_posts').delete().eq('id', pid); if (error) return say(friendly(error)); row.remove(); say('Post removed.'); }
+    if (e.target.closest('[data-gkeep]')) { const { error } = await db.from('group_reports').delete().eq('post_id', pid); if (error) return say(friendly(error)); row.remove(); say('Report cleared.'); }
+  });
+}
+
+
+// ---------- Admin: switch teacher approval on/off ----------
+async function loadApprovalSetting() {
+  const box = document.getElementById('approval-setting'); if (!box) return;
+  const { data } = await db.from('site_settings').select('value').eq('key', 'approve_student_posts').maybeSingle();
+  const on = data ? data.value === true : false;
+  box.innerHTML = `<label class="remember"><input type="checkbox" id="approve-toggle" ${on ? 'checked' : ''}> Teachers approve student posts before they appear in the community</label>
+    <p class="hint">${on ? 'On: new student posts wait for a teacher or you to approve them.' : 'Off: student posts appear straight away. Reports still come to you.'}</p>`;
+  document.getElementById('approve-toggle').addEventListener('change', async e => {
+    const { error } = await db.from('site_settings').update({ value: e.target.checked }).eq('key', 'approve_student_posts');
+    if (error) { e.target.checked = !e.target.checked; return say(friendly(error)); }
+    say(e.target.checked ? 'Teacher approval is on.' : 'Teacher approval is off.'); loadApprovalSetting();
+  });
 }

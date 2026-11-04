@@ -24,7 +24,7 @@ async function startFriends() {
     document.getElementById('friends').innerHTML = friends.length ? friends.map(f => `<div class="panel friend">
         <span class="initials">${esc(fIni(f.full_name))}</span>
         <div><b>${esc(f.full_name)}</b><span class="meta">${fMeta(f)}</span></div>
-        <div class="friend-menu"><button class="link-btn" data-remove="${f.id}" data-name="${esc(f.full_name)}">Remove</button><button class="link-btn" data-block="${f.id}" data-name="${esc(f.full_name)}">Block</button></div></div>`).join('')
+        <div class="friend-menu"><a class="pill pill-live" href="messages.html?friend=${f.id}">Message</a><button class="link-btn" data-remove="${f.id}" data-name="${esc(f.full_name)}">Remove</button><button class="link-btn" data-block="${f.id}" data-name="${esc(f.full_name)}">Block</button></div></div>`).join('')
       : '<div class="empty-box"><p>No friends yet. Search for a classmate above to send a friend request.</p></div>';
     document.getElementById('sent').innerHTML = sent.length ? '<h2 class="dash-h">Requests you sent</h2><section class="approve-list">' + sent.map(f => `<div class="pending-row"><span class="initials">${esc(fIni(f.full_name))}</span><div><b>${esc(f.full_name)}</b><span class="meta">Waiting for them to accept</span></div><button class="link-btn" data-remove="${f.id}" data-name="${esc(f.full_name)}" data-cancel="1">Cancel</button></div>`).join('') + '</section>' : '';
     const blocked = bl.data || [];
