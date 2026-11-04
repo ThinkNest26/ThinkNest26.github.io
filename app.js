@@ -209,7 +209,7 @@ async function startDashboard() {
   document.getElementById('mentors').innerHTML = ms.length ? ms.map(m => `<article class="mentor">
       <div class="mentor-top"><img src="${m.photo_url ? esc(m.photo_url) : 'images/tn-demo-mentor.png'}" alt=""><div><h4>${esc(m.name)}</h4><span>${esc(m.subject || '')}</span></div></div>
       <span class="when">${esc(m.bio || '')}</span>
-      <div class="row"><button class="pill pill-soft" data-soon-msg="Booking a mentor">Book a session</button></div>
+      <div class="row"><a class="pill pill-soft" href="mentors.html#m${m.id}">Book a session</a></div>
     </article>`).join('') : '<p class="empty">Mentors will appear here soon.</p>';
 
   // Courses
@@ -224,7 +224,7 @@ async function startDashboard() {
           <span class="meta">${esc(c.category || '')}${c.weeks ? ' · ' + c.weeks + ' weeks' : ''} · ${esc(c.level || '')}</span>
           <h4>${esc(c.title)}</h4>
           <p class="desc">${esc(c.description || '')}</p>
-          ${e ? `<div class="row"><span class="tag">Enrolled</span><span class="done">${e.progress}% completed</span></div>`
+          ${e ? `<div class="row"><a class="pill pill-soft" href="course.html?id=${c.id}">Continue</a><span class="done">${e.progress}% completed</span></div>`
               : `<button class="btn btn-red btn-small" data-join="${c.id}">Join course</button>`}
         </div></article>`;
     }).join('') : '<p class="empty">Courses will appear here soon.</p>';
