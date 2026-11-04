@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=9">
-  <link rel="stylesheet" href="app.css?v=9">
+  <link rel="stylesheet" href="style.css?v=10">
+  <link rel="stylesheet" href="app.css?v=10">
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -51,12 +51,22 @@
       </section>
       <section class="panel add-kid" id="add-kid">
         <h2>Add your child</h2>
-        <p>Ask your child to log in to Think Nest and open <b>Account Settings</b>. They’ll see a <b>family code</b>, a short code of 8 letters and numbers. Type it here to link their account to yours.</p>
-        <form class="inline-form row-form" id="link-form">
-          <label><span class="sr">Family code</span><input type="text" name="code" maxlength="12" placeholder="For example, 4F7A2C9B" autocomplete="off" required></label>
-          <button class="btn btn-red">Add child</button>
+        <p>Type the email your child uses to log in to Think Nest. They’ll get a request in their account, and once they tap <b>Approve</b>, you’ll see their progress here.</p>
+        <form class="inline-form row-form" id="email-form">
+          <label><span class="sr">Your child’s email</span><input type="email" name="email" placeholder="Your child’s Think Nest email" required></label>
+          <button class="btn btn-red">Send request</button>
         </form>
-        <p class="form-error" id="link-error" role="alert" hidden></p>
+        <p class="form-error" id="email-error" role="alert" hidden></p>
+        <div class="pending" id="pending"></div>
+        <details class="code-way">
+          <summary>Have a family code instead?</summary>
+          <p>Your child can find their family code in <b>Account Settings</b>. A code links you straight away, with no request needed.</p>
+          <form class="inline-form row-form" id="link-form">
+            <label><span class="sr">Family code</span><input type="text" name="code" class="code-input" maxlength="12" placeholder="For example, 4F7A2C9B" autocomplete="off" required></label>
+            <button class="btn btn-red">Add child</button>
+          </form>
+          <p class="form-error" id="link-error" role="alert" hidden></p>
+        </details>
       </section>
     </main>
 
@@ -77,9 +87,9 @@
   <div class="side-shade" id="side-shade"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=9"></script>
-  <script src="app.js?v=9"></script>
-  <script src="parent.js?v=9"></script>
+  <script src="supabase-config.js?v=10"></script>
+  <script src="app.js?v=10"></script>
+  <script src="parent.js?v=10"></script>
   <script>startParent();</script>
 </body>
 </html>

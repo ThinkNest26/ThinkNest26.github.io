@@ -117,5 +117,32 @@ async function startParent() {
     lf.reset(); say((data || 'Your child') + ' has been added to your account.'); loadKids();
   });
 
+  // Request by the child's email
+  const ef = document.getElementById('email-form'), eerr = document.getElementById('email-error');
+  async function loadPending() {
+    const { data } = await db.rpc('my_child_requests');
+    const box = document.getElementById('pending');
+    const rows = data || [];
+    box.innerHTML = rows.length ? '<h3>Requests sent</h3>' + rows.map(r => `<div class="pending-row">
+        <span class="initials">${esc(ini(r.child_name))}</span>
+        <div><b>${esc(r.child_name || 'Your child')}</b><span class="meta">${r.status === 'declined' ? 'Declined. Check with your child, then send again.' : 'Waiting for your child to approve. Sent ' + new Date(r.created_at).toLocaleDateString('en-GB') + '.'}</span></div>
+        <span class="tag ${r.status === 'declined' ? '' : 'tag-wait'}">${r.status === 'declined' ? 'Declined' : 'Waiting'}</span></div>`).join('') : '';
+  }
+  ef.addEventListener('submit', async e => {
+    e.preventDefault(); showError(eerr, '');
+    if (!ef.email.checkValidity()) return showError(eerr, 'Enter a valid email address.');
+    const btn = ef.querySelector('button'); btn.disabled = true; btn.textContent = 'Sending…';
+    const { data, error } = await db.rpc('request_child', { child_email: ef.email.value });
+    btn.disabled = false; btn.textContent = 'Send request';
+    if (error) return showError(eerr, friendly(error));
+    ef.reset();
+    say(data === 'linked' ? 'This child is already linked to your account.' : 'Request sent. Ask your child to log in and tap Approve.');
+    loadPending();
+  });
+  const auto = await db.rpc('auto_request_children');
+  if (auto.data > 0) say('We found ' + auto.data + (auto.data === 1 ? ' child who' : ' children who') + ' listed your email, and sent them a request to approve.');
+  loadPending();
+  setInterval(() => { loadPending(); if (document.visibilityState === 'visible') loadKids(); }, 60000);
+
   loadKids();
 }

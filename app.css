@@ -339,3 +339,20 @@ a.pill { display: inline-block; }
 .app .add-kid { margin-top: 34px; }
 .row-form label { flex: 0 1 280px; }
 .row-form input::placeholder { text-transform: none; letter-spacing: 0; font-weight: 500; }
+
+/* parent requests */
+.pending h3 { font-size: 1rem; color: #1D2026; margin: 8px 0 8px; }
+.pending-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #EEF0F8; }
+.pending-row > div { flex: 1; display: flex; flex-direction: column; }
+.pending-row .initials { width: 36px; height: 36px; font-size: .8rem; }
+.tag-wait { background: #FFF2E5; color: #B25E09; }
+.code-way { margin-top: 6px; border-top: 1px solid #EEF0F8; padding-top: 14px; }
+.code-way summary { cursor: pointer; font-weight: 600; color: var(--blue); }
+.code-way p { margin: 10px 0; }
+.row-form .code-input { text-transform: uppercase; letter-spacing: .15em; font-weight: 700; }
+.row-form input[type=email] { text-transform: none; letter-spacing: 0; font-weight: 500; }
+.row-form label { flex: 0 1 360px; }
+.parent-req { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; border: 2px solid var(--blue); background: #F1F2FA; margin-bottom: 20px; }
+.req-ic { font-size: 2rem; }
+.req-text { flex: 1; min-width: 240px; color: #2F3241; display: flex; flex-direction: column; gap: 4px; }
+.req-actions { display: flex; gap: 8px; }

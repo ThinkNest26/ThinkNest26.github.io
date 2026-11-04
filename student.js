@@ -376,3 +376,28 @@ async function startSettings() {
     pf.reset(); say('Your password has been changed.');
   });
 }
+
+
+// ---------- Parent requests (shown on the dashboard and in settings) ----------
+async function showParentRequests() {
+  const box = document.getElementById('parent-requests'); if (!box) return;
+  const { data, error } = await db.rpc('my_parent_requests');
+  if (error || !data || !data.length) { box.innerHTML = ''; return; }
+  box.innerHTML = data.map(r => `<div class="panel parent-req" data-req="${r.id}">
+      <span class="req-ic" aria-hidden="true">👨‍👩‍👧</span>
+      <div class="req-text"><b>${esc(r.parent_name || 'Someone')}</b> (${esc(r.parent_email)}) wants to follow your progress as your parent or guardian.
+        <span class="meta">They’ll see your courses, progress, classes and certificates, but can’t change anything. Only approve if you know this person.</span></div>
+      <div class="req-actions"><button class="pill pill-live" data-ok="1">Approve</button><button class="pill pill-soft" data-ok="0">Decline</button></div>
+    </div>`).join('');
+  box.onclick = async e => {
+    const b = e.target.closest('[data-ok]'); if (!b) return;
+    const row = b.closest('[data-req]');
+    row.querySelectorAll('button').forEach(x => x.disabled = true);
+    const { error: er } = await db.rpc('answer_parent_request', { req: Number(row.dataset.req), ok: b.dataset.ok === '1' });
+    if (er) { row.querySelectorAll('button').forEach(x => x.disabled = false); return say(friendly(er)); }
+    say(b.dataset.ok === '1' ? 'Approved. Your parent can now follow your progress.' : 'Request declined.');
+    row.remove();
+    const fp = document.getElementById('family-parents');
+    if (fp && b.dataset.ok === '1') fp.textContent = 'A parent is now linked to your account.';
+  };
+}
