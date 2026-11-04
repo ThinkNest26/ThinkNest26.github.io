@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Child profile – Think Nest</title>
+  <link rel="icon" href="images/tn-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=11">
+  <link rel="stylesheet" href="app.css?v=11">
+</head>
+<body class="app loading">
+  <aside class="side" id="side">
+    <a href="index.html" class="side-logo"><img src="images/tn-logo.png" alt="Think Nest home"></a>
+    <nav aria-label="Parent menu">
+      <h5 class="first">Parent</h5>
+      <ul><li><a href="parent-dashboard.html" class="active" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0 1 12 0M15 15a5 5 0 0 1 6 5"/></svg><span>My children</span></a></li><li><a href="add-child.html"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/></svg><span>Add a child</span></a></li><li><a href="parent-settings.html"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg><span>Account Settings</span></a></li></ul>
+      <h5>Others</h5>
+      <ul><li><a href="index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span>Think Nest website</span></a></li><li><a href="#" id="logout"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5v16h5"/><path d="M14 8l4 4-4 4M18 12H9"/></svg><span>Log out</span></a></li></ul>
+    </nav>
+  </aside>
+  <div class="app-main">
+    <header class="app-bar">
+      <button class="side-toggle" id="side-toggle" aria-label="Open menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <span class="bar-title">Parent area</span>
+      <div class="bar-right"><span class="initials" id="me-initials-small" title="Your profile"></span></div>
+    </header>
+    <main class="dash">
+      <section class="child-banner" aria-hidden="true"></section>
+      <section class="child-head">
+        <span class="initials huge" id="kid-initials"></span>
+        <div><h1 id="kid-name">…</h1><span class="badge" id="kid-badge"></span><p class="meta" id="kid-sub"></p></div>
+      </section>
+      <a href="parent-dashboard.html" class="back-link big-back">‹ <span id="kid-title">Profile</span></a>
+      <section class="child-cards">
+        <div class="panel child-card"><h3 id="h-certs">Achievements</h3><div class="cc-row"><div><span>Certificates</span><b id="k-certs">0</b></div><a class="pill pill-soft big" href="#certs">View all →</a></div></div>
+        <div class="panel child-card"><h3>Total courses</h3><div class="cc-row"><div><span>Courses</span><b id="k-courses">0</b></div><a class="pill pill-soft big" href="#courses">View all →</a></div></div>
+        <div class="panel child-card"><h3>Mentor sessions</h3><div class="cc-row"><div><span>Booked</span><b id="k-mentor">0</b></div><a class="pill pill-soft big" href="#coming">View all →</a></div></div>
+        <div class="panel child-card"><h3>Progress</h3><div class="cc-row"><div><span>Average across courses</span><b id="k-avg">0%</b></div></div></div>
+      </section>
+      <h2 class="dash-h" id="courses">Courses and progress</h2>
+      <section class="kid-courses" id="k-course-list"></section>
+      <h2 class="dash-h" id="coming">Coming up</h2>
+      <section class="event-list" id="k-events"></section>
+      <h2 class="dash-h" id="certs">Certificates</h2>
+      <section class="grid-cards" id="k-cert-list"></section>
+      <p class="unlink-row"><button class="pill pill-soft big danger" id="unlink">Remove this child from my account</button></p>
+    </main>
+
+    <footer class="footer app-footer">
+      <div class="container footer-inner">
+        <img src="images/tn-logo.png" alt="Think Nest" class="footer-logo">
+        <div class="footer-middle">
+          <ul class="footer-links">
+            <li><a href="index.html#about">About Us</a></li>
+            <li><a href="index.html#courses">Courses</a></li>
+            <li><a href="index.html#paths">Think Paths</a></li>
+          </ul>
+        </div>
+      </div>
+      <p class="copyright">Copyright © THINK NEST. All rights reserved.</p>
+    </footer>
+  </div>
+  <div class="side-shade" id="side-shade"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js?v=11"></script>
+  <script src="app.js?v=11"></script>
+  <script src="parent.js?v=11"></script>
+  <script>startChild();</script>
+</body>
+</html>

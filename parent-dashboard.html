@@ -8,15 +8,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=10">
-  <link rel="stylesheet" href="app.css?v=10">
+  <link rel="stylesheet" href="style.css?v=11">
+  <link rel="stylesheet" href="app.css?v=11">
 </head>
 <body class="app loading">
   <aside class="side" id="side">
     <a href="index.html" class="side-logo"><img src="images/tn-logo.png" alt="Think Nest home"></a>
     <nav aria-label="Parent menu">
       <h5 class="first">Parent</h5>
-      <ul><li><a href="parent-dashboard.html" class="active" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0 1 12 0M15 15a5 5 0 0 1 6 5"/></svg><span>My children</span></a></li></ul>
+      <ul><li><a href="parent-dashboard.html" class="active" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0 1 12 0M15 15a5 5 0 0 1 6 5"/></svg><span>My children</span></a></li><li><a href="add-child.html"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/></svg><span>Add a child</span></a></li><li><a href="parent-settings.html"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg><span>Account Settings</span></a></li></ul>
       <h5>Others</h5>
       <ul><li><a href="index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span>Think Nest website</span></a></li><li><a href="#" id="logout"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5v16h5"/><path d="M14 8l4 4-4 4M18 12H9"/></svg><span>Log out</span></a></li></ul>
     </nav>
@@ -28,46 +28,14 @@
       <div class="bar-right"><span class="initials" id="me-initials-small" title="Your profile"></span></div>
     </header>
     <main class="dash">
-      <div class="page-head"><h1 class="dash-h" id="hello">My children</h1></div>
-      <div class="kid-tabs" id="kid-tabs" role="tablist" aria-label="Choose a child"></div>
-      <section id="kid-view" hidden>
-        <section class="panel profile">
-          <span class="initials big" id="kid-initials" aria-hidden="true"></span>
-          <div><h2 class="t-name" id="kid-name"></h2><p id="kid-sub"></p></div>
-          <button class="pill pill-soft big danger" id="unlink">Remove from my account</button>
-        </section>
-        <section class="stats">
-          <div class="stat s1"><span class="stat-ic">📚</span><div><b id="k-courses">0</b><span>Courses</span></div></div>
-          <div class="stat s2"><span class="stat-ic">📈</span><div><b id="k-avg">0%</b><span>Average progress</span></div></div>
-          <div class="stat s3"><span class="stat-ic">🏅</span><div><b id="k-certs">0</b><span>Certificates</span></div></div>
-          <div class="stat s4"><span class="stat-ic">🗓️</span><div><b id="k-next">0</b><span>Coming up this week</span></div></div>
-        </section>
-        <h2 class="dash-h">Courses and progress</h2>
-        <section class="kid-courses" id="k-course-list"></section>
-        <h2 class="dash-h">Coming up</h2>
-        <section class="event-list" id="k-events"></section>
-        <h2 class="dash-h">Certificates</h2>
-        <section class="grid-cards" id="k-cert-list"></section>
+      <section class="panel profile">
+        <span class="initials big" id="me-initials" aria-hidden="true"></span>
+        <div><h1 class="t-name" id="me-name">Welcome!</h1><p id="me-sub">Parent</p></div>
       </section>
-      <section class="panel add-kid" id="add-kid">
-        <h2>Add your child</h2>
-        <p>Type the email your child uses to log in to Think Nest. They’ll get a request in their account, and once they tap <b>Approve</b>, you’ll see their progress here.</p>
-        <form class="inline-form row-form" id="email-form">
-          <label><span class="sr">Your child’s email</span><input type="email" name="email" placeholder="Your child’s Think Nest email" required></label>
-          <button class="btn btn-red">Send request</button>
-        </form>
-        <p class="form-error" id="email-error" role="alert" hidden></p>
-        <div class="pending" id="pending"></div>
-        <details class="code-way">
-          <summary>Have a family code instead?</summary>
-          <p>Your child can find their family code in <b>Account Settings</b>. A code links you straight away, with no request needed.</p>
-          <form class="inline-form row-form" id="link-form">
-            <label><span class="sr">Family code</span><input type="text" name="code" class="code-input" maxlength="12" placeholder="For example, 4F7A2C9B" autocomplete="off" required></label>
-            <button class="btn btn-red">Add child</button>
-          </form>
-          <p class="form-error" id="link-error" role="alert" hidden></p>
-        </details>
-      </section>
+      <h2 class="dash-h">My children</h2>
+      <section class="kid-cards" id="kid-cards"><p class="empty">Loading…</p></section>
+      <div class="pending" id="pending"></div>
+      <div id="family-week"></div>
     </main>
 
     <footer class="footer app-footer">
@@ -87,9 +55,9 @@
   <div class="side-shade" id="side-shade"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=10"></script>
-  <script src="app.js?v=10"></script>
-  <script src="parent.js?v=10"></script>
-  <script>startParent();</script>
+  <script src="supabase-config.js?v=11"></script>
+  <script src="app.js?v=11"></script>
+  <script src="parent.js?v=11"></script>
+  <script>startParentDashboard();</script>
 </body>
 </html>

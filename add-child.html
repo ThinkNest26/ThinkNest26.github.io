@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Add New Child – Think Nest</title>
+  <link rel="icon" href="images/tn-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=11">
+  <link rel="stylesheet" href="app.css?v=11">
+</head>
+<body class="auth">
+  <header class="app-top">
+    <a href="parent-dashboard.html"><img src="images/tn-logo-dark.png" alt="Back to parent area" class="app-top-logo"></a>
+    <a href="parent-dashboard.html" class="app-exit">Exit</a>
+  </header>
+  <main class="auth-bg">
+    <div class="auth-card">
+      <a href="parent-dashboard.html" class="not-me">‹ My children</a>
+      <img src="images/tn-bird.png" alt="" class="bird">
+      <h1>Add New Child</h1>
+      <p class="auth-sub">Please enter your child’s Think Nest email to connect</p>
+      <form class="auth-form" id="email-form" novalidate>
+        <label>Child email <input type="email" name="email" placeholder="The email your child logs in with" required></label>
+        <p class="note">Your child will see your request when they log in, and taps <b>Approve</b> to connect.</p>
+        <p class="form-error" id="email-error" role="alert" hidden></p>
+        <button class="btn btn-red auth-btn">Add</button>
+      </form>
+      <div class="pending narrow-box" id="pending"></div>
+      <details class="code-way narrow-box">
+        <summary>Have a family code instead?</summary>
+        <p>Your child can find their family code in <b>Account Settings</b>. A code connects you straight away.</p>
+        <form class="auth-form" id="link-form" novalidate>
+          <label>Family code <input type="text" name="code" class="code-input" maxlength="12" placeholder="For example, 4F7A2C9B" autocomplete="off" required></label>
+          <p class="form-error" id="link-error" role="alert" hidden></p>
+          <button class="btn btn-red auth-btn">Add with code</button>
+        </form>
+      </details>
+    </div>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js?v=11"></script>
+  <script src="app.js?v=11"></script>
+  <script src="parent.js?v=11"></script>
+  <script>startAddChild();</script>
+</body>
+</html>

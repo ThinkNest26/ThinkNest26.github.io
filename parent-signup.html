@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=10">
-  <link rel="stylesheet" href="app.css?v=10">
+  <link rel="stylesheet" href="style.css?v=11">
+  <link rel="stylesheet" href="app.css?v=11">
 </head>
 <body class="auth">
   <header class="app-top">
@@ -18,28 +18,33 @@
   </header>
   <main class="auth-bg">
     <div class="auth-card">
-      <a href="parent-login.html" class="not-me">‹ Back to log in</a>
+      <a href="start.html" class="not-me">‹ I’m not a parent</a>
       <img src="images/tn-bird.png" alt="" class="bird">
-      <h1>Create a parent account</h1>
-      <p class="auth-sub">After you sign up, add your child with the family code from their account.</p>
+      <h1>Sign Up to Get Started!</h1>
+      <p class="auth-sub">Follow your child’s courses, progress and certificates.</p>
       <form class="auth-form" id="psignup-form" novalidate>
-        <label>Full name <input type="text" name="full_name" autocomplete="name" required></label>
+        <div class="two"><label>First name <input type="text" name="first" autocomplete="given-name" required></label><label>Last name <input type="text" name="last" autocomplete="family-name" required></label></div>
         <label>Email <input type="email" name="email" autocomplete="email" required></label>
-        <label>Phone number <input type="tel" name="phone" placeholder="+971 ..."></label>
+        <div class="two"><label>Country <select name="country" required></select></label><label>Mobile number <input type="tel" name="phone" placeholder="+971 ..."></label></div>
         <label>Password
           <span class="pw"><input type="password" name="password" id="pw1" minlength="8" autocomplete="new-password" placeholder="At least 8 characters" required>
           <button type="button" class="pw-eye" data-eye="pw1" aria-label="Show password">👁</button></span>
         </label>
+        <label>Confirm password
+          <span class="pw"><input type="password" name="password2" id="pw2" minlength="8" autocomplete="new-password" placeholder="Type it again" required>
+          <button type="button" class="pw-eye" data-eye="pw2" aria-label="Show password">👁</button></span>
+        </label>
         <p class="form-error" id="psignup-error" role="alert" hidden></p>
-        <button type="submit" class="btn btn-red auth-btn">Create account</button>
+        <button type="submit" class="btn btn-red auth-btn">Continue</button>
+        <p class="switch">Already have an account? <a href="parent-login.html">Log in</a></p>
       </form>
     </div>
   </main>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=10"></script>
-  <script src="app.js?v=10"></script>
-  <script src="parent.js?v=10"></script>
+  <script src="supabase-config.js?v=11"></script>
+  <script src="app.js?v=11"></script>
+  <script src="parent.js?v=11"></script>
   <script>startParentSignup();</script>
 </body>
 </html>

@@ -260,3 +260,9 @@ async function startDashboard() {
     const s = e.target.closest('[data-soon-msg]'); if (s) soon(s.dataset.soonMsg);
   });
 }
+
+// Ask before logging out (from the design's "Are you sure you want to log out?" pop-up)
+document.addEventListener('click', e => {
+  const lo = e.target.closest('#logout');
+  if (lo && !confirm('Are you sure you want to log out? Logging out will end your current session.')) { e.preventDefault(); e.stopImmediatePropagation(); }
+}, true);
