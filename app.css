@@ -311,3 +311,8 @@ a.pill { display: inline-block; }
 .admin-link { margin-top: 22px; font-size: .95rem; }
 .admin-link a { color: var(--blue); font-weight: 600; text-decoration: underline; }
 .admin-link a:hover { color: var(--red); }
+.roles-pick { grid-template-columns: repeat(5, 1fr); max-width: 1180px; }
+.pick-ic { width: 127px; height: 127px; display: grid; place-items: center; }
+.pick-ic svg { width: 100px; height: 100px; }
+@media (max-width: 1100px) { .roles-pick { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 640px) { .roles-pick { grid-template-columns: repeat(2, 1fr); } .pick-ic, .pick-ic svg { width: 80px; height: 80px; } }
