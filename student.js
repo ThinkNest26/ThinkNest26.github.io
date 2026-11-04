@@ -133,6 +133,16 @@ async function startCourse() {
     const hm = location.hash.match(/^#lesson-(\d+)$/);
     if (hm) { const b = document.querySelector(`[data-open-lesson="${hm[1]}"]`); if (b) { b.click(); b.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }
   }
+  if (typeof initStudentItems === 'function') {
+    await initStudentItems(lessons, () => !!enrol, async lid => {
+      if (doneIds.has(lid)) return;
+      doneIds.add(lid);
+      const cb = document.querySelector(`[data-lesson="${lid}"]`); if (cb) cb.checked = true;
+      const progress = Math.round(lessons.filter(l => doneIds.has(l.id)).length / lessons.length * 100);
+      const up = await db.from('enrollments').update({ progress }).eq('id', enrol.id).select().single();
+      if (!up.error) { enrol = up.data; drawHero(); }
+    });
+  }
 
   document.getElementById('lessons').addEventListener('change', async e => {
     const box = e.target.closest('[data-lesson]'); if (!box) return;
@@ -145,7 +155,7 @@ async function startCourse() {
     const progress = Math.round(lessons.filter(l => doneIds.has(l.id)).length / lessons.length * 100);
     const up = await db.from('enrollments').update({ progress }).eq('id', enrol.id).select().single();
     if (!up.error) enrol = up.data;
-    drawHero(); drawLessons();
+    drawHero(); drawLessons(); if (window._drawItems) window._drawItems();
     if (progress === 100) say('Well done! You’ve finished this course. 🎉');
   });
 

@@ -194,6 +194,7 @@ async function startTeacherCourse() {
         <button class="pill pill-soft" data-down="${l.id}" ${k === lessons.length - 1 ? 'disabled' : ''} aria-label="Move down">↓</button>
         <button class="pill pill-soft" data-del-lesson="${l.id}">Delete</button></div>`).join('')
       : '<p class="empty">No lessons yet. Add the first one below.</p>';
+    if (typeof loadTeacherItems === 'function') loadTeacherItems(lessons, c);
   }
   await loadLessons();
   const lf = document.getElementById('lesson-form');

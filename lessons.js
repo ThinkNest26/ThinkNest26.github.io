@@ -44,6 +44,8 @@ function initLessonBuilder(course) {
       <div id="lb-editor" class="lb-editor"></div>
     </div>`;
   const sel = box.querySelector('#lb-obj'), own = box.querySelector('#lb-own'), gen = box.querySelector('#lb-gen'), editor = box.querySelector('#lb-editor');
+  // Materials are now added with "+ Add to this lesson" (materials.js), so the old single-material picker is hidden
+  if (typeof openItemBuilder === 'function') { box.querySelector('.lb-kind').hidden = true; box.insertAdjacentHTML('beforeend', '<p class="note">💡 After you add the lesson, click <b>+ Add to this lesson</b> under it to add worksheets, quizzes, Google Forms, videos, writing tasks, flashcards and more.</p>'); }
   const info = box.querySelector('#lb-course-info');
 
   async function loadObjectives() {
