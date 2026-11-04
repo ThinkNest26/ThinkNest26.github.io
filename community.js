@@ -1,0 +1,205 @@
+// ===== Think Nest community =====
+// Uses db, say(), friendly(), esc() from app.js (and initShell from student.js on the community page)
+
+const PAGE = 20;
+const MAX_PIC_MB = 5;
+const iniOf = n => (n || '?').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+function ago(ts) {
+  const s = (Date.now() - new Date(ts)) / 1000;
+  if (s < 60) return 'Just now';
+  if (s < 3600) return Math.floor(s / 60) + 'm';
+  if (s < 86400) return Math.floor(s / 3600) + 'h';
+  if (s < 604800) return Math.floor(s / 86400) + 'd';
+  return new Date(ts).toLocaleDateString('en-GB');
+}
+const roleTag = r => r === 'parent' ? '<span class="role-tag parent">Parent</span>' : r === 'teacher' || r === 'school_leader' ? '<span class="role-tag">Teacher</span>' : r === 'admin' ? '<span class="role-tag admin">Think Nest</span>' : '';
+
+async function startCommunity() {
+  const { user, profile: me } = await initShell();
+  const isAdmin = me.role === 'admin';
+  // Teachers and the admin get their own menu
+  if (['teacher', 'school_leader', 'admin'].includes(me.role)) {
+    document.querySelector('.side nav').innerHTML = `<h5 class="first">Teacher</h5><ul>
+      ${isAdmin ? '<li><a href="admin.html"><span>Approvals</span></a></li>' : ''}
+      <li><a href="teacher-dashboard.html"><span>Dashboard</span></a></li><li><a href="teacher-courses.html"><span>My Courses</span></a></li>
+      <li><a href="teacher-calendar.html"><span>Live Classes</span></a></li><li><a href="teacher-requests.html"><span>Session Requests</span></a></li>
+      <li><a href="community.html" class="active" aria-current="page"><span>Community</span></a></li><li><a href="teacher-settings.html"><span>Account Settings</span></a></li></ul>
+      <h5>Others</h5><ul><li><a href="#" id="logout"><span>Log out</span></a></li></ul>`;
+    document.getElementById('logout').addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; });
+  }
+  if (me.role === 'parent') {
+    document.querySelector('.side nav').innerHTML = `<h5 class="first">Parent</h5><ul>
+      <li><a href="parent-dashboard.html"><span>My children</span></a></li><li><a href="add-child.html"><span>Add a child</span></a></li>
+      <li><a href="community.html" class="active" aria-current="page"><span>Community</span></a></li><li><a href="parent-settings.html"><span>Account Settings</span></a></li></ul>
+      <h5>Others</h5><ul><li><a href="#" id="logout"><span>Log out</span></a></li></ul>`;
+    document.getElementById('logout').addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; });
+  }
+  const first = (me.full_name || '').split(' ')[0];
+  document.getElementById('me-ini').textContent = iniOf(me.full_name || user.email);
+  document.getElementById('post-body').placeholder = 'What’s on your mind' + (first ? ', ' + first : '') + '?';
+
+  const feed = document.getElementById('feed'), more = document.getElementById('more');
+  let posts = [], oldest = null;
+  const signed = {};
+
+  async function picUrls(list) {
+    const paths = list.map(p => p.image_path).filter(p => p && !signed[p]);
+    if (!paths.length) return;
+    const { data } = await db.storage.from('community').createSignedUrls(paths, 3600);
+    (data || []).forEach(d => { if (d.signedUrl) signed[d.path] = d.signedUrl; });
+  }
+
+  function postHtml(p) {
+    const likes = p.post_likes || [], comments = (p.post_comments || []).slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    const liked = likes.some(l => l.user_id === user.id);
+    const mine = p.author_id === user.id;
+    return `<article class="panel post" data-post="${p.id}">
+      <header class="post-head"><span class="initials">${esc(iniOf(p.author_name))}</span>
+        <div><b>${esc(p.author_name || 'Member')}</b> ${roleTag(p.author_role)}<span class="meta">${ago(p.created_at)}</span></div>
+        <div class="post-menu">${mine || isAdmin ? `<button class="link-btn" data-del-post>Delete</button>` : ''}${!mine ? `<button class="link-btn" data-report>Report</button>` : ''}</div></header>
+      <p class="post-body">${esc(p.body).replace(/\n/g, '<br>')}</p>
+      ${p.image_path && signed[p.image_path] ? `<img class="post-img" src="${signed[p.image_path]}" alt="Picture shared by ${esc(p.author_name || 'a member')}">` : ''}
+      <div class="post-actions">
+        <button class="act ${liked ? 'on' : ''}" data-like aria-pressed="${liked}">👍 Like${likes.length ? ' · ' + likes.length : ''}</button>
+        <button class="act" data-show-comments>💬 Comment${comments.length ? ' · ' + comments.length : ''}</button>
+      </div>
+      <div class="comments" ${comments.length ? '' : 'hidden'}>
+        ${comments.map(c => `<div class="comment" data-comment="${c.id}"><span class="initials">${esc(iniOf(c.author_name))}</span>
+          <div class="bubble"><b>${esc(c.author_name || 'Member')}</b> ${roleTag(c.author_role)}<p>${esc(c.body)}</p><span class="meta">${ago(c.created_at)}${c.author_id === user.id || isAdmin ? ' · <button class="link-btn" data-del-comment>Delete</button>' : ''}</span></div></div>`).join('')}
+        <form class="comment-form"><label class="grow"><span class="sr">Write a comment</span><input type="text" name="c" maxlength="1000" placeholder="Write a comment…"></label><button class="pill pill-live">Send</button></form>
+      </div>
+    </article>`;
+  }
+  const render = () => { feed.innerHTML = posts.length ? posts.map(postHtml).join('') : '<div class="empty-box"><p>No posts yet. Be the first to say hello! 👋</p></div>'; };
+
+  async function load(older) {
+    let q = db.from('posts').select('*, post_likes(user_id), post_comments(id, author_id, author_name, author_role, body, created_at)').order('created_at', { ascending: false }).limit(PAGE);
+    if (older && oldest) q = q.lt('created_at', oldest);
+    const { data, error } = await q;
+    if (error) return say(friendly(error));
+    await picUrls(data);
+    posts = older ? posts.concat(data) : data;
+    if (posts.length) oldest = posts[posts.length - 1].created_at;
+    more.hidden = data.length < PAGE;
+    render();
+    if (!older) sideLists();
+  }
+  async function refreshOne(id) {
+    const { data } = await db.from('posts').select('*, post_likes(user_id), post_comments(id, author_id, author_name, author_role, body, created_at)').eq('id', id).maybeSingle();
+    const i = posts.findIndex(p => p.id === id);
+    if (data && i > -1) { posts[i] = data; const el = feed.querySelector(`[data-post="${id}"]`); const open = el && !el.querySelector('.comments').hidden; if (el) { el.outerHTML = postHtml(data); if (open) feed.querySelector(`[data-post="${id}"] .comments`).hidden = false; } }
+  }
+  function sideLists() {
+    const seen = new Map();
+    posts.forEach(p => { if (!seen.has(p.author_id)) seen.set(p.author_id, p); });
+    document.getElementById('active').innerHTML = [...seen.values()].slice(0, 6).map(p => `<div class="side-row"><span class="initials">${esc(iniOf(p.author_name))}</span><span>${esc(p.author_name || 'Member')} ${roleTag(p.author_role)}</span></div>`).join('') || '<p class="empty">No one yet.</p>';
+    document.getElementById('recent').innerHTML = posts.slice(0, 6).map(p => `<a class="side-row" href="#" data-jump="${p.id}"><span class="recent-text">${esc(p.body.slice(0, 70))}${p.body.length > 70 ? '…' : ''}</span><span class="meta">${ago(p.created_at)}</span></a>`).join('') || '<p class="empty">No posts yet.</p>';
+  }
+  document.getElementById('recent').addEventListener('click', e => {
+    const a = e.target.closest('[data-jump]'); if (!a) return; e.preventDefault();
+    const el = feed.querySelector(`[data-post="${a.dataset.jump}"]`); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  // New post
+  const form = document.getElementById('composer'), picName = document.getElementById('pic-name');
+  form.pic.addEventListener('change', () => {
+    const f = form.pic.files[0];
+    if (f && f.size > MAX_PIC_MB * 1024 * 1024) { form.pic.value = ''; picName.textContent = ''; return say('Pictures must be smaller than ' + MAX_PIC_MB + ' MB.'); }
+    picName.textContent = f ? f.name + ' ✕' : '';
+  });
+  picName.addEventListener('click', () => { form.pic.value = ''; picName.textContent = ''; });
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const body = form.body.value.trim();
+    if (!body) return say('Write something before posting.');
+    const btn = document.getElementById('post-btn'); btn.disabled = true; btn.textContent = 'Posting…';
+    let image_path = null;
+    const f = form.pic.files[0];
+    if (f) {
+      image_path = user.id + '/' + Date.now() + '-' + f.name.replace(/[^\w.\-]+/g, '_');
+      const up = await db.storage.from('community').upload(image_path, f);
+      if (up.error) { btn.disabled = false; btn.textContent = 'Post'; return say(friendly(up.error)); }
+    }
+    const { error } = await db.from('posts').insert({ body, image_path });
+    btn.disabled = false; btn.textContent = 'Post';
+    if (error) return say(friendly(error));
+    form.reset(); picName.textContent = ''; say('Posted!'); load(false);
+  });
+  more.addEventListener('click', () => load(true));
+
+  // Likes, comments, delete, report
+  feed.addEventListener('click', async e => {
+    const art = e.target.closest('[data-post]'); if (!art) return;
+    const id = Number(art.dataset.post), p = posts.find(x => x.id === id);
+    if (e.target.closest('[data-like]')) {
+      const liked = (p.post_likes || []).some(l => l.user_id === user.id);
+      const res = liked ? await db.from('post_likes').delete().eq('post_id', id).eq('user_id', user.id) : await db.from('post_likes').insert({ post_id: id });
+      if (res.error) return say(friendly(res.error));
+      return refreshOne(id);
+    }
+    if (e.target.closest('[data-show-comments]')) { const c = art.querySelector('.comments'); c.hidden = !c.hidden; if (!c.hidden) c.querySelector('input').focus(); return; }
+    if (e.target.closest('[data-del-post]')) {
+      if (!confirm('Delete this post?')) return;
+      const { error } = await db.from('posts').delete().eq('id', id);
+      if (error) return say(friendly(error));
+      if (p.image_path) db.storage.from('community').remove([p.image_path]);
+      posts = posts.filter(x => x.id !== id); render(); sideLists(); return say('Post deleted.');
+    }
+    if (e.target.closest('[data-del-comment]')) {
+      const cid = Number(e.target.closest('[data-comment]').dataset.comment);
+      if (!confirm('Delete this comment?')) return;
+      const { error } = await db.from('post_comments').delete().eq('id', cid);
+      if (error) return say(friendly(error));
+      return refreshOne(id);
+    }
+    if (e.target.closest('[data-report]')) {
+      const reason = prompt('Why are you reporting this post? (for example: unkind, private information, not appropriate)');
+      if (reason === null) return;
+      const { error } = await db.from('post_reports').insert({ post_id: id, reason: reason.trim().slice(0, 300) || null });
+      if (error && !String(error.message).includes('duplicate')) return say(friendly(error));
+      return say('Thank you. Think Nest will check this post.');
+    }
+  });
+  feed.addEventListener('submit', async e => {
+    const f = e.target.closest('.comment-form'); if (!f) return;
+    e.preventDefault();
+    const id = Number(f.closest('[data-post]').dataset.post), body = f.c.value.trim();
+    if (!body) return;
+    f.querySelector('button').disabled = true;
+    const { error } = await db.from('post_comments').insert({ post_id: id, body });
+    f.querySelector('button').disabled = false;
+    if (error) return say(friendly(error));
+    refreshOne(id);
+  });
+
+  load(false);
+}
+
+// ---------- Admin: reported posts (on the Approvals page) ----------
+async function loadReports() {
+  const box = document.getElementById('reports'); if (!box) return;
+  const { data, error } = await db.from('post_reports').select('id, reason, created_at, post_id, posts(id, body, author_name, image_path)').order('created_at', { ascending: false });
+  if (error) { box.innerHTML = ''; return; }
+  const rows = (data || []).filter(r => r.posts);
+  document.getElementById('n-reports').textContent = rows.length;
+  box.innerHTML = rows.length ? rows.map(r => `<article class="panel person" data-rep="${r.id}" data-post="${r.post_id}">
+      <div class="person-info"><h4>Post by ${esc(r.posts.author_name || 'a member')}</h4>
+        <span class="meta bio">“${esc(r.posts.body.slice(0, 200))}${r.posts.body.length > 200 ? '…' : ''}”</span>
+        <span class="meta">Reason: ${esc(r.reason || 'not given')} · ${new Date(r.created_at).toLocaleDateString('en-GB')}</span></div>
+      <div class="person-actions"><a class="pill pill-soft" href="community.html">View</a><button class="pill pill-soft danger" data-remove>Remove post</button><button class="pill pill-soft" data-keep>Keep</button></div></article>`).join('')
+    : '<p class="empty">No reported posts. 🎉</p>';
+  box.onclick = async e => {
+    const row = e.target.closest('[data-rep]'); if (!row) return;
+    if (e.target.closest('[data-remove]')) {
+      if (!confirm('Remove this post from the community?')) return;
+      const { error: er } = await db.from('posts').delete().eq('id', Number(row.dataset.post));
+      if (er) return say(friendly(er));
+      say('Post removed.'); loadReports();
+    }
+    if (e.target.closest('[data-keep]')) {
+      const { error: er } = await db.from('post_reports').delete().eq('post_id', Number(row.dataset.post));
+      if (er) return say(friendly(er));
+      say('Report cleared.'); loadReports();
+    }
+  };
+}

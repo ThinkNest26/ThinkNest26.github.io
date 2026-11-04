@@ -398,3 +398,58 @@ a.pill { display: inline-block; }
 .vacancies { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
 .person-info .bio { font-style: italic; }
 .auth-form textarea { font: inherit; border: 1px solid #2F3241; border-radius: 6px; padding: 12px 14px; width: 100%; }
+
+/* ===== Community ===== */
+.dash.community { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 32px; align-items: start; }
+.comm-rules { background: #F1F2FA; border-radius: 10px; padding: 10px 14px; font-size: .9rem; color: #2F3241; margin-bottom: 16px; }
+.composer { margin-bottom: 20px; }
+.composer-top { display: flex; gap: 14px; align-items: flex-start; }
+.grow { flex: 1; }
+.composer textarea { width: 100%; font: inherit; border: 0; background: #EEF0F8; border-radius: 22px; padding: 14px 20px; resize: vertical; min-height: 54px; }
+.composer-bar { display: flex; align-items: center; gap: 14px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #EEF0F8; }
+.pic-btn { cursor: pointer; font-weight: 600; color: var(--blue); }
+.pic-name { font-size: .85rem; cursor: pointer; color: var(--grey); }
+.composer-bar .btn { margin-left: auto; border: 0; cursor: pointer; font-family: inherit; padding: 10px 34px; }
+.post { margin-bottom: 18px; padding: 20px 22px; }
+.post-head { display: flex; gap: 12px; align-items: center; }
+.post-head .meta { display: block; }
+.post-menu { margin-left: auto; display: flex; gap: 12px; }
+.link-btn { background: none; border: 0; font: inherit; font-size: .8rem; color: var(--grey); cursor: pointer; text-decoration: underline; padding: 0; }
+.link-btn:hover { color: var(--red); }
+.post-body { margin: 14px 0; color: #2F3241; line-height: 1.6; white-space: normal; word-break: break-word; }
+.post-img { width: calc(100% + 44px); max-width: none; margin: 0 -22px 12px; max-height: 520px; object-fit: cover; }
+.post-actions { display: flex; gap: 6px; border-top: 1px solid #EEF0F8; padding-top: 10px; }
+.act { flex: 1; background: none; border: 0; font: inherit; font-weight: 600; color: #6E7485; padding: 8px; border-radius: 8px; cursor: pointer; }
+.act:hover { background: #F1F2FA; }
+.act.on { color: var(--blue); }
+.comments { margin-top: 10px; display: grid; gap: 10px; }
+.comment { display: flex; gap: 10px; }
+.comment .initials { width: 32px; height: 32px; font-size: .75rem; }
+.bubble { background: #F1F2FA; border-radius: 14px; padding: 8px 14px; flex: 1; }
+.bubble p { margin: 2px 0; color: #2F3241; font-size: .92rem; word-break: break-word; }
+.comment-form { display: flex; gap: 8px; }
+.comment-form input { width: 100%; font: inherit; border: 1px solid #D9DBE8; border-radius: 20px; padding: 9px 16px; }
+.role-tag { font-size: .7rem; font-weight: 700; background: #E3E5F4; color: var(--blue); border-radius: 10px; padding: 2px 8px; vertical-align: middle; }
+.role-tag.admin { background: #FFE6E3; color: var(--red); }
+.more { display: block; margin: 10px auto 0; }
+.comm-side { position: sticky; top: 90px; }
+.comm-side h2 { font-size: 1.1rem; color: #1D2026; margin: 6px 0 12px; }
+.side-list { display: grid; gap: 4px; margin-bottom: 26px; padding: 14px; }
+.side-row { display: flex; align-items: center; gap: 10px; padding: 6px; border-radius: 8px; color: #2F3241; }
+a.side-row { flex-direction: column; align-items: flex-start; gap: 2px; }
+a.side-row:hover { background: #F1F2FA; }
+.side-row .initials { width: 36px; height: 36px; font-size: .8rem; }
+.recent-text { font-size: .9rem; font-weight: 500; }
+@media (max-width: 1100px) { .dash.community { grid-template-columns: 1fr; } .comm-side { position: static; } }
+.post-head b, .bubble b, .side-row span { color: #1D2026; }
+/* friends */
+.find { margin: 10px 0 10px; display: grid; gap: 12px; }
+.find h2 { font-size: 1.15rem; color: #1D2026; }
+.friend-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.friend { display: flex; align-items: center; gap: 12px; padding: 16px; }
+.friend > div { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.friend b { color: #1D2026; }
+.friend-menu { flex: 0 0 auto !important; gap: 4px; align-items: flex-end; }
+.role-tag.parent { background: #E8F7EA; color: #1E7A2B; }
+.app .req-banner { margin-bottom: 16px; }
+.app .find { margin-top: 22px; } .app #incoming .approve-list { margin-bottom: 4px; }

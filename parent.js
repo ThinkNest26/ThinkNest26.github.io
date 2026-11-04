@@ -154,6 +154,9 @@ async function startChild() {
     if (error) return say(friendly(error));
     window.open(data.signedUrl, '_blank', 'noopener');
   });
+  const fr = await db.rpc('child_friends', { kid: kidId });
+  const friends = fr.data || [];
+  document.getElementById('k-friends').innerHTML = friends.length ? friends.map(f => `<div class="panel friend"><span class="initials">${esc(ini(f.full_name))}</span><div><b>${esc(f.full_name)}</b><span class="meta">${esc([f.grade, f.school].filter(Boolean).join(' · '))}</span><span class="meta">Friends since ${new Date(f.since).toLocaleDateString('en-GB')}</span></div></div>`).join('') : '<p class="empty">No friends added yet.</p>';
   document.getElementById('unlink').addEventListener('click', async () => {
     if (!confirm('Remove ' + (k.full_name || 'this child') + ' from your parent account? You can add them again later.')) return;
     const { error } = await db.from('parent_links').delete().eq('parent_id', user.id).eq('student_id', kidId);
