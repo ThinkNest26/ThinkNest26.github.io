@@ -874,3 +874,11 @@ a.gp-post { display: block; color: inherit; }
 .star-pick span { display: inline-block; border: 1px solid #E4E6F1; border-radius: 20px; padding: 6px 10px; cursor: pointer; }
 .star-pick input:checked + span { background: #FFF6E6; border-color: #E3A43B; }
 @media (max-width: 800px) { .rw-hero { grid-template-columns: 1fr; text-align: center; } .rw-cols { grid-template-columns: 1fr; } }
+.class-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+.class-tile { display: grid; gap: 12px; border-top: 5px solid #2FA08A; }
+.class-top { display: flex; gap: 12px; align-items: center; color: #2F3241; }
+.class-top > div { display: flex; flex-direction: column; }
+.class-top b { color: #1D2026; font-size: 1.1rem; }
+.class-links { display: flex; flex-wrap: wrap; gap: 6px; }
+.class-links .pill { text-decoration: none; }
+.class-tile .rw-board { padding: 0; }

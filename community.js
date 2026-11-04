@@ -22,7 +22,7 @@ async function startCommunity() {
     document.querySelector('.side nav').innerHTML = `<h5 class="first">Teacher</h5><ul>
       ${isAdmin ? '<li><a href="admin.html"><span>Approvals</span></a></li>' : ''}
       <li><a href="teacher-dashboard.html"><span>Dashboard</span></a></li><li><a href="teacher-courses.html"><span>My Courses</span></a></li>
-      <li><a href="teacher-calendar.html"><span>Live Classes</span></a></li><li><a href="teacher-objectives.html"><span>Objectives &amp; Activities</span></a></li><li><a href="teacher-requests.html"><span>Session Requests</span></a></li><li><a href="groups.html"><span>Study Groups</span></a></li><li><a href="messages.html"><span>Messages</span></a></li>
+      <li><a href="teacher-calendar.html"><span>Live Classes</span></a></li><li><a href="teacher-objectives.html"><span>Objectives &amp; Activities</span></a></li><li><a href="teacher-requests.html"><span>Session Requests</span></a></li><li><a href="classes.html"><span>My Classes</span></a></li><li><a href="groups.html"><span>Study Groups</span></a></li><li><a href="messages.html"><span>Messages</span></a></li>
       <li><a href="community.html" class="active" aria-current="page"><span>Community</span></a></li><li><a href="teacher-settings.html"><span>Account Settings</span></a></li></ul>
       <h5>Others</h5><ul><li><a href="#" id="logout"><span>Log out</span></a></li></ul>`;
     document.getElementById('logout').addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; });
@@ -72,7 +72,7 @@ async function startCommunity() {
     document.querySelectorAll('[data-ctab]').forEach(x => x.setAttribute('aria-selected', x === b));
     ['everyone', 'groups', 'classes'].forEach(t => document.getElementById('ct-' + t).hidden = t !== b.dataset.ctab);
     if (b.dataset.ctab === 'groups') groupTab(studyGroups, 'ct-groups', me.role === 'student' ? 'You’re not in a study group yet. Create one and invite your friends!' : 'No study groups yet.');
-    if (b.dataset.ctab === 'classes') groupTab(classes, 'ct-classes', ['teacher', 'school_leader', 'admin'].includes(me.role) ? 'You haven’t made a class yet. Create one on the Study Groups page.' : 'You’re not in a class yet. Your teacher will add you.');
+    if (b.dataset.ctab === 'classes') groupTab(classes, 'ct-classes', ['teacher', 'school_leader', 'admin'].includes(me.role) ? 'You haven’t made a class yet. Create one on the My Classes page.' : 'You’re not in a class yet. Your teacher will add you.');
   });
 
   const feed = document.getElementById('feed'), more = document.getElementById('more');

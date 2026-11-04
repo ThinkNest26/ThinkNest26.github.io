@@ -11,7 +11,7 @@ function swapMenu(role) {
   let items = null, title = '';
   if (['teacher', 'school_leader', 'admin'].includes(role)) {
     title = 'Teacher';
-    items = (role === 'admin' ? [['admin.html', 'Approvals']] : []).concat([['teacher-dashboard.html', 'Dashboard'], ['teacher-courses.html', 'My Courses'], ['teacher-calendar.html', 'Live Classes'], ['teacher-objectives.html', 'Objectives & Activities'], ['teacher-requests.html', 'Session Requests'], ['groups.html', 'Study Groups'], ['messages.html', 'Messages'], ['community.html', 'Community'], ['teacher-settings.html', 'Account Settings']]);
+    items = (role === 'admin' ? [['admin.html', 'Approvals']] : []).concat([['teacher-dashboard.html', 'Dashboard'], ['teacher-courses.html', 'My Courses'], ['teacher-calendar.html', 'Live Classes'], ['teacher-objectives.html', 'Objectives & Activities'], ['teacher-requests.html', 'Session Requests'], ['classes.html', 'My Classes'], ['groups.html', 'Study Groups'], ['messages.html', 'Messages'], ['community.html', 'Community'], ['teacher-settings.html', 'Account Settings']]);
   } else if (role === 'parent') {
     title = 'Parent';
     items = [['parent-dashboard.html', 'My children'], ['add-child.html', 'Add a child'], ['community.html', 'Community'], ['parent-settings.html', 'Account Settings']];
@@ -32,31 +32,8 @@ async function startGroups() {
   const newBtn = document.getElementById('new-group');
   newBtn.hidden = !isStudent;
   const isTeach = ['teacher', 'school_leader', 'admin'].includes(me.role);
-  const clsBtn = document.getElementById('new-class'); if (clsBtn) clsBtn.hidden = !isTeach;
-  if (isTeach && clsBtn) {
-    const cd = document.getElementById('class-dialog'), cf = document.getElementById('class-form');
-    cd.querySelector('[data-close]').addEventListener('click', () => cd.close());
-    clsBtn.addEventListener('click', async () => {
-      cf.reset(); cd.showModal();
-      const [{ data: courses }, { data: studs }] = await Promise.all([db.from('courses').select('id, title').eq('teacher_id', (await db.auth.getSession()).data.session.user.id).order('title'), db.rpc('my_students')]);
-      cf.course.innerHTML = '<option value="">No course (I’ll pick students)</option>' + (courses || []).map(c => `<option value="${c.id}">${esc(c.title)}</option>`).join('');
-      const seen = new Set();
-      document.getElementById('class-studs').innerHTML = (studs || []).filter(s => !seen.has(s.id) && seen.add(s.id)).map(s => `<label class="remember"><input type="checkbox" name="stud" value="${s.id}" data-course="${s.course_id}"> ${esc(s.full_name || 'Student')} <span class="meta">${esc(s.grade || '')}</span></label>`).join('') || '<p class="meta">Students appear here once they join one of your courses.</p>';
-    });
-    cf.course.addEventListener('change', () => {
-      const c = cf.course.value; if (!c) return;
-      if (!cf.name.value.trim()) cf.name.value = cf.course.options[cf.course.selectedIndex].text + ' class';
-      cf.querySelectorAll('input[name=stud]').forEach(x => { if (x.dataset.course === c) x.checked = true; });
-    });
-    cf.addEventListener('submit', async e => {
-      e.preventDefault();
-      if (cf.name.value.trim().length < 2) return say('Give the class a name.');
-      const students = [...cf.querySelectorAll('input[name=stud]:checked')].map(x => x.value);
-      const { data, error } = await db.rpc('create_class', { cname: cf.name.value, cdesc: cf.desc.value, cid: cf.course.value ? Number(cf.course.value) : null, students });
-      if (error) return say(friendly(error));
-      location.href = 'group.html?id=' + data;
-    });
-  }
+  const tgBtn = document.getElementById('new-tgroup');
+  if (tgBtn) { tgBtn.hidden = !isTeach; if (isTeach) tgBtn.addEventListener('click', () => openTeacherGroupDialog('study')); }
   const dlg = document.getElementById('group-dialog'), f = document.getElementById('group-form'), err = document.getElementById('group-error');
   newBtn.addEventListener('click', () => { f.reset(); showError(err, ''); dlg.showModal(); });
   dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
@@ -76,14 +53,12 @@ async function startGroups() {
         <span class="initials">${esc(gIni(g.name))}</span>
         <div class="person-info"><h4>${esc(g.owner_name)} invited you to “${esc(g.name)}”</h4><span class="meta">${g.members} member${g.members === 1 ? '' : 's'}${g.description ? ' · ' + esc(g.description) : ''}</span></div>
         <div class="person-actions"><button class="pill pill-live" data-join="${g.id}">Join</button><button class="pill pill-soft" data-no="${g.id}">No thanks</button></div></article>`).join('') + '</section>' : '';
-    const cls = mine.filter(x => x.kind === 'class'); const study = mine.filter(x => x.kind !== 'class');
-    document.getElementById('classes').innerHTML = cls.length ? '<h2 class="dash-h">🏫 Classes</h2><section class="group-grid">' + cls.map(g => `<a class="panel group-card class-card" href="group.html?id=${g.id}"><span class="group-ic cls">${esc(gIni(g.name))}</span><b>${esc(g.name)}</b><span class="meta">${g.members} members · ${g.my_role === 'owner' ? 'your class' : 'with ' + esc(g.owner_name || 'your teacher')}</span>${g.description ? `<span class="meta">${esc(g.description)}</span>` : ''}</a>`).join('') + '</section><h2 class="dash-h">👥 Study groups</h2>' : '';
-    mine = study;
+    mine = mine.filter(x => x.kind !== 'class');
     document.getElementById('groups').innerHTML = mine.length ? mine.map(g => `<a class="panel group-card" href="group.html?id=${g.id}">
         <span class="group-ic">${esc(gIni(g.name))}</span><b>${esc(g.name)}</b>
         <span class="meta">${g.members} member${g.members === 1 ? '' : 's'}${g.my_role === 'owner' ? ' · you created it' : ''}</span>
         ${g.description ? `<span class="meta">${esc(g.description)}</span>` : ''}</a>`).join('')
-      : `<div class="empty-box"><p>${isStudent ? 'You’re not in any study groups yet. Create one and invite your friends.' : 'No study groups yet. Students can invite you to their groups.'}</p></div>`;
+      : `<div class="empty-box"><p>${isStudent ? 'You’re not in any study groups yet. Create one and invite your friends.' : 'No study groups yet. Students can invite you to their groups, or you can set one up for a few of your students.'}</p></div>`;
   }
   document.getElementById('invites').addEventListener('click', async e => {
     const b = e.target.closest('[data-join],[data-no]'); if (!b) return;
@@ -105,7 +80,8 @@ async function startGroup() {
   let members = mem.data || [];
   const meRow = members.find(m => m.user_id === user.id);
   const isMember = meRow && meRow.status === 'active';
-  const isOwner = g.owner_id === user.id, isAdmin = me.role === 'admin', isClass = g.kind === 'class';
+  const isOwner = g.owner_id === user.id, isAdmin = me.role === 'admin', isClass = g.kind === 'class', teacherRun = isClass || (isOwner && ['teacher', 'school_leader', 'admin'].includes(me.role));
+  if (isClass) { const bk = document.getElementById('back'); if (bk && me.role !== 'parent') { bk.href = 'classes.html'; bk.textContent = '‹ My classes'; } }
   if (meRow && meRow.status === 'invited') { location.href = 'groups.html'; return; }
   document.title = g.name + ' – Think Nest';
   document.getElementById('ro-note').hidden = isMember || isAdmin;
@@ -135,7 +111,7 @@ async function startGroup() {
     document.querySelectorAll('.tab-panel').forEach(p => p.hidden = p.id !== id);
   }
   document.querySelectorAll('[data-tab]').forEach(t => t.addEventListener('click', () => tab(t.dataset.tab)));
-  if (location.hash === '#t-mem') tab('t-mem');
+  if (['#t-mem', '#t-res'].includes(location.hash)) tab(location.hash.slice(1));
 
   // ----- feed (posts with photos, likes and comments)
   const gsigned = {};
@@ -299,17 +275,17 @@ async function startGroup() {
     document.getElementById('members').innerHTML = members.map(m => `<div class="pending-row">
         <span class="initials">${esc(gIni(m.full_name))}</span>
         <div><b>${esc(m.full_name)}</b> ${m.role === 'teacher' ? gTag('teacher') : ''}<span class="meta">${m.role === 'owner' ? 'Created the group' : m.status === 'invited' ? 'Invited, hasn’t joined yet' : (m.grade || 'Member')}</span></div>
-        ${isClass && (isOwner || isAdmin) && m.role === 'member' && m.status === 'active' ? `<button class="pill pill-soft" data-star="${m.user_id}" data-name="${esc(m.full_name)}">⭐ Stars</button>` : ''}
+        ${teacherRun && (isOwner || isAdmin) && m.role === 'member' && m.status === 'active' ? `<button class="pill pill-soft" data-star="${m.user_id}" data-name="${esc(m.full_name)}">⭐ Stars</button>` : ''}
         ${(isOwner || isAdmin) && m.role !== 'owner' ? `<button class="link-btn" data-kick="${m.user_id}" data-name="${esc(m.full_name)}">${m.status === 'invited' ? 'Cancel invite' : 'Remove'}</button>` : ''}</div>`).join('');
     document.getElementById('danger').innerHTML = isOwner || isAdmin ? '<button class="pill pill-soft big danger" id="del-group">Delete this group</button>' : isMember ? '<button class="pill pill-soft big danger" id="leave">Leave this group</button>' : '';
     if (isOwner) drawInvites();
   }
   async function drawInvites() {
     document.getElementById('invite-box').hidden = false;
-    if (isClass) {
+    if (teacherRun) {
       const { data: studs } = await db.rpc('my_students');
       const inGroup = new Set(members.map(m => m.user_id)), seen = new Set();
-      document.getElementById('invite-box').innerHTML = '<h3>Add students to this class</h3><div class="approve-list">' + ((studs || []).filter(s => !seen.has(s.id) && seen.add(s.id)).map(s => `<div class="pending-row"><span class="initials">${esc(gIni(s.full_name))}</span><div><b>${esc(s.full_name)}</b><span class="meta">${esc([s.grade, s.course_title].filter(Boolean).join(' · '))}</span></div>
+      document.getElementById('invite-box').innerHTML = '<h3>Add students' + (isClass ? ' to this class' : '') + '</h3><div class="approve-list">' + ((studs || []).filter(s => !seen.has(s.id) && seen.add(s.id)).map(s => `<div class="pending-row"><span class="initials">${esc(gIni(s.full_name))}</span><div><b>${esc(s.full_name)}</b><span class="meta">${esc([s.grade, s.course_title].filter(Boolean).join(' · '))}</span></div>
           ${inGroup.has(s.id) ? '<span class="tag">In class</span>' : `<button class="pill pill-live" data-addcls="${s.id}">Add</button>`}</div>`).join('') || '<p class="empty">Students appear here once they join one of your courses.</p>') + '</div>';
       return;
     }
@@ -337,7 +313,7 @@ async function startGroup() {
       add.disabled = true;
       const { error } = await db.rpc('add_to_class', { gid, sid: add.dataset.addcls });
       if (error) { add.disabled = false; return say(friendly(error)); }
-      say('Added to the class.'); return loadMembers();
+      say('Added.'); return loadMembers();
     }
     if (inv) {
       inv.disabled = true;
@@ -371,4 +347,61 @@ async function groupBanner() {
   const { data } = await db.rpc('my_groups');
   const n = (data || []).filter(g => g.my_status === 'invited').length;
   box.innerHTML = n ? `<a class="panel req-banner" href="groups.html"><span class="req-ic" aria-hidden="true">👥</span><span><b>${n} study group invitation${n === 1 ? '' : 's'}</b> waiting for you</span><span class="pill pill-live">See invitations →</span></a>` : '';
+}
+
+
+// ---------- Teachers: create a class, or a study group for some students ----------
+function openTeacherGroupDialog(mode) {
+  const cd = document.getElementById('class-dialog'), cf = document.getElementById('class-form');
+  const isCls = mode === 'class';
+  cd.querySelector('h2').textContent = isCls ? 'Create a class' : 'Create a study group for students';
+  cd.querySelector('.note').textContent = isCls ? 'A class is a shared space for you and your students: a feed, resources, group chat and a leaderboard. Students are added straight away.'
+    : 'Choose a few students who should work together. They are added straight away, and they can post, chat and share resources in the group.';
+  cd.querySelector('.course-pick').firstChild.textContent = isCls ? 'Add everyone from a course ' : 'Pick students from a course (optional) ';
+  cf.querySelector('button.btn-red').textContent = isCls ? 'Create class' : 'Create group';
+  cf.name.placeholder = isCls ? 'For example, Grade 4 Maths class' : 'For example, Fractions team';
+  cf.reset(); cd.showModal();
+  (async () => {
+    const uid = (await db.auth.getSession()).data.session.user.id;
+    const [{ data: courses }, { data: studs }] = await Promise.all([db.from('courses').select('id, title').eq('teacher_id', uid).order('title'), db.rpc('my_students')]);
+    cf.course.innerHTML = `<option value="">${isCls ? 'No course (I’ll pick students)' : 'Choose a course to see its students'}</option>` + (courses || []).map(c => `<option value="${c.id}">${esc(c.title)}</option>`).join('');
+    const seen = new Set();
+    document.getElementById('class-studs').innerHTML = (studs || []).filter(s => !seen.has(s.id) && seen.add(s.id)).map(s => `<label class="remember"><input type="checkbox" name="stud" value="${s.id}" data-course="${s.course_id}"> ${esc(s.full_name || 'Student')} <span class="meta">${esc(s.grade || '')}</span></label>`).join('') || '<p class="meta">Students appear here once they join one of your courses.</p>';
+  })();
+  cf.course.onchange = () => {
+    const c = cf.course.value; if (!c) return;
+    if (isCls && !cf.name.value.trim()) cf.name.value = cf.course.options[cf.course.selectedIndex].text + ' class';
+    if (isCls) cf.querySelectorAll('input[name=stud]').forEach(x => { if (x.dataset.course === c) x.checked = true; });
+    else cf.querySelectorAll('input[name=stud]').forEach(x => x.closest('label').hidden = x.dataset.course !== c);
+  };
+  cd.querySelector('[data-close]').onclick = () => cd.close();
+  cf.onsubmit = async e => {
+    e.preventDefault();
+    if (cf.name.value.trim().length < 2) return say(isCls ? 'Give the class a name.' : 'Give the group a name.');
+    const students = [...cf.querySelectorAll('input[name=stud]:checked')].map(x => x.value);
+    if (!isCls && !students.length) return say('Choose at least one student.');
+    const res = isCls ? await db.rpc('create_class', { cname: cf.name.value, cdesc: cf.desc.value, cid: cf.course.value ? Number(cf.course.value) : null, students })
+                      : await db.rpc('create_teacher_group', { gname: cf.name.value, gdesc: cf.desc.value, students });
+    if (res.error) return say(friendly(res.error));
+    location.href = 'group.html?id=' + res.data;
+  };
+}
+
+async function startClasses() {
+  const { profile: me } = await initShell();
+  swapMenu(me.role);
+  if (me.role === 'parent') { location.href = 'parent-dashboard.html'; return; }
+  const isTeach = ['teacher', 'school_leader', 'admin'].includes(me.role);
+  const btn = document.getElementById('new-class'); btn.hidden = !isTeach;
+  btn.addEventListener('click', () => openTeacherGroupDialog('class'));
+  const { data } = await db.rpc('my_groups');
+  const cls = (data || []).filter(g => g.kind === 'class' && g.my_status === 'active');
+  const box = document.getElementById('class-list');
+  if (!cls.length) { box.innerHTML = `<div class="empty-box"><p>${isTeach ? 'You haven’t created a class yet. Create one and add the students from your course in one click.' : 'You’re not in a class yet. Your teacher will add you.'}</p>${isTeach ? '<button class="btn btn-red" onclick="document.getElementById(\'new-class\').click()">+ Create a class</button>' : ''}</div>`; return; }
+  const boards = typeof leaderboardHtml === 'function' ? await Promise.all(cls.map(c => leaderboardHtml(c.id, 'Leaderboard'))) : [];
+  box.innerHTML = cls.map((g, i) => `<article class="panel class-tile">
+      <a class="class-top" href="group.html?id=${g.id}"><span class="group-ic cls">${esc(gIni(g.name))}</span><div><b>${esc(g.name)}</b><span class="meta">${g.members} members · ${g.my_role === 'owner' ? 'your class' : 'with ' + esc(g.owner_name || 'your teacher')}</span>${g.description ? `<span class="meta">${esc(g.description)}</span>` : ''}</div></a>
+      <div class="class-links"><a class="pill pill-live" href="group.html?id=${g.id}">📣 Feed</a><a class="pill pill-soft" href="group.html?id=${g.id}#t-res">📚 Resources</a><a class="pill pill-soft" href="messages.html?group=${g.id}">💬 Chat</a><a class="pill pill-soft" href="group.html?id=${g.id}#t-mem">${g.my_role === 'owner' ? '👥 Students &amp; ⭐ stars' : '👥 Members'}</a></div>
+      ${boards[i] || ''}
+    </article>`).join('');
 }
