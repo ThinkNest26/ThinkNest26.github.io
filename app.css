@@ -958,3 +958,7 @@ a.gp-post { display: block; color: inherit; }
 .side nav.nav2 .nav2-sub a { padding: 8px 12px; border-left: 0; font-size: .92rem; font-weight: 500; gap: 8px; }
 .side nav.nav2 .nav2-sub a.active { background: var(--red); font-weight: 700; }
 .side nav.nav2 .nav2-sub { padding-left: 10px; }
+.side nav.nav2 .nav2-arrow { margin-left: auto; width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,.14); display: grid; place-items: center; opacity: 1; transition: transform .2s, background .2s; }
+.side nav.nav2 .nav2-arrow svg { width: 16px; height: 16px; stroke: #fff; stroke-width: 2.6; fill: none; }
+.side nav.nav2 .nav2-toggle:hover .nav2-arrow { background: rgba(255,255,255,.25); }
+.side nav.nav2 .nav2-toggle[aria-expanded=true] .nav2-arrow { transform: rotate(180deg); background: var(--red); }

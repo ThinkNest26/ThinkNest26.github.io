@@ -57,7 +57,7 @@
       const hasHere = sec.items.some(([h]) => h === here);
       const open = hasHere || saved[sec.label] === true;
       return `<div class="nav2-sec ${hasHere ? 'has-active' : ''}">
-        <button type="button" class="nav2-top nav2-toggle" aria-expanded="${open}" aria-controls="nav2-${i}"><span class="nav2-ic" aria-hidden="true">${sec.ic}</span><span>${sec.label}</span><span class="nav2-arrow" aria-hidden="true">▾</span></button>
+        <button type="button" class="nav2-top nav2-toggle" aria-expanded="${open}" aria-controls="nav2-${i}"><span class="nav2-ic" aria-hidden="true">${sec.ic}</span><span>${sec.label}</span><span class="nav2-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span></button>
         <ul class="nav2-sub" id="nav2-${i}" ${open ? '' : 'hidden'}>${sec.items.map(([h, l]) => h === '#logout'
           ? `<li><a href="#" id="logout">${l}</a></li>`
           : `<li><a href="${h}" class="${h === here ? 'active' : ''}" ${h === here ? 'aria-current="page"' : ''}>${l}${h === 'messages.html' ? '<i class="nav-dot" id="nav-unread" hidden></i>' : ''}</a></li>`).join('')}</ul></div>`;
