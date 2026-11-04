@@ -94,6 +94,14 @@ async function startLoginPage() {
 
 // ===== Sign up (3 steps) =====
 function startSignupPage() {
+  try {
+    const p = JSON.parse(localStorage.getItem('tn_path') || 'null'), f = document.getElementById('signup-form');
+    if (p && f) {
+      const label = { british: 'British Curriculum (England / IGCSE)', ib: 'International Baccalaureate (IB)', american: 'American Curriculum' }[p.curriculum];
+      if (p.grade && f.grade) f.grade.value = p.grade;
+      if (label && f.curriculum) f.curriculum.value = label;
+    }
+  } catch (_) {}
   if (typeof curriculumHelper === 'function') setTimeout(() => curriculumHelper(document.getElementById('signup-form'), 'cur-help'), 0);
   const form = document.getElementById('signup-form');
   const err = document.getElementById('signup-error');

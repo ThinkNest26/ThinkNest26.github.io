@@ -9,7 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20">
+  <link rel="stylesheet" href="style.css?v=23">
+  <link rel="stylesheet" href="paths.css?v=23">
 </head>
 <body>
 
@@ -110,47 +111,47 @@
     <!-- ============ THINK PATHS ============ -->
     <section id="paths" class="paths container">
       <h2 class="title title-center">Think Paths</h2>
-      <p class="subtitle">Personalized Path for Every Journey</p>
+      <p class="subtitle">Personalised paths for every subject, curriculum and grade</p>
 
       <div class="course-grid">
-        <article class="course">
-          <img src="images/tn-course-1.png" alt="" class="course-img">
-          <div class="course-learners"><img src="images/tn-avatars.png" alt=""> + 40 students</div>
+        <article class="course path-card">
+          <div class="path-art" style="--c:#3E4B94"><span>Aa</span></div>
+          <div class="course-learners">KG1 – Grade 12</div>
           <div class="course-body">
-            <span class="course-date">1 – 28 July 2022</span>
-            <h3>Product Management Basic – Course</h3>
-            <p>Product Management Masterclass, you will learn with Sarah Johnson – Head of Product Customer Platform Gojek Indonesia.</p>
-            <a href="#" class="btn btn-red btn-small">Enroll now</a>
+            <span class="course-date">British · IB · American</span>
+            <h3>English</h3>
+            <p>Reading, writing, grammar, speaking and listening. Choose your curriculum and grade to see what you’ll learn and join a class.</p>
+            <a href="#paths" class="btn btn-red btn-small" data-path="english">Choose your path</a>
           </div>
         </article>
-        <article class="course">
-          <img src="images/tn-course-2.png" alt="" class="course-img">
-          <div class="course-learners"><img src="images/tn-avatars.png" alt=""> + 78 students</div>
+        <article class="course path-card">
+          <div class="path-art" style="--c:#F27A6F"><span>+×</span></div>
+          <div class="course-learners">KG1 – Grade 12</div>
           <div class="course-body">
-            <span class="course-date">1 – 28 July 2022</span>
-            <h3>BM Data Science Professional Certificate</h3>
-            <p>Product Management Masterclass, you will learn with Sarah Johnson – Head of Product Customer Platform Gojek Indonesia.</p>
-            <a href="#" class="btn btn-red btn-small">Enroll now</a>
+            <span class="course-date">British · IB · American</span>
+            <h3>Maths</h3>
+            <p>Number, calculation, shape, measures and problem solving. Choose your curriculum and grade to see what you’ll learn and join a class.</p>
+            <a href="#paths" class="btn btn-red btn-small" data-path="maths">Choose your path</a>
           </div>
         </article>
-        <article class="course">
-          <img src="images/tn-course-3.png" alt="" class="course-img">
-          <div class="course-learners"><img src="images/tn-avatars.png" alt=""> + 90 students</div>
+        <article class="course path-card">
+          <div class="path-art" style="--c:#2FA08A"><span>🔬</span></div>
+          <div class="course-learners">KG1 – Grade 12</div>
           <div class="course-body">
-            <span class="course-date">1 – 28 July 2022</span>
-            <h3>The Science of Well-Being</h3>
-            <p>Product Management Masterclass, you will learn with Sarah Johnson – Head of Product Customer Platform Gojek Indonesia.</p>
-            <a href="#" class="btn btn-red btn-small">Enroll now</a>
+            <span class="course-date">British · IB · American</span>
+            <h3>Science</h3>
+            <p>Living things, materials, forces, energy and investigating. Choose your curriculum and grade to see what you’ll learn and join a class.</p>
+            <a href="#paths" class="btn btn-red btn-small" data-path="science">Choose your path</a>
           </div>
         </article>
-        <article class="course">
-          <img src="images/tn-course-4.png" alt="" class="course-img">
-          <div class="course-learners"><img src="images/tn-avatars.png" alt=""> + 342 students</div>
+        <article class="course path-card">
+          <div class="path-art" style="--c:#E3A43B"><span>أب</span></div>
+          <div class="course-learners">KG1 – Grade 12</div>
           <div class="course-body">
-            <span class="course-date">1 – 28 July 2022</span>
-            <h3>Python for Everybody Specialization</h3>
-            <p>Product Management Masterclass, you will learn with Sarah Johnson – Head of Product Customer Platform Gojek Indonesia.</p>
-            <a href="#" class="btn btn-red btn-small">Enroll now</a>
+            <span class="course-date">Arabic A (speakers) · Arabic B (learners)</span>
+            <h3>Arabic</h3>
+            <p>Reading, writing, grammar and speaking in Arabic. Choose your curriculum and grade to see what you’ll learn and join a class.</p>
+            <a href="#paths" class="btn btn-red btn-small" data-path="arabic">Choose your path</a>
           </div>
         </article>
       </div>
@@ -191,6 +192,19 @@
     <p class="copyright">Copyright © <span id="year">2026</span> THINK NEST. All rights reserved.</p>
   </footer>
 
-  <script src="site.js?v=20"></script>
+  <dialog id="path-dialog" class="dlg path-dlg" aria-labelledby="path-title">
+    <div class="path-wrap">
+      <header class="path-head"><h2 id="path-title">Choose your path</h2><button type="button" class="link-btn" data-close aria-label="Close">✕ Close</button></header>
+      <div id="path-body"></div>
+    </div>
+  </dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="site.js?v=23"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js?v=23"></script>
+  <script src="app.js?v=23"></script>
+  <script src="curriculum.js?v=23"></script>
+  <script src="paths.js?v=23"></script>
+  <script>initPaths();</script>
 </body>
 </html>
