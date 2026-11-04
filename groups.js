@@ -19,7 +19,7 @@ function swapMenu(role) {
   if (!items) return;
   const here = location.pathname.split('/').pop();
   nav.innerHTML = `<h5 class="first">${title}</h5><ul>${items.map(([h, l]) => `<li><a href="${h}"${h === here ? ' class="active" aria-current="page"' : ''}><span>${l}</span></a></li>`).join('')}</ul>
-    <h5>Others</h5><ul><li><a href="#" id="logout"><span>Log out</span></a></li></ul>`;
+    <h5>Others</h5><ul><li><a href="contact.html"><span>Contact Us</span></a></li><li><a href="#" id="logout"><span>Log out</span></a></li></ul>`;
   document.getElementById('logout').addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; });
 }
 

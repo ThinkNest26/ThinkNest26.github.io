@@ -565,3 +565,6 @@ a.pending-row { color: inherit; }
 .msg-img { display: block; max-width: 260px; max-height: 260px; border-radius: 10px; margin: 4px 0; cursor: zoom-in; background: #EEF0F8; min-height: 60px; min-width: 80px; object-fit: cover; }
 .msg-file { background: rgba(62,75,148,.08); border: 0; border-radius: 10px; padding: 8px 12px; font: inherit; color: inherit; cursor: pointer; margin: 4px 0; text-align: left; }
 .msg.mine .msg-file { background: rgba(255,255,255,.18); }
+.wide-card { max-width: 720px; }
+.auth-form select { font: inherit; border: 1px solid #2F3241; border-radius: 6px; padding: 12px 14px; width: 100%; background: #fff; }
+.privacy a:not(.btn) { color: var(--blue); text-decoration: underline; }
