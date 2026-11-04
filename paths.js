@@ -39,6 +39,36 @@ function subjectPart(details, subj) {
   return hit.join('\n');
 }
 
+
+// Extra subject detail where the grade summary is organised differently (IB programmes, British exam years)
+function programmeDetail(cur, grade, subj) {
+  const i = gradeIndex(grade);
+  const T = {
+    ib: {
+      pyp: { english: 'In the PYP, language is taught through and alongside the units of inquiry: listening and speaking, reading (phonics, fluency and understanding) and writing for real purposes, with an additional language as well.',
+             maths: 'In the PYP, maths covers number, pattern and function, measurement, shape and space, and data handling, often linked to the units of inquiry and real-life problems.',
+             science: 'In the PYP, science is part of the units of inquiry: observing, asking questions, testing ideas and explaining how the natural and physical world works.' },
+      myp: { english: 'MYP Language and literature: analysing literary and non-literary texts, organising ideas, producing text and using language accurately. Assessed on four criteria (A to D), each marked 1 to 8.',
+             maths: 'MYP Mathematics: number, algebra, geometry and trigonometry, and statistics and probability, with investigating patterns and real-life applications. Assessed on four criteria (A to D), each marked 1 to 8.',
+             science: 'MYP Sciences: biology, chemistry and physics through inquiry, designing and carrying out investigations, and reflecting on the impact of science. Assessed on four criteria (A to D), each marked 1 to 8.' },
+      dp: { english: 'DP Studies in language and literature: courses such as Language A: Literature or Language and Literature, at standard or higher level, with oral and written assessments.',
+            maths: 'DP Mathematics: either Analysis and Approaches or Applications and Interpretation, at standard or higher level, with an internal exploration and final exams.',
+            science: 'DP Sciences: for example biology, chemistry or physics at standard or higher level, with practical work, a scientific investigation and final exams.' }
+    },
+    british: {
+      ks4: { english: 'GCSE or IGCSE English Language (reading, analysing and writing fiction and non-fiction) and usually English Literature (a Shakespeare play, a 19th-century novel, modern texts and poetry).',
+             maths: 'GCSE or IGCSE Mathematics: number, algebra, ratio and proportion, geometry and measures, probability and statistics, at Foundation or Higher tier.',
+             science: 'GCSE or IGCSE Combined Science, or separate Biology, Chemistry and Physics, including required practical experiments.' },
+      ks5: { english: 'A Level English Literature or English Language: studying texts in depth and writing extended essays, plus coursework.',
+             maths: 'A Level Mathematics (pure maths, statistics and mechanics), and for some students A Level Further Mathematics.',
+             science: 'A Level Biology, Chemistry or Physics, with practical skills and a strong base for science and medicine at university.' }
+    }
+  };
+  if (cur === 'ib') return (T.ib[i <= 6 ? 'pyp' : i <= 11 ? 'myp' : 'dp'] || {})[subj] || '';
+  if (cur === 'british' && i >= 10) return (T.british[i <= 11 ? 'ks4' : 'ks5'] || {})[subj] || '';
+  return '';
+}
+
 let pathState = { subject: null, curriculum: null, grade: null };
 async function openPathChooser(subject, start) {
   pathState = Object.assign({ subject, curriculum: null, grade: null }, start || {});
@@ -75,14 +105,27 @@ async function drawPathStep() {
   let learn = '';
   if (pathState.subject === 'arabic') learn = arabicSummary(pathState.curriculum, pathState.grade);
   else {
-    const row = await curGet(pathState.curriculum, pathState.grade);
+    const [row, objs] = await Promise.all([
+      curGet(pathState.curriculum, pathState.grade),
+      db.from('objectives').select('subject, text').eq('curriculum', pathState.curriculum).eq('grade', pathState.grade).eq('source', 'bank').order('id')
+    ]);
     if (row) {
-      const part = subjectPart(row.details, pathState.subject);
-      learn = `<div class="cur-head"><span class="cur-stage">${esc(row.stage || '')}</span><span class="meta">Ages ${esc(row.ages || '')}</span></div>` +
-        (part ? `<div class="cur-details one">${curDetailsHtml(part)}</div>` : `<p class="cur-overview">${esc(row.overview || '')}</p>${pathState.curriculum === 'ib' ? '<p class="meta">In the IB, subjects are often taught together through units of inquiry, so each school plans its own topics.</p>' : ''}`);
+      const part = subjectPart(row.details, pathState.subject), prog = programmeDetail(pathState.curriculum, pathState.grade, pathState.subject);
+      const also = String(row.details || '').split(/\n(?=## )/).filter(x => /^## (also studied|how it works|how learning works|how children learn|the dp core|the pyp exhibition|looking ahead)/i.test(x)).join('\n');
+      const myObjs = (objs.data || []).filter(o => pathSubjectKey(o.subject) === pathState.subject || (SUBJECT_HEADINGS[pathState.subject] || []).some(h => String(o.subject).toLowerCase().startsWith(h)));
+      const ibObjs = pathState.curriculum === 'ib' ? (objs.data || []) : [];
+      const list = myObjs.length ? myObjs : ibObjs;
+      learn = `<div class="cur-head"><span class="cur-stage">${esc(row.stage || '')}</span><span class="meta">Ages ${esc(row.ages || '')}</span></div>
+        <p class="cur-overview">${esc(row.overview || '')}</p>
+        ${prog ? `<div class="cur-sub"><h4>${esc(PATH_SUBJECTS[pathState.subject].name)} this year</h4><p>${esc(prog)}</p></div>` : ''}
+        ${part ? `<div class="cur-details one">${curDetailsHtml(part)}</div>` : ''}
+        ${list.length ? `<div class="cur-sub obj-sub"><h4>${myObjs.length ? 'Key learning objectives' : 'Skills students develop'} <span class="meta">(${list.length})</span></h4><ul>${list.slice(0, 6).map(o => `<li>${esc(o.text)}</li>`).join('')}</ul>
+          ${list.length > 6 ? `<details><summary>Show ${list.length - 6} more</summary><ul>${list.slice(6).map(o => `<li>${esc(o.text)}</li>`).join('')}</ul></details>` : ''}</div>` : ''}
+        ${also ? `<details class="also"><summary>More about this grade</summary>${curDetailsHtml(also)}</details>` : ''}
+        <p class="meta"><a href="curriculum.html?c=${pathState.curriculum}&g=${encodeURIComponent(pathState.grade)}" target="_blank" rel="noopener">See the full ${esc(pathState.grade)} guide ↗</a></p>`;
     }
   }
-  document.getElementById('path-learn').innerHTML = `<h3>What you’ll learn</h3>` + (learn || '<p class="meta">A summary for this grade is coming soon.</p>');
+  document.getElementById('path-learn').innerHTML = `<h3>What you’ll learn</h3>` + (learn || '<p class="meta">The details for this grade are not available yet. Please ask the Think Nest team to run the curriculum guide update.</p>');
   // open classes
   const { data: courses } = await db.from('courses').select('id, title, teacher_name, weeks, subject, curriculum, grade, description').eq('curriculum', pathState.curriculum).eq('grade', pathState.grade);
   const match = (courses || []).filter(c => pathSubjectKey(c.subject) === pathState.subject);
