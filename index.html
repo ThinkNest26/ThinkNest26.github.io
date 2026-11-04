@@ -25,7 +25,7 @@
           <li><a href="#paths">Think Paths</a></li>
         </ul>
         <div class="nav-buttons">
-          <a href="#" class="btn btn-red">Join as a Teacher</a>
+          <a href="careers.html" class="btn btn-red">Join as a Teacher</a>
           <a href="#" class="btn btn-white">Log in</a>
         </div>
       </div>
@@ -76,7 +76,7 @@
         <p>Interactive tools to learn, grow, and track progress.</p>
         <span class="role-link">Join as Student <b>›</b></span>
       </a>
-      <a href="#" class="role-card">
+      <a href="careers.html" class="role-card">
         <img src="images/tn-icon-teacher.png" alt="">
         <h3>Teachers</h3>
         <p>Create, share, and manage lessons with ease.</p>
@@ -185,29 +185,6 @@
     <p class="copyright">Copyright © <span id="year">2026</span> THINK NEST. All rights reserved.</p>
   </footer>
 
-  <script>
-    // Mobile menu
-    const toggle = document.querySelector('.nav-toggle');
-    const menu = document.querySelector('.nav-menu');
-    toggle.addEventListener('click', () => {
-      const open = menu.classList.toggle('open');
-      toggle.setAttribute('aria-expanded', open);
-    });
-    menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => menu.classList.remove('open')));
-
-    // Figma sometimes adds "@2x" to exported file names – try that name, then hide the image if neither exists
-    document.querySelectorAll('img').forEach(img => {
-      img.addEventListener('error', () => {
-        if (!img.dataset.tried) {
-          img.dataset.tried = '1';
-          img.src = img.getAttribute('src').replace('.png', '@2x.png');
-        } else {
-          img.classList.add('missing');
-        }
-      });
-    });
-
-    document.getElementById('year').textContent = new Date().getFullYear();
-  </script>
+  <script src="site.js"></script>
 </body>
 </html>

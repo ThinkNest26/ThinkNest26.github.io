@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Job opening – Think Nest</title>
+  <link rel="icon" href="images/tn-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="hero hero-slim">
+    <nav class="nav container">
+      <a href="index.html" class="nav-logo"><img src="images/tn-logo.png" alt="Think Nest home"></a>
+      <button class="nav-toggle" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
+      <div class="nav-menu">
+        <ul class="nav-links">
+          <li><a href="index.html#about">About Us</a></li>
+          <li><a href="index.html#courses">Courses</a></li>
+          <li><a href="index.html#paths">Think Paths</a></li>
+        </ul>
+        <div class="nav-buttons">
+          <a href="careers.html" class="btn btn-red">Join as a Teacher</a>
+          <a href="#" class="btn btn-white">Log in</a>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container job-page">
+    <a href="careers.html" class="back-link">‹ All job openings</a>
+    <h1 class="title" id="job-title">IGCSE / Cambridge</h1>
+    <div id="job-details"></div>
+
+    <form class="apply" id="apply-form" action="https://formsubmit.co/YOUR-EMAIL-HERE" method="POST" enctype="multipart/form-data">
+      <h2>Fill your info</h2>
+      <input type="hidden" name="_subject" id="form-subject" value="New Think Nest teacher application">
+      <input type="hidden" name="Job" id="form-job" value="">
+      <input type="hidden" name="_next" id="form-next" value="">
+      <input type="hidden" name="_template" value="table">
+      <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
+
+      <div class="form-grid">
+        <label>Full name
+          <input type="text" name="Full name" placeholder="Your full name" required>
+        </label>
+        <label>Email
+          <input type="email" name="email" placeholder="you@example.com" required>
+        </label>
+        <label>Phone number
+          <input type="tel" name="Phone" placeholder="+971 ..." required>
+        </label>
+        <label>Grade level(s)
+          <select name="Grade levels" required>
+            <option value="">Select grade level(s)</option>
+            <option>Early years (KG)</option><option>Primary</option><option>Middle school</option><option>High school</option><option>All grades</option>
+          </select>
+        </label>
+        <label>Education degree
+          <select name="Education degree" required>
+            <option value="">Select education degree</option>
+            <option>Bachelor’s degree</option><option>Master’s degree</option><option>PhD</option><option>Teaching diploma</option><option>Other</option>
+          </select>
+        </label>
+        <label>Teaching method
+          <select name="Teaching method" required>
+            <option value="">Select teaching method</option>
+            <option>Online</option><option>In person</option><option>Both</option>
+          </select>
+        </label>
+        <label>Curriculum type
+          <select name="Curriculum type" id="curriculum" required>
+            <option value="">Select curriculum type</option>
+            <option>IGCSE / Cambridge</option><option>American Curriculum</option><option>International Baccalaureate (IB)</option><option>Montessori</option>
+          </select>
+        </label>
+        <label>School name
+          <input type="text" name="School name" placeholder="Your current or most recent school">
+        </label>
+        <label>Teaching experience (years)
+          <input type="number" name="Teaching experience (years)" min="0" max="60" placeholder="For example, 5" required>
+        </label>
+      </div>
+
+      <div class="form-grid form-grid-2">
+        <label>Bio
+          <textarea name="Bio" rows="6" placeholder="Tell us about yourself and your teaching"></textarea>
+        </label>
+        <label class="upload">Upload your CV
+          <span class="upload-box">
+            <span class="upload-icon" aria-hidden="true">⇪</span>
+            <span id="file-name">Choose a PDF or Word file</span>
+            <input type="file" name="CV" id="cv" accept=".pdf,.doc,.docx" required>
+          </span>
+        </label>
+      </div>
+
+      <button type="submit" class="btn btn-red btn-big submit">Submit your application</button>
+    </form>
+
+    <div class="thanks" id="thanks" hidden>
+      <h2>Application sent</h2>
+      <p>Thank you for applying to Think Nest. We’ll review your application and contact you by email.</p>
+      <a href="careers.html" class="btn btn-red">Back to job openings</a>
+    </div>
+  </main>
+  <footer class="footer">
+    <div class="container footer-inner">
+      <img src="images/tn-logo.png" alt="Think Nest" class="footer-logo">
+      <div class="footer-middle">
+        <ul class="footer-links">
+          <li><a href="index.html#about">About Us</a></li>
+          <li><a href="index.html#courses">Courses</a></li>
+          <li><a href="index.html#paths">Think Paths</a></li>
+        </ul>
+        <div class="social">
+          <a href="#" aria-label="Instagram"><img src="images/tn-instagram.png" alt=""></a>
+          <a href="#" aria-label="YouTube"><img src="images/tn-youtube.png" alt=""></a>
+          <a href="#" aria-label="LinkedIn"><img src="images/tn-linkedin.png" alt=""></a>
+        </div>
+      </div>
+    </div>
+    <p class="copyright">Copyright © <span id="year">2026</span> THINK NEST. All rights reserved.</p>
+  </footer>
+  <script src="site.js"></script>
+  <script src="jobs.js"></script>
+</body>
+</html>
