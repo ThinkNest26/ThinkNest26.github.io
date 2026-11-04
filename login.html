@@ -22,25 +22,27 @@
       <img src="images/tn-bird.png" alt="" class="bird">
       <h1>Welcome, Student!</h1>
       <p class="auth-sub">Log in to explore lessons, track your progress, and grow your skills every day</p>
-      <form class="auth-form" id="login-form">
+      <form class="auth-form" id="login-form" novalidate>
         <label>Email
-          <input type="email" placeholder="Enter your email" required>
+          <input type="email" name="email" autocomplete="email" placeholder="Enter your email" required>
         </label>
         <label>Password
           <span class="pw">
-            <input type="password" id="pw" placeholder="Enter your password" required>
-            <button type="button" class="pw-eye" id="pw-eye" aria-label="Show password">👁</button>
+            <input type="password" name="password" id="pw" autocomplete="current-password" placeholder="Enter your password" required>
+            <button type="button" class="pw-eye" data-eye="pw" aria-label="Show password">👁</button>
           </span>
         </label>
-        <a href="#" class="forgot" data-soon="Password reset">Forgot password?</a>
-        <label class="remember"><input type="checkbox"> Remember me</label>
+        <a href="#" class="forgot" data-soon="Password reset by email">Forgot password?</a>
+        <p class="form-error" id="login-error" role="alert" hidden></p>
         <button type="submit" class="btn btn-red auth-btn">Log in</button>
-        <p class="switch">Don’t have an account? <a href="#" data-soon="Sign up">Sign up</a></p>
-        <p class="demo-note">Demo: type any email and password to see the student dashboard.</p>
+        <p class="switch">Don’t have an account? <a href="signup.html">Sign up</a></p>
       </form>
     </div>
   </main>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js"></script>
   <script src="app.js"></script>
+  <script>startLoginPage();</script>
 </body>
 </html>

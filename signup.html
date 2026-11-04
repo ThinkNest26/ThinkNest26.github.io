@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Student sign up – Think Nest</title>
+  <link rel="icon" href="images/tn-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body class="auth">
+  <header class="app-top">
+    <a href="index.html"><img src="images/tn-logo-dark.png" alt="Think Nest home" class="app-top-logo"></a>
+    <a href="index.html" class="app-exit">Exit</a>
+  </header>
+  <main class="auth-bg">
+    <div class="auth-card">
+      <a href="login.html" class="not-me">‹ Back to log in</a>
+      <img src="images/tn-bird.png" alt="" class="bird">
+      <h1>Create your student account</h1>
+      <ol class="steps" aria-label="Sign up steps">
+        <li class="on">Your account</li><li>Your school</li><li>Parent permission</li>
+      </ol>
+      <form class="auth-form" id="signup-form" novalidate>
+        <fieldset class="step" data-step="1">
+          <legend class="sr">Step 1: your account</legend>
+          <label>Full name <input type="text" name="full_name" autocomplete="name" placeholder="Your full name" required></label>
+          <label>Email <input type="email" name="email" autocomplete="email" placeholder="Enter your email" required></label>
+          <label>Password
+            <span class="pw"><input type="password" name="password" id="pw1" autocomplete="new-password" placeholder="At least 8 characters" minlength="8" required>
+            <button type="button" class="pw-eye" data-eye="pw1" aria-label="Show password">👁</button></span>
+          </label>
+        </fieldset>
+        <fieldset class="step" data-step="2" hidden>
+          <legend class="sr">Step 2: your school</legend>
+          <label>Grade
+            <select name="grade" required>
+              <option value="">Select your grade</option>
+              <option>KG</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option>Grade 10</option><option>Grade 11</option><option>Grade 12</option>
+            </select>
+          </label>
+          <label>Curriculum
+            <select name="curriculum" required>
+              <option value="">Select your curriculum</option>
+              <option>IGCSE / Cambridge</option><option>American Curriculum</option><option>International Baccalaureate (IB)</option><option>Montessori</option><option>UAE MOE</option><option>Other</option>
+            </select>
+          </label>
+          <label>School name <input type="text" name="school" placeholder="Your school (optional)"></label>
+        </fieldset>
+        <fieldset class="step" data-step="3" hidden>
+          <legend class="sr">Step 3: parent permission</legend>
+          <p class="note">If you are under 18, a parent or guardian needs to agree before you use Think Nest.</p>
+          <label>Parent or guardian name <input type="text" name="parent_name" placeholder="Parent’s full name" required></label>
+          <label>Parent or guardian email <input type="email" name="parent_email" placeholder="parent@example.com" required></label>
+          <label class="remember"><input type="checkbox" name="parent_consent" required> I am the parent or guardian, and I agree to my child using Think Nest. I have read the <a href="privacy.html" target="_blank">privacy notice</a>.</label>
+        </fieldset>
+        <p class="form-error" id="signup-error" role="alert" hidden></p>
+        <div class="step-buttons">
+          <button type="button" class="btn btn-white auth-btn outline" id="back" hidden>Back</button>
+          <button type="button" class="btn btn-red auth-btn" id="next-step">Next</button>
+          <button type="submit" class="btn btn-red auth-btn" id="create" hidden>Create account</button>
+        </div>
+        <p class="switch">Already have an account? <a href="login.html">Log in</a></p>
+      </form>
+    </div>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="app.js"></script>
+  <script>startSignupPage();</script>
+</body>
+</html>
