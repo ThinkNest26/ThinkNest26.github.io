@@ -121,6 +121,7 @@ async function startCourse() {
       </div>${l.material_kind ? `<div class="lesson-material panel" id="lm-${l.id}" hidden></div>` : ''}`).join('');
   }
   drawHero(); drawLessons();
+  if (enrol && typeof studentAttendance === 'function') studentAttendance(id, 'my-att');
   if (typeof initStudentLessons === 'function') {
     await initStudentLessons(lessons, id, () => !!enrol, async lid => {
       if (doneIds.has(lid)) return;

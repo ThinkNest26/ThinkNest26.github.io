@@ -156,6 +156,7 @@ async function startChild() {
     window.open(data.signedUrl, '_blank', 'noopener');
   });
   if (typeof childActivities === 'function') childActivities(kidId);
+  if (typeof attendanceOverviewFor === 'function') attendanceOverviewFor(kidId, 'k-att');
   if (typeof getRewards === 'function') getRewards(kidId).then(s => { const b = document.getElementById('k-rewards'); if (b) b.innerHTML = s ? rewardMiniHtml(s, { link: false }) + `<details class="rw-kid-badges"><summary>Badges (${s.badges.filter(x => x.earned).length})</summary><div class="rw-badges small">${s.badges.filter(x => x.earned).map(x => `<div class="rw-badge on"><span>${x.ic}</span><b>${esc(x.name)}</b></div>`).join('') || '<p class="meta">No badges yet.</p>'}</div></details>` : '<p class="meta">No rewards yet.</p>'; });
   const fr = await db.rpc('child_friends', { kid: kidId });
   const friends = fr.data || [];

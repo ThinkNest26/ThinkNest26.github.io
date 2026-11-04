@@ -882,3 +882,47 @@ a.gp-post { display: block; color: inherit; }
 .class-links { display: flex; flex-wrap: wrap; gap: 6px; }
 .class-links .pill { text-decoration: none; }
 .class-tile .rw-board { padding: 0; }
+/* ===== Attendance ===== */
+.att { display: grid; gap: 14px; }
+.att-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.att-top { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.att-top label { display: grid; gap: 6px; font-weight: 600; font-size: .9rem; color: #2F3241; }
+.att-top input, .att-top select { font: inherit; border: 1px solid #C9CCDA; border-radius: 8px; padding: 9px 12px; background: #fff; }
+.att-list { display: grid; gap: 8px; }
+.att-row { display: grid; grid-template-columns: auto minmax(140px, 1fr) auto minmax(140px, 220px); gap: 12px; align-items: center; background: #fff; border: 1px solid #ECEEF6; border-left: 5px solid #ECEEF6; border-radius: 12px; padding: 10px 14px; }
+.att-row.st-present { border-left-color: #2FA84F; } .att-row.st-late { border-left-color: #E3A43B; } .att-row.st-absent { border-left-color: #E5484D; } .att-row.st-excused { border-left-color: #6A78C9; }
+.att-name { display: flex; flex-direction: column; } .att-name b { color: #1D2026; }
+.att-btns { display: flex; gap: 6px; }
+.att-b { border: 1px solid #E4E6F1; background: #fff; border-radius: 10px; padding: 6px 10px; font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer; display: flex; gap: 4px; align-items: center; color: #2F3241; }
+.att-b:hover { border-color: var(--blue); }
+.att-b.on.present { background: #EAF7EE; border-color: #2FA84F; color: #1E7A2B; }
+.att-b.on.late { background: #FFF6E6; border-color: #E3A43B; color: #8A5A00; }
+.att-b.on.absent { background: #FDECEC; border-color: #E5484D; color: #B3261E; }
+.att-b.on.excused { background: #EEF0FB; border-color: #6A78C9; color: #3E4B94; }
+.att-note { font: inherit; border: 1px solid #E4E6F1; border-radius: 8px; padding: 7px 10px; width: 100%; }
+.att-save { display: flex; justify-content: space-between; align-items: center; gap: 12px; position: sticky; bottom: 0; background: #F5F6FB; padding: 10px 0; }
+.att-save .btn { border: 0; cursor: pointer; font: inherit; font-weight: 700; }
+.att-table-wrap { overflow-x: auto; }
+.att-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; }
+.att-table th, .att-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #EEF0F8; }
+.att-table th { background: #F7F8FD; font-size: .85rem; }
+.att-pct { display: inline-block; font-weight: 800; border-radius: 20px; padding: 3px 10px; background: #EEF0F8; }
+.att-pct.good { background: #EAF7EE; color: #1E7A2B; } .att-pct.ok { background: #FFF6E6; color: #8A5A00; } .att-pct.low { background: #FDECEC; color: #B3261E; }
+.att-days { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.att-day { text-align: left; font: inherit; cursor: pointer; display: grid; gap: 4px; border: 1px solid #ECEEF6; }
+.att-day:hover { border-color: var(--blue); }
+.att-day b { color: #1D2026; }
+.checkin { display: flex; align-items: center; gap: 14px; background: #FFF4F3; border: 2px solid var(--red); border-radius: 14px; padding: 12px 16px; margin: 12px 0; }
+.checkin.done { background: #EAF7EE; border-color: #2FA84F; }
+.checkin > span { font-size: 1.6rem; }
+.checkin > div { display: flex; flex-direction: column; flex: 1; }
+.checkin .btn { border: 0; cursor: pointer; font: inherit; font-weight: 700; }
+.att-me { display: flex; align-items: center; gap: 10px; margin: 8px 0 14px; color: #2F3241; }
+.att-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.att-card { border: 1px solid #ECEEF6; border-radius: 12px; padding: 12px; display: grid; gap: 4px; background: #fff; }
+.att-card b { color: #1D2026; }
+.att-card .att-pct { justify-self: start; font-size: 1.1rem; }
+.att-recent-h { margin-top: 12px; } .att-recent { display: grid; gap: 4px; margin-top: 4px; }
+.att-h { font-size: 1.1rem; color: #1D2026; margin-bottom: 8px; }
+#my-att-box { margin-top: 16px; }
+@media (max-width: 900px) { .att-row { grid-template-columns: auto 1fr; } .att-btns, .att-note { grid-column: 1 / -1; } .att-b span { display: none; } }

@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=32">
-  <link rel="stylesheet" href="app.css?v=32">
+  <link rel="stylesheet" href="style.css?v=34">
+  <link rel="stylesheet" href="app.css?v=34">
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -38,6 +38,7 @@
     <main class="dash">
       <a href="my-courses.html" class="back-link">‹ My courses</a>
       <section class="course-hero panel" id="course-hero"><p class="empty">Loading…</p></section>
+      <div id="my-att" class="my-att"></div>
       <h2 class="dash-h">Lessons</h2>
       <section class="lesson-list" id="lessons"></section>
       <h2 class="dash-h">Recordings for this course</h2>
@@ -61,12 +62,13 @@
   <div class="side-shade" id="side-shade"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=32"></script>
-  <script src="app.js?v=32"></script>
-  <script src="notify.js?v=32" defer></script>
-  <script src="lessons.js?v=32"></script>
-  <script src="materials.js?v=32"></script>
-  <script src="student.js?v=32"></script>
+  <script src="supabase-config.js?v=34"></script>
+  <script src="app.js?v=34"></script>
+  <script src="notify.js?v=34" defer></script>
+  <script src="lessons.js?v=34"></script>
+  <script src="materials.js?v=34"></script>
+  <script src="attendance.js?v=34"></script>
+  <script src="student.js?v=34"></script>
   <script>startCourse();</script>
 </body>
 </html>

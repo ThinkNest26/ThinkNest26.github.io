@@ -180,10 +180,13 @@ async function startTeacherCourse() {
   drawHero();
 
   // tabs
+  let attDone = false;
   document.querySelectorAll('[data-tab]').forEach(t => t.addEventListener('click', () => {
     document.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-selected', x === t));
     document.querySelectorAll('.tab-panel').forEach(p => p.hidden = p.id !== t.dataset.tab);
+    if (t.dataset.tab === 't-att' && !attDone && typeof attendancePanel === 'function') { attDone = true; attendancePanel(document.getElementById('att-host'), { cid: id }); }
   }));
+  if (location.hash === '#attendance') { const at = document.querySelector('[data-tab="t-att"]'); if (at) at.click(); }
 
   // lessons
   let lessons = [];

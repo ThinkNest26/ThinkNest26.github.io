@@ -10,6 +10,7 @@ const BADGES = [
   ['lessons', '📖', 'Lesson legend', 'Finish 10 lessons', s => (s.counts.lesson || 0) >= 10],
   ['helper', '🤝', 'Helpful friend', 'Write 10 helpful comments', s => (s.counts.comment || 0) >= 10],
   ['liked', '💛', 'Crowd favourite', 'Get 10 likes on your posts', s => (s.counts.like || 0) >= 10],
+  ['attend', '🙋', 'Always there', 'Attend 10 classes', s => (s.counts.attend || 0) >= 10],
   ['star', '⭐', 'Rising star', 'Get a star from a teacher', s => (s.counts.star || 0) >= 1],
   ['star5', '🌟', 'Star student', 'Get 5 stars from teachers', s => (s.counts.star || 0) >= 5],
   ['streak3', '🔥', 'On fire', 'Learn 3 days in a row', s => s.streak >= 3],
@@ -77,7 +78,7 @@ async function startRewards() {
     <section class="rw-badges">${s.badges.map(b => `<div class="rw-badge ${b.earned ? 'on' : ''}"><span>${b.earned ? b.ic : '🔒'}</span><b>${esc(b.name)}</b><span class="meta">${esc(b.desc)}</span></div>`).join('')}</section>
     <div class="rw-cols">
       <section class="panel"><h3>How to earn Nest Points</h3><ul class="rw-how">
-        <li><b>+10</b> Hand in a worksheet, quiz or task</li><li><b>+5</b> Bonus for a perfect score</li><li><b>+5</b> Finish a lesson</li>
+        <li><b>+10</b> Hand in a worksheet, quiz or task</li><li><b>+5</b> Bonus for a perfect score</li><li><b>+5</b> Finish a lesson</li><li><b>+2</b> Come to class (or ✋ check in to a live class)</li>
         <li><b>+5</b> For every ⭐ star from a teacher</li><li><b>+3</b> Share a post (up to 3 a day)</li><li><b>+2</b> Post in a group (up to 5 a day)</li>
         <li><b>+1</b> Write a helpful comment (up to 10 a day)</li><li><b>+1</b> When someone likes your post</li></ul></section>
       <section class="panel"><h3>Recent points</h3>${s.recent.length ? `<ul class="rw-recent">${s.recent.map(r => `<li><b>+${r.points}</b><span>${esc(r.reason)}</span><span class="meta">${new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span></li>`).join('')}</ul>` : '<p class="empty">Hand in some work or join the community to earn your first points!</p>'}</section>
