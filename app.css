@@ -296,3 +296,15 @@ a.pill { display: inline-block; }
 .step-buttons.narrow { max-width: 460px; margin: 28px auto 0; }
 .stat-ic { font-size: 1.5rem; }
 .auth-form input[type=tel], .auth-form input[type=url], .auth-form input[type=number] { font: inherit; border: 1px solid #2F3241; border-radius: 6px; padding: 13px 16px; width: 100%; background: var(--white); }
+
+/* admin approvals */
+.count { display: inline-grid; place-items: center; min-width: 28px; height: 28px; padding: 0 8px; border-radius: 14px; background: #EEF0F8; color: var(--blue); font-size: .9rem; margin-left: 6px; vertical-align: middle; }
+.approve-list { display: grid; gap: 12px; }
+.person { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 18px 22px; }
+.person .initials { width: 48px; height: 48px; }
+.person-info { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 2px; }
+.person-info h4 { margin: 0; }
+.person-actions { display: flex; gap: 8px; align-items: center; }
+.declined-box { margin-top: 28px; }
+.declined-box summary { cursor: pointer; font-weight: 700; color: #2F3241; }
+.declined-box .approve-list { margin-top: 14px; }

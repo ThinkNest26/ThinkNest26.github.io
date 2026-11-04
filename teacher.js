@@ -6,7 +6,7 @@ async function initTeacher() {
   const { data: { session } } = await db.auth.getSession();
   if (!session) { location.href = 'teacher-login.html'; throw new Error('not logged in'); }
   const { data: p } = await db.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
-  if (!p || !['teacher', 'school_leader'].includes(p.role)) {
+  if (!p || !['teacher', 'school_leader', 'admin'].includes(p.role)) {
     location.href = p && p.requested_role === 'teacher' ? 'teacher-pending.html' : 'student-dashboard.html';
     throw new Error('not a teacher');
   }
@@ -17,6 +17,10 @@ async function initTeacher() {
   document.getElementById('logout').addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; });
   const initials = (p.full_name || session.user.email).split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
   document.querySelectorAll('#me-initials, #me-initials-small').forEach(el => el.textContent = initials);
+  if (p.role === 'admin' && !document.querySelector('a[href="admin.html"]')) {
+    const ul = document.querySelector('.side nav ul');
+    ul.insertAdjacentHTML('afterbegin', '<li><a href="admin.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg><span>Approvals</span></a></li>');
+  }
   document.querySelectorAll('dialog [data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
   return { user: session.user, profile: p };
 }
@@ -290,6 +294,59 @@ async function startTeacherCalendar() {
     const b = e.target.closest('[data-del]'); if (!b || !confirm('Delete this live class?')) return;
     const { error } = await db.from('sessions').delete().eq('id', Number(b.dataset.del));
     if (error) return say(friendly(error));
+    load();
+  });
+}
+
+
+// ---------- Admin: teacher approvals ----------
+async function startAdmin() {
+  const { profile } = await initTeacher();
+  if (profile.role !== 'admin') { location.href = 'teacher-dashboard.html'; return; }
+  const person = (p, buttons) => `<article class="panel person">
+      <span class="initials">${esc((p.full_name || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</span>
+      <div class="person-info"><h4>${esc(p.full_name || 'No name given')}</h4>
+        <span class="meta">${[p.subject && 'Teaches ' + p.subject, p.school, p.phone].filter(Boolean).map(esc).join(' · ') || 'No details given'}</span>
+        <span class="meta">Requested ${new Date(p.created_at).toLocaleDateString('en-GB')}</span></div>
+      <div class="person-actions">${buttons}</div></article>`;
+  async function load() {
+    const [all, cs, en] = await Promise.all([
+      db.from('profiles').select('*').order('created_at', { ascending: false }),
+      db.from('courses').select('id', { count: 'exact', head: true }),
+      db.from('enrollments').select('id', { count: 'exact', head: true })
+    ]);
+    if (all.error) return say(friendly(all.error));
+    const ps = all.data;
+    const pending = ps.filter(p => p.role === 'student' && p.requested_role === 'teacher');
+    const teachers = ps.filter(p => p.role === 'teacher' || p.role === 'school_leader');
+    const declined = ps.filter(p => p.role === 'student' && ['declined', 'removed'].includes(p.requested_role));
+    document.getElementById('n-pending').textContent = pending.length;
+    document.getElementById('n-teachers').textContent = teachers.length;
+    document.getElementById('n-declined').textContent = declined.length;
+    document.getElementById('pending').innerHTML = pending.length ? pending.map(p => person(p,
+      `<button class="pill pill-live" data-act="approve_teacher" data-id="${p.id}">Approve</button><button class="pill pill-soft danger" data-act="decline_teacher" data-id="${p.id}" data-name="${esc(p.full_name || '')}">Decline</button>`)).join('')
+      : '<p class="empty">No requests waiting. 🎉</p>';
+    document.getElementById('teachers').innerHTML = teachers.length ? teachers.map(p => person(p,
+      `<span class="tag tag-now">Teacher</span><button class="pill pill-soft danger" data-act="remove_teacher" data-id="${p.id}" data-name="${esc(p.full_name || '')}">Remove</button>`)).join('')
+      : '<p class="empty">No approved teachers yet.</p>';
+    document.getElementById('declined').innerHTML = declined.length ? declined.map(p => person(p,
+      `<span class="tag">${p.requested_role === 'removed' ? 'Removed' : 'Declined'}</span><button class="pill pill-soft" data-act="approve_teacher" data-id="${p.id}">Approve instead</button>`)).join('')
+      : '<p class="empty">Nobody here.</p>';
+    document.getElementById('st-students').textContent = ps.filter(p => p.role === 'student' && !p.requested_role).length;
+    document.getElementById('st-teachers').textContent = teachers.length;
+    document.getElementById('st-courses').textContent = cs.count ?? 0;
+    document.getElementById('st-enrol').textContent = en.count ?? 0;
+  }
+  load();
+  document.querySelector('main').addEventListener('click', async e => {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    const act = b.dataset.act;
+    if (act === 'decline_teacher' && !confirm('Decline ' + (b.dataset.name || 'this request') + '? They keep a normal student account.')) return;
+    if (act === 'remove_teacher' && !confirm('Remove ' + (b.dataset.name || 'this teacher') + ' as a teacher? They will no longer see the teacher area or their students. Their courses stay on the site.')) return;
+    b.disabled = true;
+    const { error } = await db.rpc(act, { person: b.dataset.id });
+    if (error) { b.disabled = false; return say(friendly(error)); }
+    say(act === 'approve_teacher' ? 'Approved! They can now log in to the teacher area.' : act === 'decline_teacher' ? 'Request declined.' : 'Teacher removed.');
     load();
   });
 }
