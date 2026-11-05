@@ -169,7 +169,8 @@ async function startChat() {
   }
 
   await loadList();
-  if (params.get('friend')) openFriend(params.get('friend'));
+  if (params.get('with')) { const { data, error } = await db.rpc('open_adult_chat', { other: params.get('with') }); if (error) say(friendly(error)); else { await loadList(); open(data); } }
+  else if (params.get('friend')) openFriend(params.get('friend'));
   else if (params.get('group')) {
     const { data, error } = await db.rpc('open_group_chat', { gid: Number(params.get('group')) });
     if (error) say(friendly(error)); else open(data);

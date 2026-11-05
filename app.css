@@ -1123,3 +1123,51 @@ body.cafe-theme .post { border-radius: 20px; }
 .brew-q { font-size: 1.05rem; font-weight: 700; color: #3E2A1E; line-height: 1.5; margin: 4px 0 8px; }
 .brew .btn { justify-self: start; background: #8B5A3C; border: 0; cursor: pointer; font: inherit; font-weight: 700; padding: 9px 16px; }
 @media (prefers-reduced-motion: reduce) { .react.pop { animation: none; } .poll-bar { transition: none; } }
+/* ===== Coffee, Chats & Connections ===== */
+#cx-page { display: grid; gap: 18px; }
+.cx-hero { display: flex; gap: 18px; align-items: center; background: linear-gradient(120deg, #5B3A29 0%, #8B5A3C 45%, #D08C5B 100%); color: #fff; border-radius: 24px; padding: 26px 28px; }
+.cx-hero h1 { color: #fff; font-size: 2rem; }
+.cx-hero p { opacity: .92; margin-top: 4px; max-width: 640px; }
+.cx-cup { font-size: 3.6rem; background: rgba(255,255,255,.16); border-radius: 24px; width: 96px; height: 96px; display: grid; place-items: center; flex: none; }
+.cx-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.cx-tabs button { border: 0; background: #fff; border-radius: 30px; padding: 11px 20px; font: inherit; font-weight: 800; cursor: pointer; color: #5B3A29; box-shadow: 0 2px 8px rgba(91,58,41,.08); }
+.cx-tabs button[aria-selected=true] { background: #8B5A3C; color: #fff; }
+#cx-body { display: grid; gap: 16px; }
+.cx-roulette { text-align: center; display: grid; gap: 12px; justify-items: center; background: linear-gradient(180deg, #FFF6EA, #fff); border: 2px solid #F1DCC4; padding: 30px 24px; }
+.cx-roulette h2 { color: #3E2A1E; }
+.cx-roulette p { max-width: 520px; color: #4A4E5E; line-height: 1.6; }
+.cx-cups { font-size: 2.6rem; display: flex; gap: 10px; align-items: center; }
+.cx-plus { font-size: 1.4rem; color: #8B5A3C; font-weight: 800; }
+.cx-roulette .btn, .cx-me .btn, .cx-head .btn, .cx-meet .btn, .cx-hi { background: #8B5A3C; border: 0; cursor: pointer; font: inherit; font-weight: 800; }
+.cx-match { display: flex; gap: 14px; align-items: center; background: #fff; border-radius: 18px; padding: 14px 20px; box-shadow: 0 6px 18px rgba(91,58,41,.1); text-align: left; }
+.cx-match div { display: flex; flex-direction: column; }
+.initials.big { width: 56px; height: 56px; font-size: 1.2rem; }
+.initials.sm { width: 28px; height: 28px; font-size: .7rem; margin-right: -6px; border: 2px solid #fff; }
+.cx-opt { justify-content: center; font-size: .92rem; }
+.cx-me { display: grid; gap: 10px; max-width: 640px; }
+.cx-me label { display: grid; gap: 6px; font-weight: 600; font-size: .9rem; }
+.cx-me input, .cx-search { font: inherit; border: 1px solid #E2CDB6; border-radius: 10px; padding: 10px 12px; }
+.cx-me .btn { justify-self: start; }
+.cx-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.cx-head h2 { color: #1D2026; }
+.cx-form { border: 2px solid #F1DCC4; }
+.cx-meetups { display: grid; gap: 12px; }
+.cx-meet { display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: center; }
+.cx-date { width: 64px; height: 70px; border-radius: 16px; background: #FFF1DE; color: #5B3A29; display: grid; place-items: center; align-content: center; }
+.cx-date b { font-size: 1.6rem; line-height: 1; }
+.cx-date span { font-size: .8rem; font-weight: 800; text-transform: uppercase; }
+.cx-meet-info { display: grid; gap: 4px; }
+.cx-meet-info h3 { color: #1D2026; }
+.cx-going { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+.cx-going .meta { margin-left: 12px; }
+.cx-meet-btns { display: grid; gap: 6px; justify-items: end; }
+.cx-people { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+.cx-person { display: grid; gap: 6px; justify-items: center; text-align: center; }
+.cx-person b { color: #1D2026; }
+.cx-tag { font-size: .85rem; border-radius: 12px; padding: 6px 10px; margin: 0; width: 100%; }
+.cx-tag.help { background: #E2F5F0; color: #1B6B5B; }
+.cx-tag.learn { background: #FFF3DC; color: #8A5A00; }
+.cx-hi { margin-top: 6px; padding: 9px 18px; text-decoration: none; }
+.cx-promo { display: grid; gap: 4px; background: #fff; border: 2px dashed #D9A877; color: #5B3A29; }
+.cx-promo span { font-size: .88rem; }
+@media (max-width: 700px) { .cx-meet { grid-template-columns: auto 1fr; } .cx-meet-btns { grid-column: 1 / -1; justify-items: start; } .cx-hero { flex-direction: column; align-items: flex-start; } }
