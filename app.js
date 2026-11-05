@@ -147,18 +147,41 @@ function startSignupPage() {
     }
     return true;
   }
-  next.addEventListener('click', () => { if (valid(steps[i])) show(i + 1); });
+  // Children under 13 need a parent to create their account (unless they came from their parent's invite link)
+  const ageSel = document.getElementById('age'), stop = document.getElementById('age-stop');
+  const invited = () => new URLSearchParams(location.search).has('parent_email');
+  const under13 = () => ageSel && ageSel.value && Number(ageSel.value) < 13 && !invited();
+  const ageCheck = () => {
+    if (!ageSel) return false;
+    const block = under13();
+    stop.hidden = !block;
+    steps[0].querySelectorAll('label').forEach(l => { if (!l.contains(ageSel)) l.hidden = block; });
+    next.hidden = block;
+    return block;
+  };
+  if (ageSel) {
+    ageSel.addEventListener('change', ageCheck);
+    const sh = document.getElementById('age-share');
+    if (sh) sh.addEventListener('click', async () => {
+      const url = location.origin + location.pathname.replace(/[^/]*$/, '') + 'parent-signup.html';
+      const text = 'Please create my Think Nest account. Sign up as a parent here and add me as your child: ' + url;
+      if (navigator.share) { try { await navigator.share({ title: 'Think Nest', text, url }); return; } catch (_) {} }
+      window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener');
+    });
+  }
+  next.addEventListener('click', () => { if (ageCheck()) return; if (valid(steps[i])) show(i + 1); });
   back.addEventListener('click', () => show(i - 1));
   form.addEventListener('submit', async e => {
     e.preventDefault();
     if (!valid(steps[i])) return;
+    if (f.age && Number(f.age.value) < 13 && !new URLSearchParams(location.search).has('parent_email')) { show(0); return; }
     create.disabled = true; create.textContent = 'Creating account…';
     const f = form;
     const { data, error } = await db.auth.signUp({
       email: f.email.value.trim(),
       password: f.password.value,
       options: { data: {
-        full_name: f.full_name.value.trim(), role: 'student',
+        full_name: f.full_name.value.trim(), role: 'student', age: f.age ? f.age.value : '',
         grade: f.grade.value, curriculum: f.curriculum.value, school: f.school.value.trim(),
         parent_name: f.parent_name.value.trim(), parent_email: f.parent_email.value.trim(),
         parent_consent: f.parent_consent.checked
