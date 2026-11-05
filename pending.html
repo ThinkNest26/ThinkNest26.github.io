@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Waiting for approval – Think Nest</title>
+  <link rel="icon" href="images/tn-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=36">
+  <link rel="stylesheet" href="app.css?v=36">
+</head>
+<body class="auth">
+  <header class="app-top">
+    <a href="index.html"><img src="images/tn-logo-dark.png" alt="Think Nest home" class="app-top-logo"></a>
+    <a href="index.html" class="app-exit">Exit</a>
+  </header>
+      <main class="auth-bg">
+    <div class="auth-card pending-card" id="pend"><p class="empty">Loading…</p></div>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js?v=55"></script>
+  <script src="app.js?v=55"></script>
+  <script>
+  (async () => {
+    const box = document.getElementById('pend');
+    const { data: { session } } = await db.auth.getSession();
+    if (!session) { location.href = 'start.html'; return; }
+    const { data: p } = await db.from('profiles').select('full_name, role, requested_role, account_status').eq('id', session.user.id).maybeSingle();
+    const home = r => ({ parent: 'parent-dashboard.html', teacher: 'teacher-dashboard.html', school_leader: 'teacher-dashboard.html', admin: 'admin.html' }[r] || 'student-dashboard.html');
+    if (p && (p.account_status === 'approved' || p.role === 'admin')) { location.href = home(p.role); return; }
+    const first = ((p && p.full_name) || '').split(' ')[0];
+    box.innerHTML = p && p.account_status === 'declined'
+      ? `<div class="pend-ic">🙏</div><h1>Sorry${first ? ', ' + esc(first) : ''}</h1><p class="auth-sub">Your account wasn’t approved this time. If you think this is a mistake, please contact us and we’ll be happy to help.</p><a class="btn btn-red auth-btn" href="contact.html">Contact us</a><button type="button" class="link-btn" id="out">Log out</button>`
+      : `<div class="pend-ic">⏳</div><h1>Thanks${first ? ', ' + esc(first) : ''}!</h1><p class="auth-sub">Your account is waiting for approval by the Think Nest team. This usually takes less than one working day. You’ll be able to use Think Nest as soon as it’s approved.</p>
+         <ul class="pend-steps"><li>✅ Account created</li><li>⏳ Checked by the Think Nest team</li><li>🎉 Start learning!</li></ul>
+         <button type="button" class="btn btn-red auth-btn" id="again">Check again</button><button type="button" class="link-btn" id="out">Log out</button>`;
+    const again = document.getElementById('again'); if (again) again.onclick = () => location.reload();
+    document.getElementById('out').onclick = async () => { await db.auth.signOut(); location.href = 'index.html'; };
+  })();
+  </script>
+</body>
+</html>

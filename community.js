@@ -355,3 +355,31 @@ async function loadHubRequests() {
     say(ok ? 'Approved. They’ve been told. 🎉' : 'Done. They’ve been told.'); loadHubRequests();
   };
 }
+
+// ---------- Admin: new accounts waiting for approval ----------
+async function loadNewAccounts() {
+  const box = document.getElementById('newacc-box'); if (!box) return;
+  const { data, error } = await db.rpc('pending_accounts');
+  if (error) { box.innerHTML = '<p class="empty">Run database update 31 to see new accounts.</p>'; return; }
+  const rows = (data || []).filter(r => !(r.requested_role === 'teacher' && r.role !== 'teacher'));
+  const pending = rows.filter(r => r.account_status === 'pending'), declined = rows.filter(r => r.account_status === 'declined');
+  document.getElementById('n-newacc').textContent = pending.length;
+  const label = r => ({ student: '🎒 Student', parent: '👪 Parent', teacher: '👩‍🏫 Teacher', school_leader: '🏫 School leader' }[r.role] || r.role);
+  const card = r => `<article class="panel person" data-acc="${r.id}">
+      <span class="initials">${esc((r.full_name || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</span>
+      <div class="person-info"><h4>${esc(r.full_name || 'No name')} <span class="tag">${label(r)}</span></h4><span class="meta">${esc(r.email || '')}${r.created_at ? ' · signed up ' + new Date(r.created_at).toLocaleDateString('en-GB') : ''}</span>
+        <span class="meta">${esc([r.grade, r.curriculum, r.school, r.country].filter(Boolean).join(' · '))}</span>
+        ${r.parent_name || r.parent_email ? `<span class="meta">Parent: ${esc([r.parent_name, r.parent_email].filter(Boolean).join(' · '))}</span>` : ''}</div>
+      <div class="person-actions"><button class="pill pill-live" data-accok>Approve</button>${r.account_status === 'pending' ? '<button class="pill pill-soft danger" data-accno>Decline</button>' : ''}</div></article>`;
+  box.innerHTML = (pending.length ? pending.map(card).join('') : '<p class="empty">No new accounts waiting. 🎉</p>') +
+    (declined.length ? `<details class="hubreq-done"><summary>Declined (${declined.length})</summary>${declined.map(card).join('')}</details>` : '');
+  box.onclick = async e => {
+    const row = e.target.closest('[data-acc]'); if (!row) return;
+    const ok = !!e.target.closest('[data-accok]'), no = !!e.target.closest('[data-accno]');
+    if (!ok && !no) return;
+    if (no && !confirm('Decline this account? They won’t be able to use Think Nest.')) return;
+    const { error: er } = await db.rpc('decide_account', { uid: row.dataset.acc, ok });
+    if (er) return say(friendly(er));
+    say(ok ? 'Approved! They can log in now. 🎉' : 'Declined.'); loadNewAccounts();
+  };
+}

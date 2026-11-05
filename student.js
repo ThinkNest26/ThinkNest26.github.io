@@ -13,6 +13,7 @@ async function initShell() {
   shade.addEventListener('click', () => { side.classList.remove('open'); shade.classList.remove('show'); });
   document.getElementById('logout').addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; });
   const { data: p } = await db.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
+  gateApproval(p);
   const initials = ((p && p.full_name) || session.user.email).split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
   const small = document.getElementById('me-initials-small'); if (small) small.textContent = initials;
   return { user: session.user, profile: p || {} };
@@ -52,7 +53,8 @@ async function startMyCourses() {
 
 // ---------- All courses ----------
 async function startAllCourses() {
-  const { user } = await initShell();
+  const { user, profile } = await initShell();
+  const forWho = new URLSearchParams(location.search).get('for') || ({ teacher: 'teachers', school_leader: 'teachers', parent: 'parents' }[profile && profile.role] || 'students');
   const [cs, en] = await Promise.all([
     db.from('courses').select('*').order('id'),
     db.from('enrollments').select('*').eq('user_id', user.id)
@@ -64,7 +66,7 @@ async function startAllCourses() {
   q.value = new URLSearchParams(location.search).get('q') || '';
   function render() {
     const term = q.value.trim().toLowerCase();
-    const shown = cs.data.filter(c => !term || [c.title, c.description, c.category, c.teacher_name].join(' ').toLowerCase().includes(term));
+    const shown = cs.data.filter(c => (c.audience || 'students') === forWho).filter(c => !term || [c.title, c.description, c.category, c.teacher_name].join(' ').toLowerCase().includes(term));
     list.innerHTML = shown.length ? shown.map((c, k) => courseCard(c, mine.find(e => e.course_id === c.id), k)).join('')
       : '<p class="empty">No courses match your search.</p>';
   }

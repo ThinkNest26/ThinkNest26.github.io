@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=36">
-  <link rel="stylesheet" href="app.css?v=36">
+  <link rel="stylesheet" href="style.css?v=55">
+  <link rel="stylesheet" href="app.css?v=55">
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -41,6 +41,9 @@
       <h2 class="dash-h" id="waitlists">Waiting lists</h2>
       <p class="hint">Students waiting for a class to open. Ask a teacher to create a course with this subject, curriculum and grade, and everyone waiting is told automatically.</p>
       <section class="panel" id="waitlist-box"><p class="empty">Loading…</p></section>
+      <h2 class="dash-h" id="new-accounts">New accounts <span class="count" id="n-newacc">0</span></h2>
+      <p class="hint">Every new student and parent waits here for your approval (teachers appear under Teachers). You also get an email at thinknest2026@gmail.com.</p>
+      <section class="approve-list" id="newacc-box"><p class="empty">Loading…</p></section>
       <h2 class="dash-h" id="hub-requests">Hub requests <span class="count" id="n-hubreq">0</span></h2>
       <p class="hint">Teachers and parents asking to join Beyond the Bell or Beyond the School Run. You also get an email at thinknest2026@gmail.com.</p>
       <section class="approve-list" id="hubreq-box"><p class="empty">Loading…</p></section>
@@ -79,14 +82,14 @@
   <div class="side-shade" id="side-shade"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=36"></script>
-  <script src="app.js?v=36"></script>
-  <script src="nav.js?v=36"></script>
-  <script src="notify.js?v=36" defer></script>
-  <script src="teacher.js?v=36"></script>
+  <script src="supabase-config.js?v=55"></script>
+  <script src="app.js?v=55"></script>
+  <script src="nav.js?v=55"></script>
+  <script src="notify.js?v=55" defer></script>
+  <script src="teacher.js?v=55"></script>
   <script>startAdmin();</script>
-  <script src="community.js?v=36"></script>
-  <script src="chat.js?v=36"></script>
-  <script>loadReports().then(loadGroupReports); loadMessageReview(); loadApprovalSetting(); loadWaitlists(); loadHubRequests();</script>
+  <script src="community.js?v=55"></script>
+  <script src="chat.js?v=55"></script>
+  <script>loadReports().then(loadGroupReports); loadMessageReview(); loadApprovalSetting(); loadWaitlists(); loadHubRequests(); loadNewAccounts();</script>
 </body>
 </html>

@@ -6,6 +6,7 @@ async function initTeacher() {
   const { data: { session } } = await db.auth.getSession();
   if (!session) { location.href = 'teacher-login.html'; throw new Error('not logged in'); }
   const { data: p } = await db.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
+  if (p && p.role !== 'admin' && p.account_status === 'declined') { location.href = 'pending.html'; throw new Error('declined'); }
   if (!p || !['teacher', 'school_leader', 'admin'].includes(p.role)) {
     location.href = p && p.requested_role === 'teacher' ? 'teacher-pending.html' : 'student-dashboard.html';
     throw new Error('not a teacher');
@@ -61,6 +62,7 @@ function startTeacherSignup() {
     btn.disabled = false; btn.textContent = 'Send request';
     if (error) return showError(err, friendly(error));
     if (alreadyRegistered(su)) return showError(err, ALREADY_MSG);
+    emailAdmin('New teacher account waiting for approval', { Name: (f.full_name ? f.full_name.value.trim() : ''), Email: f.email.value.trim(), Account: 'Teacher', Subject: (f.subject ? f.subject.value : ''), 'What to do': 'Log in as admin and open Approvals → Teachers to approve.' });
     location.href = 'teacher-pending.html';
   });
 }

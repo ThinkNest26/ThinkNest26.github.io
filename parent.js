@@ -25,8 +25,9 @@ function startParentSignup() {
     btn.disabled = false; btn.textContent = 'Continue';
     if (error) return showError(err, friendly(error));
     if (alreadyRegistered(data)) { if (typeof btn !== 'undefined' && btn) { btn.disabled = false; } return showError(err, ALREADY_MSG); }
-    if (data.session) location.href = 'parent-dashboard.html';
-    else f.innerHTML = '<div class="note big-note"><b>Almost done! 📧</b><br>We’ve sent an email to <b>' + esc(f.email.value.trim()) + '</b>. Click the link in it to confirm your account, then log in. Check your spam folder if you can’t see it.</div><a class="btn btn-red auth-btn" href="parent-login.html">Go to log in</a>';
+    emailAdmin('New parent account waiting for approval', { Name: (f.full_name ? f.full_name.value.trim() : ''), Email: f.email.value.trim(), Account: 'Parent', 'What to do': 'Log in as admin and open Approvals → New accounts.' });
+    if (data.session) location.href = 'pending.html';
+    else f.innerHTML = '<div class="note big-note"><b>Almost done! 🎉</b><br>Your account has been created. The Think Nest team will check and approve it, usually within one working day. We’ve also sent an email to <b>' + esc(f.email.value.trim()) + '</b> with a link to confirm your address (check spam too).</div><a class="btn btn-red auth-btn" href="parent-login.html">Go to log in</a>';
   });
 }
 
@@ -36,6 +37,7 @@ async function initParent() {
   if (!session) { location.href = 'parent-login.html'; throw new Error('not logged in'); }
   const { data: me } = await db.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
   if (!me || !['parent', 'admin'].includes(me.role)) { location.href = 'student-dashboard.html'; throw new Error('not a parent'); }
+  gateApproval(me);
   document.body.classList.remove('loading');
   const side = document.getElementById('side'), shade = document.getElementById('side-shade'), st = document.getElementById('side-toggle');
   if (st) {

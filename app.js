@@ -28,6 +28,17 @@ document.querySelectorAll('[data-eye]').forEach(eye => eye.addEventListener('cli
 // Supabase returns a user with no identities when the email is already registered
 function alreadyRegistered(data) { return !!(data && data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0); }
 const ALREADY_MSG = 'An account with this email already exists. Please log in, or use “Forgot password?” if you can’t remember the password.';
+// Every account must be approved by the Think Nest admin before it can be used
+function gateApproval(p) {
+  if (p && p.role !== 'admin' && p.account_status && p.account_status !== 'approved' && !/pending\.html$/.test(location.pathname)) {
+    location.href = 'pending.html'; throw new Error('waiting for approval');
+  }
+}
+// Email the Think Nest inbox (free FormSubmit service, same as the Careers form)
+function emailAdmin(subject, fields) {
+  try { fetch('https://formsubmit.co/ajax/thinknest2026@gmail.com', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(Object.assign({ _subject: subject, _template: 'table', _captcha: 'false' }, fields)) }).catch(() => {}); } catch (_) {}
+}
 function showError(el, msg) { el.textContent = msg; el.hidden = !msg; }
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 function friendly(err) {
@@ -152,8 +163,9 @@ function startSignupPage() {
     create.disabled = false; create.textContent = 'Create account';
     if (error) return showError(err, friendly(error));
     if (alreadyRegistered(data)) { if (typeof btn !== 'undefined' && btn) { btn.disabled = false; } return showError(err, ALREADY_MSG); }
-    if (data.session) location.href = 'student-dashboard.html';
-    else { document.getElementById('signup-form').innerHTML = '<div class="note big-note"><b>Almost done! 📧</b><br>We’ve sent an email to <b>' + esc(f.email.value.trim()) + '</b>. Click the link in it to confirm your account, then log in. Check your spam folder if you can’t see it.</div><a class="btn btn-red auth-btn" href="login.html">Go to log in</a>'; }
+    emailAdmin('New student account waiting for approval', { Name: f.full_name.value.trim(), Email: f.email.value.trim(), Account: 'Student', Grade: f.grade.value, Curriculum: f.curriculum.value, School: f.school.value.trim(), 'Parent name': f.parent_name.value.trim(), 'Parent email': f.parent_email.value.trim(), 'What to do': 'Log in as admin and open Approvals → New accounts.' });
+    if (data.session) location.href = 'pending.html';
+    else { document.getElementById('signup-form').innerHTML = '<div class="note big-note"><b>Almost done! 🎉</b><br>Your account has been created. The Think Nest team will check and approve it, usually within one working day. We’ve also sent an email to <b>' + esc(f.email.value.trim()) + '</b> with a link to confirm your address (check spam too).</div><a class="btn btn-red auth-btn" href="login.html">Go to log in</a>'; }
   });
   show(0);
 }
@@ -174,6 +186,8 @@ function relative(ts) {
 async function startDashboard() {
   const { data: { session } } = await db.auth.getSession();
   if (!session) { location.href = 'login.html'; return; }
+  const { data: gp } = await db.from('profiles').select('role, account_status').eq('id', session.user.id).maybeSingle();
+  gateApproval(gp);
   document.body.classList.remove('loading');
   const uid = session.user.id;
 
