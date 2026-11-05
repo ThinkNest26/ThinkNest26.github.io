@@ -1077,3 +1077,49 @@ a.gp-post { display: block; color: inherit; }
 .age-stop p { margin: 0; color: #4A4E5E; line-height: 1.55; }
 .age-stop .btn { text-decoration: none; }
 .msg-card { display: grid; gap: 6px; } .msg-card header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; } .msg-card header .meta { margin-left: auto; } .msg-body { white-space: pre-wrap; line-height: 1.6; background: #F7F8FD; border-radius: 10px; padding: 10px 12px; margin: 4px 0; } .msg-card.done { opacity: .7; }
+/* ===================== CAFÉ THEME ===================== */
+body.cafe-theme .dash { background: radial-gradient(circle at 90% 0, #FFF1DE 0 220px, transparent 221px), #FFF9F1; }
+body.cafe-theme .comm-hero { background: linear-gradient(120deg, #5B3A29 0%, #8B5A3C 45%, #D08C5B 100%); }
+body.cafe-theme .comm-hero::after { background: rgba(255,236,210,.14); }
+body.cafe-theme .comm-hero::before { content: "☕"; position: absolute; right: 34px; bottom: 10px; font-size: 5.5rem; opacity: .22; transform: rotate(-12deg); }
+body.cafe-theme .comm-hero h1 { font-size: 2.3rem; }
+body.cafe-theme .comm-rules { background: #FFF1DE; border: 1px dashed #D9A877; color: #5B3A29; }
+body.cafe-theme .composer { border: 2px solid #F1DCC4; }
+body.cafe-theme .post-types input:checked + span { background: #FFF1DE; border-color: #8B5A3C; color: #5B3A29; }
+body.cafe-theme .feed-filter .chip.on { background: #8B5A3C; border-color: #8B5A3C; color: #fff; }
+body.cafe-theme #post-btn { background: #8B5A3C; }
+body.cafe-theme .post { border-radius: 20px; }
+.cafe-types { gap: 6px; }
+.cafe-tool { display: grid; gap: 8px; background: #FFF9F1; border: 1px solid #F1DCC4; border-radius: 14px; padding: 12px; margin-top: 10px; }
+.cafe-tool b { color: #5B3A29; }
+.cafe-tool input, .cafe-tool select { font: inherit; border: 1px solid #E2CDB6; border-radius: 10px; padding: 9px 12px; background: #fff; }
+/* post badges for new types */
+.post.pt-hack { border-left: 5px solid #E3A43B; } .post.pt-hack .pt-badge { background: #FFF3DC; color: #8A5A00; }
+.post.pt-resource { border-left: 5px solid #2FA08A; } .post.pt-resource .pt-badge { background: #E2F5F0; color: #1B6B5B; }
+.post.pt-help { border-left: 5px solid #E5484D; } .post.pt-help .pt-badge { background: #FDECEC; color: #B3261E; }
+.post.pt-funny { border-left: 5px solid #8A5CF6; } .post.pt-funny .pt-badge { background: #F1ECFF; color: #5B36B5; }
+.post.pt-shoutout { border-left: 5px solid #F27A6F; background: linear-gradient(180deg, #FFF4F2, #fff 60%); } .post.pt-shoutout .pt-badge { background: #FFE6E3; color: #B23A2F; }
+.post.pt-poll { border-left: 5px solid #3E8EDE; } .post.pt-poll .pt-badge { background: #E7F1FC; color: #1F5F9E; }
+.shout { display: inline-block; background: #FFE6E3; color: #8A2A22; border-radius: 30px; padding: 6px 14px; font-size: .92rem; margin: 6px 0; }
+/* reactions */
+.reacts { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
+.react { border: 1px solid #EEE3D6; background: #FFFBF6; border-radius: 30px; padding: 5px 11px; font: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-size: 1.05rem; transition: transform .15s, background .15s; }
+.react b { font-size: .82rem; color: #5B3A29; }
+.react:hover { transform: translateY(-1px); background: #FFF1DE; }
+.react.on { background: #FFE9CC; border-color: #D9A877; }
+.react.pop { animation: react-pop .4s ease; }
+@keyframes react-pop { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
+/* polls */
+.poll { display: grid; gap: 8px; margin: 10px 0; }
+.poll-opt { position: relative; overflow: hidden; display: flex; justify-content: space-between; align-items: center; gap: 10px; border: 2px solid #E4E6F1; background: #fff; border-radius: 12px; padding: 10px 14px; font: inherit; font-weight: 600; cursor: pointer; text-align: left; }
+.poll-opt:hover { border-color: #3E8EDE; }
+.poll-opt.on { border-color: #3E8EDE; }
+.poll-bar { position: absolute; left: 0; top: 0; bottom: 0; background: #E7F1FC; transition: width .5s ease; z-index: 0; }
+.poll-txt, .poll-opt b { position: relative; z-index: 1; }
+.poll-opt b { color: #1F5F9E; }
+/* Daily Brew */
+.brew { background: linear-gradient(160deg, #FFF1DE, #FFE2C2); border: 0; }
+.brew h3 { color: #5B3A29; }
+.brew-q { font-size: 1.05rem; font-weight: 700; color: #3E2A1E; line-height: 1.5; margin: 4px 0 8px; }
+.brew .btn { justify-self: start; background: #8B5A3C; border: 0; cursor: pointer; font: inherit; font-weight: 700; padding: 9px 16px; }
+@media (prefers-reduced-motion: reduce) { .react.pop { animation: none; } .poll-bar { transition: none; } }

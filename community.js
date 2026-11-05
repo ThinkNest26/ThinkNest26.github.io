@@ -15,7 +15,7 @@ function ago(ts) {
 const roleTag = r => r === 'parent' ? '<span class="role-tag parent">Parent</span>' : r === 'teacher' || r === 'school_leader' ? '<span class="role-tag">Teacher</span>' : r === 'admin' ? '<span class="role-tag admin">Think Nest</span>' : '';
 
 const SPACE = (document.body && document.body.dataset.space) || 'community';
-const CAFE = { teachers: { title: '☕ Teacher Café', who: ['teacher', 'school_leader', 'admin'], lead: 'A private space just for teachers: share ideas, ask questions, swap resources and celebrate the wins.', ph: 'Share an idea, a question or a win' }, parents: { title: '☕ Parent Café', who: ['parent', 'admin'], lead: 'A private space just for parents: tips, questions, recommendations and real conversations.', ph: 'Share a tip, a question or a recommendation' } }[SPACE];
+const CAFE = { teachers: { title: '☕ Teacher Café', who: ['teacher', 'school_leader', 'admin'], lead: 'Grab a coffee, pull up a chair. A private space just for teachers to swap hacks, share resources, ask the staffroom and celebrate each other.', ph: 'What’s brewing' }, parents: { title: '☕ Parent Café', who: ['parent', 'admin'], lead: 'A private space just for parents: tips, questions, recommendations and real conversations.', ph: 'Share a tip, a question or a recommendation' } }[SPACE];
 async function startCommunity() {
   const { user, profile: me } = await initShell();
   if (CAFE && !(CAFE.who.includes(me.role) || (SPACE === 'parents' && me.also_parent))) { document.querySelector('main').innerHTML = `<div class="empty-box"><p>${CAFE.title} is a private space for ${SPACE}.</p><a class="btn btn-red" href="community.html">Go to the Community</a></div>`; return; }
@@ -106,7 +106,7 @@ async function startCommunity() {
       ? (isMod && !mine ? `<div class="mod-bar"><span>⏳ Waiting for approval</span><span class="mod-actions"><button class="pill pill-live" data-approve>Approve</button><button class="pill pill-soft danger" data-reject>Don’t approve</button></span></div>`
                         : '<div class="mod-bar"><span>⏳ Waiting for a teacher to approve. Only you and teachers can see it for now.</span></div>')
       : st === 'rejected' ? '<div class="mod-bar rejected"><span>This post wasn’t approved, so only you can see it. You can delete it.</span></div>' : '';
-    const PT = { question: ['❓', 'Question'], idea: ['💡', 'Idea'], celebrate: ['🎉', 'Celebration'], showcase: ['🏆', 'Showing my work'] }[p.post_type];
+    const PT = { question: ['❓', CAFE ? 'Ask the staffroom' : 'Question'], idea: ['💡', 'Idea'], celebrate: ['🎉', CAFE ? 'Win of the week' : 'Celebration'], showcase: ['🏆', 'Showing my work'], hack: ['💡', 'Teaching hack'], resource: ['📚', 'Resource'], help: ['🆘', 'Need help'], funny: ['😂', 'Teacher life'], shoutout: ['🙌', 'Shout-out'], poll: ['📊', 'Poll'] }[p.post_type];
     return `<article class="panel post ${st !== 'published' ? 'post-' + st : ''} ${p.post_type && p.post_type !== 'post' ? 'pt-' + p.post_type : ''}" data-post="${p.id}" id="post-${p.id}">${banner}${PT ? `<span class="pt-badge">${PT[0]} ${PT[1]}</span>` : ''}
       <header class="post-head"><span class="initials">${esc(iniOf(p.author_name))}</span>
         <div><b>${esc(p.author_name || 'Member')}</b> ${roleTag(p.author_role)}<span class="meta">${ago(p.created_at)}</span></div>
@@ -199,11 +199,13 @@ async function startCommunity() {
       if (up.error) { btn.disabled = false; btn.textContent = 'Post'; return say(friendly(up.error)); }
     }
     const ptype = (form.querySelector('input[name=ptype]:checked') || {}).value || 'post';
-    let { data: np, error } = await db.from('posts').insert({ body, image_path, post_type: ptype, space: SPACE }).select('status').single();
+    const extra = typeof cafeExtra === 'function' ? cafeExtra(ptype) : {};
+    if (extra && extra.error) { btn.disabled = false; btn.textContent = 'Post'; return say(extra.error); }
+    let { data: np, error } = await db.from('posts').insert(Object.assign({ body, image_path, post_type: ptype, space: SPACE }, extra || {})).select('status').single();
     if (error && SPACE === 'community' && String(error.message).includes('column')) ({ data: np, error } = await db.from('posts').insert({ body, image_path }).select('status').single());
     btn.disabled = false; btn.textContent = 'Post';
     if (error) return say(friendly(error));
-    form.reset(); picName.textContent = ''; if (typeof refreshHeroRewards === 'function') setTimeout(refreshHeroRewards, 800);
+    form.reset(); picName.textContent = ''; if (typeof cafeReset === 'function') cafeReset(); if (typeof refreshHeroRewards === 'function') setTimeout(refreshHeroRewards, 800);
     say(np && np.status === 'pending' ? 'Sent! A teacher will check your post before everyone can see it.' : 'Posted!');
     load(false);
   });
