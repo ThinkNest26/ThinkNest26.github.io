@@ -11,7 +11,7 @@
     ],
     teacher: [
       { ic: '🏠', label: 'Dashboard', href: 'teacher-dashboard.html' },
-      { ic: '📚', label: 'Teaching', items: [['teacher-courses.html', 'My Courses'], ['teacher-calendar.html', 'Live Classes'], ['teacher-objectives.html', 'Objectives & Activities'], ['revision.html', 'Revision Hub'], ['teacher-hub.html', 'Teacher Hub']] },
+      { ic: '📚', label: 'Teaching', items: [['teacher-courses.html', 'My Courses'], ['teacher-calendar.html', 'Live Classes'], ['teacher-objectives.html', 'Objectives & Activities'], ['revision.html', 'Revision Hub'], ['teacher-hub.html', 'Teach & Thrive (hub)']] },
       { ic: '🏫', label: 'My Classes', items: [['classes.html', 'My Classes'], ['teacher-attendance.html', 'Attendance'], ['groups.html', 'Study Groups']] },
       { ic: '💬', label: 'Community', items: [['community.html', 'Community'], ['messages.html', 'Messages'], ['teacher-requests.html', 'Session Requests']] },
       { ic: '⚙️', label: 'Account', items: [['teacher-settings.html', 'Account Settings'], ['contact.html', 'Contact Us'], ['index.html', 'Think Nest website'], ['#logout', 'Log out']] }
@@ -19,7 +19,7 @@
     parent: [
       { ic: '🏠', label: 'My children', href: 'parent-dashboard.html' },
       { ic: '➕', label: 'Add a child', href: 'add-child.html' },
-      { ic: '✨', label: 'Parent Hub', href: 'parent-hub.html' },
+      { ic: '🪺', label: 'The Parent Nest', href: 'parent-hub.html' },
       { ic: '💬', label: 'Community', href: 'community.html' },
       { ic: '⚙️', label: 'Account', items: [['parent-settings.html', 'Account Settings'], ['contact.html', 'Contact Us'], ['#logout', 'Log out']] }
     ]
