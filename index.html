@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css?v=46">
-  <link rel="stylesheet" href="paths.css?v=50">
+  <link rel="stylesheet" href="paths.css?v=52">
 </head>
 <body>
 
@@ -290,7 +290,7 @@
   <script src="app.js?v=36"></script>
   <script src="curriculum.js?v=36"></script>
   <script src="paths.js?v=45"></script>
-  <script src="founders.js?v=41"></script>
+  <script src="founders.js?v=52"></script>
   <script src="hubs.js?v=50"></script>
   <script src="plot.js?v=50"></script>
   <script src="offers.js?v=49"></script>
@@ -315,7 +315,7 @@
         if (!people || !people.length) { sec.hidden = true; return; }
         sec.hidden = false;
         if (v.story) document.getElementById('home-fd-story').textContent = v.story.length > 220 ? v.story.slice(0, 217) + '…' : v.story;
-        document.getElementById('home-fd').innerHTML = people.map(founderCard).join('');
+        const g = document.getElementById('home-fd'); g.className = 'fd-grid count-' + people.length; g.innerHTML = people.map(founderCard).join('');
       }).catch(() => { sec.hidden = true; });
     } catch (e) { console.error(e); }
   </script>

@@ -11,7 +11,8 @@ function founderCard(p, i) {
   return `<article class="fd-card" style="--c:${FOUNDER_COLORS[i % 3]}">
     <div class="fd-photo">${photo}</div>
     <h3>${fEsc(p.name)}</h3><span class="fd-role">${fEsc(p.role)}</span>
-    <p>${fEsc(p.bio).replace(/\n/g, '<br>')}</p>
+    <span class="fd-line" aria-hidden="true"></span>
+    <p class="fd-bio">${fEsc(p.bio).replace(/\n/g, '<br>')}</p>
     ${p.link ? `<a class="fd-link" href="${fEsc(p.link)}" target="_blank" rel="noopener">Connect on LinkedIn ↗</a>` : ''}
   </article>`;
 }
@@ -21,7 +22,7 @@ async function startFoundersPage() {
   if (!v) { box.innerHTML = '<p class="empty">This page is coming soon.</p>'; return; }
   document.title = (v.title || 'Meet the founders') + ' – Think Nest';
   box.innerHTML = `<section class="fd-hero"><h1 class="title title-center">${fEsc(v.title || 'Meet the founders')}</h1><p class="fd-story">${fEsc(v.story || '').replace(/\n/g, '<br>')}</p></section>
-    <section class="fd-grid">${(v.people || []).map(founderCard).join('')}</section>
+    <section class="fd-grid count-${(v.people || []).filter(p => p.name && p.name !== 'Founder name').length}">${(v.people || []).filter(p => p.name && p.name !== 'Founder name').map(founderCard).join('')}</section>
     <section class="fd-cta"><h2>Want to get in touch?</h2><p>We’d love to hear from parents, students, teachers and schools.</p><a class="btn btn-red" href="contact.html">Contact us</a></section>`;
 }
 
