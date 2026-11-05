@@ -14,8 +14,12 @@ function ago(ts) {
 }
 const roleTag = r => r === 'parent' ? '<span class="role-tag parent">Parent</span>' : r === 'teacher' || r === 'school_leader' ? '<span class="role-tag">Teacher</span>' : r === 'admin' ? '<span class="role-tag admin">Think Nest</span>' : '';
 
+const SPACE = (document.body && document.body.dataset.space) || 'community';
+const CAFE = { teachers: { title: '☕ Teacher Café', who: ['teacher', 'school_leader', 'admin'], lead: 'A private space just for teachers: share ideas, ask questions, swap resources and celebrate the wins.', ph: 'Share an idea, a question or a win' }, parents: { title: '☕ Parent Café', who: ['parent', 'admin'], lead: 'A private space just for parents: tips, questions, recommendations and real conversations.', ph: 'Share a tip, a question or a recommendation' } }[SPACE];
 async function startCommunity() {
   const { user, profile: me } = await initShell();
+  if (CAFE && !CAFE.who.includes(me.role)) { document.querySelector('main').innerHTML = `<div class="empty-box"><p>${CAFE.title} is a private space for ${SPACE}.</p><a class="btn btn-red" href="community.html">Go to the Community</a></div>`; return; }
+  if (CAFE) { document.title = CAFE.title.replace('☕ ', '') + ' – Think Nest'; const h1 = document.querySelector('.comm-hero h1'); if (h1) h1.textContent = CAFE.title; const p = document.querySelector('.comm-hero-text p:not(.meta)'); if (p) p.textContent = CAFE.lead; document.querySelectorAll('.comm-tabs, #side-groups, #side-board').forEach(x => x.hidden = true); const r = document.querySelector('.comm-rules'); if (r) r.innerHTML = '🔒 Only ' + SPACE + ' can see this café. Be kind, keep it friendly, and use <b>Report</b> if something isn’t right.'; }
   const isAdmin = me.role === 'admin';
   // Teachers and the admin get their own menu
   if (window.buildNav) window.buildNav(me.role === 'school_leader' ? 'teacher' : me.role);
@@ -37,7 +41,7 @@ async function startCommunity() {
   }
   const first = (me.full_name || '').split(' ')[0];
   document.getElementById('me-ini').textContent = iniOf(me.full_name || user.email);
-  document.getElementById('post-body').placeholder = 'What’s on your mind' + (first ? ', ' + first : '') + '?';
+  document.getElementById('post-body').placeholder = CAFE ? CAFE.ph + (first ? ', ' + first : '') + '…' : 'What’s on your mind' + (first ? ', ' + first : '') + '?';
 
   // ----- welcome banner, rewards and tabs
   const hour = new Date().getHours();
@@ -120,7 +124,7 @@ async function startCommunity() {
   document.getElementById('feed-filter').addEventListener('click', e => { const b = e.target.closest('[data-ff]'); if (!b) return; filter = b.dataset.ff; document.querySelectorAll('[data-ff]').forEach(x => x.classList.toggle('on', x === b)); render(); });
 
   async function load(older) {
-    let q = db.from('posts').select('*, post_likes(user_id), post_comments(id, author_id, author_name, author_role, body, created_at)').or('status.eq.published,author_id.eq.' + user.id).order('created_at', { ascending: false }).limit(PAGE);
+    let q = db.from('posts').select('*, post_likes(user_id), post_comments(id, author_id, author_name, author_role, body, created_at)').eq('space', SPACE).or('status.eq.published,author_id.eq.' + user.id).order('created_at', { ascending: false }).limit(PAGE);
     if (older && oldest) q = q.lt('created_at', oldest);
     const { data, error } = await q;
     if (error) return say(friendly(error));
@@ -135,8 +139,8 @@ async function startCommunity() {
   // Teachers and the admin: posts waiting for approval
   async function loadPending() {
     const box = document.getElementById('pending');
-    if (!box || !['teacher', 'school_leader', 'admin'].includes(me.role)) return;
-    const { data } = await db.from('posts').select('*, post_likes(user_id), post_comments(id, author_id, author_name, author_role, body, created_at)').eq('status', 'pending').neq('author_id', user.id).order('created_at');
+    if (!box || SPACE !== 'community' || !['teacher', 'school_leader', 'admin'].includes(me.role)) return;
+    const { data } = await db.from('posts').select('*, post_likes(user_id), post_comments(id, author_id, author_name, author_role, body, created_at)').eq('space', 'community').eq('status', 'pending').neq('author_id', user.id).order('created_at');
     const list = data || [];
     await picUrls(list);
     box.hidden = !list.length;
@@ -190,8 +194,8 @@ async function startCommunity() {
       if (up.error) { btn.disabled = false; btn.textContent = 'Post'; return say(friendly(up.error)); }
     }
     const ptype = (form.querySelector('input[name=ptype]:checked') || {}).value || 'post';
-    let { data: np, error } = await db.from('posts').insert({ body, image_path, post_type: ptype }).select('status').single();
-    if (error && String(error.message).includes('post_type')) ({ data: np, error } = await db.from('posts').insert({ body, image_path }).select('status').single());
+    let { data: np, error } = await db.from('posts').insert({ body, image_path, post_type: ptype, space: SPACE }).select('status').single();
+    if (error && SPACE === 'community' && String(error.message).includes('column')) ({ data: np, error } = await db.from('posts').insert({ body, image_path }).select('status').single());
     btn.disabled = false; btn.textContent = 'Post';
     if (error) return say(friendly(error));
     form.reset(); picName.textContent = ''; if (typeof refreshHeroRewards === 'function') setTimeout(refreshHeroRewards, 800);

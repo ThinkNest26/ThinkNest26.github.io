@@ -63,7 +63,7 @@ async function startHubInApp(aud) {
       ${joined.has(c.id) ? `<a class="btn btn-white outline hub-btn" href="course.html?id=${c.id}">✅ Joined · Open</a>` : `<button type="button" class="btn btn-red hub-btn" data-hjoin="${c.id}">Join</button>`}</article>`; };
   function draw() {
     const mine = courses.filter(c => joined.has(c.id)), shown = courses.filter(c => !pick || c.category === pick);
-    box.innerHTML = `<section class="hub-hero" style="background:${H.grad}">${hubPic(H, 'big')}<div><span class="hub-kicker">${H.kicker}</span><h1>${H.name}</h1><p class="hub-tagline">${H.tagline}</p><p>${H.about}</p></div></section>
+    box.innerHTML = `<section class="hub-hero" style="background:${H.grad}">${hubPic(H, 'big')}<div><span class="hub-kicker">${H.kicker}</span><h1>${H.name}</h1><p class="hub-tagline">${H.tagline}</p><p>${H.about}</p><div class="hub-hero-btns"><a class="btn btn-white" href="${aud === 'teachers' ? 'teacher-cafe.html' : 'parent-cafe.html'}">☕ Go to the ${aud === 'teachers' ? 'Teacher' : 'Parent'} Café</a></div></div></section>
       ${mine.length ? `<h2 class="hub-h">My workshops</h2><div class="hub-courses">${mine.map(card).join('')}</div>` : ''}
       <h2 class="hub-h">Explore topics</h2>
       <div class="hub-cats">${H.cats.map(([k, ic, n, d]) => `<button type="button" class="hub-cat ${pick === k ? 'on' : ''}" data-hc="${k}" style="--c:${H.color}"><span>${ic}</span><b>${n}</b><small>${d}</small></button>`).join('')}</div>
