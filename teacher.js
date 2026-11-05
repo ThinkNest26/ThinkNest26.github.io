@@ -369,7 +369,7 @@ async function startAdmin() {
     ]);
     if (all.error) return say(friendly(all.error));
     const ps = all.data;
-    const pending = ps.filter(p => p.role === 'student' && p.requested_role === 'teacher');
+    const pending = ps.filter(p => ['student', 'parent'].includes(p.role) && p.requested_role === 'teacher');
     const teachers = ps.filter(p => p.role === 'teacher' || p.role === 'school_leader');
     const declined = ps.filter(p => p.role === 'student' && ['declined', 'removed'].includes(p.requested_role));
     document.getElementById('n-pending').textContent = pending.length;

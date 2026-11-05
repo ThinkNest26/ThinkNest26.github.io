@@ -36,7 +36,7 @@ async function initParent() {
   const { data: { session } } = await db.auth.getSession();
   if (!session) { location.href = 'parent-login.html'; throw new Error('not logged in'); }
   const { data: me } = await db.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
-  if (!me || !['parent', 'admin'].includes(me.role)) { location.href = 'student-dashboard.html'; throw new Error('not a parent'); }
+  if (!me || !(['parent', 'admin'].includes(me.role) || (me.also_parent && ['teacher', 'school_leader'].includes(me.role)))) { location.href = me && ['teacher', 'school_leader'].includes(me.role) ? 'teacher-settings.html#also-parent' : 'student-dashboard.html'; throw new Error('not a parent'); }
   gateApproval(me);
   document.body.classList.remove('loading');
   const side = document.getElementById('side'), shade = document.getElementById('side-shade'), st = document.getElementById('side-toggle');

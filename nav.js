@@ -35,7 +35,8 @@
     try {
       const { data: { session } } = await db.auth.getSession();
       if (session) {
-        const { data } = await db.from('profiles').select('role').eq('id', session.user.id).maybeSingle();
+        const { data } = await db.from('profiles').select('role, also_parent').eq('id', session.user.id).maybeSingle();
+        window.TN_ALSO_PARENT = !!(data && data.also_parent);
         if (data && data.role) return data.role === 'school_leader' ? 'teacher' : data.role;
       }
     } catch (_) {}
@@ -45,7 +46,11 @@
 
   function build(role) {
     const nav = document.querySelector('.side nav'); if (!nav) return;
-    const menu = MENUS[role] || MENUS.student;
+    let menu = MENUS[role] || MENUS.student;
+    if (window.TN_ALSO_PARENT && (role === 'teacher' || role === 'admin')) {
+      const acc = menu[menu.length - 1];
+      menu = menu.slice(0, -1).concat([{ ic: '👪', label: 'Parent', items: [['parent-dashboard.html', 'My children'], ['add-child.html', 'Add a child'], ['parent-hub.html', 'Beyond the School Run'], ['parent-cafe.html', '☕ Parent Café']] }, acc]);
+    }
     let here = location.pathname.split('/').pop() || 'index.html';
     if (ALIAS[here]) here = ALIAS[here];
     if (here === 'group.html' && document.querySelector('.class-flag')) here = 'classes.html';

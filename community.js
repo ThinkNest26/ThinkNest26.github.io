@@ -18,7 +18,7 @@ const SPACE = (document.body && document.body.dataset.space) || 'community';
 const CAFE = { teachers: { title: '☕ Teacher Café', who: ['teacher', 'school_leader', 'admin'], lead: 'A private space just for teachers: share ideas, ask questions, swap resources and celebrate the wins.', ph: 'Share an idea, a question or a win' }, parents: { title: '☕ Parent Café', who: ['parent', 'admin'], lead: 'A private space just for parents: tips, questions, recommendations and real conversations.', ph: 'Share a tip, a question or a recommendation' } }[SPACE];
 async function startCommunity() {
   const { user, profile: me } = await initShell();
-  if (CAFE && !CAFE.who.includes(me.role)) { document.querySelector('main').innerHTML = `<div class="empty-box"><p>${CAFE.title} is a private space for ${SPACE}.</p><a class="btn btn-red" href="community.html">Go to the Community</a></div>`; return; }
+  if (CAFE && !(CAFE.who.includes(me.role) || (SPACE === 'parents' && me.also_parent))) { document.querySelector('main').innerHTML = `<div class="empty-box"><p>${CAFE.title} is a private space for ${SPACE}.</p><a class="btn btn-red" href="community.html">Go to the Community</a></div>`; return; }
   if (CAFE && me.role !== 'admin') {
     const { data: ok } = await db.rpc('is_hub_member', { h: SPACE });
     if (!ok) { const hubPage = SPACE === 'teachers' ? 'teacher-hub.html' : 'parent-hub.html', hubName = SPACE === 'teachers' ? 'Beyond the Bell' : 'Beyond the School Run';

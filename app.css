@@ -1032,3 +1032,5 @@ a.gp-post { display: block; color: inherit; }
 
 .pending-card { text-align: center; } .pend-ic { font-size: 3.4rem; } .pend-steps { list-style: none; padding: 0; display: grid; gap: 8px; margin: 14px auto; max-width: 320px; text-align: left; font-weight: 600; } .pending-card .link-btn { margin-top: 12px; display: inline-block; }
 .pending-card { max-width: 560px; margin: 0 auto; display: grid; justify-items: center; gap: 6px; } .pending-card .auth-btn { width: 100%; max-width: 320px; } .pending-card .link-btn { margin-top: 6px; }
+.dual-role { margin-bottom: 18px; display: grid; gap: 10px; } .dual-role h2 { color: #1D2026; font-size: 1.15rem; } .switch-row { display: flex; align-items: center; gap: 10px; font-weight: 600; } .switch-row input { width: 22px; height: 22px; accent-color: #3E4B94; }
+.dual-role .switch-row { display: flex !important; flex-direction: row !important; justify-content: flex-start !important; align-items: center; gap: 10px; text-align: left; } .dual-role .meta { font-size: .92rem; }
