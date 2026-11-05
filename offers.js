@@ -1,18 +1,24 @@
-// ===== Think Nest home page: the two big hubs (Teacher Hub and Parent Hub) =====
+// ===== Think Nest home page: the two hubs (compact, tidy cards) =====
 (function () {
   async function draw() {
     const box = document.getElementById('big-hubs');
     if (!box || typeof HUBS === 'undefined') return;
-    let courses = [];
-    try { if (typeof db !== 'undefined') { const { data } = await db.from('courses').select('id, title, audience, category, format').in('audience', ['teachers', 'parents']).order('id', { ascending: false }).limit(20); courses = data || []; } } catch (_) {}
+    let counts = { teachers: 0, parents: 0 };
+    try { if (typeof db !== 'undefined') { const { data } = await db.from('courses').select('audience').in('audience', ['teachers', 'parents']); (data || []).forEach(c => counts[c.audience]++); } } catch (_) {}
     box.innerHTML = ['teachers', 'parents'].map(aud => {
-      const H = HUBS[aud], next = courses.filter(c => c.audience === aud).slice(0, 2);
-      return `<article class="big-hub" style="background:${H.grad}">
-        <div class="big-hub-top">${hubPic(H, 'xl')}<div><span class="hub-kicker">${H.kicker}</span><h3>${H.name}</h3><p class="big-hub-tag">${H.tagline}</p></div></div>
-        <p class="big-hub-about">${H.about}</p>
-        <div class="big-hub-cats">${H.cats.map(([k, ic, n]) => `<a href="hub.html?for=${aud}" class="big-hub-cat"><span>${ic}</span>${n}</a>`).join('')}</div>
-        ${next.length ? `<div class="big-hub-next"><b>Coming up</b>${next.map(c => `<a href="hub.html?for=${aud}">${(hubCat(aud, c.category) || ['', '✨'])[1]} ${hubEsc(c.title)}${c.format ? ` <span>· ${hubEsc(c.format)}</span>` : ''}</a>`).join('')}</div>` : ''}
-        <div class="big-hub-btns"><a class="btn btn-white btn-big" href="hub.html?for=${aud}">Explore ${H.name} →</a><a class="big-hub-join" href="${aud === 'teachers' ? 'teacher-signup.html' : 'parent-signup.html'}">Join free</a></div>
+      const H = HUBS[aud], n = counts[aud];
+      return `<article class="hub2" style="--c:${H.color}">
+        <header class="hub2-head" style="background:${H.grad}">
+          ${hubPic(H)}
+          <div><span class="hub-kicker">${H.kicker}</span><h3>${H.name}</h3><p>${H.tagline}</p></div>
+        </header>
+        <div class="hub2-body">
+          <span class="hub2-label">Popular topics</span>
+          <ul class="hub2-topics">${H.cats.slice(0, 4).map(([k, ic, name]) => `<li><span>${ic}</span>${name}</li>`).join('')}</ul>
+          <p class="hub2-more">+ ${H.cats.length - 4} more: ${H.cats.slice(4).map(c => c[2]).join(', ')}</p>
+          <footer class="hub2-foot"><span class="meta">${n ? n + ' workshop' + (n === 1 ? '' : 's') + ' on now' : 'New workshops coming soon'}</span>
+            <a class="btn btn-red" href="hub.html?for=${aud}">Explore ${H.name} →</a></footer>
+        </div>
       </article>`;
     }).join('');
   }

@@ -212,3 +212,21 @@
 .hub-kicker { display: inline-block; text-transform: uppercase; letter-spacing: .08em; font-size: .78rem; font-weight: 800; background: rgba(255,255,255,.22); border-radius: 20px; padding: 4px 12px; margin-bottom: 6px; }
 .big-hub h3 { font-size: 2.6rem; }
 @media (max-width: 520px) { .hub-pic.xl, .hub-pic.big { width: 92px; height: 92px; } .big-hub h3 { font-size: 2rem; } }
+/* ===== Compact, tidy hub cards (home page) ===== */
+.big-hubs { max-width: 1040px; margin: 18px auto 0; gap: 22px; }
+.hub2 { background: #fff; border-radius: 22px; overflow: hidden; box-shadow: 0 10px 30px rgba(30,35,82,.10); display: flex; flex-direction: column; border: 1px solid #EEF0F8; }
+.hub2-head { display: flex; align-items: center; gap: 16px; padding: 20px 22px; color: #fff; }
+.hub2-head .hub-pic { width: 72px; height: 72px; border-radius: 20px; }
+.hub2-head .hub-kicker { margin-bottom: 4px; font-size: .7rem; padding: 3px 10px; }
+.hub2-head h3 { font-size: 1.6rem; line-height: 1.15; color: #fff; }
+.hub2-head p { font-size: .95rem; opacity: .95; margin-top: 2px; }
+.hub2-body { padding: 18px 22px 20px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.hub2-label { font-size: .75rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: #6E7485; }
+.hub2-topics { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.hub2-topics li { display: flex; align-items: center; gap: 8px; background: #F7F8FD; border-radius: 12px; padding: 9px 12px; font-weight: 600; font-size: .92rem; color: #2F3241; }
+.hub2-topics li span { font-size: 1.15rem; }
+.hub2-more { font-size: .85rem; color: #6E7485; line-height: 1.5; margin: 0; }
+.hub2-foot { margin-top: auto; padding-top: 12px; border-top: 1px solid #EEF0F8; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.hub2-foot .btn { padding: 11px 20px; font-size: .95rem; background: var(--c); border-color: var(--c); }
+@media (max-width: 860px) { .big-hubs { grid-template-columns: 1fr; max-width: 560px; } }
+@media (max-width: 460px) { .hub2-topics { grid-template-columns: 1fr; } }
