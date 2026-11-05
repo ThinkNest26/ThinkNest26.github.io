@@ -320,3 +320,7 @@
 @media (max-width: 1020px) { .plot-cards { grid-template-columns: 1fr; max-width: 640px; margin: 0 auto; width: 100%; } .plot-mood-btns { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 520px) { .plot { padding: 60px 0; } .plot-card { padding: 24px 18px 22px; border-radius: 26px; } .pc-tiles { grid-template-columns: 1fr; } .plot-mood-btns button b { font-size: .8rem; } .pc-actions { flex-direction: column; align-items: stretch; text-align: center; } .pc-main { justify-content: center; } }
 .plot-card h3 { font-size: clamp(1.35rem, 2.2vw, 1.8rem); } .pc-tiles a.dim { opacity: .7; }
+.hub-status { margin-top: 14px; background: rgba(255,255,255,.18); border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-weight: 600; }
+.hub-status .btn { border: 0; cursor: pointer; font: inherit; font-weight: 800; color: #1D2026; }
+.hub-status.pending { background: rgba(255,255,255,.25); }
+.hub-lock { justify-self: start; font-size: .85rem; font-weight: 700; color: #6E7485; background: #F1F2FA; border-radius: 20px; padding: 6px 12px; margin-top: 4px; }

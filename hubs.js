@@ -56,14 +56,22 @@ async function startHubInApp(aud) {
     db.from('enrollments').select('course_id').eq('user_id', uid)
   ]);
   const courses = cs || [], joined = new Set((en || []).map(e => e.course_id));
+  const { data: mem } = await db.from('hub_members').select('status').eq('user_id', uid).eq('hub', aud).maybeSingle();
+  const isAdmin = ((ctx.profile || ctx.me || {}).role) === 'admin';
+  let status = isAdmin ? 'approved' : (mem && mem.status) || 'none';
+  const me = ctx.profile || ctx.me || {};
   const card = c => { const cat = hubCat(aud, c.category);
     return `<article class="hub-course" style="--c:${H.color}">${cat ? `<span class="hub-tag">${cat[1]} ${hubEsc(cat[2])}</span>` : ''}<b>${hubEsc(c.title)}</b>
       <span class="hub-meta">${hubEsc([c.format, c.weeks ? c.weeks + ' weeks' : '', c.teacher_name ? 'with ' + c.teacher_name : ''].filter(Boolean).join(' · '))}</span>
       ${c.description ? `<small>${hubEsc(c.description.slice(0, 140))}${c.description.length > 140 ? '…' : ''}</small>` : ''}
-      ${joined.has(c.id) ? `<a class="btn btn-white outline hub-btn" href="course.html?id=${c.id}">✅ Joined · Open</a>` : `<button type="button" class="btn btn-red hub-btn" data-hjoin="${c.id}">Join</button>`}</article>`; };
+      ${joined.has(c.id) ? `<a class="btn btn-white outline hub-btn" href="course.html?id=${c.id}">✅ Joined · Open</a>` : status === 'approved' ? `<button type="button" class="btn btn-red hub-btn" data-hjoin="${c.id}">Join</button>` : '<span class="hub-lock">🔒 Members only</span>'}</article>`; };
+  const cafe = aud === 'teachers' ? 'teacher-cafe.html' : 'parent-cafe.html', cafeName = aud === 'teachers' ? 'Teacher' : 'Parent';
+  const memberBox = () => status === 'approved' ? `<div class="hub-hero-btns"><a class="btn btn-white" href="${cafe}">☕ Go to the ${cafeName} Café</a></div>`
+    : status === 'pending' ? `<div class="hub-status pending">⏳ Your request to join is waiting for approval. We’ll let you know as soon as you’re in!</div>`
+    : `<div class="hub-status">${status === 'declined' ? 'Your last request wasn’t approved. You can ask again, or contact us. ' : 'Join to take part in workshops and the ' + cafeName + ' Café. It’s free! '}<button type="button" class="btn btn-white" data-hreq>Request to join</button></div>`;
   function draw() {
     const mine = courses.filter(c => joined.has(c.id)), shown = courses.filter(c => !pick || c.category === pick);
-    box.innerHTML = `<section class="hub-hero" style="background:${H.grad}">${hubPic(H, 'big')}<div><span class="hub-kicker">${H.kicker}</span><h1>${H.name}</h1><p class="hub-tagline">${H.tagline}</p><p>${H.about}</p><div class="hub-hero-btns"><a class="btn btn-white" href="${aud === 'teachers' ? 'teacher-cafe.html' : 'parent-cafe.html'}">☕ Go to the ${aud === 'teachers' ? 'Teacher' : 'Parent'} Café</a></div></div></section>
+    box.innerHTML = `<section class="hub-hero" style="background:${H.grad}">${hubPic(H, 'big')}<div><span class="hub-kicker">${H.kicker}</span><h1>${H.name}</h1><p class="hub-tagline">${H.tagline}</p><p>${H.about}</p>${memberBox()}</div></section>
       ${mine.length ? `<h2 class="hub-h">My workshops</h2><div class="hub-courses">${mine.map(card).join('')}</div>` : ''}
       <h2 class="hub-h">Explore topics</h2>
       <div class="hub-cats">${H.cats.map(([k, ic, n, d]) => `<button type="button" class="hub-cat ${pick === k ? 'on' : ''}" data-hc="${k}" style="--c:${H.color}"><span>${ic}</span><b>${n}</b><small>${d}</small></button>`).join('')}</div>
@@ -73,6 +81,15 @@ async function startHubInApp(aud) {
   }
   box.addEventListener('click', async e => {
     const c = e.target.closest('[data-hc]'); if (c) { pick = c.dataset.hc; return draw(); }
+    const rq = e.target.closest('[data-hreq]');
+    if (rq) {
+      rq.disabled = true; rq.textContent = 'Sending…';
+      const { data, error } = await db.rpc('request_hub', { h: aud });
+      if (error) { rq.disabled = false; rq.textContent = 'Request to join'; return say(friendly(error)); }
+      status = data || 'pending';
+      emailAdmin('New request to join ' + H.name, { Name: me.full_name || '', Email: (ctx.user || {}).email || '', Account: aud === 'teachers' ? 'Teacher' : 'Parent', Hub: H.name + ' (' + H.kicker + ')', 'What to do': 'Log in as admin and open Approvals → Hub requests to approve or decline.' });
+      say('Request sent! Think Nest will approve it soon.'); return draw();
+    }
     const j = e.target.closest('[data-hjoin]'); if (!j) return;
     j.disabled = true; j.textContent = 'Joining…';
     const { error } = await db.from('enrollments').insert({ user_id: uid, course_id: Number(j.dataset.hjoin) });
@@ -86,4 +103,12 @@ function hubBanner(aud, hostId) {
   const b = document.getElementById(hostId); if (!b || typeof HUBS === 'undefined') return;
   const H = HUBS[aud], page = aud === 'parents' ? 'parent-hub.html' : 'teacher-hub.html';
   b.innerHTML = `<a class="hub-banner" href="${page}" style="background:${H.grad}">${hubPic(H)}<div><span class="hub-kicker">${H.kicker}</span><b>${H.name}</b><span>${H.tagline} ${H.cats.slice(0, 4).map(c => c[1]).join(' ')}</span></div><span class="hub-banner-go">Open →</span></a>`;
+}
+
+// Email the Think Nest inbox (uses the same free FormSubmit service as the Careers form)
+function emailAdmin(subject, fields) {
+  try {
+    fetch('https://formsubmit.co/ajax/thinknest2026@gmail.com', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(Object.assign({ _subject: subject, _template: 'table', _captcha: 'false' }, fields)) }).catch(() => {});
+  } catch (_) {}
 }

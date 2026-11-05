@@ -19,6 +19,11 @@ const CAFE = { teachers: { title: '☕ Teacher Café', who: ['teacher', 'school_
 async function startCommunity() {
   const { user, profile: me } = await initShell();
   if (CAFE && !CAFE.who.includes(me.role)) { document.querySelector('main').innerHTML = `<div class="empty-box"><p>${CAFE.title} is a private space for ${SPACE}.</p><a class="btn btn-red" href="community.html">Go to the Community</a></div>`; return; }
+  if (CAFE && me.role !== 'admin') {
+    const { data: ok } = await db.rpc('is_hub_member', { h: SPACE });
+    if (!ok) { const hubPage = SPACE === 'teachers' ? 'teacher-hub.html' : 'parent-hub.html', hubName = SPACE === 'teachers' ? 'Beyond the Bell' : 'Beyond the School Run';
+      document.querySelector('main').innerHTML = `<div class="empty-box"><p>🔒 ${CAFE.title} is for members of <b>${hubName}</b>. Ask to join the hub, and you’ll get in as soon as Think Nest approves your request.</p><a class="btn btn-red" href="${hubPage}">Go to ${hubName}</a></div>`; return; }
+  }
   if (CAFE) { document.title = CAFE.title.replace('☕ ', '') + ' – Think Nest'; const h1 = document.querySelector('.comm-hero h1'); if (h1) h1.textContent = CAFE.title; const p = document.querySelector('.comm-hero-text p:not(.meta)'); if (p) p.textContent = CAFE.lead; document.querySelectorAll('.comm-tabs, #side-groups, #side-board').forEach(x => x.hidden = true); const r = document.querySelector('.comm-rules'); if (r) r.innerHTML = '🔒 Only ' + SPACE + ' can see this café. Be kind, keep it friendly, and use <b>Report</b> if something isn’t right.'; }
   const isAdmin = me.role === 'admin';
   // Teachers and the admin get their own menu
@@ -325,4 +330,28 @@ async function loadWaitlists() {
   const cur = { british: 'British', ib: 'IB', american: 'American', arabic_a: 'Arabic A', arabic_b: 'Arabic B' };
   box.innerHTML = (data || []).length ? `<table class="wait-table"><thead><tr><th>Subject</th><th>Curriculum</th><th>Grade</th><th>Waiting</th><th>Latest</th></tr></thead><tbody>${data.map(w => `<tr><td>${esc(w.subject.charAt(0).toUpperCase() + w.subject.slice(1))}</td><td>${esc(cur[w.curriculum] || w.curriculum)}</td><td>${esc(w.grade)}</td><td><b>${w.waiting}</b></td><td>${new Date(w.newest).toLocaleDateString('en-GB')}</td></tr>`).join('')}</tbody></table>`
     : '<p class="empty">No one is waiting at the moment.</p>';
+}
+
+// ---------- Admin: requests to join the Teacher Hub and Parent Hub ----------
+async function loadHubRequests() {
+  const box = document.getElementById('hubreq-box'); if (!box) return;
+  const { data, error } = await db.rpc('hub_requests');
+  if (error) { box.innerHTML = '<p class="empty">Run database update 28 to see hub requests.</p>'; return; }
+  const names = { teachers: '🔔 Beyond the Bell (teachers)', parents: '🚗 Beyond the School Run (parents)' };
+  const pending = (data || []).filter(r => r.status === 'pending'), done = (data || []).filter(r => r.status !== 'pending').slice(0, 20);
+  document.getElementById('n-hubreq').textContent = pending.length;
+  box.innerHTML = (pending.length ? pending.map(r => `<article class="panel person" data-hu="${r.user_id}" data-hh="${r.hub}">
+      <span class="initials">${esc((r.full_name || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</span>
+      <div class="person-info"><h4>${esc(r.full_name || 'Someone')}</h4><span class="meta">${esc(r.email || '')} · ${esc(r.role)}</span><span class="meta">Wants to join ${names[r.hub]} · ${new Date(r.requested_at).toLocaleDateString('en-GB')}</span></div>
+      <div class="person-actions"><button class="pill pill-live" data-hok>Approve</button><button class="pill pill-soft danger" data-hno>Decline</button></div></article>`).join('') : '<p class="empty">No requests waiting. 🎉</p>') +
+    (done.length ? `<details class="hubreq-done"><summary>Recent decisions (${done.length})</summary>${done.map(r => `<div class="pending-row"><b>${esc(r.full_name || '')}</b><span class="meta">${names[r.hub]} · ${r.status === 'approved' ? '✅ Approved' : '❌ Declined'}</span>${r.status === 'approved' ? `<button class="link-btn" data-hrevoke data-hu="${r.user_id}" data-hh="${r.hub}">Remove access</button>` : `<button class="link-btn" data-hre data-hu="${r.user_id}" data-hh="${r.hub}">Approve now</button>`}</div>`).join('')}</details>` : '');
+  box.onclick = async e => {
+    const row = e.target.closest('[data-hu]'); if (!row) return;
+    const ok = !!(e.target.closest('[data-hok]') || e.target.closest('[data-hre]')), no = !!(e.target.closest('[data-hno]') || e.target.closest('[data-hrevoke]'));
+    if (!ok && !no) return;
+    if (no && !confirm(e.target.closest('[data-hrevoke]') ? 'Remove this person’s access to the hub?' : 'Decline this request?')) return;
+    const { error: er } = await db.rpc('decide_hub', { uid: row.dataset.hu, h: row.dataset.hh, ok });
+    if (er) return say(friendly(er));
+    say(ok ? 'Approved. They’ve been told. 🎉' : 'Done. They’ve been told.'); loadHubRequests();
+  };
 }

@@ -41,6 +41,9 @@
       <h2 class="dash-h" id="waitlists">Waiting lists</h2>
       <p class="hint">Students waiting for a class to open. Ask a teacher to create a course with this subject, curriculum and grade, and everyone waiting is told automatically.</p>
       <section class="panel" id="waitlist-box"><p class="empty">Loading…</p></section>
+      <h2 class="dash-h" id="hub-requests">Hub requests <span class="count" id="n-hubreq">0</span></h2>
+      <p class="hint">Teachers and parents asking to join Beyond the Bell or Beyond the School Run. You also get an email at thinknest2026@gmail.com.</p>
+      <section class="approve-list" id="hubreq-box"><p class="empty">Loading…</p></section>
       <h2 class="dash-h">Curriculum guide</h2>
       <section class="panel req-row"><span>Edit the British, IB and American guides that students see when they choose their curriculum.</span><a class="btn btn-red" href="admin-curriculum.html">Open the editor</a></section>
       <h2 class="dash-h">Community settings</h2>
@@ -84,6 +87,6 @@
   <script>startAdmin();</script>
   <script src="community.js?v=36"></script>
   <script src="chat.js?v=36"></script>
-  <script>loadReports().then(loadGroupReports); loadMessageReview(); loadApprovalSetting(); loadWaitlists();</script>
+  <script>loadReports().then(loadGroupReports); loadMessageReview(); loadApprovalSetting(); loadWaitlists(); loadHubRequests();</script>
 </body>
 </html>
