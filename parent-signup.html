@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=36">
-  <link rel="stylesheet" href="app.css?v=36">
+  <link rel="stylesheet" href="style.css?v=60">
+  <link rel="stylesheet" href="app.css?v=60">
 </head>
 <body class="auth">
   <header class="app-top">
@@ -34,6 +34,22 @@
           <span class="pw"><input type="password" name="password2" id="pw2" minlength="8" autocomplete="new-password" placeholder="Type it again" required>
           <button type="button" class="pw-eye" data-eye="pw2" aria-label="Show password">👁</button></span>
         </label>
+        <section class="fam-section">
+          <h2 class="fam-h">👧👦 Enrol your children</h2>
+          <p class="fam-q">How many children would you like to enrol in Think Nest?</p>
+          <div class="fam-count" id="fam-count" role="group" aria-label="Number of children">
+            <button type="button" data-n="1" aria-pressed="false">1</button><button type="button" data-n="2" aria-pressed="false">2</button><button type="button" data-n="3" aria-pressed="false">3</button><button type="button" data-n="4" aria-pressed="false">4</button><button type="button" data-n="5" aria-pressed="false">5</button>
+          </div>
+          <div id="fam-kids"></div>
+          <fieldset class="parent-q">
+            <legend>👪 Would you like a joined family account?</legend>
+            <p class="meta">With a joined account, your children are linked to you automatically, so you can see their courses, progress, certificates, rewards and chats straight away.</p>
+            <div class="parent-q-btns fam-joined">
+              <label><input type="radio" name="family_joined" value="yes"><span>✅ Yes, link us together (recommended)</span></label>
+              <label><input type="radio" name="family_joined" value="no"><span>No, my child will accept a request</span></label>
+            </div>
+          </fieldset>
+        </section>
         <p class="form-error" id="psignup-error" role="alert" hidden></p>
         <button type="submit" class="btn btn-red auth-btn">Continue</button>
         <p class="switch">Already have an account? <a href="parent-login.html">Log in</a></p>
@@ -42,9 +58,10 @@
   </main>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=36"></script>
-  <script src="app.js?v=36"></script>
-  <script src="parent.js?v=36"></script>
-  <script>startParentSignup();</script>
+  <script src="supabase-config.js?v=60"></script>
+  <script src="app.js?v=60"></script>
+  <script src="family.js?v=60"></script>
+  <script src="parent.js?v=60"></script>
+  <script>startParentSignup(); initFamilySignup();</script>
 </body>
 </html>

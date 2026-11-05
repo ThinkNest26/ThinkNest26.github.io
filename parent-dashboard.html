@@ -8,9 +8,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=36">
-  <link rel="stylesheet" href="app.css?v=36">
-  <link rel="stylesheet" href="paths.css?v=50">
+  <link rel="stylesheet" href="style.css?v=60">
+  <link rel="stylesheet" href="app.css?v=60">
+  <link rel="stylesheet" href="paths.css?v=60">
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -36,6 +36,7 @@
       <h2 class="dash-h">My children</h2>
       <section class="kid-cards" id="kid-cards"><p class="empty">Loading…</p></section>
       <div class="pending" id="pending"></div>
+      <section id="fam-box" hidden></section>
       <div id="family-week"></div>
       <dialog id="path-dialog" class="dlg path-dlg" aria-labelledby="path-title">
     <div class="path-wrap">
@@ -62,16 +63,17 @@
   <div class="side-shade" id="side-shade"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=36"></script>
-  <script src="app.js?v=36"></script>
-  <script src="nav.js?v=36"></script>
-  <script src="notify.js?v=36" defer></script>
-  <script src="curriculum.js?v=36"></script>
-  <script src="paths.js?v=36"></script>
-  <script src="parent.js?v=36"></script>
-  <script>startParentDashboard();</script>
+  <script src="supabase-config.js?v=60"></script>
+  <script src="app.js?v=60"></script>
+  <script src="nav.js?v=60"></script>
+  <script src="notify.js?v=60" defer></script>
+  <script src="curriculum.js?v=60"></script>
+  <script src="paths.js?v=60"></script>
+  <script src="family.js?v=60"></script>
+  <script src="parent.js?v=60"></script>
+  <script>startParentDashboard(); setTimeout(() => familyWaiting('fam-box'), 300);</script>
   <script>document.addEventListener("DOMContentLoaded", () => {}); setTimeout(() => { initPaths(); document.querySelectorAll("[data-path-find]").forEach(b => b.addEventListener("click", () => openPathChooser(null))); resumePendingPath(); }, 600);</script>
-  <script src="hubs.js?v=50"></script>
+  <script src="hubs.js?v=60"></script>
   <script>hubBanner('parents', 'hub-banner-box');</script>
 </body>
 </html>

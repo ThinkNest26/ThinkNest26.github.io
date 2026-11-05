@@ -1049,3 +1049,24 @@ a.gp-post { display: block; color: inherit; }
 .side nav.nav2 .nav2-switch { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0 0 10px; padding: 10px 12px; border-radius: 12px; background: #F27A6F; color: #fff; font-weight: 800; font-size: .92rem; border-left: 0; text-align: center; }
 .side nav.nav2 .nav2-switch:hover { background: #F5938A; }
 .also-parent-hint { margin-bottom: 12px; text-align: left; }
+/* ===== Family: children on parent sign-up ===== */
+.fam-section { display: grid; gap: 12px; border-top: 1px solid #ECEEF6; padding-top: 16px; margin-top: 4px; }
+.fam-h { font-size: 1.15rem; color: #1D2026; }
+.fam-q { font-weight: 700; color: #2F3241; margin: 0; }
+.fam-count { display: flex; gap: 8px; }
+.fam-count button { width: 52px; height: 52px; border-radius: 14px; border: 2px solid #C9CCDA; background: #fff; font: inherit; font-weight: 800; font-size: 1.2rem; cursor: pointer; color: #2F3241; }
+.fam-count button:hover { border-color: #3E4B94; }
+.fam-count button[aria-pressed=true] { background: #3E4B94; border-color: #3E4B94; color: #fff; }
+.fam-child { border: 1px solid #E4E6F1; border-radius: 14px; padding: 12px 14px 14px; display: grid; gap: 10px; background: #FAFBFE; }
+.fam-child legend { font-weight: 800; color: #3E4B94; padding: 0 6px; }
+.fam-has { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; font-size: .92rem; font-weight: 600; }
+.fam-has label { display: inline-flex !important; align-items: center; gap: 6px; flex-direction: row !important; font-weight: 600; }
+.fam-joined span { font-size: .9rem; }
+.fam-wait { display: grid; gap: 10px; margin-bottom: 14px; }
+.fam-card { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
+.fam-card > div:nth-child(2) { display: flex; flex-direction: column; }
+.fam-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.fam-add { margin-bottom: 20px; }
+.fam-add summary { cursor: pointer; font-weight: 800; color: var(--blue); }
+.fam-add .auth-form { margin-top: 12px; }
+#fam-box { margin: 16px 0 6px; }

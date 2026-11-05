@@ -373,6 +373,11 @@ async function loadNewAccounts() {
       <div class="person-actions"><button class="pill pill-live" data-accok>Approve</button>${r.account_status === 'pending' ? '<button class="pill pill-soft danger" data-accno>Decline</button>' : ''}</div></article>`;
   box.innerHTML = (pending.length ? pending.map(card).join('') : '<p class="empty">No new accounts waiting. 🎉</p>') +
     (declined.length ? `<details class="hubreq-done"><summary>Declined (${declined.length})</summary>${declined.map(card).join('')}</details>` : '');
+  rows.filter(r => r.role === 'student').forEach(async r => {
+    const { data: by } = await db.rpc('registered_by', { kid: r.id });
+    const el = box.querySelector(`[data-acc="${r.id}"] .person-info`);
+    if (by && el) el.insertAdjacentHTML('beforeend', `<span class="meta">👪 Registered by parent: <b>${esc(by)}</b></span>`);
+  });
   box.onclick = async e => {
     const row = e.target.closest('[data-acc]'); if (!row) return;
     const ok = !!e.target.closest('[data-accok]'), no = !!e.target.closest('[data-accno]');

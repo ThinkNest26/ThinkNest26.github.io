@@ -17,15 +17,18 @@ function startParentSignup() {
       if (!el.checkValidity()) { el.focus(); return showError(err, el.type === 'password' ? 'Choose a password with at least 8 characters.' : el.type === 'email' ? 'Enter a valid email address.' : 'Please fill in every required box.'); }
     }
     if (f.password.value !== f.password2.value) { f.password2.focus(); return showError(err, 'The two passwords don’t match.'); }
+    if (typeof famValidate === 'function') { const fe = famValidate(); if (fe) return showError(err, fe); }
+    const kids = typeof famCollect === 'function' ? famCollect() : [];
+    const joined = (f.querySelector('input[name=family_joined]:checked') || {}).value !== 'no';
     const btn = f.querySelector('button[type=submit]'); btn.disabled = true; btn.textContent = 'Creating account…';
     const { data, error } = await db.auth.signUp({
       email: f.email.value.trim(), password: f.password.value,
-      options: { data: { role: 'parent', full_name: (f.first.value.trim() + ' ' + f.last.value.trim()).trim(), phone: f.phone.value.trim(), country: f.country.value } }
+      options: { data: { role: 'parent', full_name: (f.first.value.trim() + ' ' + f.last.value.trim()).trim(), phone: f.phone.value.trim(), country: f.country.value, children: kids, family_joined: joined } }
     });
     btn.disabled = false; btn.textContent = 'Continue';
     if (error) return showError(err, friendly(error));
     if (alreadyRegistered(data)) { if (typeof btn !== 'undefined' && btn) { btn.disabled = false; } return showError(err, ALREADY_MSG); }
-    emailAdmin('New parent account waiting for approval', { Name: (f.full_name ? f.full_name.value.trim() : ''), Email: f.email.value.trim(), Account: 'Parent', 'What to do': 'Log in as admin and open Approvals → New accounts.' });
+    emailAdmin('New parent account waiting for approval', { Name: (f.first.value.trim() + ' ' + f.last.value.trim()).trim(), Email: f.email.value.trim(), Account: 'Parent', Children: kids.map(k => k.name + (k.grade ? ' (' + k.grade + ')' : '')).join(', '), 'Joined family account': joined ? 'Yes' : 'No', 'What to do': 'Log in as admin and open Approvals → New accounts.' });
     if (data.session) location.href = 'pending.html';
     else f.innerHTML = '<div class="note big-note"><b>Almost done! 🎉</b><br>Your account has been created. The Think Nest team will check and approve it, usually within one working day. We’ve also sent an email to <b>' + esc(f.email.value.trim()) + '</b> with a link to confirm your address (check spam too).</div><a class="btn btn-red auth-btn" href="parent-login.html">Go to log in</a>';
   });
