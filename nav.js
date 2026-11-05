@@ -57,7 +57,11 @@
     let saved = {};
     try { saved = JSON.parse(localStorage.getItem('tn_nav_open') || '{}'); } catch (_) {}
     nav.classList.add('nav2');
-    nav.innerHTML = menu.map((sec, i) => {
+    const parentPages = ['parent-dashboard.html', 'add-child.html', 'parent-hub.html', 'parent-cafe.html', 'child.html', 'parent-settings.html'];
+    const inParent = parentPages.includes(location.pathname.split('/').pop());
+    const switcher = window.TN_ALSO_PARENT && (role === 'teacher' || role === 'admin')
+      ? `<a class="nav2-switch" href="${inParent ? 'teacher-dashboard.html' : 'parent-dashboard.html'}">${inParent ? '👩‍🏫 Switch to teacher view' : '👪 Switch to parent view'}</a>` : '';
+    nav.innerHTML = switcher + menu.map((sec, i) => {
       if (sec.href) {
         const on = sec.href === here;
         return `<a class="nav2-top ${on ? 'active' : ''}" href="${sec.href}" ${on ? 'aria-current="page"' : ''}><span class="nav2-ic" aria-hidden="true">${sec.ic}</span><span>${sec.label}</span></a>`;

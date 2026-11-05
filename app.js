@@ -70,7 +70,11 @@ if (nextBtn) nextBtn.addEventListener('click', () => {
 
 // ===== Log in =====
 async function homeFor(userId) {
-  const { data: p } = await db.from('profiles').select('role, requested_role').eq('id', userId).maybeSingle();
+  const { data: p } = await db.from('profiles').select('role, requested_role, also_parent, account_status').eq('id', userId).maybeSingle();
+  // the parent log in page takes teachers who are also parents to the parent view
+  const wantsParent = /parent-login/.test(location.pathname);
+  if (p && p.role !== 'admin' && p.account_status && p.account_status !== 'approved' && p.requested_role !== 'teacher') return 'pending.html';
+  if (wantsParent && p && p.also_parent && ['teacher', 'school_leader', 'admin'].includes(p.role)) return 'parent-dashboard.html';
   if (p && p.role === 'admin') return 'admin.html';
   if (p && p.role === 'parent') return 'parent-dashboard.html';
   if (p && (p.role === 'teacher' || p.role === 'school_leader')) return 'teacher-dashboard.html';

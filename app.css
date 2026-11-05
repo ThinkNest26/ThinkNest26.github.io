@@ -1046,3 +1046,6 @@ a.gp-post { display: block; color: inherit; }
 .parent-q-btns label:hover span { border-color: #3E4B94; }
 .parent-q-btns input:checked + span { border-color: #3E4B94; background: #3E4B94; color: #fff; }
 .parent-q-btns input:focus-visible + span { outline: 3px solid #F27A6F; outline-offset: 2px; }
+.side nav.nav2 .nav2-switch { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0 0 10px; padding: 10px 12px; border-radius: 12px; background: #F27A6F; color: #fff; font-weight: 800; font-size: .92rem; border-left: 0; text-align: center; }
+.side nav.nav2 .nav2-switch:hover { background: #F5938A; }
+.also-parent-hint { margin-bottom: 12px; text-align: left; }
