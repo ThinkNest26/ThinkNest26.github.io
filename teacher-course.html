@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=36">
-  <link rel="stylesheet" href="app.css?v=36">
+  <link rel="stylesheet" href="style.css?v=45">
+  <link rel="stylesheet" href="app.css?v=45">
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -77,8 +77,11 @@
         <form id="course-form" class="auth-form course-form-v2">
           <h2 id="course-dlg-title">New course</h2>
           <input type="hidden" name="subject"><input type="hidden" name="curriculum"><input type="hidden" name="grade">
-          <input type="hidden" name="category" value="Think Paths"><input type="hidden" name="level" value="All levels">
-          <div class="cf-step"><span class="cf-num">1</span><b>Subject</b></div>
+          <input type="hidden" name="audience" value="students"><input type="hidden" name="category" value="Think Paths"><input type="hidden" name="level" value="All levels">
+          <div class="cf-step"><span class="cf-num">✓</span><b>Who is this course for?</b></div>
+          <div class="cur-grades cf-aud" data-cf="audience"><button type="button" class="chip on" data-v="students">🎒 Students</button><button type="button" class="chip" data-v="teachers">👩‍🏫 Teachers</button><button type="button" class="chip" data-v="parents">👪 Parents</button></div>
+          <div class="cf-hub" hidden><div class="cf-step"><span class="cf-num">1</span><b>Hub topic</b></div><div class="cf-hubtopics" data-cf="hubtopic"></div></div>
+          <div class="cf-school"><div class="cf-step"><span class="cf-num">1</span><b>Subject</b> <span class="meta cf-opt" hidden>(optional)</span></div>
           <div class="cf-subjects" data-cf="subject">
             <button type="button" data-v="English"><span>Aa</span>English</button>
             <button type="button" data-v="Maths"><span>+×</span>Maths</button>
@@ -92,10 +95,12 @@
           <div class="cur-grades" data-cf="curriculum"></div>
           <div class="cf-step"><span class="cf-num">3</span><b>Grade</b></div>
           <div class="cur-grades cf-grades" data-cf="grade"></div>
+          </div>
           <div class="cf-step"><span class="cf-num">4</span><b>Course name</b></div>
           <label><span class="sr">Course title</span><input type="text" name="title" required maxlength="120" placeholder="Choose a subject, curriculum and grade, and we’ll suggest a name"></label>
           <details class="cf-more"><summary>More options (optional)</summary>
             <label>Short description <textarea name="description" rows="3" placeholder="What will students do in this course?"></textarea></label>
+            <label>Format (optional) <input type="text" name="format" list="format-list" maxlength="60" placeholder="For example, Live online or Workshop"></label><datalist id="format-list"><option value="Live online"><option value="Workshop"><option value="Self-paced"><option value="In person"></datalist>
             <div class="two"><label>Length in weeks <input type="number" name="weeks" min="1" max="52" placeholder="For example, 10"></label>
             <label>Picture link <input type="url" name="image_url" placeholder="https://... (a subject picture is used if empty)"></label></div>
           </details>
@@ -127,16 +132,17 @@
   <div class="side-shade" id="side-shade"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=36"></script>
-  <script src="app.js?v=36"></script>
-  <script src="nav.js?v=36"></script>
-  <script src="notify.js?v=36" defer></script>
-  <script src="objpicker.js?v=36"></script>
-  <script src="lessons.js?v=36"></script>
-  <script src="materials.js?v=36"></script>
-  <script src="courseform.js?v=36"></script>
-  <script src="attendance.js?v=36"></script>
-  <script src="teacher.js?v=36"></script>
+  <script src="supabase-config.js?v=45"></script>
+  <script src="app.js?v=45"></script>
+  <script src="nav.js?v=45"></script>
+  <script src="notify.js?v=45" defer></script>
+  <script src="objpicker.js?v=45"></script>
+  <script src="lessons.js?v=45"></script>
+  <script src="materials.js?v=45"></script>
+  <script src="hubs.js?v=45"></script>
+  <script src="courseform.js?v=45"></script>
+  <script src="attendance.js?v=45"></script>
+  <script src="teacher.js?v=45"></script>
   <script>startTeacherCourse();</script>
 </body>
 </html>

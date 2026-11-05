@@ -72,10 +72,12 @@ function courseDialog(onSaved) {
     e.preventDefault(); showError(err, '');
     const row = { title: f.title.value.trim(), description: f.description.value.trim() || null, category: f.category.value, level: f.level.value,
                   weeks: f.weeks.value ? Number(f.weeks.value) : null, image_url: f.image_url.value.trim() || null,
-                  curriculum: f.curriculum ? f.curriculum.value || null : null, grade: f.grade ? f.grade.value || null : null, subject: f.subject ? f.subject.value.trim() || null : null };
-    if (f.subject && !row.subject) return showError(err, 'Choose a subject.');
-    if (f.curriculum && !row.curriculum) return showError(err, 'Choose a curriculum.');
-    if (f.grade && !row.grade) return showError(err, 'Choose a grade.');
+                  curriculum: f.curriculum ? f.curriculum.value || null : null, audience: f.audience ? f.audience.value || 'students' : 'students', format: f.format ? f.format.value.trim() || null : null, grade: f.grade ? f.grade.value || null : null, subject: f.subject ? f.subject.value.trim() || null : null };
+    const forStudents = !f.audience || f.audience.value === 'students';
+    if (!forStudents && !f.category.value) return showError(err, 'Choose a hub topic.');
+    if (forStudents && f.subject && !row.subject) return showError(err, 'Choose a subject.');
+    if (forStudents && f.curriculum && !row.curriculum) return showError(err, 'Choose a curriculum.');
+    if (forStudents && f.grade && !row.grade) return showError(err, 'Choose a grade.');
     if (!row.title) return showError(err, 'Give the course a name.');
     let res;
     if (editing) res = await db.from('courses').update(row).eq('id', editing.id).select().single();
@@ -88,7 +90,7 @@ function courseDialog(onSaved) {
       editing = course; teacher = me;
       document.getElementById('course-dlg-title').textContent = course ? 'Edit course' : 'New course';
       f.reset();
-      if (course) ['title', 'description', 'category', 'level', 'weeks', 'image_url', 'curriculum', 'grade', 'subject'].forEach(k => { if (f[k]) f[k].value = course[k] ?? ''; });
+      if (course) ['title', 'description', 'category', 'level', 'weeks', 'image_url', 'curriculum', 'grade', 'subject', 'audience', 'format'].forEach(k => { if (f[k]) f[k].value = course[k] ?? ''; });
       showError(err, ''); dlg.showModal();
       if (typeof syncCourseForm === 'function') syncCourseForm(course);
     }

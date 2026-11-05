@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=43">
-  <link rel="stylesheet" href="paths.css?v=43">
+  <link rel="stylesheet" href="style.css?v=45">
+  <link rel="stylesheet" href="paths.css?v=45">
 </head>
 <body>
 
@@ -34,6 +34,8 @@
             <ul class="nav-dd" id="dd-res">
               <li><a href="curriculum.html">Curriculum guide</a></li>
               <li><a href="revision.html">Revision Hub</a></li>
+              <li><a href="hub.html?for=teachers">Teacher Hub</a></li>
+              <li><a href="hub.html?for=parents">Parent Hub</a></li>
             </ul></li>
         </ul>
         <div class="nav-buttons">
@@ -102,17 +104,17 @@
       </a>
     </section>
 
-    <!-- ============ CODE. BUILD. IMAGINE ============ -->
+    <!-- ============ COURSES FOR EVERYONE ============ -->
     <section id="courses" class="container">
-      <div class="code-panel">
-        <h2 class="title title-white title-center">Code. Build. Imagine</h2>
-        <div class="code-inner">
-          <img src="images/tn-code-kids.png" alt="Illustration of a coding window">
-          <div>
-            <p>Unlock creativity and problem-solving through hands-on courses in coding and LEGO robotics. Designed to spark curiosity and build the future skills kids need to think, grow, and connect.</p>
-            <a href="#paths" class="btn btn-red btn-big">Explore the courses</a>
-          </div>
+      <div class="code-panel offer-panel">
+        <h2 class="title title-white title-center">Something for everyone</h2>
+        <p class="offer-sub">Classes for students, plus a Teacher Hub and a Parent Hub for your own growth, wellbeing and interests.</p>
+        <div class="offer-tabs" role="tablist" aria-label="Who is it for?">
+          <button role="tab" aria-selected="true" data-aud="students"><span>🎒</span>For students</button>
+          <button role="tab" aria-selected="false" data-aud="teachers"><span>👩‍🏫</span>Teacher Hub</button>
+          <button role="tab" aria-selected="false" data-aud="parents"><span>👪</span>Parent Hub</button>
         </div>
+        <div class="offer-body" id="offer-body" role="tabpanel"></div>
       </div>
     </section>
 
@@ -222,8 +224,10 @@
   <script src="supabase-config.js?v=36"></script>
   <script src="app.js?v=36"></script>
   <script src="curriculum.js?v=36"></script>
-  <script src="paths.js?v=36"></script>
+  <script src="paths.js?v=45"></script>
   <script src="founders.js?v=41"></script>
+  <script src="hubs.js?v=45"></script>
+  <script src="offers.js?v=45"></script>
   <script>
     // Top menu drop-downs (kept separate so nothing else can stop them working)
     document.querySelectorAll('.nav-drop-btn').forEach(b => b.addEventListener('click', e => {

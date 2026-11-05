@@ -1013,3 +1013,5 @@ a.gp-post { display: block; color: inherit; }
 .fd-photo-btns { display: grid; gap: 6px; justify-items: start; }
 .fd-photo-btns .pill { cursor: pointer; }
 .fd-save { position: sticky; bottom: 0; background: #F5F6FB; padding: 10px 0; }
+.cf-aud .chip { padding: 8px 14px; }
+.cf-hubtopics { display: flex; flex-wrap: wrap; gap: 8px; } .cf-hubtopics .chip { padding: 7px 12px; font-size: .88rem; } .cf-hub[hidden], .cf-school[hidden] { display: none; }

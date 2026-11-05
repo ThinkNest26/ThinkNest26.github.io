@@ -10,6 +10,15 @@ function cfSubject() { const f = cfForm(); return f.subject.value; }
 function cfDraw() {
   const f = cfForm(); if (!f) return;
   const subj = f.subject.value, isOther = subj && !CF_COLORS[subj];
+  const aud = f.audience ? f.audience.value || 'students' : 'students';
+  f.querySelectorAll('[data-cf=audience] button').forEach(b => b.classList.toggle('on', b.dataset.v === aud));
+  f.querySelectorAll('.cf-opt').forEach(x => x.hidden = aud === 'students');
+  const isHub = aud !== 'students' && typeof HUBS !== 'undefined';
+  f.querySelector('.cf-school').hidden = isHub; f.querySelector('.cf-hub').hidden = !isHub;
+  if (isHub) {
+    if (!HUBS[aud].cats.some(x => x[0] === f.category.value)) f.category.value = '';
+    f.querySelector('[data-cf=hubtopic]').innerHTML = HUBS[aud].cats.map(([k, ic, n]) => `<button type="button" class="chip ${f.category.value === k ? 'on' : ''}" data-v="${k}">${ic} ${n}</button>`).join('');
+  } else if (typeof HUBS !== 'undefined' && Object.values(HUBS).some(h => h.cats.some(x => x[0] === f.category.value))) f.category.value = 'Think Paths';
   f.querySelectorAll('[data-cf=subject] button').forEach(b => b.classList.toggle('on', b.dataset.v === subj || (b.dataset.v === 'other' && isOther)));
   f.querySelector('.cf-other').hidden = !isOther && f.querySelector('[data-cf=subject] .on')?.dataset.v !== 'other';
   const curs = subj === 'Arabic' ? CF_CURRICULA.Arabic : CF_CURRICULA.default;
@@ -17,7 +26,8 @@ function cfDraw() {
   f.querySelector('[data-cf=curriculum]').innerHTML = curs.map(([k, n]) => `<button type="button" class="chip ${f.curriculum.value === k ? 'on' : ''}" data-v="${k}">${n}</button>`).join('');
   f.querySelector('[data-cf=grade]').innerHTML = CF_GRADES.map(g => `<button type="button" class="chip ${f.grade.value === g ? 'on' : ''}" data-v="${g}">${g}</button>`).join('');
   // suggest a name
-  const suggestion = subj && f.grade.value ? `${f.grade.value} ${subj}${f.curriculum.value ? ' (' + CF_CUR_SHORT[f.curriculum.value] + ')' : ''}` : '';
+  const hubTopic = isHub && typeof hubCat === 'function' ? hubCat(aud, f.category.value) : null;
+  const suggestion = hubTopic ? hubTopic[2] + ' workshop' : subj && f.grade.value ? `${f.grade.value} ${subj}${f.curriculum.value ? ' (' + CF_CUR_SHORT[f.curriculum.value] + ')' : ''}` : '';
   if (suggestion && (!f.title.value.trim() || (!cfTitleTouched && f.title.value === cfLastSuggested))) { f.title.value = suggestion; cfLastSuggested = suggestion; }
   // preview
   const col = CF_COLORS[subj] || '#6E7485';
@@ -26,7 +36,7 @@ function cfDraw() {
 function syncCourseForm(course) {
   const f = cfForm(); if (!f) return;
   cfTitleTouched = !!course; cfLastSuggested = '';
-  if (!course) { f.subject.value = ''; f.curriculum.value = ''; f.grade.value = ''; f.category.value = 'Think Paths'; f.level.value = 'All levels'; }
+  if (!course) { f.subject.value = ''; f.curriculum.value = ''; f.grade.value = ''; if (f.audience) f.audience.value = 'students'; f.category.value = 'Think Paths'; f.level.value = 'All levels'; }
   const isOther = f.subject.value && !CF_COLORS[f.subject.value];
   document.getElementById('cf-other').value = isOther ? f.subject.value : '';
   f.querySelector('.cf-more').open = !!(course && (course.description || course.weeks || course.image_url));
@@ -40,7 +50,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (field === 'subject') {
       if (b.dataset.v === 'other') { f.subject.value = document.getElementById('cf-other').value.trim(); f.querySelectorAll('[data-cf=subject] button').forEach(x => x.classList.toggle('on', x === b)); f.querySelector('.cf-other').hidden = false; document.getElementById('cf-other').focus(); cfDraw(); f.querySelector('.cf-other').hidden = false; return; }
       f.subject.value = b.dataset.v;
-    } else f[field].value = b.dataset.v;
+    } else if (field === 'audience') { f.audience.value = b.dataset.v; cfLastSuggested = f.title.value; cfTitleTouched = false; }
+    else if (field === 'hubtopic') { f.category.value = b.dataset.v; }
+    else f[field].value = b.dataset.v;
     cfDraw();
   });
   document.getElementById('cf-other').addEventListener('input', e => { f.subject.value = e.target.value.trim(); cfDraw(); f.querySelector('.cf-other').hidden = false; });
