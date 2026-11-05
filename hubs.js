@@ -4,7 +4,7 @@ const HUBS = {
     about: 'Workshops, courses and meetups for teachers’ own wellbeing, skills and ambitions, from finding balance to starting something of your own.',
     cats: [['wellbeing', '🌿', 'Wellbeing & balance', 'Stress, energy, boundaries and looking after yourself'], ['career', '🚀', 'Career growth & leadership', 'Leading teams, interviews, CVs and next steps'], ['digital', '🤖', 'AI & digital skills', 'AI tools, Canva, video and working smarter'], ['confidence', '🎤', 'Confidence & public speaking', 'Presenting, storytelling and speaking up'],
            ['venture', '💡', 'Start your own venture', 'Tutoring, content creation and side businesses'], ['creative', '🎨', 'Creativity & hobbies', 'Art, photography, writing and making'], ['languages', '🗣️', 'Languages', 'Arabic, English, French and more'], ['cafe', '☕', 'Teacher Café', 'Meetups, networking and sharing ideas']] },
-  parents: { name: 'Nest & Rest', kicker: 'Parent Hub', img: 'images/tn-icon-parent.png', ic: '👪', color: '#F27A6F', grad: 'linear-gradient(120deg,#F27A6F,#F6A49B)', tagline: 'A place to grow, recharge and connect.',
+  parents: { name: 'Beyond the School Run', kicker: 'Parent Hub', img: 'images/tn-icon-parent.png', ic: '👪', color: '#F27A6F', grad: 'linear-gradient(120deg,#F27A6F,#F6A49B)', tagline: 'A place to grow, recharge and connect.',
     about: 'Workshops, talks and classes for parents’ own wellbeing, skills and interests, plus a friendly community of other parents.',
     cats: [['selfcare', '💛', 'Self-care & wellbeing', 'Rest, calm, confidence and finding time for you'], ['family', '🏡', 'Family life & relationships', 'Communication, routines and a happier home'], ['cooking', '🥗', 'Healthy cooking & nutrition', 'Quick family meals, lunchboxes and healthy habits'], ['money', '💰', 'Money & family budgeting', 'Budgets, saving and planning ahead'],
            ['career', '💼', 'Career & side projects', 'Returning to work, new skills and starting a business'], ['creative', '🎨', 'Creative & hobby classes', 'Crafts, photography, baking and more'], ['fitness', '🧘', 'Fitness & mindfulness', 'Yoga, movement, breathing and sleep'], ['circles', '☕', 'Parent Circles', 'Meetups, talks and sharing experiences']] }
@@ -21,8 +21,8 @@ function hubCourseCard(c, aud) {
 
 // ---------- The hub page (hub.html?for=teachers or parents) ----------
 async function startHub() {
-  const aud = new URLSearchParams(location.search).get('for') === 'parents' ? 'parents' : 'teachers';
-  const H = HUBS[aud]; let pick = '';
+  const qs = new URLSearchParams(location.search), aud = qs.get('for') === 'parents' ? 'parents' : 'teachers';
+  const H = HUBS[aud]; let pick = H.cats.some(c => c[0] === qs.get('topic')) ? qs.get('topic') : '';
   document.title = H.name + ' (' + H.kicker + ') – Think Nest';
   let courses = [];
   try { const { data } = await db.from('courses').select('id, title, description, teacher_name, weeks, audience, format, category').eq('audience', aud).order('id', { ascending: false }); courses = data || []; } catch (_) {}

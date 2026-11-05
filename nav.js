@@ -19,7 +19,7 @@
     parent: [
       { ic: '🏠', label: 'My children', href: 'parent-dashboard.html' },
       { ic: '➕', label: 'Add a child', href: 'add-child.html' },
-      { ic: '🪺', label: 'Nest & Rest', href: 'parent-hub.html' },
+      { ic: '🪺', label: 'Beyond the School Run', href: 'parent-hub.html' },
       { ic: '💬', label: 'Community', href: 'community.html' },
       { ic: '⚙️', label: 'Account', items: [['parent-settings.html', 'Account Settings'], ['contact.html', 'Contact Us'], ['#logout', 'Log out']] }
     ]

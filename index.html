@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css?v=46">
-  <link rel="stylesheet" href="paths.css?v=49">
+  <link rel="stylesheet" href="paths.css?v=50">
 </head>
 <body>
 
@@ -35,7 +35,7 @@
               <li><a href="curriculum.html">Curriculum guide</a></li>
               <li><a href="revision.html">Revision Hub</a></li>
               <li><a href="hub.html?for=teachers">Beyond the Bell (Teacher Hub)</a></li>
-              <li><a href="hub.html?for=parents">Nest &amp; Rest (Parent Hub)</a></li>
+              <li><a href="hub.html?for=parents">Beyond the School Run (Parent Hub)</a></li>
             </ul></li>
         </ul>
         <div class="nav-buttons">
@@ -104,11 +104,83 @@
       </a>
     </section>
 
-    <!-- ============ TEACHER HUB & PARENT HUB ============ -->
-    <section id="courses" class="container hubs-home">
-      <h2 class="title title-center">Grown-ups grow here too</h2>
-      <p class="subtitle">Two hubs just for teachers and parents: workshops, skills and community for your own life.</p>
-      <div class="big-hubs" id="big-hubs"></div>
+    <!-- ============ PLOT TWIST! (Teacher Hub & Parent Hub) ============ -->
+    <section id="courses" class="plot" aria-labelledby="plot-title">
+      <span class="plot-blob b1" aria-hidden="true"></span><span class="plot-blob b2" aria-hidden="true"></span><span class="plot-blob b3" aria-hidden="true"></span>
+      <div class="container plot-inner">
+        <header class="plot-head pt-reveal">
+          <h2 id="plot-title" class="plot-title">PLOT TWIST! <span class="plot-pop" aria-hidden="true">🎉</span></h2>
+          <p class="plot-lead">You’re a teacher. You’re a parent. But that’s not your whole story.</p>
+          <p class="plot-sub">You spend so much time doing things for everyone else. How about doing something just for <b>YOU</b>?</p>
+          <p class="plot-rotator" aria-live="polite"><span id="plot-rotate">Your comfort zone called. We told it you’re busy.</span></p>
+        </header>
+
+        <div class="plot-mood pt-reveal" role="group" aria-labelledby="mood-q">
+          <p id="mood-q" class="plot-mood-q">What are you in the mood for?</p>
+          <div class="plot-mood-btns">
+            <button type="button" data-mood="break" aria-pressed="false"><span>🧘</span><b>I NEED A BREAK!</b><small>Recharge. Reset. Repeat.</small></button>
+            <button type="button" data-mood="unstoppable" aria-pressed="false"><span>🚀</span><b>MAKE ME UNSTOPPABLE!</b><small>Big dreams? Let’s talk.</small></button>
+            <button type="button" data-mood="surprise" aria-pressed="false"><span>🎨</span><b>SURPRISE ME!</b><small>Discover your next favourite thing.</small></button>
+            <button type="button" data-mood="people" aria-pressed="false"><span>☕</span><b>I NEED MY PEOPLE!</b><small>Good conversations. Great company.</small></button>
+          </div>
+          <div class="plot-mood-result" id="mood-result" hidden></div>
+        </div>
+
+        <div class="plot-cards">
+          <article class="plot-card pc-teach pt-reveal" data-aud="teachers">
+            <div class="pc-top">
+              <span class="pc-pic"><img src="images/tn-icon-teacher.png" alt=""></span>
+              <div><span class="pc-kicker">For teachers</span><h3>BEYOND THE BELL <span class="pc-emoji" aria-hidden="true">🔔</span></h3></div>
+            </div>
+            <p class="pc-twist">Plot Twist! You’re not just a teacher.</p>
+            <p class="pc-text">You’ve spent the day inspiring young minds. Now it’s your turn to discover something new, chase an idea, meet new people or simply have some fun!</p>
+            <p class="pc-quip">No marking. No lesson plans. Just possibilities.</p>
+            <ul class="pc-tiles">
+              <li><a href="hub.html?for=teachers&amp;topic=wellbeing" data-cat="wellbeing"><span>🧘</span><b>Recharge Your Batteries</b><small>Wellbeing &amp; balance</small></a></li>
+              <li><a href="hub.html?for=teachers&amp;topic=career" data-cat="career"><span>🚀</span><b>Dream Bigger</b><small>Career growth &amp; leadership</small></a></li>
+              <li><a href="hub.html?for=teachers&amp;topic=digital" data-cat="digital"><span>🤖</span><b>Outsmart the Tech</b><small>AI &amp; digital skills</small></a></li>
+              <li><a href="hub.html?for=teachers&amp;topic=confidence" data-cat="confidence"><span>🎤</span><b>Find Your Voice</b><small>Confidence &amp; public speaking</small></a></li>
+              <li><a href="hub.html?for=teachers&amp;topic=venture" data-cat="venture"><span>💡</span><b>That Big Idea of Yours</b><small>Entrepreneurship</small></a></li>
+              <li><a href="hub.html?for=teachers&amp;topic=creative" data-cat="creative"><span>🎨</span><b>Unleash Your Creative Side</b><small>Creativity &amp; hobbies</small></a></li>
+              <li><a href="hub.html?for=teachers&amp;topic=languages" data-cat="languages"><span>🌍</span><b>Say It Differently</b><small>Languages</small></a></li>
+              <li><a href="hub.html?for=teachers&amp;topic=cafe" data-cat="cafe"><span>☕</span><b>Coffee, Chats &amp; Connections</b><small>Teacher Café</small></a></li>
+            </ul>
+            <div class="pc-actions">
+              <a class="pc-main" href="hub.html?for=teachers">I’M OFF DUTY! <span aria-hidden="true">→</span></a>
+              <a class="pc-second" href="teacher-signup.html">Count me in! It’s free.</a>
+            </div>
+          </article>
+
+          <article class="plot-card pc-parent pt-reveal" data-aud="parents">
+            <div class="pc-top">
+              <span class="pc-pic"><img src="images/tn-icon-parent.png" alt=""></span>
+              <div><span class="pc-kicker">For parents</span><h3>BEYOND THE SCHOOL RUN <span class="pc-emoji" aria-hidden="true">🚗</span></h3></div>
+            </div>
+            <p class="pc-twist">Plot Twist! You’re not just Mum or Dad.</p>
+            <p class="pc-text">Between packed lunches, school runs, work and a million little things… remember that person with dreams, hobbies and interests? They’re still there!</p>
+            <p class="pc-quip">You’ve signed them up for everything. Now it’s your turn!</p>
+            <ul class="pc-tiles">
+              <li><a href="hub.html?for=parents&amp;topic=selfcare" data-cat="selfcare"><span>❤️</span><b>A Little Time for Me</b><small>Self-care &amp; wellbeing</small></a></li>
+              <li><a href="hub.html?for=parents&amp;topic=family" data-cat="family"><span>🏡</span><b>Love, Life &amp; Everything Between</b><small>Family &amp; relationships</small></a></li>
+              <li><a href="hub.html?for=parents&amp;topic=cooking" data-cat="cooking"><span>🍳</span><b>What’s Cooking?</b><small>Cooking &amp; nutrition</small></a></li>
+              <li><a href="hub.html?for=parents&amp;topic=money" data-cat="money"><span>💰</span><b>Money Matters</b><small>Budgeting &amp; financial skills</small></a></li>
+              <li><a href="hub.html?for=parents&amp;topic=career" data-cat="career"><span>🚀</span><b>What’s Your Next Chapter?</b><small>Career &amp; side projects</small></a></li>
+              <li><a href="hub.html?for=parents&amp;topic=creative" data-cat="creative"><span>🎨</span><b>Discover Your Hidden Talent</b><small>Creativity &amp; hobbies</small></a></li>
+              <li><a href="hub.html?for=parents&amp;topic=fitness" data-cat="fitness"><span>🧘</span><b>Move, Breathe, Feel Good</b><small>Fitness &amp; mindfulness</small></a></li>
+              <li><a href="hub.html?for=parents&amp;topic=circles" data-cat="circles"><span>☕</span><b>Coffee &amp; Real Conversations</b><small>Parent Circles</small></a></li>
+            </ul>
+            <div class="pc-actions">
+              <a class="pc-main" href="hub.html?for=parents">IT’S MY TURN! <span aria-hidden="true">→</span></a>
+              <a class="pc-second" href="parent-signup.html">Count me in! It’s free.</a>
+            </div>
+          </article>
+        </div>
+
+        <footer class="plot-end pt-reveal">
+          <p class="plot-end-1">You give so much to everyone else. This one’s for you.</p>
+          <p class="plot-end-2">So… what’s your next Plot Twist? ✨</p>
+        </footer>
+      </div>
     </section>
 
     <!-- ============ THINK PATHS ============ -->
@@ -219,7 +291,8 @@
   <script src="curriculum.js?v=36"></script>
   <script src="paths.js?v=45"></script>
   <script src="founders.js?v=41"></script>
-  <script src="hubs.js?v=49"></script>
+  <script src="hubs.js?v=50"></script>
+  <script src="plot.js?v=50"></script>
   <script src="offers.js?v=49"></script>
   <script>
     // Top menu drop-downs (kept separate so nothing else can stop them working)
