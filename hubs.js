@@ -105,10 +105,3 @@ function hubBanner(aud, hostId) {
   b.innerHTML = `<a class="hub-banner" href="${page}" style="background:${H.grad}">${hubPic(H)}<div><span class="hub-kicker">${H.kicker}</span><b>${H.name}</b><span>${H.tagline} ${H.cats.slice(0, 4).map(c => c[1]).join(' ')}</span></div><span class="hub-banner-go">Open →</span></a>`;
 }
 
-// Email the Think Nest inbox (uses the same free FormSubmit service as the Careers form)
-function emailAdmin(subject, fields) {
-  try {
-    fetch('https://formsubmit.co/ajax/thinknest2026@gmail.com', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify(Object.assign({ _subject: subject, _template: 'table', _captcha: 'false' }, fields)) }).catch(() => {});
-  } catch (_) {}
-}
