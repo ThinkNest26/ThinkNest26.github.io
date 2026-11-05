@@ -1035,3 +1035,14 @@ a.gp-post { display: block; color: inherit; }
 .dual-role { margin-bottom: 18px; display: grid; gap: 10px; } .dual-role h2 { color: #1D2026; font-size: 1.15rem; } .switch-row { display: flex; align-items: center; gap: 10px; font-weight: 600; } .switch-row input { width: 22px; height: 22px; accent-color: #3E4B94; }
 .dual-role .switch-row { display: flex !important; flex-direction: row !important; justify-content: flex-start !important; align-items: center; gap: 10px; text-align: left; } .dual-role .meta { font-size: .92rem; }
 .also-parent-box { display: flex !important; gap: 10px; align-items: flex-start; background: #F7F8FD; border: 1px solid #E4E6F1; border-radius: 12px; padding: 12px 14px; font-weight: 400; line-height: 1.5; text-align: left; } .also-parent-box input { margin-top: 3px; width: 18px; height: 18px; accent-color: #3E4B94; flex: none; }
+/* "Are you also a parent?" on teacher sign-up */
+.parent-q { border: 2px solid #3E4B94; border-radius: 16px; padding: 14px 16px 16px; margin: 6px 0; background: #F4F5FD; display: grid; gap: 8px; }
+.parent-q legend { font-weight: 800; color: #1D2026; padding: 0 6px; font-size: 1.02rem; }
+.parent-q .meta { margin: 0; }
+.parent-q-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.parent-q-btns label { display: block !important; margin: 0; cursor: pointer; }
+.parent-q-btns input { position: absolute; opacity: 0; }
+.parent-q-btns span { display: block; text-align: center; border: 2px solid #C9CCDA; background: #fff; border-radius: 12px; padding: 12px 10px; font-weight: 700; color: #2F3241; transition: border-color .15s, background .15s; }
+.parent-q-btns label:hover span { border-color: #3E4B94; }
+.parent-q-btns input:checked + span { border-color: #3E4B94; background: #3E4B94; color: #fff; }
+.parent-q-btns input:focus-visible + span { outline: 3px solid #F27A6F; outline-offset: 2px; }

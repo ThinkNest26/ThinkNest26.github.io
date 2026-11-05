@@ -53,16 +53,17 @@ function startTeacherSignup() {
     }
     const school = f.school_pick.value === 'A school' ? f.school.value.trim() : f.school_pick.value;
     const btn = f.querySelector('button[type=submit]'); btn.disabled = true; btn.textContent = 'Sending…';
+    if (!f.querySelector('input[name=also_parent]:checked')) { document.getElementById('parent-q').scrollIntoView({ behavior: 'smooth', block: 'center' }); btn.disabled = false; btn.textContent = 'Send request'; return showError(err, 'Please answer: are you also a parent at Think Nest?'); }
     const { data: su, error } = await db.auth.signUp({
       email: f.email.value.trim(), password: f.password.value,
       options: { data: { role: 'teacher', full_name: f.full_name.value.trim(), subject: f.subject.value.trim(), school, phone: f.phone.value.trim(),
         grade_levels: f.grade_levels.value, education_degree: f.education_degree.value, teaching_method: f.teaching_method.value,
-        curriculum: f.curriculum.value, experience_years: f.experience_years.value, bio: f.bio.value.trim(), also_parent: !!(f.also_parent && f.also_parent.checked) } }
+        curriculum: f.curriculum.value, experience_years: f.experience_years.value, bio: f.bio.value.trim(), also_parent: (f.querySelector('input[name=also_parent]:checked') || {}).value === 'yes' } }
     });
     btn.disabled = false; btn.textContent = 'Send request';
     if (error) return showError(err, friendly(error));
     if (alreadyRegistered(su)) return showError(err, ALREADY_MSG);
-    emailAdmin('New teacher account waiting for approval', { Name: (f.full_name ? f.full_name.value.trim() : ''), Email: f.email.value.trim(), Account: 'Teacher' + (f.also_parent && f.also_parent.checked ? ' (also a parent)' : ''), Subject: (f.subject ? f.subject.value : ''), 'What to do': 'Log in as admin and open Approvals → Teachers to approve.' });
+    emailAdmin('New teacher account waiting for approval', { Name: (f.full_name ? f.full_name.value.trim() : ''), Email: f.email.value.trim(), Account: 'Teacher' + ((f.querySelector('input[name=also_parent]:checked') || {}).value === 'yes' ? ' (also a parent)' : ''), Subject: (f.subject ? f.subject.value : ''), 'What to do': 'Log in as admin and open Approvals → Teachers to approve.' });
     location.href = 'teacher-pending.html';
   });
 }
