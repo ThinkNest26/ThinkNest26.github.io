@@ -34,11 +34,8 @@ function gateApproval(p) {
     location.href = 'pending.html'; throw new Error('waiting for approval');
   }
 }
-// Email the Think Nest inbox (free FormSubmit service, same as the Careers form)
-function emailAdmin(subject, fields) {
-  try { fetch('https://formsubmit.co/ajax/thinknest2026@gmail.com', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify(Object.assign({ _subject: subject, _template: 'table', _captcha: 'false' }, fields)) }).catch(() => {}); } catch (_) {}
-}
+// Admin emails are now sent automatically by Think Nest (database update 39), so nothing to do here
+function emailAdmin() {}
 function showError(el, msg) { el.textContent = msg; el.hidden = !msg; }
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 function friendly(err) {

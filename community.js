@@ -438,3 +438,18 @@ async function loadConnectAdmin() {
     await db.from('cafe_meetups').delete().eq('id', Number(r.dataset.mrm)); loadConnectAdmin();
   };
 }
+
+// ---------- Admin: email outbox ----------
+async function loadEmailAdmin() {
+  const box = document.getElementById('email-admin-box'); if (!box) return;
+  const { data, error } = await db.from('email_outbox').select('id, subject, status, error, created_at, sent_at').order('created_at', { ascending: false }).limit(15);
+  if (error) { box.innerHTML = '<p class="empty">Run database update 39 to see emails.</p>'; return; }
+  const icon = { sent: '✅', pending: '⏳', failed: '❌', skipped: '➖' };
+  const waiting = (data || []).filter(e => e.status === 'pending' || e.status === 'failed').length;
+  box.innerHTML = `<div class="email-top"><span class="meta">${waiting ? waiting + ' waiting or failed' : 'All caught up'}</span><button class="pill pill-live" id="email-now">📤 Send waiting emails now</button></div>
+    ${(data || []).length ? `<div class="email-list">${data.map(e => `<div class="pending-row"><span>${icon[e.status] || ''}</span><div><b>${esc(e.subject)}</b><span class="meta">${new Date(e.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })} · ${e.status}${e.error ? ' · ' + esc(e.error.slice(0, 80)) : ''}</span></div></div>`).join('')}</div>` : '<p class="meta">No emails yet.</p>'}`;
+  box.querySelector('#email-now').onclick = async () => {
+    const { error: er } = await db.rpc('send_emails_now');
+    say(er ? friendly(er) : 'Sending… refresh in a minute.'); setTimeout(loadEmailAdmin, 6000);
+  };
+}

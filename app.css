@@ -1184,3 +1184,4 @@ body.cafe-theme .post { border-radius: 20px; }
 .chat-pro { background: #FFF6EA; color: #5B3A29; border-radius: 12px; padding: 8px 12px; font-size: .85rem; line-height: 1.5; margin: 8px 12px 0; }
 .cx-switches { display: grid; gap: 10px; margin-bottom: 14px; }
 .cx-adm-h { color: #1D2026; font-size: 1rem; margin: 6px 0; }
+.email-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; } .email-list { display: grid; gap: 4px; max-height: 340px; overflow-y: auto; }

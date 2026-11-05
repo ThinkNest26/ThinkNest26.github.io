@@ -64,11 +64,6 @@
       const msg = { name: cf.Name.value.trim(), email: cf.email.value.trim(), who: cf['I am a'].value, topic: cf.Topic.value, message: cf.Message.value.trim() };
       let saved = false, emailed = false;
       try { const { error } = await db.from('contact_messages').insert(msg); saved = !error; } catch (_) {}
-      try {
-        const r = await fetch('https://formsubmit.co/ajax/thinknest2026@gmail.com', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify({ _subject: 'New message from the Think Nest website: ' + msg.topic, _template: 'table', _captcha: 'false', _replyto: msg.email, Name: msg.name, Email: msg.email, 'I am a': msg.who, Topic: msg.topic, Message: msg.message }) });
-        const j = await r.json().catch(() => ({})); emailed = r.ok && String(j.success) !== 'false';
-      } catch (_) {}
       btn.disabled = false; btn.textContent = 'Send message';
       if (saved || emailed) { cf.reset(); return showSent(msg.name); }
       showError(cerr, 'Sorry, your message couldn’t be sent just now. Please try again in a minute, or email us at thinknest2026@gmail.com.');
