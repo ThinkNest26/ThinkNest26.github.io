@@ -24,6 +24,7 @@ function startParentSignup() {
     });
     btn.disabled = false; btn.textContent = 'Continue';
     if (error) return showError(err, friendly(error));
+    if (alreadyRegistered(data)) { if (typeof btn !== 'undefined' && btn) { btn.disabled = false; } return showError(err, ALREADY_MSG); }
     if (data.session) location.href = 'parent-dashboard.html';
     else f.innerHTML = '<div class="note big-note"><b>Almost done! 📧</b><br>We’ve sent an email to <b>' + esc(f.email.value.trim()) + '</b>. Click the link in it to confirm your account, then log in. Check your spam folder if you can’t see it.</div><a class="btn btn-red auth-btn" href="parent-login.html">Go to log in</a>';
   });

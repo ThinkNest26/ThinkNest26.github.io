@@ -52,7 +52,7 @@ function startTeacherSignup() {
     }
     const school = f.school_pick.value === 'A school' ? f.school.value.trim() : f.school_pick.value;
     const btn = f.querySelector('button[type=submit]'); btn.disabled = true; btn.textContent = 'Sending…';
-    const { error } = await db.auth.signUp({
+    const { data: su, error } = await db.auth.signUp({
       email: f.email.value.trim(), password: f.password.value,
       options: { data: { role: 'teacher', full_name: f.full_name.value.trim(), subject: f.subject.value.trim(), school, phone: f.phone.value.trim(),
         grade_levels: f.grade_levels.value, education_degree: f.education_degree.value, teaching_method: f.teaching_method.value,
@@ -60,6 +60,7 @@ function startTeacherSignup() {
     });
     btn.disabled = false; btn.textContent = 'Send request';
     if (error) return showError(err, friendly(error));
+    if (alreadyRegistered(su)) return showError(err, ALREADY_MSG);
     location.href = 'teacher-pending.html';
   });
 }

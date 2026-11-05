@@ -25,11 +25,14 @@ document.querySelectorAll('[data-eye]').forEach(eye => eye.addEventListener('cli
   eye.setAttribute('aria-label', pw.type === 'password' ? 'Show password' : 'Hide password');
 }));
 
+// Supabase returns a user with no identities when the email is already registered
+function alreadyRegistered(data) { return !!(data && data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0); }
+const ALREADY_MSG = 'An account with this email already exists. Please log in, or use “Forgot password?” if you can’t remember the password.';
 function showError(el, msg) { el.textContent = msg; el.hidden = !msg; }
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 function friendly(err) {
   const m = (err && err.message || '').toLowerCase();
-  if (m.includes('invalid login')) return 'That email and password don’t match. Check them and try again.';
+  if (m.includes('invalid login')) return 'That email and password don’t match. Check them and try again, or click “Forgot password?” to choose a new one.';
   if (m.includes('email not confirmed')) return 'Please confirm your email first. Open the email we sent you and click the link (check spam too).';
   if (m.includes('already registered') || m.includes('already been registered')) return 'An account with this email already exists. Try logging in instead.';
   if (m.includes('password')) return 'Choose a password with at least 8 characters.';
@@ -148,6 +151,7 @@ function startSignupPage() {
     });
     create.disabled = false; create.textContent = 'Create account';
     if (error) return showError(err, friendly(error));
+    if (alreadyRegistered(data)) { if (typeof btn !== 'undefined' && btn) { btn.disabled = false; } return showError(err, ALREADY_MSG); }
     if (data.session) location.href = 'student-dashboard.html';
     else { document.getElementById('signup-form').innerHTML = '<div class="note big-note"><b>Almost done! 📧</b><br>We’ve sent an email to <b>' + esc(f.email.value.trim()) + '</b>. Click the link in it to confirm your account, then log in. Check your spam folder if you can’t see it.</div><a class="btn btn-red auth-btn" href="login.html">Go to log in</a>'; }
   });
