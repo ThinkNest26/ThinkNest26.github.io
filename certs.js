@@ -29,7 +29,7 @@ function certificateHtml(c) {
       <div class="cert-foot">
         <div class="cert-sig"><b>${cEsc(cDate(c.issued_at || new Date().toISOString().slice(0, 10)))}</b><span>Date</span></div>
         <div class="cert-seal"><span>${T.ic}</span><small>THINK NEST</small></div>
-        <div class="cert-sig"><b class="cert-sign">${cEsc(c.teacher_name || 'Teacher')}</b><span>Teacher</span></div>
+        <div class="cert-sig"><b class="cert-sign">The Think Nest Team</b><span>Think Nest</span></div>
       </div>
       ${c.code ? `<div class="cert-verify">Certificate code ${cEsc(c.code)} · Check it at thinknest26.github.io/verify.html</div>` : ''}
     </div>
