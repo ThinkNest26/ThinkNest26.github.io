@@ -1076,3 +1076,4 @@ a.gp-post { display: block; color: inherit; }
 .age-stop b { color: #1D2026; font-size: 1.05rem; }
 .age-stop p { margin: 0; color: #4A4E5E; line-height: 1.55; }
 .age-stop .btn { text-decoration: none; }
+.msg-card { display: grid; gap: 6px; } .msg-card header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; } .msg-card header .meta { margin-left: auto; } .msg-body { white-space: pre-wrap; line-height: 1.6; background: #F7F8FD; border-radius: 10px; padding: 10px 12px; margin: 4px 0; } .msg-card.done { opacity: .7; }

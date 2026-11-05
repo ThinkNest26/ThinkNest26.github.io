@@ -388,3 +388,27 @@ async function loadNewAccounts() {
     say(ok ? 'Approved! They can log in now. 🎉' : 'Declined.'); loadNewAccounts();
   };
 }
+
+// ---------- Admin: messages sent through the Contact form ----------
+async function loadContactMessages() {
+  const box = document.getElementById('msgs-box'); if (!box) return;
+  const { data, error } = await db.from('contact_messages').select('*').order('created_at', { ascending: false }).limit(100);
+  if (error) { box.innerHTML = '<p class="empty">Run database update 35 to see website messages.</p>'; return; }
+  const open = (data || []).filter(m => !m.handled), done = (data || []).filter(m => m.handled).slice(0, 20);
+  document.getElementById('n-msgs').textContent = open.length;
+  const card = m => `<article class="panel msg-card ${m.handled ? 'done' : ''}" data-mid="${m.id}">
+      <header><b>${esc(m.name)}</b> <span class="tag">${esc(m.who || '')}</span><span class="meta">${new Date(m.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</span></header>
+      <p class="meta"><b>${esc(m.topic || '')}</b> · <a href="mailto:${esc(m.email)}?subject=${encodeURIComponent('Re: ' + (m.topic || 'your message to Think Nest'))}">${esc(m.email)}</a></p>
+      <p class="msg-body">${esc(m.message)}</p>
+      <div class="person-actions"><a class="pill pill-live" href="mailto:${esc(m.email)}?subject=${encodeURIComponent('Re: ' + (m.topic || 'your message to Think Nest'))}">↩ Reply by email</a>
+        ${m.handled ? '<button class="pill pill-soft" data-mopen>Mark as not done</button>' : '<button class="pill pill-soft" data-mdone>✓ Mark as done</button>'}<button class="link-btn" data-mdel>Delete</button></div></article>`;
+  box.innerHTML = (open.length ? open.map(card).join('') : '<p class="empty">No new messages. 🎉</p>') + (done.length ? `<details class="hubreq-done"><summary>Done (${done.length})</summary>${done.map(card).join('')}</details>` : '');
+  box.onclick = async e => {
+    const row = e.target.closest('[data-mid]'); if (!row) return; const id = Number(row.dataset.mid);
+    if (e.target.closest('[data-mdone]')) await db.from('contact_messages').update({ handled: true }).eq('id', id);
+    else if (e.target.closest('[data-mopen]')) await db.from('contact_messages').update({ handled: false }).eq('id', id);
+    else if (e.target.closest('[data-mdel]')) { if (!confirm('Delete this message?')) return; await db.from('contact_messages').delete().eq('id', id); }
+    else return;
+    loadContactMessages();
+  };
+}
