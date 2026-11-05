@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css?v=36">
   <link rel="stylesheet" href="app.css?v=36">
+  <link rel="stylesheet" href="paths.css?v=47">
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -43,6 +44,7 @@
         <div class="stat s4"><span class="stat-ic">🗓️</span><div><b id="st-classes">0</b><span>Upcoming live classes</span></div></div>
       </section>
       <div id="req-box"></div>
+      <div id="hub-banner-box"></div>
       <div class="page-head"><h2 class="dash-h">📋 Attendance</h2><a class="pill pill-soft big" href="teacher-attendance.html">See all →</a></div>
       <section class="panel" id="att-hub"><p class="empty">Loading…</p></section>
       <div class="page-head"><h2 class="dash-h">Upcoming live classes</h2><a class="pill pill-soft big" href="teacher-calendar.html">Add a live class →</a></div>
@@ -80,5 +82,7 @@
   <script src="attendance.js?v=36"></script>
   <script src="teacher.js?v=36"></script>
   <script>startTeacherDashboard(); setTimeout(() => attendanceHub('att-hub'), 400);</script>
+  <script src="hubs.js?v=47"></script>
+  <script>hubBanner('teachers', 'hub-banner-box');</script>
 </body>
 </html>

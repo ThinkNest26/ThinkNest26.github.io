@@ -42,3 +42,47 @@ async function startHub() {
   document.addEventListener('click', e => { const b = e.target.closest('[data-hc]'); if (!b) return; pick = b.dataset.hc; draw(); });
   draw();
 }
+
+// ---------- Inside the parent or teacher account ----------
+async function startHubInApp(aud) {
+  const init = aud === 'parents' ? initParent : initTeacher;
+  const ctx = await init();
+  const uid = (ctx.user || ctx.me || {}).id || (await db.auth.getSession()).data.session.user.id;
+  const H = HUBS[aud]; let pick = '';
+  const box = document.getElementById('hub-app');
+  const [{ data: cs }, { data: en }] = await Promise.all([
+    db.from('courses').select('id, title, description, teacher_name, weeks, audience, format, category').eq('audience', aud).order('id', { ascending: false }),
+    db.from('enrollments').select('course_id').eq('user_id', uid)
+  ]);
+  const courses = cs || [], joined = new Set((en || []).map(e => e.course_id));
+  const card = c => { const cat = hubCat(aud, c.category);
+    return `<article class="hub-course" style="--c:${H.color}">${cat ? `<span class="hub-tag">${cat[1]} ${hubEsc(cat[2])}</span>` : ''}<b>${hubEsc(c.title)}</b>
+      <span class="hub-meta">${hubEsc([c.format, c.weeks ? c.weeks + ' weeks' : '', c.teacher_name ? 'with ' + c.teacher_name : ''].filter(Boolean).join(' · '))}</span>
+      ${c.description ? `<small>${hubEsc(c.description.slice(0, 140))}${c.description.length > 140 ? '…' : ''}</small>` : ''}
+      ${joined.has(c.id) ? `<a class="btn btn-white outline hub-btn" href="course.html?id=${c.id}">✅ Joined · Open</a>` : `<button type="button" class="btn btn-red hub-btn" data-hjoin="${c.id}">Join</button>`}</article>`; };
+  function draw() {
+    const mine = courses.filter(c => joined.has(c.id)), shown = courses.filter(c => !pick || c.category === pick);
+    box.innerHTML = `<section class="hub-hero" style="background:${H.grad}"><span class="hub-hero-ic">${H.ic}</span><div><h1>${H.name}</h1><p class="hub-tagline">${H.tagline}</p><p>${H.about}</p></div></section>
+      ${mine.length ? `<h2 class="hub-h">My workshops</h2><div class="hub-courses">${mine.map(card).join('')}</div>` : ''}
+      <h2 class="hub-h">Explore topics</h2>
+      <div class="hub-cats">${H.cats.map(([k, ic, n, d]) => `<button type="button" class="hub-cat ${pick === k ? 'on' : ''}" data-hc="${k}" style="--c:${H.color}"><span>${ic}</span><b>${n}</b><small>${d}</small></button>`).join('')}</div>
+      <h2 class="hub-h">${pick ? hubCat(aud, pick)[1] + ' ' + hubCat(aud, pick)[2] : 'What’s on'} ${pick ? '<button type="button" class="link-btn" data-hc="">Show all</button>' : ''}</h2>
+      ${shown.length ? `<div class="hub-courses">${shown.map(card).join('')}</div>` : `<div class="hub-empty"><p>${pick ? 'Nothing in this topic yet.' : 'New workshops are being added.'} Tell us what you’d love to learn!</p><a class="btn btn-red" href="contact.html">Suggest a workshop</a></div>`}
+      <section class="hub-host"><div><h2>Have a skill to share?</h2><p>Run a workshop for the ${H.name}: wellbeing, cooking, careers, crafts, anything people would love to learn.</p></div><a class="btn btn-red" href="contact.html">Become a host</a></section>`;
+  }
+  box.addEventListener('click', async e => {
+    const c = e.target.closest('[data-hc]'); if (c) { pick = c.dataset.hc; return draw(); }
+    const j = e.target.closest('[data-hjoin]'); if (!j) return;
+    j.disabled = true; j.textContent = 'Joining…';
+    const { error } = await db.from('enrollments').insert({ user_id: uid, course_id: Number(j.dataset.hjoin) });
+    if (error && !String(error.message).includes('duplicate')) { j.disabled = false; j.textContent = 'Join'; return say(friendly(error)); }
+    joined.add(Number(j.dataset.hjoin)); say('You’ve joined! Find it under My workshops.'); draw();
+  });
+  draw();
+}
+// Small banner for the dashboards
+function hubBanner(aud, hostId) {
+  const b = document.getElementById(hostId); if (!b || typeof HUBS === 'undefined') return;
+  const H = HUBS[aud], page = aud === 'parents' ? 'parent-hub.html' : 'teacher-hub.html';
+  b.innerHTML = `<a class="hub-banner" href="${page}" style="background:${H.grad}"><span class="hub-hero-ic">${H.ic}</span><div><b>${H.name}</b><span>${H.tagline} ${H.cats.slice(0, 4).map(c => c[1]).join(' ')}</span></div><span class="hub-banner-go">Open →</span></a>`;
+}
