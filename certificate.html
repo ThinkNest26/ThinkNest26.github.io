@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Certificate – Think Nest</title>
+  <link rel="icon" href="images/tn-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=36">
+  <link rel="stylesheet" href="app.css?v=36">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@600;700;800&display=swap">
+  <link rel="stylesheet" href="certs.css?v=53">
+</head>
+<body class="auth">
+  <header class="app-top">
+    <a href="index.html"><img src="images/tn-logo-dark.png" alt="Think Nest home" class="app-top-logo"></a>
+    <a href="index.html" class="app-exit">Exit</a>
+  </header>
+      <main class="cert-page">
+    <div class="cert-bar no-print"><a href="javascript:history.back()" class="link-btn">‹ Back</a><button type="button" class="btn btn-red" onclick="window.print()">⬇ Download PDF / Print</button></div>
+    <p class="cert-tip no-print">Tip: in the print window, choose <b>Save as PDF</b> to download it. Landscape is set automatically.</p>
+    <div id="cert-view" class="cert-view"><p class="empty">Loading…</p></div>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js?v=53"></script>
+  <script src="app.js?v=53"></script>
+  <script src="certs.js?v=53"></script>
+  <script>startCertificatePage();</script>
+</body>
+</html>

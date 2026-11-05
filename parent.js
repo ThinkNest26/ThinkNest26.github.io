@@ -150,6 +150,7 @@ async function startChild() {
       <span class="meta">${esc(c.courses ? c.courses.title : '')}${c.issued_at ? ' · ' + new Date(c.issued_at).toLocaleDateString('en-GB') : ''}</span>
       ${c.file_path ? `<button class="pill pill-soft big" data-file="${esc(c.file_path)}">Download ↓</button>` : ''}</article>`).join('')
     : '<p class="empty">No certificates yet.</p>';
+  if (typeof childCertificates === 'function') childCertificates(kidId, 'k-cert-list');
   document.getElementById('k-cert-list').addEventListener('click', async e => {
     const b = e.target.closest('[data-file]'); if (!b) return;
     const { data, error } = await db.storage.from('certificates').createSignedUrl(b.dataset.file, 600);

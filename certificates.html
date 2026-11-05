@@ -8,8 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=36">
-  <link rel="stylesheet" href="app.css?v=36">
+  <link rel="stylesheet" href="style.css?v=53">
+  <link rel="stylesheet" href="app.css?v=53">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@600;700;800&display=swap">
+  <link rel="stylesheet" href="certs.css?v=53">
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -36,8 +38,9 @@
     </header>
 
     <main class="dash">
-      <h1 class="dash-h">My certificates</h1>
-      <section class="grid-cards" id="list"><p class="empty">Loading…</p></section>
+      <h1 class="title">My certificates</h1>
+      <p class="hint">Certificates your teachers have awarded you. Open one to download it as a PDF or print it. 🏅</p>
+      <section class="cert-grid" id="cert-list"><p class="empty">Loading…</p></section>
     </main>
 
     <footer class="footer app-footer">
@@ -57,11 +60,12 @@
   <div class="side-shade" id="side-shade"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=36"></script>
-  <script src="app.js?v=36"></script>
-  <script src="nav.js?v=36"></script>
-  <script src="notify.js?v=36" defer></script>
-  <script src="student.js?v=36"></script>
-  <script>startCertificates();</script>
+  <script src="supabase-config.js?v=53"></script>
+  <script src="app.js?v=53"></script>
+  <script src="nav.js?v=53"></script>
+  <script src="notify.js?v=53" defer></script>
+  <script src="student.js?v=53"></script>
+  <script src="certs.js?v=53"></script>
+  <script>startMyCertificates();</script>
 </body>
 </html>
