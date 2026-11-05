@@ -174,9 +174,9 @@ function startSignupPage() {
   form.addEventListener('submit', async e => {
     e.preventDefault();
     if (!valid(steps[i])) return;
-    if (f.age && Number(f.age.value) < 13 && !new URLSearchParams(location.search).has('parent_email')) { show(0); return; }
-    create.disabled = true; create.textContent = 'Creating account…';
     const f = form;
+    if (f.age && Number(f.age.value) < 13 && !new URLSearchParams(location.search).has('parent_email')) { show(0); ageCheck(); return; }
+    create.disabled = true; create.textContent = 'Creating account…';
     const { data, error } = await db.auth.signUp({
       email: f.email.value.trim(),
       password: f.password.value,
