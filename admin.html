@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=62">
-  <link rel="stylesheet" href="app.css?v=62">
+  <link rel="stylesheet" href="style.css?v=65">
+  <link rel="stylesheet" href="app.css?v=65">
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -41,6 +41,9 @@
       <h2 class="dash-h" id="waitlists">Waiting lists</h2>
       <p class="hint">Students waiting for a class to open. Ask a teacher to create a course with this subject, curriculum and grade, and everyone waiting is told automatically.</p>
       <section class="panel" id="waitlist-box"><p class="empty">Loading…</p></section>
+      <h2 class="dash-h" id="connect-admin">☕ Coffee &amp; Connections</h2>
+      <p class="hint">Switch features on or off for both hubs, and keep an eye on group meetups. Flagged private messages appear under “Messages to check”.</p>
+      <section class="panel" id="connect-admin-box"><p class="empty">Loading…</p></section>
       <h2 class="dash-h" id="messages">✉️ Messages from the website <span class="count" id="n-msgs">0</span></h2>
       <p class="hint">Everything sent through the Contact form. A copy is also emailed to thinknest2026@gmail.com.</p>
       <section class="approve-list" id="msgs-box"><p class="empty">Loading…</p></section>
@@ -85,14 +88,14 @@
   <div class="side-shade" id="side-shade"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=62"></script>
-  <script src="app.js?v=62"></script>
-  <script src="nav.js?v=62"></script>
-  <script src="notify.js?v=62" defer></script>
-  <script src="teacher.js?v=62"></script>
+  <script src="supabase-config.js?v=65"></script>
+  <script src="app.js?v=65"></script>
+  <script src="nav.js?v=65"></script>
+  <script src="notify.js?v=65" defer></script>
+  <script src="teacher.js?v=65"></script>
   <script>startAdmin();</script>
-  <script src="community.js?v=62"></script>
-  <script src="chat.js?v=62"></script>
-  <script>loadReports().then(loadGroupReports); loadMessageReview(); loadApprovalSetting(); loadWaitlists(); loadHubRequests(); loadNewAccounts(); loadContactMessages();</script>
+  <script src="community.js?v=65"></script>
+  <script src="chat.js?v=65"></script>
+  <script>loadReports().then(loadGroupReports); loadMessageReview(); loadApprovalSetting(); loadWaitlists(); loadHubRequests(); loadNewAccounts(); loadContactMessages(); loadConnectAdmin();</script>
 </body>
 </html>

@@ -414,3 +414,27 @@ async function loadContactMessages() {
     loadContactMessages();
   };
 }
+
+// ---------- Admin: Coffee & Connections switches and meetups ----------
+async function loadConnectAdmin() {
+  const box = document.getElementById('connect-admin-box'); if (!box) return;
+  const { data: st } = await db.from('site_settings').select('value').eq('key', 'connect_settings').maybeSingle();
+  if (!st) { box.innerHTML = '<p class="empty">Run database update 38 to see these settings.</p>'; return; }
+  const s = Object.assign({ partners: true, meetups: true, messages: true }, st.value || {});
+  const { data: ms } = await db.from('cafe_meetups').select('*').gte('starts_at', new Date(Date.now() - 864e5).toISOString()).order('starts_at');
+  box.innerHTML = `<div class="cx-switches">
+      <label class="switch-row"><input type="checkbox" data-cs="partners" ${s.partners ? 'checked' : ''}> ☕ Learning Partners</label>
+      <label class="switch-row"><input type="checkbox" data-cs="meetups" ${s.meetups ? 'checked' : ''}> 📅 Group meetups</label>
+      <label class="switch-row"><input type="checkbox" data-cs="messages" ${s.messages ? 'checked' : ''}> 💬 Professional private messages</label></div>
+    <h3 class="cx-adm-h">Upcoming meetups</h3>${(ms || []).length ? ms.map(m => `<div class="pending-row"><div><b>${esc(m.title)}</b><span class="meta">${m.hub === 'teachers' ? '🔔 Beyond the Bell' : '🚗 Beyond the School Run'} · ${new Date(m.starts_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })} · ${esc(m.place || 'Online')} · host ${esc(m.host_name || '')}</span></div><button class="link-btn" data-mrm="${m.id}">Remove</button></div>`).join('') : '<p class="meta">No upcoming meetups.</p>'}`;
+  box.onchange = async e => {
+    const k = e.target.dataset.cs; if (!k) return;
+    s[k] = e.target.checked;
+    const { error } = await db.rpc('set_connect_settings', { s });
+    say(error ? friendly(error) : 'Saved.');
+  };
+  box.onclick = async e => {
+    const r = e.target.closest('[data-mrm]'); if (!r || !confirm('Remove this meetup?')) return;
+    await db.from('cafe_meetups').delete().eq('id', Number(r.dataset.mrm)); loadConnectAdmin();
+  };
+}

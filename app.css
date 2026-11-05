@@ -1171,3 +1171,16 @@ body.cafe-theme .post { border-radius: 20px; }
 .cx-promo { display: grid; gap: 4px; background: #fff; border: 2px dashed #D9A877; color: #5B3A29; }
 .cx-promo span { font-size: .88rem; }
 @media (max-width: 700px) { .cx-meet { grid-template-columns: auto 1fr; } .cx-meet-btns { grid-column: 1 / -1; justify-items: start; } .cx-hero { flex-direction: column; align-items: flex-start; } }
+/* professional-only safeguards */
+.cx-code { display: grid; gap: 12px; max-width: 760px; border: 2px solid #F1DCC4; }
+.cx-code h2 { color: #3E2A1E; }
+.cx-code ul { list-style: none; padding: 0; display: grid; gap: 8px; line-height: 1.55; }
+.cx-code .btn { justify-self: start; background: #8B5A3C; border: 0; cursor: pointer; font: inherit; font-weight: 800; }
+.cx-code .btn:disabled { opacity: .5; cursor: not-allowed; }
+.cx-note { font-size: .88rem; color: #5B3A29; background: #FFF6EA; border-radius: 12px; padding: 8px 12px; margin: 0; }
+.cx-note a { color: #8B5A3C; font-weight: 700; text-decoration: underline; }
+.cx-contact { display: grid; gap: 6px; justify-items: center; margin-top: 6px; }
+.cx-contact .link-btn { font-size: .85rem; }
+.chat-pro { background: #FFF6EA; color: #5B3A29; border-radius: 12px; padding: 8px 12px; font-size: .85rem; line-height: 1.5; margin: 8px 12px 0; }
+.cx-switches { display: grid; gap: 10px; margin-bottom: 14px; }
+.cx-adm-h { color: #1D2026; font-size: 1rem; margin: 6px 0; }

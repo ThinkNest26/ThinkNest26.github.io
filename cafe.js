@@ -113,5 +113,9 @@
     const feed = document.getElementById('feed');
     if (feed) new MutationObserver(() => enhance()).observe(feed, { childList: true, subtree: false });
     enhance(); toggleTools();
+    // arriving from the Colleague directory: "Ask in the café"
+    const ask = new URLSearchParams(location.search).get('ask');
+    if (ask) { const q = document.querySelector('input[name=ptype][value=question]'); if (q) q.checked = true; toggleTools();
+      const b = document.getElementById('post-body'); if (b) { b.value = '@' + ask + ' '; b.focus(); b.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }
   });
 })();

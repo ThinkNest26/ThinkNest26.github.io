@@ -70,6 +70,10 @@ async function startChat() {
     const gl = document.getElementById('chat-group-link');
     gl.hidden = c.kind !== 'group'; if (c.kind === 'group') gl.href = 'group.html?id=' + c.group_id;
     document.getElementById('chat-form').hidden = !c.can_post;
+    let pro = document.getElementById('chat-pro');
+    if (!pro) { pro = document.createElement('p'); pro.id = 'chat-pro'; pro.className = 'chat-pro'; document.getElementById('chat-head').after(pro); }
+    pro.hidden = !(c.kind === 'direct' && me && me.role !== 'student');
+    pro.innerHTML = '🛡️ <b>Professional chat.</b> Keep it about teaching and learning. Please don’t share personal contact details or make personal invitations. Think Nest may review chats to keep everyone safe. Use <b>Report</b> on any message that isn’t right.';
     const ro = document.getElementById('chat-ro');
     ro.hidden = c.can_post;
     ro.textContent = me.role === 'parent' ? 'You’re reading this chat as a parent. Only the children in it can write.' : me.role === 'admin' ? 'Admin view (read only).' : 'You can’t send messages in this chat right now.';
