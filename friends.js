@@ -15,7 +15,7 @@ async function startFriends() {
   async function load() {
     const [{ data, error }, bl] = await Promise.all([db.rpc('my_friends'), db.rpc('my_blocked')]);
     if (error) return say(friendly(error));
-    const friends = data.filter(f => f.relation === 'friend'), incoming = data.filter(f => f.relation === 'incoming'), sent = data.filter(f => f.relation === 'sent');
+    const fl = data || []; const friends = fl.filter(f => f.relation === 'friend'), incoming = fl.filter(f => f.relation === 'incoming'), sent = fl.filter(f => f.relation === 'sent');
     document.getElementById('n-friends').textContent = friends.length;
     document.getElementById('incoming').innerHTML = incoming.length ? '<h2 class="dash-h">Friend requests <span class="count">' + incoming.length + '</span></h2><section class="approve-list">' + incoming.map(f => `<article class="panel person">
         <span class="initials">${esc(fIni(f.full_name))}</span>

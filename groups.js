@@ -49,7 +49,7 @@ async function startGroups() {
   async function load() {
     const { data, error } = await db.rpc('my_groups');
     if (error) return say(friendly(error));
-    const inv = data.filter(g => g.my_status === 'invited'); let mine = data.filter(g => g.my_status === 'active');
+    const all = data || []; const inv = all.filter(g => g.my_status === 'invited'); let mine = all.filter(g => g.my_status === 'active');
     document.getElementById('invites').innerHTML = inv.length ? '<h2 class="dash-h">Invitations <span class="count">' + inv.length + '</span></h2><section class="approve-list">' + inv.map(g => `<article class="panel person">
         <span class="initials">${esc(gIni(g.name))}</span>
         <div class="person-info"><h4>${esc(g.owner_name)} invited you to “${esc(g.name)}”</h4><span class="meta">${g.members} member${g.members === 1 ? '' : 's'}${g.description ? ' · ' + esc(g.description) : ''}</span></div>

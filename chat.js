@@ -26,8 +26,8 @@ async function startChat() {
     if (me.role === 'parent') { document.getElementById('convs').innerHTML = '<p class="empty">Open a chat from your child’s profile page.</p>'; return; }
     const { data, error } = await db.rpc('my_conversations');
     if (error) return say(friendly(error));
-    convs = data;
-    const total = data.reduce((s, c) => s + Number(c.unread || 0), 0);
+    convs = data || [];
+    const total = convs.reduce((s, c) => s + Number(c.unread || 0), 0);
     const dot = document.getElementById('nav-unread'); if (dot) dot.hidden = !total;
     document.getElementById('convs').innerHTML = data.length ? data.map(c => `<button class="conv ${current && current.id === c.id ? 'on' : ''}" data-conv="${c.id}">
         <span class="initials ${c.kind === 'group' ? 'grp' : ''}">${c.kind === 'group' ? '👥' : esc(cIni(c.title))}</span>
