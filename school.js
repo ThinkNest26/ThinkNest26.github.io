@@ -59,7 +59,7 @@ async function startSchool() {
     document.documentElement.style.setProperty('--school2', S.color_accent || '#F27A6F');
   };
   paint();
-  const tabs = [['overview', '🏠 Overview'], ['people', '👥 People'], ['settings', '⚙️ School settings']];
+  const tabs = [['overview', '🏠 Overview'], ['people', '👥 People']].concat(canManage ? [['import', '📥 Import']] : [], [['settings', '⚙️ School settings']]);
   box.innerHTML = `<section class="sc-hero" id="sc-hero"></section>
     ${mine.length > 1 ? `<label class="sc-switch">School <select id="sc-pick">${mine.map(s => `<option value="${s.id}" ${s.id === sid ? 'selected' : ''}>${SC_E(s.name)}</option>`).join('')}</select></label>` : ''}
     <div class="tabs sc-tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="false" data-sct="${k}">${l}</button>`).join('')}</div>
@@ -73,7 +73,7 @@ async function startSchool() {
   const show = k => {
     document.querySelectorAll('[data-sct]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.sct === k)));
     history.replaceState(null, '', '#' + k);
-    ({ overview, people, settings })[k]();
+    ({ overview, people, settings, import: importTab })[k]();
   };
   document.querySelector('.sc-tabs').addEventListener('click', e => { const b = e.target.closest('[data-sct]'); if (b) show(b.dataset.sct); });
   const pane = () => document.getElementById('sc-pane');
@@ -82,6 +82,7 @@ async function startSchool() {
   async function overview() {
     pane().innerHTML = '<p class="empty">Loading…</p>';
     const [{ data: ppl }, { data: cls }] = await Promise.all([db.rpc('school_people', { sid }), db.rpc('school_classes', { sid })]);
+    const staff = (ppl || []).filter(p => !['student', 'parent'].includes(p.role));
     const P = ppl || [], n = r => P.filter(p => r.includes(p.role)).length;
     const steps = [[!!S.logo_url, 'Add your school logo and colours', 'settings'], [P.filter(p => SC_LEADERS.includes(p.role)).length > 1, 'Add your leadership team', 'people'],
       [(S.grades || []).length > 0 && S.academic_year, 'Check your academic year, terms and grades', 'settings']];
@@ -93,10 +94,16 @@ async function startSchool() {
       <section class="panel sc-check"><h2>🚀 Set up your school</h2>
         ${steps.map(([done, t, go]) => `<button type="button" class="sc-step ${done ? 'done' : ''}" data-go="${go}"><span class="sc-tick" aria-hidden="true">${done ? '✓' : ''}</span><b>${t}</b><span class="sc-go">${done ? 'Done' : 'Start →'}</span></button>`).join('')}
         <p class="meta">Next, coming soon: bulk import of staff and students, the whole-school dashboard, report cycles and announcements.</p></section>
-      <section class="panel"><h2>🏫 Classes</h2>${(cls || []).length ? `<div class="in-scroll"><table class="ac-table"><thead><tr><th>Class</th><th>Grade</th><th>Teacher</th><th>Students</th></tr></thead><tbody>
-        ${cls.map(c => `<tr><td><a href="group.html?id=${c.id}">${SC_E(c.name)}</a></td><td>${SC_E([c.grade, c.section].filter(Boolean).join(' ') || '–')}</td><td>${SC_E(c.teacher || '')}</td><td>${c.students}</td></tr>`).join('')}</tbody></table></div>`
+      <section class="panel"><h2>🏫 Classes</h2>${(cls || []).length ? `<div class="in-scroll"><table class="ac-table"><thead><tr><th>Class</th><th>Grade</th><th>Class teacher</th><th>Students</th></tr></thead><tbody>
+        ${cls.map(c => `<tr data-cls="${c.id}"><td><a href="group.html?id=${c.id}">${SC_E(c.name)}</a></td><td>${SC_E([c.grade, c.section].filter(Boolean).join(' ') || '–')}</td>
+          <td>${canManage ? `<select class="sc-teach" aria-label="Class teacher for ${SC_E(c.name)}">${staff.some(p => p.user_id === c.teacher_id) ? '' : `<option value="">${SC_E(c.teacher || 'Choose…')}</option>`}${staff.map(p => `<option value="${p.user_id}" ${p.user_id === c.teacher_id ? 'selected' : ''}>${SC_E(p.full_name)}</option>`).join('')}</select>` : SC_E(c.teacher || '')}</td><td>${c.students}</td></tr>`).join('')}</tbody></table></div>`
         : '<p class="meta">No classes yet. Classes created by your school’s teachers will appear here.</p>'}</section>`;
     pane().querySelectorAll('[data-go]').forEach(b => b.onclick = () => show(b.dataset.go));
+    pane().querySelectorAll('.sc-teach').forEach(sel => sel.onchange = async () => {
+      if (!sel.value) return;
+      const { error: er } = await db.rpc('school_set_class_teacher', { gid: Number(sel.closest('[data-cls]').dataset.cls), uid: sel.value });
+      if (er) return say(friendly(er)); say('✅ Class teacher saved.');
+    });
   }
 
   // ----- People
@@ -196,8 +203,179 @@ async function startSchool() {
       Object.assign(S, row); paint(); hero(); say('✅ School settings saved.');
     };
   }
+
+  // ----- Import (staff, or students with parents)
+  let scExisting = new Set();
+  function importTab() {
+    db.rpc('school_people', { sid }).then(({ data }) => { scExisting = new Set((data || []).filter(p => p.role === 'student').map(p => (String(p.full_name || '') + '|' + String(p.grade || '')).toLowerCase())); });
+    pane().innerHTML = `<section class="sc-imp-cards">
+        <article class="panel sc-imp"><span class="sc-imp-ic">👩‍🏫</span><h2>Import staff</h2>
+          <p class="meta">Columns: <b>Full name, Email, Role, Job title, Grades, Subjects</b>. Each person logs in with their email.</p>
+          <div class="sc-imp-btns"><button type="button" class="pill pill-soft" data-tpl="staff">⬇ Template</button>
+            <label class="btn btn-red sc-imp-up">📤 Choose file<input type="file" data-kind="staff" accept=".xlsx,.xls,.csv,.txt" hidden></label></div></article>
+        <article class="panel sc-imp"><span class="sc-imp-ic">🎒</span><h2>Import students and parents</h2>
+          <p class="meta">Columns: <b>Full name, Grade, Section, Parent name, Parent email</b>. Classes are created for each grade and section.</p>
+          <div class="sc-imp-btns"><button type="button" class="pill pill-soft" data-tpl="students">⬇ Template</button>
+            <label class="btn btn-red sc-imp-up">📤 Choose file<input type="file" data-kind="students" accept=".xlsx,.xls,.csv,.txt" hidden></label></div></article>
+      </section>
+      <section id="sc-imp-out"></section>`;
+    pane().querySelectorAll('[data-tpl]').forEach(b => b.onclick = () => scTemplate(b.dataset.tpl));
+    pane().querySelectorAll('input[type=file][data-kind]').forEach(inp => inp.onchange = async () => {
+      const file = inp.files[0]; inp.value = ''; if (!file) return;
+      const out = document.getElementById('sc-imp-out'); out.innerHTML = '<p class="empty">Reading the file…</p>';
+      try { const sheets = await scReadFile(file); scPreview(out, inp.dataset.kind, sheets, file.name); }
+      catch (e) { out.innerHTML = `<p class="note">⚠️ ${SC_E(e.message || 'This file couldn’t be read.')} Please use the template (Excel or CSV).</p>`; }
+    });
+  }
+  function scPreview(out, kind, sheets, fname, pickName) {
+    const names = Object.keys(sheets);
+    const best = pickName || names.find(n => new RegExp(kind === 'staff' ? '^staff' : '^students?$', 'i').test(n.trim())) || names[0];
+    const v = kind === 'staff' ? scCheckStaff(sheets[best]) : scCheckStudents(sheets[best]);
+    if (kind === 'students') v.forEach(r => { if (r.name && r.grade && scExisting.has((r.name + '|' + r.grade).toLowerCase())) r.problems.push('Already in the school in this grade (skipped so they aren’t added twice)'); });
+    const ok = v.filter(r => !r.problems.length), bad = v.filter(r => r.problems.length);
+    const classes = kind === 'students' ? [...new Set(ok.map(r => r.grade + (r.section ? ' ' + r.section : '')))] : [];
+    const parents = kind === 'students' ? [...new Set(ok.filter(r => r.parent_email).map(r => r.parent_email))] : [];
+    out.innerHTML = `<section class="panel sc-prev"><h2>👀 Check before importing</h2>
+      <p class="meta">File: <b>${SC_E(fname)}</b>${names.length > 1 ? ` · Sheet <select id="sc-sheet">${names.map(n => `<option ${n === best ? 'selected' : ''}>${SC_E(n)}</option>`).join('')}</select>` : ''}</p>
+      <div class="sc-prev-sum">
+        <span class="good">✅ ${ok.length} ${kind === 'staff' ? 'staff' : 'student' + (ok.length === 1 ? '' : 's')} ready</span>
+        ${kind === 'students' ? `<span>🏫 ${classes.length} class${classes.length === 1 ? '' : 'es'}: ${SC_E(classes.join(', ') || '–')}</span><span>👪 ${parents.length} parent${parents.length === 1 ? '' : 's'}</span>` : ''}
+        ${bad.length ? `<span class="bad">⚠️ ${bad.length} row${bad.length === 1 ? '' : 's'} with problems (they will be skipped)</span>` : ''}</div>
+      ${bad.length ? `<div class="in-scroll"><table class="ac-table sc-bad"><thead><tr><th>Row</th><th>Name</th><th>Problem</th></tr></thead><tbody>${bad.map(r => `<tr><td>${r.row}</td><td>${SC_E(r.name || '–')}</td><td>${SC_E(r.problems.join('; '))}</td></tr>`).join('')}</tbody></table></div>` : ''}
+      <details class="sc-ok-list"><summary>See the ${ok.length} row${ok.length === 1 ? '' : 's'} that will be imported</summary><div class="in-scroll"><table class="ac-table"><tbody>
+        ${ok.map(r => kind === 'staff' ? `<tr><td>${SC_E(r.name)}</td><td>${SC_E(r.email)}</td><td>${SC_E(scRole(r.role))}</td><td class="meta">${SC_E([r.title].concat(r.grades, r.subjects).filter(Boolean).join(' · '))}</td></tr>`
+          : `<tr><td>${SC_E(r.name)}</td><td>${SC_E(r.grade + (r.section ? ' ' + r.section : ''))}</td><td class="meta">${SC_E(r.parent_name ? r.parent_name + ' · ' + r.parent_email : '')}</td></tr>`).join('')}</tbody></table></div></details>
+      <div class="ca-bar"><span class="meta">${kind === 'staff' ? 'New staff get a welcome email and choose their own password with “Forgot password?”.' : 'Students get usernames and passwords for their login cards. New parents get a welcome email.'}</span>
+        <button type="button" class="btn btn-red" id="sc-go" ${ok.length ? '' : 'disabled'}>✅ Confirm and import ${ok.length}</button></div></section>`;
+    const sh = document.getElementById('sc-sheet'); if (sh) sh.onchange = () => scPreview(out, kind, sheets, fname, sh.value);
+    document.getElementById('sc-go').onclick = () => scRun(out, kind, ok);
+  }
+  async function scRun(out, kind, rows) {
+    if (!confirm(`Import ${rows.length} ${kind === 'staff' ? 'staff' : 'students'} into ${S.name}? This creates accounts${kind === 'students' ? ', classes and parent links' : ''}.`)) return;
+    out.innerHTML = `<section class="panel sc-run"><h2>⏳ Importing…</h2><div class="sc-bar"><i id="sc-bar" style="width:0%"></i></div><p class="meta" id="sc-bar-t">Starting…</p>
+      <p class="note">Please keep this page open until it finishes.</p></section>`;
+    const size = kind === 'staff' ? 8 : 6, all = [];
+    for (let i = 0; i < rows.length; i += size) {
+      const part = rows.slice(i, i + size);
+      try {
+        const { data, error } = await db.functions.invoke(CA_FN_SCHOOL, { body: { action: 'school_import', school_id: sid, kind, rows: part } });
+        if (error) { let m = error.message; try { const j = await error.context.json(); m = j.error || m; } catch (_) {} throw new Error(m); }
+        if (data && data.error) throw new Error(data.error);
+        all.push(...(data.results || []));
+      } catch (e) { part.forEach(r => all.push({ row: r.row, name: r.name, error: e.message })); }
+      const done = Math.min(i + size, rows.length);
+      document.getElementById('sc-bar').style.width = Math.round(100 * done / rows.length) + '%';
+      document.getElementById('sc-bar-t').textContent = `${done} of ${rows.length} done`;
+    }
+    scResults(out, kind, all);
+  }
+  function scResults(out, kind, res) {
+    const ok = res.filter(r => !r.error), bad = res.filter(r => r.error);
+    const csv = (name, rows) => { const t = rows.map(r => r.map(v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`).join(',')).join('\n');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + t], { type: 'text/csv' })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); };
+    const parents = kind === 'students' ? ok.filter(r => r.parent && !r.parent.error) : [];
+    const newParents = [...new Map(parents.filter(r => r.parent.status === 'created').map(r => [r.parent.email, r.parent])).values()];
+    out.innerHTML = `<section class="panel sc-done"><h2>🎉 Import finished</h2>
+      <div class="sc-prev-sum"><span class="good">✅ ${ok.length} imported</span>${kind === 'staff' ? `<span>🆕 ${ok.filter(r => r.status === 'created').length} new accounts</span><span>➕ ${ok.filter(r => r.status === 'added').length} existing accounts added</span>`
+        : `<span>👪 ${newParents.length} new parent accounts</span>`}${bad.length ? `<span class="bad">⚠️ ${bad.length} not imported</span>` : ''}</div>
+      <p class="note">🔐 <b>Passwords are shown only now.</b> Download the lists before leaving this page, and keep them safe.</p>
+      <div class="ca-bar">${kind === 'staff' ? '<button type="button" class="btn btn-red" data-dl="staff">⬇ Staff logins (CSV)</button>'
+        : '<button type="button" class="btn btn-red" data-dl="cards">🖨️ Student login cards</button><button type="button" class="btn btn-white outline" data-dl="students">⬇ Student logins (CSV)</button>' + (newParents.length ? '<button type="button" class="btn btn-white outline" data-dl="parents">⬇ Parent logins (CSV)</button>' : '')}
+        <button type="button" class="link-btn" data-dl="again">📥 Import another file</button></div>
+      ${bad.length ? `<div class="in-scroll"><table class="ac-table sc-bad"><thead><tr><th>Row</th><th>Name</th><th>Why it wasn’t imported</th></tr></thead><tbody>${bad.map(r => `<tr><td>${r.row || ''}</td><td>${SC_E(r.name || '')}</td><td>${SC_E(r.error)}</td></tr>`).join('')}</tbody></table></div>` : ''}</section>`;
+    out.querySelector('.ca-bar').onclick = e => {
+      const b = e.target.closest('[data-dl]'); if (!b) return;
+      if (b.dataset.dl === 'again') return importTab();
+      if (b.dataset.dl === 'staff') return csv('staff-logins.csv', [['Name', 'Email', 'Role', 'Status', 'Starting password', 'Website']].concat(ok.map(r => [r.name, r.email, scRole(r.role), r.status === 'created' ? 'New account' : 'Existing account added', r.password || '(their own password)', 'thinknestonline.com'])));
+      if (b.dataset.dl === 'students') return csv('student-logins.csv', [['Name', 'Class', 'Username', 'Password', 'Website']].concat(ok.map(r => [r.name, r.grade + (r.section ? ' ' + r.section : ''), r.username, r.password, 'thinknestonline.com'])));
+      if (b.dataset.dl === 'parents') return csv('parent-logins.csv', [['Parent', 'Email', 'Starting password', 'Children', 'Website']].concat(newParents.map(p => [p.name, p.email, p.password, parents.filter(r => r.parent.email === p.email).map(r => r.name).join(', '), 'thinknestonline.com'])));
+      if (b.dataset.dl === 'cards') {
+        const byClass = {}; ok.forEach(r => { const k = r.grade + (r.section ? ' ' + r.section : ''); (byClass[k] = byClass[k] || []).push(r); });
+        const list = Object.keys(byClass).sort().flatMap(k => byClass[k].map(r => ({ name: r.name, username: r.username, password: r.password, cls: k })));
+        if (typeof caPrint === 'function') return caPrint(list.map(r => ({ ...r, name: r.name + ' · ' + r.cls })), S.name);
+      }
+    };
+  }
+
   const start = (location.hash || '').slice(1);
   show(tabs.some(t => t[0] === start) ? start : 'overview');
+}
+
+
+// ---------- Import helpers (read Excel/CSV, check rows, templates) ----------
+const CA_FN_SCHOOL = 'quick-worker';   // the Edge Function "create-students"
+function scLoadXlsx() {
+  if (window.XLSX) return Promise.resolve(window.XLSX);
+  return new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    sc.onload = () => ok(window.XLSX); sc.onerror = () => no(new Error('The Excel reader couldn’t load. Check your internet connection, or save the file as CSV.')); document.head.appendChild(sc); });
+}
+function scParseCsv(text) {
+  const rows = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; } else if (c === '"') q = false; else cell += c; }
+    else if (c === '"') q = true; else if (c === ',' || c === ';' || c === '\t') { row.push(cell); cell = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; }
+    else cell += c;
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(x => String(x).trim()));
+}
+async function scReadFile(file) {
+  if (/\.(xlsx|xls)$/i.test(file.name)) {
+    const X = await scLoadXlsx(), wb = X.read(await file.arrayBuffer(), { type: 'array' }), out = {};
+    wb.SheetNames.forEach(n => { out[n] = X.utils.sheet_to_json(wb.Sheets[n], { header: 1, defval: '', raw: false }).filter(r => r.some(x => String(x).trim())); });
+    return out;
+  }
+  return { Sheet1: scParseCsv((await file.text()).replace(/^\ufeff/, '')) };
+}
+function scTable(rows) {
+  if (!rows || !rows.length) return [];
+  const head = rows[0].map(h => String(h).trim().toLowerCase().replace(/[^a-z ]/g, '').replace(/\s+/g, ' '));
+  return rows.slice(1).map((r, i) => { const o = { row: i + 2 }; head.forEach((h, j) => { o[h] = String(r[j] == null ? '' : r[j]).trim(); }); return o; });
+}
+const scCol = (o, ...names) => { for (const n of names) if (o[n] != null && o[n] !== '') return o[n]; return ''; };
+const scList = v => String(v || '').split(/[,;]/).map(x => x.trim()).filter(Boolean);
+const scEmailOk = e => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);
+function scGrade(g) { const t = String(g || '').trim().toLowerCase().replace(/\s+/g, ' '); return SC_ALL_GRADES.find(x => x.toLowerCase() === t || x.toLowerCase().replace(' ', '') === t.replace(' ', '')) || null; }
+function scCheckStaff(rows) {
+  const seen = new Set();
+  return scTable(rows).map(o => {
+    const r = { row: o.row, name: scCol(o, 'full name', 'name'), email: scCol(o, 'email', 'work email').toLowerCase(), title: scCol(o, 'job title', 'title'),
+      grades: scList(scCol(o, 'grades', 'grade')), subjects: scList(scCol(o, 'subjects', 'subject')), problems: [] };
+    const roleTxt = scCol(o, 'role').toLowerCase();
+    const role = SC_ROLES.find(([k, l]) => l.toLowerCase() === roleTxt || k === roleTxt.replace(/\s+/g, '_'));
+    r.role = role ? role[0] : '';
+    if (r.name.length < 2) r.problems.push('No name');
+    if (!scEmailOk(r.email)) r.problems.push('Email is missing or not valid');
+    else if (seen.has(r.email)) r.problems.push('Same email appears twice'); else seen.add(r.email);
+    if (!role || ['student', 'parent'].includes(r.role)) r.problems.push('Role should be Teacher, Coordinator, Head of department, Inclusion lead, Admin staff, or Vice/Assistant principal');
+    const badG = r.grades.filter(g => !scGrade(g)); if (badG.length) r.problems.push('Unknown grade: ' + badG.join(', '));
+    r.grades = r.grades.map(scGrade).filter(Boolean);
+    return r;
+  }).filter(r => r.name || r.email);
+}
+function scCheckStudents(rows) {
+  const seen = new Set();
+  return scTable(rows).map(o => {
+    const gtxt = scCol(o, 'grade', 'year');
+    const r = { row: o.row, name: scCol(o, 'full name', 'name', 'student name'), grade: scGrade(gtxt), section: scCol(o, 'section', 'class').toUpperCase().slice(0, 5),
+      parent_name: scCol(o, 'parent name', 'parent'), parent_email: scCol(o, 'parent email').toLowerCase(), problems: [] };
+    if (r.name.length < 2) r.problems.push('No student name');
+    if (!gtxt) r.problems.push('No grade'); else if (!r.grade) r.problems.push(`Grade “${gtxt}” doesn’t exist (use KG1, KG2, Grade 1 … Grade 12)`);
+    if (r.parent_email && !scEmailOk(r.parent_email)) r.problems.push('Parent email is not valid');
+    const key = (r.name + '|' + r.grade + '|' + r.section).toLowerCase();
+    if (r.name && r.grade) { if (seen.has(key)) r.problems.push('Same student appears twice in the same class'); else seen.add(key); }
+    return r;
+  }).filter(r => r.name || r.grade || r.parent_email);
+}
+function scTemplate(kind) {
+  const rows = kind === 'staff'
+    ? [['Full name', 'Email', 'Role', 'Job title', 'Grades', 'Subjects'], ['Sarah Thompson', 'sarah@yourschool.ae', 'Teacher', 'KG2 Homeroom Teacher', 'KG2', 'English, Maths']]
+    : [['Full name', 'Grade', 'Section', 'Parent name', 'Parent email'], ['Ahmed Al Hashimi', 'KG2', 'A', 'Fatima Al Hashimi', 'fatima@example.com']];
+  const t = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + t], { type: 'text/csv' })); a.download = kind === 'staff' ? 'staff-template.csv' : 'students-template.csv';
+  document.body.appendChild(a); a.click(); a.remove();
 }
 
 // ---------- Think Nest admin: school registrations and schools ----------

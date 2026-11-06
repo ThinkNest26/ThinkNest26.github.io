@@ -1425,7 +1425,24 @@
 "✅ School settings saved.": "✅ تم حفظ إعدادات المدرسة.",
 "🏫 School registrations": "🏫 تسجيلات المدارس",
 "Approve school": "اعتمد المدرسة",
-"No school registrations waiting. 🎉": "لا توجد تسجيلات مدارس بانتظار المراجعة. 🎉"
+"No school registrations waiting. 🎉": "لا توجد تسجيلات مدارس بانتظار المراجعة. 🎉",
+"📥 Import": "📥 استيراد",
+"Import": "استيراد",
+"Import staff": "استيراد الموظفين",
+"Import students and parents": "استيراد الطلاب وأولياء الأمور",
+"⬇ Template": "⬇ النموذج",
+"📤 Choose file": "📤 اختر ملفًا",
+"👀 Check before importing": "👀 راجع قبل الاستيراد",
+"🎉 Import finished": "🎉 اكتمل الاستيراد",
+"⏳ Importing…": "⏳ جارٍ الاستيراد…",
+"Please keep this page open until it finishes.": "يُرجى إبقاء هذه الصفحة مفتوحة حتى ينتهي.",
+"⬇ Staff logins (CSV)": "⬇ بيانات دخول الموظفين (CSV)",
+"🖨️ Student login cards": "🖨️ بطاقات دخول الطلاب",
+"⬇ Student logins (CSV)": "⬇ بيانات دخول الطلاب (CSV)",
+"⬇ Parent logins (CSV)": "⬇ بيانات دخول أولياء الأمور (CSV)",
+"📥 Import another file": "📥 استورد ملفًا آخر",
+"Class teacher": "معلّم الفصل",
+"✅ Class teacher saved.": "✅ تم حفظ معلّم الفصل."
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

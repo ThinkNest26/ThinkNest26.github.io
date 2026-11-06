@@ -1679,3 +1679,19 @@ dialog .toast { z-index: 100; }
 @media (max-width: 760px) { .sc-add-grid, .sc-two { grid-template-columns: 1fr; } .sc-hero { flex-direction: column; text-align: center; } }
 html.tn-ar .sc-step { text-align: right; }
 .school-page .panel + .panel, .school-page .in-cards + .panel { margin-top: 16px; }
+/* ===== School import ===== */
+.sc-imp-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.sc-imp { display: grid; gap: 8px; align-content: start; } .sc-imp h2 { margin: 0 !important; } .sc-imp p { margin: 0; }
+.sc-imp-ic { font-size: 2rem; } .sc-imp-btns { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 6px; }
+.sc-imp-up { cursor: pointer; border: 0; font: inherit; font-weight: 800; }
+.sc-prev, .sc-done, .sc-run { display: grid; gap: 12px; border: 2px solid #CDD3F2; }
+.sc-prev select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid #D9DCEB; }
+.sc-prev-sum { display: flex; flex-wrap: wrap; gap: 8px; } .sc-prev-sum span { background: #F1F2F8; border-radius: 20px; padding: 6px 12px; font-weight: 700; font-size: .92rem; }
+.sc-prev-sum .good { background: #E3F5EE; color: #1F7A4D; } .sc-prev-sum .bad { background: #FDECEC; color: #8A1C1C; }
+.sc-bad td:last-child { color: #8A1C1C; font-weight: 600; }
+.sc-ok-list summary { cursor: pointer; font-weight: 700; color: #3E4B94; } .sc-ok-list table { margin-top: 8px; }
+.sc-prev .btn, .sc-done .btn { border: 0; cursor: pointer; font: inherit; font-weight: 800; } .sc-done .outline { border: 1px solid #3E4B94; color: #3E4B94; }
+.sc-prev .btn:disabled { opacity: .5; cursor: default; }
+.sc-bar { height: 14px; background: #EEF0F8; border-radius: 10px; overflow: hidden; } .sc-bar i { display: block; height: 100%; background: var(--school); transition: width .3s; }
+.sc-teach { font: inherit; padding: 5px 8px; border: 1px solid #D9DCEB; border-radius: 8px; max-width: 220px; }
+@media (max-width: 760px) { .sc-imp-cards { grid-template-columns: 1fr; } }

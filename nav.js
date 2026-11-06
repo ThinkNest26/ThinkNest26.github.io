@@ -30,6 +30,7 @@
   MENUS.school_leader = [
     { ic: '🏫', label: 'My school', href: 'school.html' },
     { ic: '👥', label: 'People', href: 'school.html#people' },
+    { ic: '📥', label: 'Import', href: 'school.html#import' },
     { ic: '⚙️', label: 'School settings', href: 'school.html#settings' },
     { ic: '🏫', label: 'Classes', dyn: 'classes', items: [['classes.html', 'All classes'], ['classes.html?new=1', '➕ New class']] },
     { ic: '💬', label: 'Messages', href: 'messages.html' }
@@ -64,7 +65,7 @@
     const view = inParent ? 'parent' : role;
     const menu = MENUS[view] || MENUS.student;
     let here = ALIAS[page] || page;
-    if (page === 'school.html' && /^#(people|settings)$/.test(location.hash)) here = 'school.html' + location.hash;
+    if (page === 'school.html' && /^#(people|settings|import)$/.test(location.hash)) here = 'school.html' + location.hash;
     if (page === 'group.html' && document.querySelector('.class-flag')) here = 'classes.html';
     const qid = new URLSearchParams(location.search).get('id');
     let saved = {};
