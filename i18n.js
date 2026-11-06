@@ -1675,7 +1675,18 @@
 "Select all": "اختر الكل",
 "Clear": "مسح",
 "From": "من",
-"To": "إلى"
+"To": "إلى",
+"Registers taken": "سجلات الحضور المكتملة",
+"Present": "حاضر",
+"Late": "متأخر",
+"Absent": "غائب",
+"Excused": "غياب بعذر",
+"🏫 Registers": "🏫 سجلات الحضور",
+"👀 Register": "👀 السجل",
+"🚪 Absent or late on this day": "🚪 الغائبون أو المتأخرون في هذا اليوم",
+"⚠️ Persistent absence": "⚠️ الغياب المتكرر",
+"Day": "اليوم",
+"Days absent": "أيام الغياب"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

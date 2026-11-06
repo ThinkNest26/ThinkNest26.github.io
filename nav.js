@@ -30,6 +30,7 @@
   MENUS.school_leader = [
     { ic: '🏫', label: 'My school', href: 'school.html' },
     { ic: '📊', label: 'Dashboard', href: 'school.html#dashboard' },
+    { ic: '📋', label: 'Attendance', href: 'school.html#attendance' },
     { ic: '🗺️', label: 'Coverage', href: 'school.html#coverage' },
     { ic: '🗂️', label: 'Unit planner', href: 'planner.html' },
     { ic: '👀', label: 'Observations', href: 'observe.html' },
@@ -111,7 +112,7 @@
     }
     const menu = MENUS[view] || MENUS.student;
     let here = ALIAS[page] || page;
-    if (page === 'school.html' && /^#(people|settings|import|dashboard|reports|announce|coverage|evidence)$/.test(location.hash)) here = 'school.html' + location.hash;
+    if (page === 'school.html' && /^#(people|settings|import|dashboard|reports|announce|coverage|evidence|attendance)$/.test(location.hash)) here = 'school.html' + location.hash;
     if (page === 'group.html' && document.querySelector('.class-flag')) here = 'classes.html';
     const qid = new URLSearchParams(location.search).get('id');
     let saved = {};

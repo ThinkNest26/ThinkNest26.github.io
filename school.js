@@ -59,7 +59,7 @@ async function startSchool() {
     document.documentElement.style.setProperty('--school2', S.color_accent || '#F27A6F');
   };
   paint();
-  const tabs = [['overview', '🏠 Overview'], ['dashboard', '📊 Dashboard'], ['coverage', '🗺️ Coverage'], ['reports', '📝 Reports'], ['announce', '📣 Announcements']].concat(['principal', 'vice_principal', 'assistant_principal', 'coordinator'].includes(S.my_role) || profile.role === 'admin' ? [['evidence', '📂 Evidence']] : [], [['people', '👥 People']]).concat(canManage ? [['import', '📥 Import']] : [], [['settings', '⚙️ School settings']]);
+  const tabs = [['overview', '🏠 Overview'], ['dashboard', '📊 Dashboard'], ['attendance', '📋 Attendance'], ['coverage', '🗺️ Coverage'], ['reports', '📝 Reports'], ['announce', '📣 Announcements']].concat(['principal', 'vice_principal', 'assistant_principal', 'coordinator'].includes(S.my_role) || profile.role === 'admin' ? [['evidence', '📂 Evidence']] : [], [['people', '👥 People']]).concat(canManage ? [['import', '📥 Import']] : [], [['settings', '⚙️ School settings']]);
   box.innerHTML = `<section class="sc-hero" id="sc-hero"></section>
     ${mine.length > 1 ? `<label class="sc-switch">School <select id="sc-pick">${mine.map(s => `<option value="${s.id}" ${s.id === sid ? 'selected' : ''}>${SC_E(s.name)}</option>`).join('')}</select></label>` : ''}
     <div class="tabs sc-tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="false" data-sct="${k}">${l}</button>`).join('')}</div>
@@ -73,7 +73,7 @@ async function startSchool() {
   const show = k => {
     document.querySelectorAll('[data-sct]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.sct === k)));
     history.replaceState(null, '', '#' + k);
-    ({ overview, dashboard, coverage, reports, announce, evidence, people, settings, import: importTab })[k]();
+    ({ overview, dashboard, attendance, coverage, reports, announce, evidence, people, settings, import: importTab })[k]();
   };
   document.querySelector('.sc-tabs').addEventListener('click', e => { const b = e.target.closest('[data-sct]'); if (b) show(b.dataset.sct); });
   const pane = () => document.getElementById('sc-pane');
@@ -520,6 +520,53 @@ async function startSchool() {
         <h2>What the evidence shows</h2>${x.shows}<h2>How the evidence was gathered</h2><ul>${x.process}</ul><h2>Next steps</h2><ul>${x.next || '<li>–</li>'}</ul></div>`; }).join('')}</body></html>`;
   }
 
+
+  // ----- Whole-school attendance
+  let atDay = new Date().toISOString().slice(0, 10);
+  async function attendance() {
+    pane().innerHTML = '<p class="empty">Loading…</p>';
+    const { data: d, error } = await db.rpc('school_attendance', { sid, aday: atDay });
+    if (error) { pane().innerHTML = `<p class="empty">${SC_E(/school_attendance|function/.test(error.message || '') ? 'Run database update 67 to see whole-school attendance.' : friendly(error))}</p>`; return; }
+    const C = d.classes || [], A = d.away || [], P = d.persistent || [];
+    const taken = C.filter(c => c.taken), notYet = C.filter(c => !c.taken && c.students);
+    const sum = k => taken.reduce((a, c) => a + Number(c[k] || 0), 0), marked = sum('present') + sum('late') + sum('absent') + sum('excused');
+    const rate = marked - sum('excused') ? Math.round(100 * (sum('present') + sum('late')) / (marked - sum('excused'))) : null;
+    const dLabel = new Date(atDay + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+    const ST = { absent: ['gap', '❌ Absent'], late: ['att', '⏰ Late'], excused: ['miss', '📝 Excused'], present: ['ok', '✅ Present'] };
+    pane().innerHTML = `<div class="at-head"><label>Day <input type="date" id="at-day" value="${atDay}" max="${new Date().toISOString().slice(0, 10)}"></label><b>${dLabel}</b>
+        ${notYet.length ? `<button type="button" class="pill pill-soft" id="at-remind">🔔 Remind ${notYet.length} teacher${notYet.length === 1 ? '' : 's'}</button>` : ''}</div>
+      <section class="in-cards sc-cards sc-cards6">
+        <div class="in-card ${notYet.length ? 'warn' : ''}"><span>📋</span><b>${taken.length}/${C.length}</b><small>Registers taken</small></div>
+        <div class="in-card"><span>🎯</span><b>${rate == null ? '–' : rate + '%'}</b><small>Attendance</small></div>
+        <div class="in-card"><span>✅</span><b>${sum('present')}</b><small>Present</small></div>
+        <div class="in-card"><span>⏰</span><b>${sum('late')}</b><small>Late</small></div>
+        <div class="in-card"><span>❌</span><b>${sum('absent')}</b><small>Absent</small></div>
+        <div class="in-card"><span>📝</span><b>${sum('excused')}</b><small>Excused</small></div></section>
+      <section class="panel"><h2>🏫 Registers</h2>${C.length ? `<div class="in-scroll"><table class="ac-table sc-dtable"><thead><tr><th>Class</th><th>Teacher</th><th>Register</th><th>Present</th><th>Late</th><th>Absent</th><th>Excused</th><th></th></tr></thead><tbody>
+        ${C.map(c => `<tr data-g="${c.id}" data-name="${SC_E(c.name)}"><td><b>${SC_E(c.name)}</b></td><td>${SC_E(c.teacher || '–')}</td>
+          <td>${c.taken ? `<span class="rc-st ok">✓ Taken${c.marked_at ? ' ' + new Date(c.marked_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : ''}</span>` : c.students ? '<span class="rc-st ret">Not yet</span>' : '<span class="meta">No students</span>'}</td>
+          <td>${c.taken ? c.present : '–'}</td><td>${c.taken ? c.late : '–'}</td><td class="${c.absent ? 'sc-low' : ''}">${c.taken ? c.absent : '–'}</td><td>${c.taken ? c.excused : '–'}</td>
+          <td>${c.taken ? '<button type="button" class="pill pill-soft" data-reg>👀 Register</button>' : ''}</td></tr>`).join('')}</tbody></table></div>` : '<p class="meta">No classes in your area yet.</p>'}
+        <div id="at-reg"></div></section>
+      <div class="sc-two-col"><section class="panel"><h2>🚪 Absent or late on this day <span class="count">${A.length}</span></h2>
+          ${A.length ? `<div class="in-scroll"><table class="ac-table"><tbody>${A.map(a => `<tr><td><b>${SC_E(a.name)}</b></td><td>${SC_E(a.class)}</td><td><span class="sc-flag ${ST[a.status][0]}">${ST[a.status][1]}</span></td><td class="meta">${SC_E(a.note || '')}</td></tr>`).join('')}</tbody></table></div>` : '<p class="meta">Everyone marked so far is present. 🎉</p>'}</section>
+        <section class="panel"><h2>⚠️ Persistent absence <span class="count">${P.length}</span></h2><p class="meta">Students below 90% attendance over the last six weeks.</p>
+          ${P.length ? `<div class="in-scroll"><table class="ac-table"><thead><tr><th>Student</th><th>Class</th><th>Attendance</th><th>Days absent</th></tr></thead><tbody>
+            ${P.map(p => `<tr><td><b>${SC_E(p.name)}</b></td><td>${SC_E(p.class || '')}</td><td class="sc-low">${p.pct}%</td><td>${p.absent} of ${p.days}</td></tr>`).join('')}</tbody></table></div>` : '<p class="meta">No students below 90%. 🎉</p>'}</section></div>`;
+    document.getElementById('at-day').onchange = e => { atDay = e.target.value || atDay; attendance(); };
+    const rm = document.getElementById('at-remind');
+    if (rm) rm.onclick = async () => { const { data: n, error: er } = await db.rpc('remind_registers', { sid, aday: atDay }); if (er) return say(friendly(er)); say(`🔔 Reminder sent to ${n} teacher${n === 1 ? '' : 's'}.`); };
+    pane().querySelectorAll('[data-reg]').forEach(b => b.onclick = async () => {
+      const tr = b.closest('[data-g]'), box = document.getElementById('at-reg');
+      const { data: R, error: er } = await db.rpc('class_register_view', { gid: Number(tr.dataset.g), aday: atDay });
+      if (er) return say(friendly(er));
+      box.innerHTML = `<div class="sc-drill-head"><h3>📋 ${SC_E(tr.dataset.name)} · ${SC_E(dLabel)}</h3><button type="button" class="link-btn" id="at-reg-x">✕ Close</button></div>
+        <div class="at-reg">${(R || []).map(r => { const s2 = ST[r.status] || ['none', '– Not marked']; return `<div class="at-r"><b>${SC_E(r.name)}</b><span class="sc-flag ${s2[0]}">${s2[1]}</span>${r.note ? `<small class="meta">${SC_E(r.note)}</small>` : ''}</div>`; }).join('')}</div>`;
+      document.getElementById('at-reg-x').onclick = () => { box.innerHTML = ''; };
+      box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
   // ----- People
   async function people() {
     pane().innerHTML = '<p class="empty">Loading…</p>';
@@ -724,6 +771,11 @@ async function startSchool() {
 
   const start = (location.hash || '').slice(1);
   show(tabs.some(t => t[0] === start) ? start : 'overview');
+  window.addEventListener('hashchange', () => {
+    const k = (location.hash || '').slice(1);
+    if (tabs.some(t => t[0] === k) && !document.querySelector(`[data-sct="${k}"][aria-selected="true"]`)) { show(k); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    document.querySelectorAll('.side a[href^="school.html"]').forEach(a => { const on = a.getAttribute('href') === 'school.html' + (k && k !== 'overview' ? '#' + k : ''); a.classList.toggle('active', on); });
+  });
 }
 
 

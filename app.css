@@ -1935,3 +1935,11 @@ html.tn-school .find-class, html.tn-school [data-path-find] { display: none !imp
 .ev-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; } .ev-row label { display: flex; gap: 6px; align-items: center; font-weight: 700; }
 .ev-row input { font: inherit; padding: 6px 10px; border: 2px solid #E4E6F1; border-radius: 10px; }
 .ev-pick .btn { border: 0; cursor: pointer; font: inherit; font-weight: 800; } .ev-pick .outline { border: 1px solid #3E4B94; color: #3E4B94; }
+/* ===== Whole-school attendance ===== */
+.at-head { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; } .at-head label { display: flex; gap: 6px; align-items: center; font-weight: 800; }
+.at-head input { font: inherit; padding: 6px 10px; border: 2px solid #E4E6F1; border-radius: 10px; } .at-head b { font-size: 1.1rem; }
+.in-card.warn { background: #FFF6E0; }
+.at-reg { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; margin-top: 8px; }
+.at-r { border: 1px solid #ECEEF6; border-radius: 12px; padding: 8px 12px; display: grid; gap: 4px; } .at-r .sc-flag { justify-self: start; }
+.sc-flag.ok { background: #E3F5EE; color: #1F7A4D; } .sc-flag.none { background: #F1F2F8; color: #6E7485; }
+#at-reg:not(:empty) { margin-top: 16px; border-top: 2px dashed #E4E6F1; padding-top: 14px; }
