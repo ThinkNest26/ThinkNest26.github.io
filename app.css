@@ -1234,3 +1234,4 @@ body.cafe-theme .post { border-radius: 20px; }
 .sr-none { padding: 12px; color: #6E7485; margin: 0; font-size: .9rem; }
 .moved-note { margin-bottom: 16px; }
 .moved-note a { color: #3E4B94; font-weight: 700; text-decoration: underline; }
+.adm-head-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; } .adm-head-right .btn { border: 1px solid #3E4B94; color: #3E4B94; font: inherit; font-weight: 700; cursor: pointer; padding: 9px 16px; }

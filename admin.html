@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=70">
-  <link rel="stylesheet" href="app.css?v=70">
+  <link rel="stylesheet" href="style.css?v=72">
+  <link rel="stylesheet" href="app.css?v=72">
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -31,7 +31,7 @@
     </header>
 
     <main class="dash admin-dash">
-      <div class="page-head"><h1 class="title">Admin dashboard</h1><span class="meta" id="adm-updated"></span></div>
+      <div class="page-head"><h1 class="title">Admin dashboard</h1><div class="adm-head-right"><span class="meta" id="adm-updated"></span><button type="button" class="btn btn-white outline" id="adm-backup">⬇ Download a backup</button></div></div>
       <section class="stats">
         <div class="stat s1"><span class="stat-ic">👩‍🎓</span><div><b id="st-students">0</b><span>Students</span></div></div>
         <div class="stat s2"><span class="stat-ic">🧑‍🏫</span><div><b id="st-teachers">0</b><span>Teachers</span></div></div>
@@ -111,15 +111,15 @@
   <div class="side-shade" id="side-shade"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=70"></script>
-  <script src="app.js?v=70"></script>
-  <script src="nav.js?v=70"></script>
-  <script src="notify.js?v=70" defer></script>
-  <script src="teacher.js?v=70"></script>
+  <script src="supabase-config.js?v=72"></script>
+  <script src="app.js?v=72"></script>
+  <script src="nav.js?v=72"></script>
+  <script src="notify.js?v=72" defer></script>
+  <script src="teacher.js?v=72"></script>
   <script>startAdmin();</script>
-  <script src="admintabs.js?v=70"></script>
-  <script src="community.js?v=70"></script>
-  <script src="chat.js?v=70"></script>
+  <script src="admintabs.js?v=72"></script>
+  <script src="community.js?v=72"></script>
+  <script src="chat.js?v=72"></script>
   <script>loadReports().then(loadGroupReports); loadMessageReview(); loadApprovalSetting(); loadWaitlists(); loadHubRequests(); loadNewAccounts(); loadContactMessages(); loadConnectAdmin(); loadEmailAdmin(); loadDeletionRequests();</script>
 </body>
 </html>

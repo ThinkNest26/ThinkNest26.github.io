@@ -37,6 +37,33 @@
       const { count } = await db.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'parent');
       const p = document.getElementById('st-parents'); if (p) p.textContent = count || 0;
     } catch (_) {}
+    const bk = document.getElementById('adm-backup'); if (bk) bk.addEventListener('click', backup);
     const u = document.getElementById('adm-updated'); if (u) u.textContent = 'Updated ' + new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   });
+  // ----- Download a backup of the important data (JSON file) -----
+  const BACKUP_TABLES = ['profiles', 'courses', 'lessons', 'lesson_items', 'enrollments', 'lesson_progress', 'item_responses', 'certificates', 'attendance',
+    'parent_links', 'family_children', 'study_groups', 'group_members', 'hub_members', 'hub_profiles', 'posts', 'post_comments', 'contact_messages',
+    'cafe_meetups', 'points_log', 'site_settings', 'curriculum_grades', 'data_requests', 'sessions', 'course_interest'];
+  async function backup() {
+    const btn = document.getElementById('adm-backup'); btn.disabled = true;
+    const out = { made: new Date().toISOString(), site: 'Think Nest', tables: {} }, skipped = [];
+    for (const t of BACKUP_TABLES) {
+      btn.textContent = 'Saving ' + t + '…';
+      let rows = [], from = 0;
+      try {
+        while (true) {
+          const { data, error } = await db.from(t).select('*').range(from, from + 999);
+          if (error) { skipped.push(t); break; }
+          rows = rows.concat(data || []); if (!data || data.length < 1000) break; from += 1000;
+        }
+      } catch (_) { skipped.push(t); }
+      if (!skipped.includes(t)) out.tables[t] = rows;
+    }
+    const blob = new Blob([JSON.stringify(out, null, 1)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'thinknest-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    btn.disabled = false; btn.textContent = '⬇ Download a backup';
+    const n = Object.values(out.tables).reduce((s, r) => s + r.length, 0);
+    say(`Backup saved: ${n} records from ${Object.keys(out.tables).length} tables.` + (skipped.length ? ' Skipped: ' + skipped.join(', ') : ''));
+  }
 })();
