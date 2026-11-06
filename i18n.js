@@ -1720,7 +1720,21 @@
 "Going further": "التعمق",
 "Making conclusions": "الاستنتاج",
 "Making connections": "الربط",
-"Taking action": "اتخاذ الإجراء"
+"Taking action": "اتخاذ الإجراء",
+"🗓️ Week at a glance": "🗓️ الأسبوع في لمحة",
+"➕ Add a subject…": "➕ أضف مادة…",
+"Remove subject": "احذف المادة",
+"🎯 Learning objectives": "🎯 أهداف التعلم",
+"📆 Lessons this week": "📆 دروس هذا الأسبوع",
+"🧠 ATL skills this week": "🧠 مهارات منهجيات التعلم هذا الأسبوع",
+"🌟 Learner profile focus": "🌟 سمات ملف المتعلم",
+"Anything else? (optional)": "شيء آخر؟ (اختياري)",
+"Choose or type an activity…": "اختر نشاطًا أو اكتبه…",
+"Details (optional)": "تفاصيل (اختياري)",
+"Lesson focus": "محور الدرس",
+"📝 Assessment": "📝 التقييم",
+"Choose a subject…": "اختر مادة…",
+"📋 Weekly plans: drop-down choices": "📋 الخطط الأسبوعية: خيارات القوائم"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times
