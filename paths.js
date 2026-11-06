@@ -199,3 +199,29 @@ function resumePendingPath() {
   if (!p || !p.subject || !document.getElementById('path-dialog')) return;
   openPathChooser(p.subject, p);
 }
+
+// ===== Home page finder: subject → curriculum → grade → the path =====
+function initPathFinder() {
+  const box = document.querySelector('.pf-box'); if (!box) return;
+  const st = { subject: null, curriculum: null };
+  const more = document.getElementById('pf-more'), cur = document.getElementById('pf-cur'), grade = document.getElementById('pf-grade'), go = document.getElementById('pf-go');
+  const ready = () => { go.disabled = !(st.subject && st.curriculum && grade.value); };
+  box.querySelectorAll('[data-pf]').forEach(b => b.addEventListener('click', () => {
+    st.subject = b.dataset.pf; st.curriculum = null;
+    box.querySelectorAll('[data-pf]').forEach(x => x.setAttribute('aria-checked', String(x === b)));
+    const list = pathCurricula(st.subject);
+    cur.innerHTML = list.map(([k, n]) => `<button type="button" class="pf-chip" role="radio" aria-checked="false" data-cur="${k}">${esc(n.replace(' Curriculum', '').replace('International Baccalaureate (IB)', 'IB'))}</button>`).join('');
+    if (list.length === 1) cur.firstElementChild.click();
+    more.hidden = false; ready();
+    if (window.matchMedia('(max-width: 700px)').matches) more.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }));
+  cur.addEventListener('click', e => { const c = e.target.closest('[data-cur]'); if (!c) return; st.curriculum = c.dataset.cur; cur.querySelectorAll('[data-cur]').forEach(x => x.setAttribute('aria-checked', String(x === c))); ready(); });
+  grade.addEventListener('change', ready);
+  go.addEventListener('click', () => { if (!go.disabled) openPathChooser(st.subject, { curriculum: st.curriculum, grade: grade.value }); });
+  // live "classes open" badges
+  db.from('courses').select('subject, audience').then(({ data }) => {
+    const n = {}; (data || []).filter(c => !c.audience || c.audience === 'students').forEach(c => { const k = pathSubjectKey(c.subject); n[k] = (n[k] || 0) + 1; });
+    document.querySelectorAll('[data-open]').forEach(el => { const k = n[el.dataset.open] || 0; el.textContent = k ? `🟢 ${k} class${k === 1 ? '' : 'es'} open` : '✨ New classes soon'; });
+  }).catch(() => {});
+}
+document.addEventListener('DOMContentLoaded', () => { try { initPathFinder(); } catch (e) { console.error(e); } });

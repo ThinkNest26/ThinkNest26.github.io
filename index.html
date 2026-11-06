@@ -9,10 +9,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=46">
-  <link rel="stylesheet" href="paths.css?v=52">
-  <link rel="stylesheet" href="rtl.css?v=76">
-  <script src="i18n.js?v=76"></script>
+  <link rel="stylesheet" href="style.css?v=77">
+  <link rel="stylesheet" href="paths.css?v=77">
+  <link rel="stylesheet" href="rtl.css?v=77">
+  <script src="i18n.js?v=77"></script>
 </head>
 <body>
 
@@ -186,51 +186,49 @@
     </section>
 
     <!-- ============ THINK PATHS ============ -->
-    <section id="paths" class="paths container">
+    <section id="paths" class="paths container pf">
       <h2 class="title title-center">Think Paths</h2>
-      <p class="subtitle">Personalised paths for every subject, curriculum and grade</p>
+      <p class="subtitle">Find the right class in 3 quick taps</p>
 
-      <div class="course-grid">
-        <article class="course path-card">
-          <div class="path-art" style="--c:#3E4B94"><span>Aa</span></div>
-          <div class="course-learners">KG1 – Grade 12</div>
-          <div class="course-body">
-            <span class="course-date">British · IB · American</span>
-            <h3>English</h3>
-            <p>Reading, writing, grammar, speaking and listening. Choose your curriculum and grade to see what you’ll learn and join a class.</p>
-            <a href="#paths" class="btn btn-red btn-small" data-path="english">Choose your path</a>
+      <ol class="pf-how" aria-label="How it works">
+        <li><span>1</span><div><b>Pick a subject</b><em>English, Maths, Science or Arabic</em></div></li>
+        <li><span>2</span><div><b>Choose curriculum &amp; grade</b><em>British, IB, American or Arabic A/B</em></div></li>
+        <li><span>3</span><div><b>See your path</b><em>What you’ll learn, and classes to join</em></div></li>
+      </ol>
+
+      <div class="pf-box">
+        <p class="pf-q"><b>1</b> Which subject?</p>
+        <div class="pf-subjects" role="radiogroup" aria-label="Subject">
+          <button type="button" class="pf-subj" role="radio" aria-checked="false" data-pf="english" style="--c:#3E4B94;--c2:#6A78C9">
+            <span class="pf-ic" aria-hidden="true" data-no-tr dir="ltr">Aa</span><b>English</b><span class="pf-open" data-open="english"></span>
+            <span class="pf-tags"><i>Phonics</i><i>Stories</i><i>Grammar</i></span></button>
+          <button type="button" class="pf-subj" role="radio" aria-checked="false" data-pf="maths" style="--c:#E5675C;--c2:#F6A49B">
+            <span class="pf-ic" aria-hidden="true" data-no-tr dir="ltr">+×</span><b>Maths</b><span class="pf-open" data-open="maths"></span>
+            <span class="pf-tags"><i>Fractions</i><i>Shapes</i><i>Times tables</i></span></button>
+          <button type="button" class="pf-subj" role="radio" aria-checked="false" data-pf="science" style="--c:#2FA08A;--c2:#6FCBB4">
+            <span class="pf-ic" aria-hidden="true" data-no-tr dir="ltr">🔬</span><b>Science</b><span class="pf-open" data-open="science"></span>
+            <span class="pf-tags"><i>Plants</i><i>Forces</i><i>Space</i></span></button>
+          <button type="button" class="pf-subj" role="radio" aria-checked="false" data-pf="arabic" style="--c:#D4952B;--c2:#F0C46A">
+            <span class="pf-ic" aria-hidden="true" data-no-tr dir="ltr">أب</span><b>Arabic</b><span class="pf-open" data-open="arabic"></span>
+            <span class="pf-tags"><i>Reading</i><i>Writing</i><i>Speaking</i></span></button>
+        </div>
+
+        <div class="pf-more" id="pf-more" hidden>
+          <div class="pf-row">
+            <p class="pf-q"><b>2</b> Which curriculum?</p>
+            <div class="pf-chips" id="pf-cur" role="radiogroup" aria-label="Curriculum"></div>
           </div>
-        </article>
-        <article class="course path-card">
-          <div class="path-art" style="--c:#F27A6F"><span>+×</span></div>
-          <div class="course-learners">KG1 – Grade 12</div>
-          <div class="course-body">
-            <span class="course-date">British · IB · American</span>
-            <h3>Maths</h3>
-            <p>Number, calculation, shape, measures and problem solving. Choose your curriculum and grade to see what you’ll learn and join a class.</p>
-            <a href="#paths" class="btn btn-red btn-small" data-path="maths">Choose your path</a>
+          <div class="pf-row">
+            <p class="pf-q"><b>3</b> Which grade?</p>
+            <label class="sr" for="pf-grade">Grade</label>
+            <select id="pf-grade" class="pf-select">
+              <option value="">Choose a grade…</option>
+              <option value="KG1">KG1</option><option value="KG2">KG2</option><option value="Grade 1">Grade 1</option><option value="Grade 2">Grade 2</option><option value="Grade 3">Grade 3</option><option value="Grade 4">Grade 4</option><option value="Grade 5">Grade 5</option><option value="Grade 6">Grade 6</option><option value="Grade 7">Grade 7</option><option value="Grade 8">Grade 8</option><option value="Grade 9">Grade 9</option><option value="Grade 10">Grade 10</option><option value="Grade 11">Grade 11</option><option value="Grade 12">Grade 12</option>
+            </select>
           </div>
-        </article>
-        <article class="course path-card">
-          <div class="path-art" style="--c:#2FA08A"><span>🔬</span></div>
-          <div class="course-learners">KG1 – Grade 12</div>
-          <div class="course-body">
-            <span class="course-date">British · IB · American</span>
-            <h3>Science</h3>
-            <p>Living things, materials, forces, energy and investigating. Choose your curriculum and grade to see what you’ll learn and join a class.</p>
-            <a href="#paths" class="btn btn-red btn-small" data-path="science">Choose your path</a>
-          </div>
-        </article>
-        <article class="course path-card">
-          <div class="path-art" style="--c:#E3A43B"><span>أب</span></div>
-          <div class="course-learners">KG1 – Grade 12</div>
-          <div class="course-body">
-            <span class="course-date">Arabic A (speakers) · Arabic B (learners)</span>
-            <h3>Arabic</h3>
-            <p>Reading, writing, grammar and speaking in Arabic. Choose your curriculum and grade to see what you’ll learn and join a class.</p>
-            <a href="#paths" class="btn btn-red btn-small" data-path="arabic">Choose your path</a>
-          </div>
-        </article>
+          <button type="button" class="btn btn-red pf-go" id="pf-go" disabled>Show my path →</button>
+          <p class="pf-note">Not sure which curriculum? <a href="curriculum.html">See the curriculum guide</a></p>
+        </div>
       </div>
     </section>
 
@@ -286,16 +284,16 @@
     </div>
   </dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="site.js?v=36"></script>
+  <script src="site.js?v=77"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=36"></script>
-  <script src="app.js?v=36"></script>
-  <script src="curriculum.js?v=36"></script>
-  <script src="paths.js?v=45"></script>
-  <script src="founders.js?v=52"></script>
-  <script src="hubs.js?v=50"></script>
-  <script src="plot.js?v=50"></script>
-  <script src="offers.js?v=49"></script>
+  <script src="supabase-config.js?v=77"></script>
+  <script src="app.js?v=77"></script>
+  <script src="curriculum.js?v=77"></script>
+  <script src="paths.js?v=77"></script>
+  <script src="founders.js?v=77"></script>
+  <script src="hubs.js?v=77"></script>
+  <script src="plot.js?v=77"></script>
+  <script src="offers.js?v=77"></script>
   <script>
     // Top menu drop-downs (kept separate so nothing else can stop them working)
     document.querySelectorAll('.nav-drop-btn').forEach(b => b.addEventListener('click', e => {
