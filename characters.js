@@ -237,6 +237,10 @@ async function tnClassCommunity() {
     const { data: me } = session ? await db.from('profiles').select('role, grade').eq('id', session.user.id).maybeSingle() : { data: null };
     const card = document.createElement('section'); card.className = 'tn-challenge tn-quiz'; card.id = 'tn-class-challenge';
     banner.after(card); tnQuizCard(card, tnRiddleBand(me && me.role, me && me.grade));
+    if (!document.getElementById('tn-class-riddle')) {
+      const rd = document.createElement('section'); rd.className = 'panel side-card tn-riddle tn-riddle-wide'; rd.id = 'tn-class-riddle';
+      card.after(rd); tnRiddleCard(rd, tnRiddleBand(me && me.role, me && me.grade));
+    }
   }
 
 }
@@ -318,9 +322,9 @@ function tnQuizCard(host, band) {
     const msg = host.querySelector('.tn-qz-msg');
     if (Number(b.dataset.k) === ok) {
       b.classList.add('right'); host.classList.add('solved'); host.querySelectorAll('[data-k]').forEach(x => x.disabled = true);
-      msg.innerHTML = `<b>${tnPick(TN_YES[L])}</b> ${fact}`; tnConfetti(host);
+      msg.className = 'tn-qz-msg ok'; msg.innerHTML = `<b>${tnPick(TN_YES[L])}</b> ${fact}`; tnConfetti(host);
     } else {
-      b.classList.add('wrong'); b.disabled = true; msg.textContent = tnPick(TN_NO[L]); tnWobble(host);
+      b.classList.add('wrong'); b.disabled = true; msg.className = 'tn-qz-msg no'; msg.textContent = tnPick(TN_NO[L]); tnWobble(host);
     }
   });
 }
@@ -343,9 +347,9 @@ tnRiddleCard = function (host, band) {
       const msg = host.querySelector('.tn-rd-msg');
       if (words.some(w => val === w || val.includes(w) || (w.length > 3 && w.includes(val) && val.length > 2))) {
         host.classList.add('solved'); host.querySelector('.tn-rd-ans').hidden = false;
-        msg.innerHTML = `<b>${tnPick(TN_YES[L])}</b>`; tnConfetti(host);
+        msg.className = 'tn-rd-msg ok'; msg.innerHTML = `<b>${tnPick(TN_YES[L])}</b>`; tnConfetti(host);
         host.querySelectorAll('.tn-rd-try input, .tn-rd-try button').forEach(x => x.disabled = true);
-      } else { msg.textContent = tnPick(TN_NO[L]); tnWobble(host); }
+      } else { msg.className = 'tn-rd-msg no'; msg.textContent = tnPick(TN_NO[L]); tnWobble(host); }
     });
   };
   addBox();

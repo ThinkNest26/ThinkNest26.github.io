@@ -1620,3 +1620,5 @@ html.tn-ar .prof-menu { right: auto; left: 0; }
 @media (max-width: 520px) { .tn-qz-opts { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .tn-wobble, .tn-qz-opts button.right { animation: none; } }
 html.tn-ar .tn-qz-opts button { text-align: right; }
+.tn-riddle-wide { margin-bottom: 14px; }
+.tn-rd-msg.no, .tn-qz-msg.no { color: #C2410C; } .tn-rd-msg.ok, .tn-qz-msg.ok { color: #1F7A4D; }
