@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=36">
-  <link rel="stylesheet" href="app.css?v=36">
+  <link rel="stylesheet" href="style.css?v=69">
+  <link rel="stylesheet" href="app.css?v=69">
 </head>
 <body class="auth">
   <header class="app-top">
@@ -30,6 +30,7 @@
         </label>
         <a href="forgot.html" class="forgot">Forgot password?</a>
         <p class="form-error" id="login-error" role="alert" hidden></p>
+        <div class="captcha-box" data-captcha></div>
         <button type="submit" class="btn btn-red auth-btn">Log in</button>
         <p class="switch">Only the Think Nest admin can open the admin area.</p>
       </form>
@@ -37,9 +38,10 @@
   </main>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=36"></script>
-  <script src="app.js?v=36"></script>
-  <script src="teacher.js?v=36"></script>
+  <script src="supabase-config.js?v=69"></script>
+  <script src="app.js?v=69"></script>
+  <script src="captcha.js?v=69"></script>
+  <script src="teacher.js?v=69"></script>
   <script>startLoginPage();</script>
 </body>
 </html>

@@ -40,6 +40,7 @@ function showError(el, msg) { el.textContent = msg; el.hidden = !msg; }
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 function friendly(err) {
   const m = (err && err.message || '').toLowerCase();
+  if (m.includes('captcha')) return 'Please wait for the “Verify you are human” box to show a tick, then try again.';
   if (m.includes('invalid login')) return 'That email and password don’t match. Check them and try again, or click “Forgot password?” to choose a new one.';
   if (m.includes('email not confirmed')) return 'Please confirm your email first. Open the email we sent you and click the link (check spam too).';
   if (m.includes('already registered') || m.includes('already been registered')) return 'An account with this email already exists. Try logging in instead.';
@@ -98,9 +99,11 @@ async function startLoginPage() {
     showError(err, '');
     const email = form.email.value.trim(), password = form.password.value;
     if (!email || !password) return showError(err, 'Enter your email and password.');
+    if (typeof captchaMissing === 'function' && captchaMissing()) return showError(err, CAPTCHA_MSG);
     const btn = form.querySelector('button[type=submit]');
     btn.disabled = true; btn.textContent = 'Logging in…';
-    const { data: d, error } = await db.auth.signInWithPassword({ email, password });
+    const { data: d, error } = await db.auth.signInWithPassword({ email, password, options: { captchaToken: (typeof captchaToken === 'function' ? captchaToken() : undefined) } });
+    if (typeof captchaReset === 'function') captchaReset();
     btn.disabled = false; btn.textContent = 'Log in';
     if (error) return showError(err, friendly(error));
     location.href = await homeFor(d.user.id);
@@ -174,17 +177,19 @@ function startSignupPage() {
     const f = form;
     if (f.agree_terms && !f.agree_terms.checked) { f.agree_terms.focus(); return showError(document.getElementById('signup-error') || err, 'Please tick the box to agree to the Terms of use.'); }
     if (f.age && Number(f.age.value) < 13 && !new URLSearchParams(location.search).has('parent_email')) { show(0); ageCheck(); return; }
+    if (typeof captchaMissing === 'function' && captchaMissing()) { return showError(document.getElementById('signup-error'), CAPTCHA_MSG); }
     create.disabled = true; create.textContent = 'Creating account…';
     const { data, error } = await db.auth.signUp({
       email: f.email.value.trim(),
       password: f.password.value,
-      options: { data: {
+      options: { captchaToken: (typeof captchaToken === 'function' ? captchaToken() : undefined),  data: {
         full_name: f.full_name.value.trim(), role: 'student', age: f.age ? f.age.value : '', agreed_terms: true,
         grade: f.grade.value, curriculum: f.curriculum.value, school: f.school.value.trim(),
         parent_name: f.parent_name.value.trim(), parent_email: f.parent_email.value.trim(),
         parent_consent: f.parent_consent.checked
       } }
     });
+    if (typeof captchaReset === 'function') captchaReset();
     create.disabled = false; create.textContent = 'Create account';
     if (error) return showError(err, friendly(error));
     if (alreadyRegistered(data)) { if (typeof btn !== 'undefined' && btn) { btn.disabled = false; } return showError(err, ALREADY_MSG); }
@@ -338,8 +343,10 @@ function startForgot() {
   f.addEventListener('submit', async e => {
     e.preventDefault(); showError(err, '');
     if (!f.email.checkValidity()) return showError(err, 'Enter a valid email address.');
+    if (typeof captchaMissing === 'function' && captchaMissing()) return showError(err, CAPTCHA_MSG);
     const btn = f.querySelector('button'); btn.disabled = true; btn.textContent = 'Sending…';
-    const { error } = await db.auth.resetPasswordForEmail(f.email.value.trim(), { redirectTo: SITE + 'reset.html' });
+    const { error } = await db.auth.resetPasswordForEmail(f.email.value.trim(), { redirectTo: SITE + 'reset.html', captchaToken: (typeof captchaToken === 'function' ? captchaToken() : undefined) });
+    if (typeof captchaReset === 'function') captchaReset();
     btn.disabled = false; btn.textContent = 'Send reset link';
     if (error) return showError(err, friendly(error));
     document.getElementById('forgot-done').hidden = false;

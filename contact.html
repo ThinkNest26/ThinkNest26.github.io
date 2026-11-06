@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=36">
-  <link rel="stylesheet" href="app.css?v=36">
+  <link rel="stylesheet" href="style.css?v=69">
+  <link rel="stylesheet" href="app.css?v=69">
 </head>
 <body class="auth">
   <header class="app-top">
@@ -41,6 +41,7 @@
         <label>Message <textarea name="Message" rows="5" maxlength="3000" required placeholder="How can we help?"></textarea></label>
         <p class="note">Students: please don’t include your phone number or home address. If you’re under 18, it’s best to ask a parent or guardian to contact us.</p>
         <p class="form-error" id="contact-error" role="alert" hidden></p>
+        <div class="captcha-box" data-captcha></div>
         <button class="btn btn-red auth-btn">Send message</button>
       </form>
       <p class="switch"><a href="index.html">‹ Back to the home page</a></p>
@@ -48,8 +49,9 @@
   </main>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=62"></script>
-  <script src="app.js?v=62"></script>
+  <script src="supabase-config.js?v=69"></script>
+  <script src="app.js?v=69"></script>
+  <script src="captcha.js?v=69"></script>
   <script>
     const cf = document.getElementById('contact-form'), cerr = document.getElementById('contact-error');
     const showSent = name => { cf.hidden = true; const n = document.getElementById('sent-note'); n.hidden = false; if (name) { const b = n.querySelector('b'); if (b) b.textContent = 'Thank you, ' + name.split(' ')[0] + '!'; } n.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
@@ -60,10 +62,12 @@
       for (const el of cf.querySelectorAll('[required]')) {
         if (!el.value.trim() || !el.checkValidity()) { el.focus(); return showError(cerr, el.type === 'email' ? 'Enter a valid email address.' : 'Please fill in every box.'); }
       }
-      const btn = cf.querySelector('button'); btn.disabled = true; btn.textContent = 'Sending…';
+      if (typeof captchaMissing === 'function' && captchaMissing()) return showError(cerr, CAPTCHA_MSG);
+      const btn = cf.querySelector('button[type=submit], button.btn-red') || cf.querySelector('button'); btn.disabled = true; btn.textContent = 'Sending…';
       const msg = { name: cf.Name.value.trim(), email: cf.email.value.trim(), who: cf['I am a'].value, topic: cf.Topic.value, message: cf.Message.value.trim() };
       let saved = false, emailed = false;
-      try { const { error } = await db.from('contact_messages').insert(msg); saved = !error; } catch (_) {}
+      try { const { error } = await db.from('contact_messages').insert(msg); saved = !error; if (error && /too many/i.test(error.message)) { btn.disabled = false; btn.textContent = 'Send message'; return showError(cerr, 'You’ve sent a few messages already. Please wait a little before sending another.'); } } catch (_) {}
+      if (typeof captchaReset === 'function') captchaReset();
       btn.disabled = false; btn.textContent = 'Send message';
       if (saved || emailed) { cf.reset(); return showSent(msg.name); }
       showError(cerr, 'Sorry, your message couldn’t be sent just now. Please try again in a minute, or email us at thinknest2026@gmail.com.');

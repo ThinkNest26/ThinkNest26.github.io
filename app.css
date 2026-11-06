@@ -1205,3 +1205,4 @@ body.cafe-theme .post { border-radius: 20px; }
 .agree-box a { color: #3E4B94; text-decoration: underline; font-weight: 700; }
 .delete-req { margin-top: 22px; border: 1px solid #F6D3D3; }
 .danger-btn { border-color: #E5484D !important; color: #B3261E !important; }
+.captcha-box { min-height: 66px; margin: 6px 0 4px; display: flex; justify-content: center; }
