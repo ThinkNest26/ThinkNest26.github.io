@@ -1494,3 +1494,23 @@ html.tn-ar .in-table tbody th { text-align: right; left: auto; right: 0; }
 .tn-rd-next { margin-top: 8px; font-size: .85rem; }
 .tn-riddle.solved { box-shadow: 0 0 0 3px #BFEBDD inset; }
 @media (prefers-reduced-motion: reduce) { .tn-rd-ans { animation: none; } }
+/* ===== Student accounts ===== */
+.ac-form { display: grid; gap: 12px; }
+.ac-step { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-weight: 800; color: #1D2026; }
+.ac-step > span { width: 28px; height: 28px; border-radius: 50%; background: #3E4B94; color: #fff; display: grid; place-items: center; font-size: .9rem; flex: none; }
+.ac-step select { font: inherit; font-weight: 700; padding: 9px 12px; border: 2px solid #E4E6F1; border-radius: 12px; min-width: 260px; }
+.ac-step small { font-weight: 500; width: 100%; padding-left: 38px; }
+#ac-names { font: inherit; border: 2px solid #E4E6F1; border-radius: 14px; padding: 12px 14px; resize: vertical; line-height: 1.6; }
+#ac-names:focus { border-color: #3E4B94; outline: none; }
+.ac-bar { display: flex; align-items: center; gap: 12px; } .ac-up { cursor: pointer; }
+.ac-go { justify-self: start; border: 0; cursor: pointer; font: inherit; font-weight: 800; padding: 13px 24px; }
+.ac-results { border: 2px solid #BFE6D6; background: #F7FCFA; }
+.ac-res-head { display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; align-items: flex-start; margin-bottom: 12px; }
+.ac-res-head h2 { margin: 0 0 4px; } .ac-res-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.ac-res-btns .btn { border: 0; cursor: pointer; font: inherit; font-weight: 800; } .ac-res-btns .outline { border: 1px solid #3E4B94; color: #3E4B94; }
+.ac-table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+.ac-table th, .ac-table td { padding: 9px 12px; border-bottom: 1px solid #F1F2F8; text-align: left; }
+.ac-table thead th { background: #F7F8FD; font-size: .85rem; color: #4A4E5E; }
+.ac-table code { background: #EEF0FB; color: #2E3A82; border-radius: 6px; padding: 2px 7px; font-size: .95rem; }
+.ac-newpw code { background: #E3F5EE; color: #1F7A4D; }
+html.tn-ar .ac-table th, html.tn-ar .ac-table td { text-align: right; } html.tn-ar .ac-step small { padding-left: 0; padding-right: 38px; }

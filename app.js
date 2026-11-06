@@ -97,8 +97,10 @@ async function startLoginPage() {
   form.addEventListener('submit', async e => {
     e.preventDefault();
     showError(err, '');
-    const email = form.email.value.trim(), password = form.password.value;
-    if (!email || !password) return showError(err, 'Enter your email and password.');
+    let email = form.email.value.trim(); const password = form.password.value;
+    if (!email || !password) return showError(err, 'Enter your email (or username) and password.');
+    // students created by a teacher log in with a username, for example zahra.n27
+    if (!email.includes('@')) email = email.toLowerCase().replace(/\s+/g, '') + '@students.thinknestonline.com';
     if (typeof captchaMissing === 'function' && captchaMissing()) return showError(err, CAPTCHA_MSG);
     const btn = form.querySelector('button[type=submit]');
     btn.disabled = true; btn.textContent = 'Logging in…';

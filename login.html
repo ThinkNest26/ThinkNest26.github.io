@@ -8,10 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=69">
-  <link rel="stylesheet" href="app.css?v=69">
-  <link rel="stylesheet" href="rtl.css?v=76">
-  <script src="i18n.js?v=76"></script>
+  <link rel="stylesheet" href="style.css?v=86">
+  <link rel="stylesheet" href="app.css?v=86">
+  <link rel="stylesheet" href="rtl.css?v=86">
+  <script src="i18n.js?v=86"></script>
 </head>
 <body class="auth">
   <header class="app-top">
@@ -25,8 +25,8 @@
       <h1>Welcome, Student!</h1>
       <p class="auth-sub">Log in to explore lessons, track your progress, and grow your skills every day</p>
       <form class="auth-form" id="login-form" novalidate>
-        <label>Email
-          <input type="email" name="email" autocomplete="email" placeholder="Enter your email" required>
+        <label>Email or username
+          <input type="text" name="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Your email or username" required>
         </label>
         <label>Password
           <span class="pw">
@@ -44,9 +44,9 @@
   </main>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=69"></script>
-  <script src="app.js?v=69"></script>
-  <script src="captcha.js?v=69"></script>
+  <script src="supabase-config.js?v=86"></script>
+  <script src="app.js?v=86"></script>
+  <script src="captcha.js?v=86"></script>
   <script>startLoginPage();</script>
 </body>
 </html>

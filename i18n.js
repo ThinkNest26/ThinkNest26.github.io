@@ -1278,7 +1278,27 @@
 "Secure": "متمكّن",
 "Developing": "قيد التطوّر",
 "Gap": "فجوة",
-"Not handed in": "لم يُسلَّم"
+"Not handed in": "لم يُسلَّم",
+"👥 Student accounts": "👥 حسابات الطلاب",
+"Create log ins for a whole class in one go. Each student gets a username and an easy password, and is added to your class straight away.": "أنشئ حسابات دخول لفصل كامل دفعة واحدة. يحصل كل طالب على اسم مستخدم وكلمة مرور سهلة، ويُضاف إلى فصلك فورًا.",
+"Which class or course?": "أي فصل أو دورة؟",
+"Student names": "أسماء الطلاب",
+"One name per line, or upload a list (CSV or text file; from Excel use File → Save As → CSV)": "اسم واحد في كل سطر، أو ارفع قائمة (ملف CSV أو نصي؛ من إكسل استخدم ملف ← حفظ باسم ← CSV)",
+"📄 Upload a list": "📄 ارفع قائمة",
+"I confirm that my school and the students’ parents have agreed to these students having Think Nest accounts.": "أؤكد أن مدرستي وأولياء أمور الطلاب وافقوا على حصول هؤلاء الطلاب على حسابات في ثينك نست.",
+"✨ Generate accounts": "✨ أنشئ الحسابات",
+"Students you’ve created": "الطلاب الذين أنشأت حساباتهم",
+"Students you create will appear here.": "سيظهر هنا الطلاب الذين تُنشئ حساباتهم.",
+"🖨️ Print login cards": "🖨️ اطبع بطاقات الدخول",
+"Username": "اسم المستخدم",
+"🔄 New password": "🔄 كلمة مرور جديدة",
+"Choose a class or course…": "اختر فصلًا أو دورة…",
+"Email or username": "البريد الإلكتروني أو اسم المستخدم",
+"Your email or username": "بريدك الإلكتروني أو اسم المستخدم",
+"Enter your email (or username) and password.": "أدخل بريدك الإلكتروني (أو اسم المستخدم) وكلمة المرور.",
+"Choose a class or course first.": "اختر فصلًا أو دورة أولًا.",
+"Type or upload at least one name.": "اكتب اسمًا واحدًا على الأقل أو ارفع قائمة.",
+"Please tick the box to confirm you have permission.": "يُرجى تحديد المربع لتأكيد حصولك على الإذن."
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times
