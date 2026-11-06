@@ -175,8 +175,8 @@ async function startSchool() {
       const file = up.files[0]; if (!file) return;
       if (file.size > 2 * 1024 * 1024) return say('Please choose an image up to 2 MB.');
       const path = `${sid}/logo-${Date.now()}.${(file.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z]/g, '')}`;
-      const { error: er } = await db.storage.from('school-logos').upload(path, file, { upsert: true, contentType: file.type });
-      if (er) return say(friendly(er));
+      const { error: er } = await db.storage.from('school-logos').upload(path, file, { contentType: file.type });
+      if (er) { up.value = ''; return say('The logo couldn’t be uploaded: ' + (er.message || friendly(er)) + '. Please send a screenshot of this message to the Think Nest team.'); }
       logoUrl = db.storage.from('school-logos').getPublicUrl(path).data.publicUrl;
       document.getElementById('sc-logo-prev').innerHTML = `<img src="${SC_E(logoUrl)}" alt="">`;
       say('Logo uploaded. Click 💾 Save settings to keep it.');
