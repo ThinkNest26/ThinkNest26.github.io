@@ -9,15 +9,16 @@ async function startConnect(sp) {
     const { data: ok } = await db.rpc('is_hub_member', { h: sp });
     if (!ok) { box.innerHTML = `<div class="empty-box"><p>☕ Coffee, Chats &amp; Connections is for members of <b>${hubName}</b>. Ask to join the hub, and you’ll be in as soon as Think Nest approves you.</p><a class="btn btn-red" href="${hubPage}">Go to ${hubName}</a></div>`; return; }
   }
+  const P0 = sp === 'parents';
   const [{ data: sP }, { data: sM }, { data: sD }, { data: agreed }] = await Promise.all(['partners', 'meetups', 'messages'].map(k => db.rpc('connect_setting', { k })).concat([db.rpc('agreed_code', { sp })]));
   const ON = { partners: sP !== false, meetups: sM !== false, messages: sD !== false };
   if (!agreed) {
     box.innerHTML = `<section class="cx-hero"><span class="cx-cup">☕</span><div><span class="hub-kicker">${hubName}</span><h1>Coffee, Chats &amp; Connections</h1><p>A professional space to swap ideas, learn from each other and grow together.</p></div></section>
       <section class="panel cx-code"><h2>🤝 Our code of conduct</h2><p>Before you start, please read and agree to keep this space professional and comfortable for everyone.</p>
-        <ul><li>✅ Keep every conversation <b>professional and respectful</b>, focused on teaching, learning and professional growth.</li>
+        <ul><li>✅ Keep every conversation <b>professional and respectful</b>, focused on ${P0 ? 'parenting, learning and personal growth' : 'teaching, learning and professional growth'}.</li>
           <li>🚫 <b>No personal, romantic or private invitations</b>, and no comments about anyone’s appearance.</li>
           <li>🔒 <b>Don’t share personal contact details</b> or social media. Keep conversations on Think Nest.</li>
-          <li>👥 <b>Meet in groups</b>: online, or in a public place such as a café or school. Never at home.</li>
+          <li>👥 <b>Meet in groups</b>: online, or in a public place such as a café${P0 ? ', park or community centre' : ' or school'}. Never at home.</li>
           <li>🛡️ Messages may be <b>reviewed by Think Nest</b> to keep everyone safe. Some messages are checked automatically.</li>
           <li>🚩 <b>Report</b> anything that makes you uncomfortable. Breaking these rules can mean losing access to the hub.</li></ul>
         <label class="switch-row"><input type="checkbox" id="cx-agree"> I have read and agree to the code of conduct</label>
@@ -29,12 +30,15 @@ async function startConnect(sp) {
     });
     return;
   }
+  const P = sp === 'parents';
+  const W = P ? { partners: 'Parent Partners', partner: 'parent partner', colleague: 'parent', colleagues: 'parents', directory: 'Parent directory', topic: 'parenting, learning and personal growth', place: 'A public café, park or community centre, or Online' }
+              : { partners: 'Learning Partners', partner: 'learning partner', colleague: 'colleague', colleagues: 'colleagues', directory: 'Colleague directory', topic: 'teaching, learning and professional growth', place: 'A public café or school, or Online' };
   const E = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const ini = n => (n || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
   const when = d => new Date(d).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
   let tab = location.hash === '#meetups' && ON.meetups ? 'meetups' : location.hash === '#people' ? 'people' : ON.partners ? 'roulette' : ON.meetups ? 'meetups' : 'people';
-  box.innerHTML = `<section class="cx-hero"><span class="cx-cup">☕</span><div><span class="hub-kicker">${hubName}</span><h1>Coffee, Chats &amp; Connections</h1><p>A professional space to swap ideas, learn from colleagues and grow together, over a (virtual) cup of coffee.</p></div></section>
-    <div class="cx-tabs" role="tablist">${ON.partners ? '<button role="tab" data-cx="roulette">☕ Learning Partners</button>' : ''}${ON.meetups ? '<button role="tab" data-cx="meetups">📅 Group meetups</button>' : ''}<button role="tab" data-cx="people">📇 Colleague directory</button></div>
+  box.innerHTML = `<section class="cx-hero"><span class="cx-cup">☕</span><div><span class="hub-kicker">${hubName}</span><h1>Coffee, Chats &amp; Connections</h1><p>${P ? 'A friendly, respectful space to swap ideas, learn from other parents and grow together, over a (virtual) cup of coffee.' : 'A professional space to swap ideas, learn from colleagues and grow together, over a (virtual) cup of coffee.'}</p></div></section>
+    <div class="cx-tabs" role="tablist">${ON.partners ? `<button role="tab" data-cx="roulette">☕ ${W.partners}</button>` : ''}${ON.meetups ? '<button role="tab" data-cx="meetups">📅 Group meetups</button>' : ''}<button role="tab" data-cx="people">📇 ${W.directory}</button></div>
     <p class="cx-note">🛡️ Keep it professional: no personal invitations or contact details. <a href="#" id="cx-code-link">Code of conduct</a></p>
     <div id="cx-body"></div>`;
   const body = document.getElementById('cx-body');
@@ -49,15 +53,15 @@ async function startConnect(sp) {
     if (m) { const pid = m.user_a === uid ? m.user_b : m.user_a; const { data: p } = await db.from('profiles').select('id, full_name, subject, school').eq('id', pid).maybeSingle(); partner = p; }
     body.innerHTML = `<section class="panel cx-roulette">
       <div class="cx-cups" aria-hidden="true"><span>☕</span><span class="cx-plus">+</span><span>☕</span></div>
-      ${partner ? `<h2>This week’s learning partner</h2><div class="cx-match"><span class="initials big">${E(ini(partner.full_name))}</span><div><b>${E(partner.full_name)}</b><span class="meta">${E([partner.subject, partner.school].filter(Boolean).join(' · '))}</span></div></div>
+      ${partner ? `<h2>This week’s ${W.partner}</h2><div class="cx-match"><span class="initials big">${E(ini(partner.full_name))}</span><div><b>${E(partner.full_name)}</b><span class="meta">${E([partner.subject, partner.school].filter(Boolean).join(' · '))}</span></div></div>
           <p>Swap ideas on a topic you share, for 15 minutes this week: in the café, online, or in the staffroom with colleagues around. ☕</p>${sayHi(partner.id, partner.full_name)}`
-        : `<h2>Swap ideas with a colleague</h2><p>Learning Partners pairs you with a colleague who shares your professional interests, using your “I can help with” and “I’d love to learn” topics. Fill those in below first for the best match.</p>
-          <button type="button" class="btn btn-red btn-big" id="cx-match">☕ Find me a learning partner</button>`}
-      <label class="switch-row cx-opt"><input type="checkbox" id="cx-roul" ${mine && mine.roulette ? 'checked' : ''}> I’m happy to be paired as a learning partner</label>
+        : `<h2>Swap ideas with a ${W.colleague}</h2><p>${W.partners} pairs you with a ${W.colleague} who shares your interests, using your “I can help with” and “I’d love to learn” topics. Fill those in below first for the best match.</p>
+          <button type="button" class="btn btn-red btn-big" id="cx-match">☕ Find me a ${W.partner}</button>`}
+      <label class="switch-row cx-opt"><input type="checkbox" id="cx-roul" ${mine && mine.roulette ? 'checked' : ''}> I’m happy to be paired as a ${W.partner}</label>
     </section>
-    <section class="panel cx-me"><h3>My professional interests</h3><p class="meta">Used for Learning Partners and the Colleague directory. Professional topics only, please.</p>
-      <label>I can help with <input type="text" id="cx-help" maxlength="200" value="${E(mine && mine.can_help)}" placeholder="For example, phonics, Canva, behaviour tips"></label>
-      <label>I’d love to learn <input type="text" id="cx-learn" maxlength="200" value="${E(mine && mine.want_learn)}" placeholder="For example, AI tools, public speaking"></label>
+    <section class="panel cx-me"><h3>My interests</h3><p class="meta">Used for ${W.partners} and the ${W.directory}. Keep it to learning and growth topics, please.</p>
+      <label>I can help with <input type="text" id="cx-help" maxlength="200" value="${E(mine && mine.can_help)}" placeholder="${P ? 'For example, healthy lunchboxes, budgeting, Arabic' : 'For example, phonics, Canva, behaviour tips'}"></label>
+      <label>I’d love to learn <input type="text" id="cx-learn" maxlength="200" value="${E(mine && mine.want_learn)}" placeholder="${P ? 'For example, photography, yoga, starting a small business' : 'For example, AI tools, public speaking'}"></label>
       <button type="button" class="btn btn-red" id="cx-save">Save my profile</button></section>`;
   }
   async function meetups() {
@@ -68,7 +72,7 @@ async function startConnect(sp) {
       <form class="panel auth-form cx-form" id="cx-form" hidden>
         <label>What’s the meetup? <input name="title" maxlength="120" required placeholder="For example, Friday coffee and planning swap"></label>
         <div class="two"><label>Date and time <input type="datetime-local" name="when" required></label><label>Places (at least 3) <input type="number" name="cap" min="3" max="200" value="6"></label></div>
-        <div class="two"><label>Where? <input name="place" maxlength="160" placeholder="A public café or school, or Online"></label><label>Online link (optional) <input type="url" name="link" placeholder="https://meet.google.com/…"></label></div>
+        <div class="two"><label>Where? <input name="place" maxlength="160" placeholder="${W.place}"></label><label>Online link (optional) <input type="url" name="link" placeholder="https://meet.google.com/…"></label></div>
         <label>Details (optional) <textarea name="details" rows="2" maxlength="600" placeholder="The professional topic, for example: sharing reading strategies"></textarea></label>
         <label class="switch-row"><input type="checkbox" name="public" required> This is a group meetup, online or in a public place (never a home)</label>
         <div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" id="cx-cancel">Cancel</button><button class="btn btn-red auth-btn">Post meetup</button></div></form>
@@ -85,11 +89,11 @@ async function startConnect(sp) {
   async function people() {
     const { data } = await db.rpc('cafe_directory', { sp });
     const list = (data || []).filter(p => p.id !== uid);
-    body.innerHTML = `<div class="cx-head"><h2>Colleague directory: who can help with what</h2><input type="search" id="cx-search" placeholder="Search by name, subject or skill" class="cx-search"></div>
+    body.innerHTML = `<div class="cx-head"><h2>${W.directory}: who can help with what</h2><input type="search" id="cx-search" placeholder="Search by name, subject or skill" class="cx-search"></div>
       <div class="cx-people">${list.length ? list.map(p => `<article class="panel cx-person" data-text="${E([p.full_name, p.subject, p.school, p.can_help, p.want_learn].join(' ').toLowerCase())}">
         <span class="initials big">${E(ini(p.full_name))}</span><b>${E(p.full_name)}</b><span class="meta">${E([p.subject, p.school].filter(Boolean).join(' · '))}</span>
         ${p.can_help ? `<p class="cx-tag help">🙋 Can help with: ${E(p.can_help)}</p>` : ''}${p.want_learn ? `<p class="cx-tag learn">🌱 Would love to learn: ${E(p.want_learn)}</p>` : ''}
-        ${p.roulette ? '<span class="meta">☕ Open to Learning Partners</span>' : ''}${sayHi(p.id, p.full_name)}</article>`).join('') : '<div class="empty-box"><p>You’re the first one here! Invite your colleagues to join the hub. ☕</p></div>'}</div>`;
+        ${p.roulette ? `<span class="meta">☕ Open to ${W.partners}</span>` : ''}${sayHi(p.id, p.full_name)}</article>`).join('') : `<div class="empty-box"><p>You’re the first one here! Invite other ${W.colleagues} to join the hub. ☕</p></div>`}</div>`;
   }
   async function draw() {
     document.querySelectorAll('[data-cx]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.cx === tab)));
@@ -100,11 +104,11 @@ async function startConnect(sp) {
     if (e.target.id === 'cx-code-link') { e.preventDefault(); alert('Code of conduct\n\n• Keep it professional and respectful.\n• No personal, romantic or private invitations, and no comments about appearance.\n• Don’t share personal contact details or social media.\n• Meet in groups, online or in a public place. Never at home.\n• Messages may be reviewed by Think Nest.\n• Report anything that makes you uncomfortable.'); return; }
     const t = e.target.closest('[data-cx]'); if (t) { tab = t.dataset.cx; history.replaceState(null, '', '#' + tab); return draw(); }
     if (e.target.id === 'cx-match') {
-      e.target.disabled = true; e.target.textContent = 'Finding a learning partner…';
+      e.target.disabled = true; e.target.textContent = 'Finding a ' + W.partner + '…';
       const { data, error } = await db.rpc('coffee_match_me', { sp });
-      if (error) { e.target.disabled = false; e.target.textContent = '☕ Find me a learning partner'; return say(friendly(error)); }
-      if (!(data || []).length) { say('No one is free to pair just now. You’re on the list, so you’ll be paired when a colleague joins in. ☕'); return roulette(); }
-      say('☕ Paired! Say hello to your learning partner in the café.'); return roulette();
+      if (error) { e.target.disabled = false; e.target.textContent = '☕ Find me a ' + W.partner; return say(friendly(error)); }
+      if (!(data || []).length) { say('No one is free to pair just now. You’re on the list, so you’ll be paired when another ' + W.colleague + ' joins in. ☕'); return roulette(); }
+      say('☕ Paired! Say hello to your ' + W.partner + ' in the café.'); return roulette();
     }
     if (e.target.id === 'cx-save') {
       const { error } = await db.from('hub_profiles').upsert({ user_id: uid, hub: sp, can_help: document.getElementById('cx-help').value.trim(), want_learn: document.getElementById('cx-learn').value.trim(), roulette: document.getElementById('cx-roul').checked, updated_at: new Date().toISOString() });

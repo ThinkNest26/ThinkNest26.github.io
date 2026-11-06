@@ -15,7 +15,7 @@ function ago(ts) {
 const roleTag = r => r === 'parent' ? '<span class="role-tag parent">Parent</span>' : r === 'teacher' || r === 'school_leader' ? '<span class="role-tag">Teacher</span>' : r === 'admin' ? '<span class="role-tag admin">Think Nest</span>' : '';
 
 const SPACE = (document.body && document.body.dataset.space) || 'community';
-const CAFE = { teachers: { title: '☕ Teacher Café', who: ['teacher', 'school_leader', 'admin'], lead: 'Grab a coffee, pull up a chair. A private space just for teachers to swap hacks, share resources, ask the staffroom and celebrate each other.', ph: 'What’s brewing' }, parents: { title: '☕ Parent Café', who: ['parent', 'admin'], lead: 'A private space just for parents: tips, questions, recommendations and real conversations.', ph: 'Share a tip, a question or a recommendation' } }[SPACE];
+const CAFE = { teachers: { title: '☕ Teacher Café', who: ['teacher', 'school_leader', 'admin'], lead: 'Grab a coffee, pull up a chair. A private space just for teachers to swap hacks, share resources, ask the staffroom and celebrate each other.', ph: 'What’s brewing' }, parents: { title: '☕ Parent Café', who: ['parent', 'admin'], lead: 'Pull up a chair! A private space just for parents to swap tips, ask questions, share recommendations and cheer each other on.', ph: 'What’s on your mind' } }[SPACE];
 async function startCommunity() {
   const { user, profile: me } = await initShell();
   if (CAFE && !(CAFE.who.includes(me.role) || (SPACE === 'parents' && me.also_parent))) { document.querySelector('main').innerHTML = `<div class="empty-box"><p>${CAFE.title} is a private space for ${SPACE}.</p><a class="btn btn-red" href="community.html">Go to the Community</a></div>`; return; }
@@ -106,7 +106,9 @@ async function startCommunity() {
       ? (isMod && !mine ? `<div class="mod-bar"><span>⏳ Waiting for approval</span><span class="mod-actions"><button class="pill pill-live" data-approve>Approve</button><button class="pill pill-soft danger" data-reject>Don’t approve</button></span></div>`
                         : '<div class="mod-bar"><span>⏳ Waiting for a teacher to approve. Only you and teachers can see it for now.</span></div>')
       : st === 'rejected' ? '<div class="mod-bar rejected"><span>This post wasn’t approved, so only you can see it. You can delete it.</span></div>' : '';
-    const PT = { question: ['❓', CAFE ? 'Ask the staffroom' : 'Question'], idea: ['💡', 'Idea'], celebrate: ['🎉', CAFE ? 'Win of the week' : 'Celebration'], showcase: ['🏆', 'Showing my work'], hack: ['💡', 'Teaching hack'], resource: ['📚', 'Resource'], help: ['🆘', 'Need help'], funny: ['😂', 'Teacher life'], shoutout: ['🙌', 'Shout-out'], poll: ['📊', 'Poll'] }[p.post_type];
+    const PAR = SPACE === 'parents';
+    const PT = { question: ['❓', PAR ? 'Ask other parents' : CAFE ? 'Ask the staffroom' : 'Question'], idea: ['💡', 'Idea'], celebrate: ['🎉', PAR ? 'Family win' : CAFE ? 'Win of the week' : 'Celebration'], showcase: ['🏆', 'Showing my work'],
+      hack: ['💡', PAR ? 'Parent tip' : 'Teaching hack'], resource: ['📚', PAR ? 'Recommendation' : 'Resource'], help: ['🆘', PAR ? 'Need advice' : 'Need help'], funny: ['😂', PAR ? 'Parent life' : 'Teacher life'], shoutout: ['🙌', 'Shout-out'], poll: ['📊', 'Poll'] }[p.post_type];
     return `<article class="panel post ${st !== 'published' ? 'post-' + st : ''} ${p.post_type && p.post_type !== 'post' ? 'pt-' + p.post_type : ''}" data-post="${p.id}" id="post-${p.id}">${banner}${PT ? `<span class="pt-badge">${PT[0]} ${PT[1]}</span>` : ''}
       <header class="post-head"><span class="initials">${esc(iniOf(p.author_name))}</span>
         <div><b>${esc(p.author_name || 'Member')}</b> ${roleTag(p.author_role)}<span class="meta">${ago(p.created_at)}</span></div>

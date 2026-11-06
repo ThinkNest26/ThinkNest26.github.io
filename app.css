@@ -1266,3 +1266,22 @@ dialog.tour::backdrop { background: rgba(30,35,82,.55); }
 .tour-help { font-size: .85rem; color: #6E7485 !important; margin-top: 12px; }
 .tour-help a { color: #3E4B94; font-weight: 700; }
 dialog.tour { position: fixed; inset: 0; margin: auto; height: fit-content; max-height: 90vh; }
+/* ===== Parent Café + Parent Connections: rose & peach ===== */
+body.parent-cafe .dash { background: radial-gradient(circle at 90% 0, #FFE6E1 0 220px, transparent 221px), #FFF8F6; }
+body.parent-cafe .comm-hero { background: linear-gradient(120deg, #C0505E 0%, #F27A6F 50%, #FFB38A 100%); }
+body.parent-cafe .comm-rules { background: #FFEDEA; border-color: #F2A99F; color: #7A2E2A; }
+body.parent-cafe .composer { border-color: #F7D3CC; }
+body.parent-cafe .post-types input:checked + span { background: #FFEDEA; border-color: #E0606B; color: #8A2E36; }
+body.parent-cafe .feed-filter .chip.on, body.parent-cafe #post-btn, body.parent-cafe .brew .btn { background: #E0606B; border-color: #E0606B; }
+body.parent-cafe .brew { background: linear-gradient(160deg, #FFEDEA, #FFD9CC); }
+body.parent-cafe .brew h3, body.parent-cafe .brew-q { color: #7A2E2A; }
+body.parent-cafe .cafe-tool { background: #FFF8F6; border-color: #F7D3CC; }
+body.parent-cafe .cx-promo { border-color: #F2A99F; color: #7A2E2A; }
+body.parent-cafe .react:hover, body.parent-cafe .react.on { background: #FFE6E1; border-color: #F2A99F; }
+.parent-connect .cx-hero { background: linear-gradient(120deg, #C0505E 0%, #F27A6F 50%, #FFB38A 100%); }
+.parent-connect .cx-tabs button { color: #8A2E36; }
+.parent-connect .cx-tabs button[aria-selected=true], .parent-connect .cx-roulette .btn, .parent-connect .cx-me .btn, .parent-connect .cx-head .btn, .parent-connect .cx-meet .btn, .parent-connect .cx-hi, .parent-connect .cx-code .btn { background: #E0606B; }
+.parent-connect .cx-roulette, .parent-connect .cx-code { border-color: #F7D3CC; background: linear-gradient(180deg, #FFF3F0, #fff); }
+.parent-connect .cx-date { background: #FFEDEA; color: #8A2E36; }
+.parent-connect .cx-note { background: #FFF3F0; color: #7A2E2A; }
+.parent-connect .cx-plus { color: #E0606B; }

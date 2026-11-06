@@ -22,6 +22,7 @@
       { ic: '➕', label: 'Add a child', href: 'add-child.html' },
       { ic: '🪺', label: 'Beyond the School Run', href: 'parent-hub.html' },
       { ic: '☕', label: 'Parent Café', href: 'parent-cafe.html' },
+      { ic: '🤝', label: 'Parent Connections', href: 'parent-connect.html' },
       { ic: '💬', label: 'Community', href: 'community.html' },
       { ic: '⚙️', label: 'Account', items: [['parent-settings.html', 'Account Settings'], ['help.html', 'Help Centre'], ['contact.html', 'Contact Us'], ['#logout', 'Log out']] }
     ]
@@ -49,7 +50,7 @@
     let menu = MENUS[role] || MENUS.student;
     if (window.TN_ALSO_PARENT && (role === 'teacher' || role === 'admin')) {
       const acc = menu[menu.length - 1];
-      menu = menu.slice(0, -1).concat([{ ic: '👪', label: 'Parent', items: [['parent-dashboard.html', 'My children'], ['add-child.html', 'Add a child'], ['parent-hub.html', 'Beyond the School Run'], ['parent-cafe.html', '☕ Parent Café']] }, acc]);
+      menu = menu.slice(0, -1).concat([{ ic: '👪', label: 'Parent', items: [['parent-dashboard.html', 'My children'], ['add-child.html', 'Add a child'], ['parent-hub.html', 'Beyond the School Run'], ['parent-cafe.html', '☕ Parent Café'], ['parent-connect.html', '🤝 Parent Connections']] }, acc]);
     }
     let here = location.pathname.split('/').pop() || 'index.html';
     if (ALIAS[here]) here = ALIAS[here];

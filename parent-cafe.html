@@ -8,10 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=51">
-  <link rel="stylesheet" href="app.css?v=51">
+  <link rel="stylesheet" href="style.css?v=74">
+  <link rel="stylesheet" href="app.css?v=74">
 </head>
-<body class="app loading" data-space="parents">
+<body class="app loading cafe-theme parent-cafe" data-space="parents">
   <aside class="side" id="side">
     <a href="index.html" class="side-logo"><img src="images/tn-logo.png" alt="Think Nest home"></a>
     <nav aria-label="Student menu">
@@ -51,13 +51,19 @@
           <form class="panel composer" id="composer">
             <div class="composer-top"><span class="initials" id="me-ini"></span>
               <label class="grow"><span class="sr">Write a post</span><textarea name="body" id="post-body" rows="2" maxlength="2000" placeholder="What’s on your mind?"></textarea></label></div>
-            <div class="post-types" role="radiogroup" aria-label="Type of post">
-              <label><input type="radio" name="ptype" value="post" checked><span>💬 Post</span></label>
-              <label><input type="radio" name="ptype" value="question"><span>❓ Question</span></label>
-              <label><input type="radio" name="ptype" value="idea"><span>💡 Idea</span></label>
-              <label><input type="radio" name="ptype" value="celebrate"><span>🎉 Celebrate</span></label>
-              <label><input type="radio" name="ptype" value="showcase"><span>🏆 Show my work</span></label>
+            <div class="post-types cafe-types" role="radiogroup" aria-label="Type of post">
+              <label><input type="radio" name="ptype" value="post" checked><span>💬 Chat</span></label>
+              <label><input type="radio" name="ptype" value="hack"><span>💡 Parent tip</span></label>
+              <label><input type="radio" name="ptype" value="resource"><span>📚 Recommendation</span></label>
+              <label><input type="radio" name="ptype" value="question"><span>❓ Ask other parents</span></label>
+              <label><input type="radio" name="ptype" value="celebrate"><span>🎉 Family win</span></label>
+              <label><input type="radio" name="ptype" value="funny"><span>😂 Parent life</span></label>
+              <label><input type="radio" name="ptype" value="help"><span>🆘 Need advice</span></label>
+              <label><input type="radio" name="ptype" value="shoutout"><span>🙌 Shout-out</span></label>
+              <label><input type="radio" name="ptype" value="poll"><span>📊 Poll</span></label>
             </div>
+            <div class="cafe-tool" id="cafe-poll" hidden><b>📊 Poll options</b><input type="text" maxlength="80" placeholder="Option 1" data-opt><input type="text" maxlength="80" placeholder="Option 2" data-opt><input type="text" maxlength="80" placeholder="Option 3 (optional)" data-opt><input type="text" maxlength="80" placeholder="Option 4 (optional)" data-opt></div>
+            <div class="cafe-tool" id="cafe-shout" hidden><b>🙌 Who are you giving a shout-out to?</b><select id="cafe-mention"><option value="">Choose a parent…</option></select></div>
             <div class="composer-bar">
               <label class="pic-btn">🖼️ Photo<input type="file" name="pic" accept="image/*" hidden></label>
               <span class="pic-name" id="pic-name"></span>
@@ -65,7 +71,7 @@
             </div>
           </form>
           <div class="feed-filter" id="feed-filter">
-            <button class="chip on" data-ff="">All</button><button class="chip" data-ff="question">❓ Questions</button><button class="chip" data-ff="idea">💡 Ideas</button><button class="chip" data-ff="celebrate">🎉 Celebrations</button><button class="chip" data-ff="showcase">🏆 Work</button>
+            <button class="chip on" data-ff="">All</button><button class="chip" data-ff="hack">💡 Tips</button><button class="chip" data-ff="resource">📚 Recommendations</button><button class="chip" data-ff="question">❓ Questions</button><button class="chip" data-ff="celebrate">🎉 Family wins</button><button class="chip" data-ff="funny">😂 Parent life</button><button class="chip" data-ff="help">🆘 Advice</button><button class="chip" data-ff="shoutout">🙌 Shout-outs</button><button class="chip" data-ff="poll">📊 Polls</button>
           </div>
           <section id="pending" class="pending-box" hidden></section>
           <section id="feed"><p class="empty">Loading…</p></section>
@@ -78,7 +84,9 @@
         <div class="panel side-card" id="side-rw" hidden></div>
         <div class="panel side-card" id="side-groups"></div>
         <div class="panel side-card" id="side-board" hidden></div>
-        <h2>Active members</h2>
+        <div class="panel side-card brew" id="cafe-brew"></div>
+        <a class="panel side-card cx-promo" href="parent-connect.html"><b>🤝 Parent Connections</b><span>Parent Partners, group meetups and the parent directory →</span></a>
+        <h2>In the café today ☕</h2>
         <div class="panel side-list" id="active"></div>
         <h2>Recent posts</h2>
         <div class="panel side-list" id="recent"></div>
@@ -102,13 +110,14 @@
   <div class="side-shade" id="side-shade"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=51"></script>
-  <script src="app.js?v=51"></script>
-  <script src="nav.js?v=51"></script>
-  <script src="notify.js?v=51" defer></script>
-  <script src="student.js?v=51"></script>
-  <script src="rewards.js?v=51"></script>
-  <script src="community.js?v=51"></script>
+  <script src="supabase-config.js?v=74"></script>
+  <script src="app.js?v=74"></script>
+  <script src="nav.js?v=74"></script>
+  <script src="notify.js?v=74" defer></script>
+  <script src="student.js?v=74"></script>
+  <script src="rewards.js?v=74"></script>
+  <script src="cafe.js?v=74"></script>
+  <script src="community.js?v=74"></script>
   <script>startCommunity();</script>
 </body>
 </html>
