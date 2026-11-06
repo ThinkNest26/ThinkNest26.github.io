@@ -1667,7 +1667,15 @@
 "Average mood": "متوسط المزاج",
 "Check-ins": "المشاركات",
 "All my students": "جميع طلابي",
-"No one needs a check-in right now. 🌈": "لا أحد يحتاج إلى متابعة الآن. 🌈"
+"No one needs a check-in right now. 🌈": "لا أحد يحتاج إلى متابعة الآن. 🌈",
+"📂 Evidence": "📂 الأدلة",
+"Evidence": "الأدلة",
+"📂 Inspection evidence packs": "📂 حزم أدلة الرقابة المدرسية",
+"⬇ Download Word": "⬇ نزّل ملف وورد",
+"Select all": "اختر الكل",
+"Clear": "مسح",
+"From": "من",
+"To": "إلى"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

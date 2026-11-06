@@ -59,7 +59,7 @@ async function startSchool() {
     document.documentElement.style.setProperty('--school2', S.color_accent || '#F27A6F');
   };
   paint();
-  const tabs = [['overview', '🏠 Overview'], ['dashboard', '📊 Dashboard'], ['coverage', '🗺️ Coverage'], ['reports', '📝 Reports'], ['announce', '📣 Announcements'], ['people', '👥 People']].concat(canManage ? [['import', '📥 Import']] : [], [['settings', '⚙️ School settings']]);
+  const tabs = [['overview', '🏠 Overview'], ['dashboard', '📊 Dashboard'], ['coverage', '🗺️ Coverage'], ['reports', '📝 Reports'], ['announce', '📣 Announcements']].concat(['principal', 'vice_principal', 'assistant_principal', 'coordinator'].includes(S.my_role) || profile.role === 'admin' ? [['evidence', '📂 Evidence']] : [], [['people', '👥 People']]).concat(canManage ? [['import', '📥 Import']] : [], [['settings', '⚙️ School settings']]);
   box.innerHTML = `<section class="sc-hero" id="sc-hero"></section>
     ${mine.length > 1 ? `<label class="sc-switch">School <select id="sc-pick">${mine.map(s => `<option value="${s.id}" ${s.id === sid ? 'selected' : ''}>${SC_E(s.name)}</option>`).join('')}</select></label>` : ''}
     <div class="tabs sc-tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="false" data-sct="${k}">${l}</button>`).join('')}</div>
@@ -73,7 +73,7 @@ async function startSchool() {
   const show = k => {
     document.querySelectorAll('[data-sct]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.sct === k)));
     history.replaceState(null, '', '#' + k);
-    ({ overview, dashboard, coverage, reports, announce, people, settings, import: importTab })[k]();
+    ({ overview, dashboard, coverage, reports, announce, evidence, people, settings, import: importTab })[k]();
   };
   document.querySelector('.sc-tabs').addEventListener('click', e => { const b = e.target.closest('[data-sct]'); if (b) show(b.dataset.sct); });
   const pane = () => document.getElementById('sc-pane');
@@ -402,6 +402,122 @@ async function startSchool() {
       };
     };
     draw(); box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+
+  // ----- Inspection evidence packs (Word): data about students and processes, no names, no target judgements
+  const EV = [
+    ['PS1', 'Students’ achievement', [['1.1', 'Attainment'], ['1.2', 'Progress'], ['1.3', 'Learning skills']]],
+    ['PS2', 'Students’ personal and social development, and their innovation skills', [['2.1', 'Personal development']]],
+    ['PS3', 'Teaching and assessment', [['3.1', 'Teaching for effective learning'], ['3.2', 'Assessment']]],
+    ['PS4', 'Curriculum', [['4.1', 'Curriculum design and implementation']]],
+    ['PS5', 'The protection, care, guidance and support of students', [['5.2', 'Care and support']]],
+    ['PS6', 'Leadership and management', [['6.3', 'Partnerships with parents and the community']]]];
+  async function evidence() {
+    const y = new Date().getFullYear(), m = new Date().getMonth(), yearStart = (m >= 7 ? y : y - 1) + '-08-15', today = new Date().toISOString().slice(0, 10);
+    pane().innerHTML = `<section class="panel ev-pick"><h2>📂 Inspection evidence packs</h2>
+      <p class="meta">Choose the indicators. Think Nest gathers your school’s data for each one into an editable Word document, ready to add to your SEF evidence. Evidence is about students and processes: it contains no staff or student names, and no target judgements.</p>
+      ${EV.map(([ps, name, list]) => `<fieldset class="ev-ps"><legend>${ps}: ${SC_E(name)}</legend>${list.map(([c, l]) => `<label class="sc-chip"><input type="checkbox" value="${c}" checked><span>${c} ${SC_E(l)}</span></label>`).join('')}</fieldset>`).join('')}
+      <div class="ev-row"><label>From <input type="date" id="ev-from" value="${yearStart}"></label><label>To <input type="date" id="ev-to" value="${today}"></label>
+        <button type="button" class="link-btn" id="ev-all">Select all</button><button type="button" class="link-btn" id="ev-none">Clear</button></div>
+      <div class="ca-bar"><span class="meta" id="ev-status"></span><span><button type="button" class="btn btn-white outline" id="ev-prev">👀 Preview</button> <button type="button" class="btn btn-red" id="ev-word">⬇ Download Word</button></span></div></section>
+      <section id="ev-preview"></section>`;
+    document.getElementById('ev-all').onclick = () => pane().querySelectorAll('.ev-ps input').forEach(x => x.checked = true);
+    document.getElementById('ev-none').onclick = () => pane().querySelectorAll('.ev-ps input').forEach(x => x.checked = false);
+    const build = async () => {
+      const codes = [...pane().querySelectorAll('.ev-ps input:checked')].map(x => x.value);
+      if (!codes.length) { say('Choose at least one indicator.'); return null; }
+      const from = document.getElementById('ev-from').value || yearStart, to = document.getElementById('ev-to').value || today;
+      const st = document.getElementById('ev-status'); st.textContent = '⏳ Gathering your school’s data…';
+      const call = (fn, args) => db.rpc(fn, args).then(r => r.error ? null : r.data, () => null);
+      const [dash, obs, cov, inc, wb, ppl, cys, anns] = await Promise.all([call('school_dashboard', { sid }), call('obs_summary', { sid, since: from }), call('school_coverage_overview', { sid }),
+        call('inclusion_overview', { sid }), call('wellbeing_overview', { sid, gid: null }), call('school_people', { sid }), call('school_report_cycles', { sid }), call('school_announcements', { sid })]);
+      const { data: plans } = await db.from('unit_plans').select('grade, status, template').eq('school_id', sid).then(r => r, () => ({ data: null }));
+      let cyStatus = [];
+      for (const c of (cys || []).filter(c => (c.created_at || '').slice(0, 10) >= from).slice(0, 3)) { const r = await call('report_cycle_status', { cid: c.id }); cyStatus.push([c, r || []]); }
+      st.textContent = '';
+      return evDoc(codes, from, to, { dash, obs, cov, inc, wb, ppl: ppl || [], cys: cyStatus, anns: (anns || []).filter(a => (a.created_at || '').slice(0, 10) >= from), plans: plans || [] });
+    };
+    document.getElementById('ev-prev').onclick = async () => { const html = await build(); if (!html) return; const w = window.open('', '_blank'); if (!w) return say('Please allow pop-ups to preview.'); w.document.write(html); w.document.close(); };
+    document.getElementById('ev-word').onclick = async () => {
+      const html = await build(); if (!html) return;
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + html], { type: 'application/msword' }));
+      a.download = `SEF-evidence-${S.name.replace(/[^\w]+/g, '-')}-${new Date().toISOString().slice(0, 10)}.doc`; document.body.appendChild(a); a.click(); a.remove();
+      say('⬇ Downloaded. Open it in Word to add photos and comments.');
+    };
+  }
+  function evDoc(codes, from, to, D) {
+    const E = SC_E, fmt = d => new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    const T = (D.dash && D.dash.totals) || {}, C = (D.dash && D.dash.classes) || [], O = (D.dash && D.dash.objectives) || [], WK = (D.dash && D.dash.weeks) || [];
+    const OB = D.obs || {}, OBC = OB.criteria || {}, rub = Object.assign({}, typeof OB_MOE !== 'undefined' ? OB_MOE : {}, {});
+    const pct = v => v == null ? '–' : v + '%';
+    const bar = (v, max) => { const w = Math.max(0, Math.min(100, Math.round(100 * (v || 0) / (max || 100)))); return `<table class="bar"><tr><td style="width:${w}%;background:${S.color_primary}"></td><td style="width:${100 - w}%;background:#ECEEF6"></td></tr></table>`; };
+    const table = (head, rows) => rows.length ? `<table class="t"><tr>${head.map(h => `<th>${E(h)}</th>`).join('')}</tr>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</table>` : '<p class="none">No data recorded for this period yet.</p>';
+    const MOE6 = ['', 'Very weak', 'Weak', 'Acceptable', 'Good', 'Very good', 'Outstanding'];
+    const obsRows = keys => keys.filter(k => OBC[k]).map(k => { const x = OBC[k]; const lab = { ls1: '1.3.1 Engagement in and responsibility for learning', ls2: '1.3.2 Interactions, collaboration and communication', ls3: '1.3.3 Application of learning to the real world and making connections', ls4: '1.3.4 Innovation, enterprise, inquiry, research, critical thinking and use of learning technologies',
+      t1: '3.1.1 Teachers’ knowledge of their subjects and how students learn them', t2: '3.1.2 Lesson planning, the learning environment, and the use of time and resources', t3: '3.1.3 Teacher–student interactions, including questioning and dialogue', t4: '3.1.4 Teaching strategies to meet the needs of individuals and groups', t5: '3.1.5 Teaching to develop critical thinking, problem-solving, innovation and independent learning',
+      a4: '3.2.4 Use of assessment information to influence teaching and students’ progress', a5: '3.2.5 Teachers’ knowledge of students’ strengths and weaknesses, feedback, and self- and peer-assessment' }[k] || k;
+      const dist = Object.entries(x.dist || {}).sort((a, b) => b[0] - a[0]).map(([lv, n]) => `${MOE6[lv] || lv}: ${n}`).join(' · ');
+      return [E(lab), `<b>${E(MOE6[Math.round(x.avg)] || x.avg)}</b> (${x.avg})`, E(dist), x.n]; });
+    const weakest = keys => keys.filter(k => OBC[k]).sort((a, b) => OBC[a].avg - OBC[b].avg)[0];
+    const nObs = OB.total || 0, kinds = OB.by_kind || {};
+    const obsProcess = nObs ? `<li>${nObs} lessons were observed in this period (${['formal', 'walk', 'dropin', 'peer'].filter(k => kinds[k]).map(k => kinds[k] + ' ' + { formal: 'formal observations', walk: 'learning walks', dropin: 'drop-ins', peer: 'peer observations' }[k]).join(', ')}), using the school’s rubric aligned with the UAE School Inspection Framework.</li><li>Each observation records a judgement and evidence for every element seen, strengths and next steps. Feedback is shared with the teacher, who adds a reflection.</li>` : '<li>Lesson observations are recorded on Think Nest using the school’s rubric aligned with the UAE School Inspection Framework.</li>';
+    const S1 = {
+      '1.1': () => ({ name: 'Attainment', shows: `<p>Across ${T.classes || 0} classes and ${T.students || 0} students, the average score in marked work is <b>${pct(T.avg)}</b>.</p>
+          ${table(['Class', 'Students', 'Average score', ''], C.filter(c => c.avg != null).map(c => [E(c.name), c.students, pct(c.avg), bar(c.avg)]))}
+          <h3>Strongest learning objectives</h3>${table(['Objective', 'Grade', 'Subject', 'Average'], O.slice().sort((a, b) => b.avg - a.avg).slice(0, 5).map(o => [E(o.objective), E(o.grade || ''), E(o.subject || ''), pct(o.avg)]))}`,
+        process: '<li>Students complete quizzes, activities and assessments linked to curriculum objectives. Scores are recorded automatically or marked by teachers.</li><li>Attainment is analysed by class and by learning objective on the whole-school dashboard.</li>',
+        next: O.find(o => o.avg < 60) ? `<li>Focus planning on the objectives below 60%, starting with “${E(O.find(o => o.avg < 60).objective)}”.</li>` : '<li>Continue to track attainment by objective as more work is marked.</li>' }),
+      '1.2': () => { const w = WK.filter(x => x.avg != null); const f = w[0], l = w[w.length - 1];
+        return { name: 'Progress', shows: `${f && l && f !== l ? `<p>The weekly average score moved from <b>${f.avg}%</b> (week of ${fmt(f.week)}) to <b>${l.avg}%</b> (week of ${fmt(l.week)}).</p>` : '<p>Weekly progress data will build up as more work is completed.</p>'}
+          ${table(['Week of', 'Average score', 'Attendance'], WK.filter(x => x.avg != null || x.att != null).map(x => [fmt(x.week), pct(x.avg), pct(x.att)]))}
+          <p>${T.support || 0} students are currently below 60% and are supported through teachers’ next steps; ${((D.dash || {}).watch || []).length} are on the early-warning list.</p>`,
+        process: '<li>Progress is tracked week by week from marked work, and each student’s progress by objective is visible to class teachers.</li><li>An early-warning list identifies students with low scores, low attendance or missing work, so support starts early.</li>',
+        next: '<li>Review the early-warning list in grade meetings, and agree support for each student.</li>' }; },
+      '1.3': () => ({ name: 'Learning skills', shows: `${table(['Element', 'Average judgement', 'Spread of judgements', 'Ratings'], obsRows(['ls1', 'ls2', 'ls3', 'ls4']))}<p>Students completed <b>${pct(T.done)}</b> of the activities set.</p>`,
+        process: obsProcess, next: weakest(['ls1', 'ls2', 'ls3', 'ls4']) ? `<li>Develop element ${E(obsRows([weakest(['ls1', 'ls2', 'ls3', 'ls4'])])[0][0])}, the lowest-rated learning skill.</li>` : '<li>Continue observing learning skills across phases.</li>' }),
+      '2.1': () => { const W = D.wb || {}, td = W.today || {}, n = Object.values(td).reduce((a, b) => a + b, 0), pos = (td[5] || 0) + (td[4] || 0);
+        return { name: 'Personal development', shows: `<p>Overall attendance is <b>${pct(T.att)}</b>.</p>${table(['Class', 'Attendance', ''], C.filter(c => c.att != null).map(c => [E(c.name), pct(c.att), bar(c.att)]))}
+          <h3>Wellbeing check-ins</h3><p>${W.students ? `${W.today_count || 0} of ${W.students} students checked in today; ${n ? Math.round(100 * pos / n) : 0}% said they felt great or good.` : 'Wellbeing check-ins are available to students every day.'} ${(W.followed || []).length} follow-up conversations were recorded in the last two weeks.</p>`,
+          process: '<li>Registers are taken in every class, and attendance is tracked by class and student.</li><li>Students check in on how they feel each day. Class teachers and the inclusion lead are alerted when a student asks to talk or feels low, and every follow-up is recorded.</li>',
+          next: '<li>Use attendance and wellbeing trends to plan pastoral support for the classes with the lowest figures.</li>' }; },
+      '3.1': () => ({ name: 'Teaching for effective learning', shows: table(['Element', 'Average judgement', 'Spread of judgements', 'Ratings'], obsRows(['t1', 't2', 't3', 't4', 't5'])) + `<p>${D.plans.length} units have been planned collaboratively on the unit planner (${D.plans.filter(p => p.status === 'approved').length} reviewed and approved by leaders).</p>`,
+        process: obsProcess + '<li>Grade teams plan units together on the shared unit planner; leaders review and approve the plans.</li>',
+        next: weakest(['t1', 't2', 't3', 't4', 't5']) ? `<li>Make element ${E(obsRows([weakest(['t1', 't2', 't3', 't4', 't5'])])[0][0])} a focus for professional development.</li>` : '<li>Continue observing teaching across phases.</li>' }),
+      '3.2': () => ({ name: 'Assessment', shows: `${table(['Element', 'Average judgement', 'Spread of judgements', 'Ratings'], obsRows(['a4', 'a5']))}
+          <p>${T.marking || 0} pieces of work are waiting to be marked. ${(D.cov || []).length ? Math.round(100 * D.cov.reduce((a, x) => a + x.assessed, 0) / Math.max(1, D.cov.reduce((a, x) => a + x.total, 0))) + '% of curriculum objectives have been assessed so far.' : ''}</p>
+          <h3>Report cycles</h3>${table(['Report', 'Students', 'Approved', 'Released'], D.cys.map(([c, r]) => [E(c.title), r.reduce((a, x) => a + Number(x.students), 0), r.reduce((a, x) => a + Number(x.approved), 0), r.reduce((a, x) => a + Number(x.published), 0)]))}`,
+        process: '<li>Assessment results are linked to curriculum objectives and analysed by class, objective and student.</li><li>Report cards are written by class teachers in school report cycles, reviewed and approved by leaders, then released to families.</li>',
+        next: '<li>Use the weakest objectives on the dashboard to plan re-teaching and next assessments.</li>' }),
+      '4.1': () => { const cv = D.cov || [];
+        return { name: 'Curriculum design and implementation', shows: table(['Grade', 'Subject', 'Objectives', 'Taught', 'Assessed', ''], cv.filter(x => x.total).map(x => [E(x.grade), E(x.subject), x.total, pct(Math.round(100 * x.taught / x.total)), pct(Math.round(100 * x.assessed / x.total)), bar(x.taught, x.total)]))
+          + `<h3>Unit planning</h3>${table(['Grade', 'Units planned', 'Approved'], [...new Set(D.plans.map(p => p.grade))].map(g => [E(g), D.plans.filter(p => p.grade === g).length, D.plans.filter(p => p.grade === g && p.status === 'approved').length]))}`,
+          process: '<li>The school’s curriculum for each subject is mapped on Think Nest, and each objective is tracked as planned, taught and assessed.</li><li>Units are planned collaboratively and linked to curriculum objectives.</li>',
+          next: cv.filter(x => x.total).sort((a, b) => a.taught / a.total - b.taught / b.total)[0] ? `<li>Plan coverage of the remaining objectives, starting with ${E(cv.filter(x => x.total).sort((a, b) => a.taught / a.total - b.taught / b.total)[0].grade)} ${E(cv.filter(x => x.total).sort((a, b) => a.taught / a.total - b.taught / b.total)[0].subject)}.</li>` : '' }; },
+      '5.2': () => { const I = D.inc || {}, G = I.groups || {}, P = I.plans || {}, N = { send: 'Students of determination (SEND)', gt: 'Gifted and talented', ell: 'English language learners', other: 'Other support' };
+        return { name: 'Care and support', shows: table(['Group', 'Students', 'Average score', 'Compared with others', 'Attendance'], Object.keys(N).filter(k => (G[k] || {}).count).map(k => { const g = G[k];
+            return [N[k], g.count, pct(g.avg), g.avg != null && g.others_avg != null ? (g.avg - g.others_avg > 0 ? '+' : '') + Math.round(g.avg - g.others_avg) + ' points' : '–', pct(g.att)]; }))
+          + `<p>${P.active || 0} support plans are active, and ${P.targets_done || 0} of ${P.targets_all || 0} targets have been achieved.</p>`,
+          process: '<li>Students who need additional support or challenge are identified in groups, and each has a support plan with SMART targets, strategies for teachers and access arrangements.</li><li>Plans are reviewed on set dates, and class teachers add progress notes.</li>',
+          next: '<li>Review the groups whose scores are below their peers, and adjust support plans and strategies.</li>' }; },
+      '6.3': () => { const par = D.ppl.filter(p => p.role === 'parent').length, A = D.anns, toPar = A.filter(a => ['all', 'parents', 'grade', 'class'].includes(a.audience));
+        const rate = toPar.reduce((a, x) => a + Number(x.reach), 0) ? Math.round(100 * toPar.reduce((a, x) => a + Number(x.reads), 0) / toPar.reduce((a, x) => a + Number(x.reach), 0)) : null;
+        return { name: 'Partnerships with parents and the community', shows: `<p>${par} parents have Think Nest accounts linked to their children.</p>
+          ${table(['Announcement', 'Audience', 'Read by'], A.slice(0, 10).map(a => [E(a.title), { all: 'Whole school', staff: 'Staff', parents: 'Parents', students: 'Students', grade: 'Grade', class: 'Class' }[a.audience], `${a.reads} of ${a.reach}`]))}
+          ${rate != null ? `<p>On average, <b>${rate}%</b> of the families and students they were sent to read the school’s announcements.</p>` : ''}
+          <p>${D.cys.reduce((a, [, r]) => a + r.reduce((b, x) => b + Number(x.published), 0), 0)} report cards were released to families in this period.</p>`,
+          process: '<li>Parents receive announcements, report cards and their children’s progress on Think Nest, in English and Arabic, with read receipts.</li>',
+          next: '<li>Follow up with families who have not read recent announcements.</li>' }; }
+    };
+    const order = EV.flatMap(([, , l]) => l.map(x => x[0])).filter(c => codes.includes(c));
+    const logo = S.logo_url ? `<img src="${E(S.logo_url)}" width="70" height="70" alt="">` : '';
+    return `<html><head><meta charset="utf-8"><title>SEF Evidence – ${E(S.name)}</title><style>
+      body{font-family:Arial,sans-serif;color:#1D2026;margin:28px;font-size:11pt}h1{color:${S.color_primary};font-size:20pt;margin:6px 0}h2{color:${S.color_primary};font-size:13pt;border-bottom:2px solid ${S.color_accent};padding-bottom:3px;margin:16px 0 6px}
+      h3{font-size:11pt;margin:12px 0 4px}.meta{color:#555;font-size:9.5pt}.t{border-collapse:collapse;width:100%;margin:6px 0}.t th{background:${S.color_primary};color:#fff;text-align:left;padding:5px;font-size:9.5pt}.t td{border:1px solid #D9DCEB;padding:5px;font-size:9.5pt;vertical-align:top}
+      .bar{border-collapse:collapse;width:120px;height:10px}.bar td{height:10px;padding:0;border:0}.none{color:#888;font-style:italic}.page{page-break-before:always}ul{margin:4px 0 4px 18px}</style></head><body>
+      ${order.map((c, i) => { const x = S1[c](); return `<div class="${i ? 'page' : ''}">${logo}<p class="meta">${E(S.name)}</p><h1>SEF Evidence: ${c} ${E(x.name)}</h1>
+        <p class="meta">Evidence period: ${fmt(from)} to ${fmt(to)} · Source: the school’s records on Think Nest</p>
+        <h2>What the evidence shows</h2>${x.shows}<h2>How the evidence was gathered</h2><ul>${x.process}</ul><h2>Next steps</h2><ul>${x.next || '<li>–</li>'}</ul></div>`; }).join('')}</body></html>`;
   }
 
   // ----- People

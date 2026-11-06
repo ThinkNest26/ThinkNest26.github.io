@@ -1929,3 +1929,9 @@ html.tn-school .find-class, html.tn-school [data-path-find] { display: none !imp
 .wb-tagsum { display: flex; flex-wrap: wrap; gap: 4px; }
 @media (max-width: 760px) { .wb-moods { grid-template-columns: repeat(3, minmax(0, 1fr)); } .wb-today { grid-template-columns: repeat(3, minmax(0, 1fr)); } .wb-a { grid-template-columns: auto 1fr; } .wb-f { grid-column: 1 / -1; } }
 .wellbeing-page .sc-chart-panel, .wb-classes { margin-top: 16px; }
+/* ===== Evidence packs ===== */
+.ev-pick { display: grid; gap: 12px; } .ev-ps { border: 1px solid #ECEEF6; border-radius: 14px; padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+.ev-ps legend { font-weight: 800; font-size: .9rem; padding: 0 6px; color: var(--school); }
+.ev-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; } .ev-row label { display: flex; gap: 6px; align-items: center; font-weight: 700; }
+.ev-row input { font: inherit; padding: 6px 10px; border: 2px solid #E4E6F1; border-radius: 10px; }
+.ev-pick .btn { border: 0; cursor: pointer; font: inherit; font-weight: 800; } .ev-pick .outline { border: 1px solid #3E4B94; color: #3E4B94; }

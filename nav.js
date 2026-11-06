@@ -37,6 +37,7 @@
     { ic: '💛', label: 'Wellbeing', href: 'wellbeing.html' },
     { ic: '📝', label: 'Reports', href: 'school.html#reports' },
     { ic: '📣', label: 'Announcements', href: 'school.html#announce', an: 1 },
+    { ic: '📂', label: 'Evidence', href: 'school.html#evidence' },
     { ic: '👥', label: 'People', href: 'school.html#people' },
     { ic: '📥', label: 'Import', href: 'school.html#import' },
     { ic: '⚙️', label: 'School settings', href: 'school.html#settings' },
@@ -110,7 +111,7 @@
     }
     const menu = MENUS[view] || MENUS.student;
     let here = ALIAS[page] || page;
-    if (page === 'school.html' && /^#(people|settings|import|dashboard|reports|announce|coverage)$/.test(location.hash)) here = 'school.html' + location.hash;
+    if (page === 'school.html' && /^#(people|settings|import|dashboard|reports|announce|coverage|evidence)$/.test(location.hash)) here = 'school.html' + location.hash;
     if (page === 'group.html' && document.querySelector('.class-flag')) here = 'classes.html';
     const qid = new URLSearchParams(location.search).get('id');
     let saved = {};
