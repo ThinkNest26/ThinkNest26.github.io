@@ -100,7 +100,7 @@ async function drawPathStep() {
     return;
   }
   const curName = (pathCurricula(pathState.subject).find(c => c[0] === pathState.curriculum) || [])[1];
-  body.innerHTML = stepper(3) + `<p class="path-summary"><b>${esc(s.name)}</b> · ${esc(curName)} · ${esc(pathState.grade)} <button type="button" class="link-btn" data-back="grade">Change</button></p><div id="path-learn"><p class="empty">Loading…</p></div><div id="path-classes"></div><div id="path-actions"></div>`;
+  body.innerHTML = stepper(3) + `<p class="path-summary"><b>${esc(s.name)}</b> · ${esc(curName)} · ${esc(pathState.grade)} <button type="button" class="link-btn" data-back="grade">Change</button> · <a href="path.html?s=${encodeURIComponent(pathState.subject)}&c=${encodeURIComponent(pathState.curriculum)}&g=${encodeURIComponent(pathState.grade)}">Open as a full page ↗</a></p><div id="path-learn"><p class="empty">Loading…</p></div><div id="path-classes"></div><div id="path-actions"></div>`;
   // what they'll learn
   let learn = '';
   if (pathState.subject === 'arabic') learn = arabicSummary(pathState.curriculum, pathState.grade);
@@ -196,7 +196,10 @@ function initPaths() {
 function resumePendingPath() {
   let p = null;
   try { p = JSON.parse(localStorage.getItem('tn_path') || 'null'); } catch (_) {}
-  if (!p || !p.subject || !document.getElementById('path-dialog')) return;
+  if (!p || !p.subject) return;
+  // continue the path chosen before signing up, on its own page
+  if (p.curriculum && p.grade) { try { localStorage.removeItem('tn_path'); } catch (_) {} location.href = 'path.html?s=' + encodeURIComponent(p.subject) + '&c=' + encodeURIComponent(p.curriculum) + '&g=' + encodeURIComponent(p.grade); return; }
+  if (!document.getElementById('path-dialog')) return;
   openPathChooser(p.subject, p);
 }
 
@@ -217,7 +220,7 @@ function initPathFinder() {
   }));
   cur.addEventListener('click', e => { const c = e.target.closest('[data-cur]'); if (!c) return; st.curriculum = c.dataset.cur; cur.querySelectorAll('[data-cur]').forEach(x => x.setAttribute('aria-checked', String(x === c))); ready(); });
   grade.addEventListener('change', ready);
-  go.addEventListener('click', () => { if (!go.disabled) openPathChooser(st.subject, { curriculum: st.curriculum, grade: grade.value }); });
+  go.addEventListener('click', () => { if (!go.disabled) location.href = 'path.html?s=' + encodeURIComponent(st.subject) + '&c=' + encodeURIComponent(st.curriculum) + '&g=' + encodeURIComponent(grade.value); });
   // live "classes open" badges
   db.from('courses').select('subject, audience').then(({ data }) => {
     const n = {}; (data || []).filter(c => !c.audience || c.audience === 'students').forEach(c => { const k = pathSubjectKey(c.subject); n[k] = (n[k] || 0) + 1; });
