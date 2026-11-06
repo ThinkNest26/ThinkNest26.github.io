@@ -27,8 +27,15 @@
       { ic: '🌟', label: 'For me', items: [['parent-hub.html', 'Beyond the School Run workshops'], ['parent-cafe.html', '☕ Parent Café'], ['parent-connect.html', '🤝 Parent Connections'], ['community.html', 'Community']] }
     ]
   };
+  MENUS.school_leader = [
+    { ic: '🏫', label: 'My school', href: 'school.html' },
+    { ic: '👥', label: 'People', href: 'school.html#people' },
+    { ic: '⚙️', label: 'School settings', href: 'school.html#settings' },
+    { ic: '🏫', label: 'Classes', dyn: 'classes', items: [['classes.html', 'All classes'], ['classes.html?new=1', '➕ New class']] },
+    { ic: '💬', label: 'Messages', href: 'messages.html' }
+  ];
   MENUS.admin = [{ ic: '🛡️', label: 'Admin', items: [['admin.html', 'Admin dashboard'], ['admin-curriculum.html', 'Curriculum editor'], ['admin-founders.html', 'Founders page']] }].concat(MENUS.teacher);
-  const SETTINGS = { student: 'settings.html', teacher: 'teacher-settings.html', admin: 'teacher-settings.html', parent: 'parent-settings.html' };
+  const SETTINGS = { student: 'settings.html', teacher: 'teacher-settings.html', admin: 'teacher-settings.html', parent: 'parent-settings.html', school_leader: 'teacher-settings.html' };
   // pages that aren't in the menu, and which menu item they belong to
   const ALIAS = { 'course.html': 'my-courses.html', 'teacher-course.html': 'teacher-courses.html', 'group.html': 'groups.html', 'child.html': 'parent-dashboard.html' };
   const PARENT_PAGES = ['parent-dashboard.html', 'add-child.html', 'parent-hub.html', 'parent-cafe.html', 'parent-connect.html', 'child.html', 'parent-settings.html', 'parent-calendar.html', 'reports.html'];
@@ -41,7 +48,7 @@
         window.TN_UID = session.user.id;
         const { data } = await db.from('profiles').select('role, also_parent').eq('id', session.user.id).maybeSingle();
         window.TN_ALSO_PARENT = !!(data && data.also_parent);
-        if (data && data.role) return data.role === 'school_leader' ? 'teacher' : data.role;
+        if (data && data.role) return data.role;
       }
     } catch (_) {}
     const label = nav.getAttribute('aria-label') || '';
@@ -57,6 +64,7 @@
     const view = inParent ? 'parent' : role;
     const menu = MENUS[view] || MENUS.student;
     let here = ALIAS[page] || page;
+    if (page === 'school.html' && /^#(people|settings)$/.test(location.hash)) here = 'school.html' + location.hash;
     if (page === 'group.html' && document.querySelector('.class-flag')) here = 'classes.html';
     const qid = new URLSearchParams(location.search).get('id');
     let saved = {};

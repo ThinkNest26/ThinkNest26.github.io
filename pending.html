@@ -8,10 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=97">
-  <link rel="stylesheet" href="app.css?v=97">
-  <link rel="stylesheet" href="rtl.css?v=97">
-  <script src="i18n.js?v=97"></script>
+  <link rel="stylesheet" href="style.css?v=99">
+  <link rel="stylesheet" href="app.css?v=99">
+  <link rel="stylesheet" href="rtl.css?v=99">
+  <script src="i18n.js?v=99"></script>
 </head>
 <body class="auth">
   <header class="app-top">
@@ -23,17 +23,27 @@
   </main>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=97"></script>
-  <script src="app.js?v=97"></script>
+  <script src="supabase-config.js?v=99"></script>
+  <script src="app.js?v=99"></script>
   <script>
   (async () => {
     const box = document.getElementById('pend');
     const { data: { session } } = await db.auth.getSession();
     if (!session) { location.href = 'start.html'; return; }
     const { data: p } = await db.from('profiles').select('full_name, role, requested_role, account_status').eq('id', session.user.id).maybeSingle();
-    const home = r => ({ parent: 'parent-dashboard.html', teacher: 'teacher-dashboard.html', school_leader: 'teacher-dashboard.html', admin: 'admin.html' }[r] || 'student-dashboard.html');
+    const home = r => ({ parent: 'parent-dashboard.html', teacher: 'teacher-dashboard.html', school_leader: 'school.html', admin: 'admin.html' }[r] || 'student-dashboard.html');
     if (p && (p.account_status === 'approved' || p.role === 'admin')) { location.href = home(p.role); return; }
     const first = ((p && p.full_name) || '').split(' ')[0];
+    if (p && p.requested_role === 'school_leader' && p.account_status !== 'declined') {
+      const { data: rq } = await db.from('school_requests').select('school_name').eq('user_id', session.user.id).limit(1);
+      const sn = rq && rq[0] ? rq[0].school_name : 'your school';
+      box.innerHTML = `<div class="pend-ic">🏫</div><h1>Thanks${first ? ', ' + esc(first) : ''}!</h1><p class="auth-sub"><b>${esc(sn)}</b> is registered and waiting for approval by the Think Nest team. This usually takes less than one working day, and we’ll email you as soon as it’s ready.</p>
+         <ul class="pend-steps"><li>✅ School registered</li><li>⏳ Checked by the Think Nest team</li><li>🎉 Set up your school</li></ul>
+         <button type="button" class="btn btn-red auth-btn" id="again">Check again</button><button type="button" class="link-btn" id="out">Log out</button>`;
+      document.getElementById('again').onclick = () => location.reload();
+      document.getElementById('out').onclick = async () => { await db.auth.signOut(); location.href = 'index.html'; };
+      return;
+    }
     box.innerHTML = p && p.account_status === 'declined'
       ? `<div class="pend-ic">🙏</div><h1>Sorry${first ? ', ' + esc(first) : ''}</h1><p class="auth-sub">Your account wasn’t approved this time. If you think this is a mistake, please contact us and we’ll be happy to help.</p><a class="btn btn-red auth-btn" href="contact.html">Contact us</a><button type="button" class="link-btn" id="out">Log out</button>`
       : `<div class="pend-ic">⏳</div><h1>Thanks${first ? ', ' + esc(first) : ''}!</h1><p class="auth-sub">Your account is waiting for approval by the Think Nest team. This usually takes less than one working day. You’ll be able to use Think Nest as soon as it’s approved.</p>

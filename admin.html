@@ -9,10 +9,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=97">
-  <link rel="stylesheet" href="app.css?v=97">
-  <link rel="stylesheet" href="rtl.css?v=97">
-  <script src="i18n.js?v=97"></script>
+  <link rel="stylesheet" href="style.css?v=99">
+  <link rel="stylesheet" href="app.css?v=99">
+  <link rel="stylesheet" href="rtl.css?v=99">
+  <script src="i18n.js?v=99"></script>
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -51,6 +51,9 @@
         <button role="tab" id="tab-learning" aria-controls="pane-learning" aria-selected="false" data-tab="learning"><span>📚</span>Learning<i class="adm-badge" data-badge="learning" hidden>0</i></button>
       </div>
       <section class="adm-pane" id="pane-accounts" role="tabpanel" aria-labelledby="tab-accounts" hidden>
+      <h2 class="dash-h" id="school-requests">🏫 School registrations <span class="count" id="n-schoolreq">0</span></h2>
+      <p class="hint">Schools that registered from the <b>School Leader</b> card. Approving creates the school and makes its leader the principal.</p>
+      <section class="approve-list" id="school-requests-box"><p class="empty">Loading…</p></section>
       <h2 class="dash-h" id="new-accounts">New accounts <span class="count" id="n-newacc">0</span></h2>
       <p class="hint">Every new student and parent waits here for your approval (teachers appear under Teachers). You also get an email at thinknest2026@gmail.com.</p>
       <section class="approve-list" id="newacc-box"><p class="empty">Loading…</p></section>
@@ -114,15 +117,17 @@
   <div class="side-shade" id="side-shade"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=97"></script>
-  <script src="app.js?v=97"></script>
-  <script src="nav.js?v=97"></script>
-  <script src="notify.js?v=97" defer></script>
-  <script src="teacher.js?v=97"></script>
+  <script src="supabase-config.js?v=99"></script>
+  <script src="app.js?v=99"></script>
+  <script src="nav.js?v=99"></script>
+  <script src="notify.js?v=99" defer></script>
+  <script src="teacher.js?v=99"></script>
   <script>startAdmin();</script>
-  <script src="admintabs.js?v=97"></script>
-  <script src="community.js?v=97"></script>
-  <script src="chat.js?v=97"></script>
+  <script src="admintabs.js?v=99"></script>
+  <script src="community.js?v=99"></script>
+  <script src="chat.js?v=99"></script>
+  <script src="school.js?v=99"></script>
+  <script>adminSchools();</script>
   <script>loadReports().then(loadGroupReports); loadMessageReview(); loadApprovalSetting(); loadWaitlists(); loadHubRequests(); loadNewAccounts(); loadContactMessages(); loadConnectAdmin(); loadEmailAdmin(); loadDeletionRequests();</script>
 </body>
 </html>

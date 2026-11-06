@@ -1629,3 +1629,53 @@ dialog .toast { z-index: 100; }
 /* role page: four cards, centred */
 .roles-pick { grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 960px; margin-left: auto; margin-right: auto; justify-content: center; }
 @media (max-width: 900px) { .roles-pick { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 520px; } }
+/* ===== Think Nest for Schools ===== */
+:root { --school: #3E4B94; --school2: #F27A6F; }
+.sreg-card { max-width: 760px; }
+.sreg-kicker { text-transform: uppercase; letter-spacing: .14em; font-size: .78rem; font-weight: 800; color: #F27A6F; margin: 0 0 4px; text-align: center; }
+.sreg-h { font-size: 1.1rem; color: #3E4B94; margin: 18px 0 4px; padding-top: 12px; border-top: 1px solid #ECEEF6; }
+.sreg-h:first-of-type { border-top: 0; padding-top: 0; margin-top: 6px; }
+.sc-hero { display: flex; align-items: center; gap: 20px; padding: 24px 26px; border-radius: 24px; color: #fff; margin-bottom: 14px;
+  background: linear-gradient(120deg, var(--school), color-mix(in srgb, var(--school) 70%, var(--school2))); }
+.sc-hero h1 { color: #fff; margin: 2px 0; font-size: 1.9rem; }
+.sc-kicker { margin: 0; text-transform: uppercase; letter-spacing: .12em; font-size: .75rem; font-weight: 800; opacity: .85; }
+.sc-meta { margin: 0; opacity: .92; }
+.sc-logo { width: 84px; height: 84px; border-radius: 20px; background: #fff; display: grid; place-items: center; overflow: hidden; flex: none; box-shadow: 0 6px 16px rgba(0,0,0,.15); }
+.sc-logo img { width: 100%; height: 100%; object-fit: contain; padding: 6px; }
+.sc-logo span { font-weight: 900; font-size: 1.6rem; color: var(--school); }
+.sc-logo.big { width: 120px; height: 120px; border: 2px dashed #D9DCEB; box-shadow: none; }
+.sc-logo.big span { font-size: 1rem; color: #9AA0B5; font-weight: 700; }
+.sc-switch { display: flex; gap: 8px; align-items: center; font-weight: 800; margin: 0 0 10px; } .sc-switch select { font: inherit; padding: 6px 10px; border-radius: 10px; border: 2px solid #E4E6F1; }
+.sc-tabs button[aria-selected=true] { color: var(--school); border-color: var(--school); }
+.school-page .panel h2 { font-size: 1.2rem; margin: 0 0 12px; color: #1D2026; }
+.sc-cards .in-card b { color: var(--school); }
+.sc-check { display: grid; gap: 10px; }
+.sc-step { display: flex; align-items: center; gap: 12px; text-align: left; border: 1px solid #E4E6F1; background: #fff; border-radius: 14px; padding: 12px 14px; font: inherit; cursor: pointer; }
+.sc-step:hover { border-color: var(--school); }
+.sc-step b { flex: 1; color: #1D2026; } .sc-go { color: var(--school); font-weight: 800; }
+.sc-tick { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #C9CCDA; display: grid; place-items: center; font-weight: 900; color: #fff; flex: none; }
+.sc-step.done .sc-tick { background: #2FA08A; border-color: #2FA08A; } .sc-step.done .sc-go { color: #2FA08A; }
+.sc-h3 { font-size: 1rem; margin: 18px 0 8px; color: #1D2026; }
+.sc-add-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: end; }
+.sc-add-grid label { display: grid; gap: 4px; font-weight: 700; font-size: .92rem; }
+.sc-add-grid input, .sc-add-grid select, .sc-set input:not([type=checkbox]):not([type=color]) { font: inherit; font-weight: 400; padding: 9px 12px; border: 2px solid #E4E6F1; border-radius: 12px; }
+.sc-scope { grid-column: 1 / -1; border: 1px solid #ECEEF6; border-radius: 12px; padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.sc-scope legend { font-weight: 800; font-size: .88rem; padding: 0 4px; } .sc-scope label { display: flex; gap: 6px; align-items: center; font-weight: 600; font-size: .88rem; }
+.sc-add-grid .btn { border: 0; cursor: pointer; font: inherit; font-weight: 800; justify-self: start; }
+.sc-role { font-size: .8rem; font-weight: 800; padding: 3px 10px; border-radius: 20px; background: #EEF0FB; color: #3E4B94; white-space: nowrap; }
+.sc-role.r-principal { background: #3E4B94; color: #fff; } .sc-role.r-teacher { background: #E3F5EE; color: #1F7A4D; } .sc-role.r-student { background: #FFF4D6; color: #8A6100; }
+.sc-set { display: grid; gap: 12px; } .sc-set label { display: grid; gap: 4px; font-weight: 700; }
+.sc-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.sc-brand { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; } .sc-brand-in { display: grid; gap: 10px; flex: 1; min-width: 240px; }
+.sc-up { cursor: pointer; justify-self: start; }
+.sc-colors { display: flex; gap: 18px; flex-wrap: wrap; } .sc-colors label { display: flex; gap: 8px; align-items: center; }
+.sc-colors input[type=color] { width: 46px; height: 34px; border: 1px solid #D9DCEB; border-radius: 8px; padding: 2px; background: #fff; cursor: pointer; }
+.sc-grades { display: flex; flex-wrap: wrap; gap: 8px; }
+.sc-chip { display: inline-flex; } .sc-chip input { position: absolute; opacity: 0; width: 0; height: 0; }
+.sc-chip span { border: 2px solid #E4E6F1; border-radius: 20px; padding: 6px 12px; font-weight: 700; font-size: .9rem; cursor: pointer; background: #fff; }
+.sc-chip input:checked + span { background: var(--school); border-color: var(--school); color: #fff; }
+.sc-chip input:focus-visible + span { outline: 3px solid var(--school2); outline-offset: 2px; }
+.sc-set .btn { border: 0; cursor: pointer; font: inherit; font-weight: 800; justify-self: start; }
+@media (max-width: 760px) { .sc-add-grid, .sc-two { grid-template-columns: 1fr; } .sc-hero { flex-direction: column; text-align: center; } }
+html.tn-ar .sc-step { text-align: right; }
+.school-page .panel + .panel, .school-page .in-cards + .panel { margin-top: 16px; }

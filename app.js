@@ -79,7 +79,8 @@ async function homeFor(userId) {
   if (wantsParent && p && p.also_parent && ['teacher', 'school_leader', 'admin'].includes(p.role)) return 'parent-dashboard.html';
   if (p && p.role === 'admin') return 'admin.html';
   if (p && p.role === 'parent') return 'parent-dashboard.html';
-  if (p && (p.role === 'teacher' || p.role === 'school_leader')) return 'teacher-dashboard.html';
+  if (p && p.role === 'school_leader') return 'school.html';
+  if (p && p.role === 'teacher') return 'teacher-dashboard.html';
   if (p && p.requested_role === 'teacher') return 'teacher-pending.html';
   return 'student-dashboard.html';
 }

@@ -1,8 +1,8 @@
 // ===== Admin dashboard: tabs, red counters, quick numbers =====
 (function () {
-  const TABS = { accounts: ['n-newacc', 'n-pending', 'n-delreq'], hubs: ['n-hubreq'], messages: ['n-contact'], safety: ['n-reports', 'n-msgs'], learning: [] };
+  const TABS = { accounts: ['n-schoolreq', 'n-newacc', 'n-pending', 'n-delreq'], hubs: ['n-hubreq'], messages: ['n-contact'], safety: ['n-reports', 'n-msgs'], learning: [] };
   // old notification links (#new-accounts, #hub-requests…) open the right tab
-  const ANCHOR = { 'new-accounts': 'accounts', 'data-requests': 'accounts', 'hub-requests': 'hubs', 'connect-admin': 'hubs', 'messages': 'messages', 'email-admin': 'messages', 'waitlists': 'learning' };
+  const ANCHOR = { 'new-accounts': 'accounts', 'school-requests': 'accounts', 'data-requests': 'accounts', 'hub-requests': 'hubs', 'connect-admin': 'hubs', 'messages': 'messages', 'email-admin': 'messages', 'waitlists': 'learning' };
   function show(k, scrollTo) {
     document.querySelectorAll('.adm-tabs [data-tab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === k)));
     document.querySelectorAll('.adm-pane').forEach(p => p.hidden = p.id !== 'pane-' + k);
