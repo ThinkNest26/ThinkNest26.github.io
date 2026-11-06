@@ -1900,3 +1900,32 @@ html.tn-school .find-class, html.tn-school [data-path-find] { display: none !imp
 .ob-lv.lv-top.on, .ob-chip.lv-top, .ob-dist .lv-top, .sc-legend .lv-top { background: #3E4B94; border-color: #3E4B94; }
 .ob-lv.lv-vlo.on, .ob-chip.lv-vlo, .ob-dist .lv-vlo, .sc-legend .lv-vlo { background: #8E1B1B; border-color: #8E1B1B; }
 .sc-legend .lv-top, .sc-legend .lv-vlo { display: inline-block; }
+/* ===== Wellbeing ===== */
+.wb-card { margin-bottom: 16px; display: grid; gap: 12px; background: linear-gradient(150deg, #FFF8EC, #fff); border: 2px solid #F6E3BF; }
+.wb-card h2 { margin: 0; font-size: 1.25rem; }
+.wb-moods { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.wb-m { border: 2px solid #EDE4D3; background: #fff; border-radius: 18px; padding: 12px 6px; display: grid; justify-items: center; gap: 4px; font: inherit; cursor: pointer; transition: transform .12s; }
+.wb-m span { font-size: 2.6rem; line-height: 1; } .wb-m b { font-size: .88rem; } .wb-m:hover { transform: translateY(-3px); }
+.wb-m.on { border-color: var(--school, #3E4B94); background: color-mix(in srgb, var(--school, #3E4B94) 9%, #fff); transform: scale(1.06); }
+.wb-q { margin: 0; font-weight: 700; } .wb-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.wb-talk { display: flex; gap: 8px; align-items: center; font-weight: 800; background: #fff; border: 2px solid #EDE4D3; border-radius: 14px; padding: 10px 12px; cursor: pointer; }
+.wb-talk input { width: 20px; height: 20px; } #wb-note { font: inherit; padding: 9px 12px; border: 2px solid #EDE4D3; border-radius: 12px; }
+.wb-more { display: grid; gap: 10px; } .wb-more[hidden], .wb-send[hidden] { display: none; } .wb-send .btn { border: 0; cursor: pointer; font: inherit; font-weight: 800; }
+.wb-done { display: flex; gap: 14px; align-items: center; } .wb-done p { margin: 4px 0; } .wb-done > div { flex: 1; }
+.wb-big { font-size: 2.6rem; line-height: 1; }
+.wb-pick { display: flex; gap: 8px; align-items: center; font-weight: 800; } .wb-pick select { font: inherit; padding: 6px 10px; border-radius: 10px; border: 2px solid #E4E6F1; }
+.wb-today { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.wb-t { border-radius: 16px; padding: 12px; display: grid; justify-items: center; gap: 2px; } .wb-t span { font-size: 2rem; } .wb-t b { font-size: 1.5rem; } .wb-t small { font-weight: 700; color: #4A4E5E; }
+.wb-t.m5, .wb-bar .m5 { background: #DDF3E9; } .wb-t.m4, .wb-bar .m4 { background: #E8F4D9; } .wb-t.m3, .wb-bar .m3 { background: #FFF4D6; } .wb-t.m2, .wb-bar .m2 { background: #FFE4D2; } .wb-t.m1, .wb-bar .m1 { background: #FBD9DC; }
+.wb-bar .m5 { background: #2FA08A; } .wb-bar .m4 { background: #8CC152; } .wb-bar .m3 { background: #E8B22E; } .wb-bar .m2 { background: #F08A4B; } .wb-bar .m1 { background: #D9534F; }
+.wb-bar { display: flex; height: 14px; border-radius: 8px; overflow: hidden; margin-top: 12px; }
+.wb-attn { margin-top: 16px; display: grid; gap: 10px; }
+.wb-a { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: start; border: 1px solid #F1E2C8; background: #FFFBF4; border-radius: 16px; padding: 12px 14px; }
+.wb-flag { display: inline-block; font-size: .78rem; font-weight: 800; border-radius: 20px; padding: 3px 10px; margin: 4px 6px 0 0; background: #EEF0FB; color: #3E4B94; }
+.wb-flag.talk { background: #FDE2E2; color: #B3261E; } .wb-flag.low { background: #FFF4D6; color: #8A6100; }
+.wb-note { margin: 6px 0 0; font-style: italic; color: #4A4E5E; }
+.wb-f { display: grid; gap: 6px; min-width: 220px; } .wb-f input { font: inherit; padding: 7px 10px; border: 2px solid #E4E6F1; border-radius: 10px; }
+.wb-done-list summary { cursor: pointer; font-weight: 700; color: #3E4B94; } .wb-done-list p { margin: 6px 0; }
+.wb-tagsum { display: flex; flex-wrap: wrap; gap: 4px; }
+@media (max-width: 760px) { .wb-moods { grid-template-columns: repeat(3, minmax(0, 1fr)); } .wb-today { grid-template-columns: repeat(3, minmax(0, 1fr)); } .wb-a { grid-template-columns: auto 1fr; } .wb-f { grid-column: 1 / -1; } }
+.wellbeing-page .sc-chart-panel, .wb-classes { margin-top: 16px; }
