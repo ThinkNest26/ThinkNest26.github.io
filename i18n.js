@@ -1298,7 +1298,18 @@
 "Enter your email (or username) and password.": "أدخل بريدك الإلكتروني (أو اسم المستخدم) وكلمة المرور.",
 "Choose a class or course first.": "اختر فصلًا أو دورة أولًا.",
 "Type or upload at least one name.": "اكتب اسمًا واحدًا على الأقل أو ارفع قائمة.",
-"Please tick the box to confirm you have permission.": "يُرجى تحديد المربع لتأكيد حصولك على الإذن."
+"Please tick the box to confirm you have permission.": "يُرجى تحديد المربع لتأكيد حصولك على الإذن.",
+"➕ Add students": "➕ أضف طلابًا",
+"1. Names": "1. الأسماء",
+"2. Check logins": "2. راجع بيانات الدخول",
+"3. Done": "3. تم",
+"Generate usernames and passwords →": "أنشئ أسماء المستخدمين وكلمات المرور ←",
+"‹ Back to names": "‹ العودة إلى الأسماء",
+"➕ Add more students": "➕ أضف طلابًا آخرين",
+"🔑 Student logins": "🔑 بيانات دخول الطلاب",
+"Type one name per line, or upload a list (CSV or text; from Excel use File → Save As → CSV).": "اكتب اسمًا واحدًا في كل سطر، أو ارفع قائمة (CSV أو نص؛ من إكسل استخدم ملف ← حفظ باسم ← CSV).",
+"Check the list. You can change any username (lowercase letters, numbers and dots), or tap 🔄 for a new password.": "راجع القائمة. يمكنك تغيير أي اسم مستخدم (أحرف صغيرة وأرقام ونقاط)، أو اضغط 🔄 لكلمة مرور جديدة.",
+"Students you add with ➕ Add students appear here, so you can give them a new password if they forget it.": "يظهر هنا الطلاب الذين تضيفهم عبر ➕ أضف طلابًا، لتتمكن من إعطائهم كلمة مرور جديدة إذا نسوها."
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

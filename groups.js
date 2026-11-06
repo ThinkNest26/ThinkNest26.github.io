@@ -385,7 +385,7 @@ function openTeacherGroupDialog(mode) {
     const res = isCls ? await db.rpc('create_class', { cname: cf.name.value, cdesc: cf.desc.value, cid: cf.course.value ? Number(cf.course.value) : null, students })
                       : await db.rpc('create_teacher_group', { gname: cf.name.value, gdesc: cf.desc.value, students });
     if (res.error) return say(friendly(res.error));
-    location.href = 'group.html?id=' + res.data;
+    location.href = 'group.html?id=' + res.data + (isCls ? '&add=1' : '');
   };
 }
 

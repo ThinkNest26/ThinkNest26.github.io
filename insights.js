@@ -31,10 +31,12 @@ async function startInsights() {
     const courseId = isG ? ((classes || []).find(c => c.id === id) || {}).course_id : id;
     const { data, error } = await db.rpc('class_insights', { cid: isG ? null : id, gid: isG ? id : null });
     if (error) { out.innerHTML = `<p class="empty">${inEsc(friendly(error))}</p>`; return; }
-    draw(data, courseId, isG ? 'class' : 'course', sel.options[sel.selectedIndex].text.replace(/^\S+\s/, ''));
+    inDraw(out, data, courseId, isG ? 'class' : 'course', sel.options[sel.selectedIndex].text.replace(/^\S+\s/, ''));
   }
+}
 
-  function draw(d, courseId, kind, name) {
+// Draw the insights into any box (used on the Class Insights page and inside each class)
+function inDraw(out, d, courseId, kind, name) {
     const S = d.students || [], items = d.items || [], R = d.responses || [];
     if (!S.length) { out.innerHTML = `<div class="empty-box"><p>No students in this ${kind} yet.</p></div>`; return; }
     if (!courseId && kind === 'class') { out.innerHTML = '<div class="empty-box"><p>This class isn’t linked to a course yet, so there’s no work to analyse. Create the class from a course to see insights.</p></div>'; return; }
@@ -115,4 +117,11 @@ async function startInsights() {
       a.download = `insights-${name.replace(/[^\w]+/g, '-').toLowerCase()}.csv`; document.body.appendChild(a); a.click(); a.remove();
     };
   }
+
+// Insights inside a class page (class teacher only)
+async function inClassTab(out, gid, courseId, name) {
+  out.innerHTML = '<p class="empty">Gathering the data…</p>';
+  const { data, error } = await db.rpc('class_insights', { cid: null, gid });
+  if (error) { out.innerHTML = `<p class="empty">${inEsc(typeof friendly === 'function' ? friendly(error) : error.message)}</p>`; return; }
+  inDraw(out, data, courseId, 'class', name);
 }

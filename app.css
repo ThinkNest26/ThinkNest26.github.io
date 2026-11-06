@@ -1514,3 +1514,20 @@ html.tn-ar .in-table tbody th { text-align: right; left: auto; right: 0; }
 .ac-table code { background: #EEF0FB; color: #2E3A82; border-radius: 6px; padding: 2px 7px; font-size: .95rem; }
 .ac-newpw code { background: #E3F5EE; color: #1F7A4D; }
 html.tn-ar .ac-table th, html.tn-ar .ac-table td { text-align: right; } html.tn-ar .ac-step small { padding-left: 0; padding-right: 38px; }
+/* ===== Add students (class page) ===== */
+.ca-open { background: #F27A6F !important; color: #fff !important; border: 0; cursor: pointer; font: inherit; font-weight: 800; }
+.ca-panel { border: 2px solid #CDD3F2; display: grid; gap: 12px; margin-bottom: 16px; animation: pt2-in .25s ease; }
+.ca-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; } .ca-top h2 { margin: 0; font-size: 1.25rem; }
+.ca-steps { list-style: none; display: flex; gap: 6px; padding: 0; margin: 0; flex-wrap: wrap; }
+.ca-steps li { background: #F1F2F8; color: #6E7485; border-radius: 20px; padding: 5px 12px; font-size: .85rem; font-weight: 800; }
+.ca-steps li.on { background: #3E4B94; color: #fff; } .ca-steps li.done { background: #E3F5EE; color: #1F7A4D; }
+#ca-names { font: inherit; border: 2px solid #E4E6F1; border-radius: 14px; padding: 12px 14px; resize: vertical; line-height: 1.6; }
+#ca-names:focus { border-color: #3E4B94; outline: none; }
+.ca-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .ca-bar .btn { border: 0; cursor: pointer; font: inherit; font-weight: 800; } .ca-bar .btn-red { margin-left: auto; }
+.ca-bar .outline { border: 1px solid #3E4B94; color: #3E4B94; } .ca-up { cursor: pointer; }
+.ca-u { font: inherit; font-family: ui-monospace, Menlo, monospace; border: 1px solid #D9DCEB; border-radius: 8px; padding: 6px 9px; width: 100%; max-width: 200px; }
+.ca-logins { margin-bottom: 14px; } .ca-logins h3 { margin: 0 0 8px; }
+html.tn-ar .ca-bar .btn-red { margin-left: 0; margin-right: auto; }
+.ca-link { border: 2px dashed #C9CCDA; display: grid; gap: 10px; } .ca-link h3 { margin: 0; }
+.ca-link select { font: inherit; font-weight: 700; padding: 9px 12px; border: 2px solid #E4E6F1; border-radius: 12px; min-width: 240px; }
+#t-ins .in-cards { margin-top: 4px; }
