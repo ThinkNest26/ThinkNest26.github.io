@@ -1990,3 +1990,11 @@ html.tn-school .find-class, html.tn-school [data-path-find] { display: none !imp
 .pl-lists { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; } .pl-lists label { display: grid; gap: 4px; font-weight: 700; font-size: .88rem; }
 @media (max-width: 1000px) { .wk-stages6 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 760px) { .wk-sub-grid, .wk-sub-4, .wk-stages6 { grid-template-columns: 1fr; } .wk-les-top { grid-template-columns: 1fr 1fr; } }
+/* ===== School admins ===== */
+.sc-admins { display: grid; gap: 10px; border-top: 5px solid var(--school); margin-bottom: 16px; }
+.sc-admin-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+.sc-admin { display: flex; gap: 10px; align-items: center; border: 1px solid #ECEEF6; border-radius: 14px; padding: 10px 12px; background: #FCFCFE; }
+.sc-admin > div { display: grid; flex: 1; } .sc-admin .initials { width: 42px; height: 42px; background: var(--school); }
+.sc-admin-add { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; } .sc-admin-add label { display: grid; gap: 4px; font-weight: 700; }
+.sc-admin-add select, .sc-admin-add input { font: inherit; font-weight: 400; padding: 9px 12px; border: 2px solid #E4E6F1; border-radius: 12px; min-width: 220px; }
+.sc-admin-add .btn { border: 0; cursor: pointer; font: inherit; font-weight: 800; }

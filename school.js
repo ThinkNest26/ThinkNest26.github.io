@@ -1,6 +1,6 @@
 // ===== Think Nest for Schools =====
 const SC_E = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const SC_ROLES = [['principal', 'Principal'], ['vice_principal', 'Vice principal'], ['assistant_principal', 'Assistant principal'], ['coordinator', 'Coordinator'],
+const SC_ROLES = [['principal', 'Principal / school admin'], ['vice_principal', 'Vice principal'], ['assistant_principal', 'Assistant principal'], ['coordinator', 'Coordinator'],
   ['head_of_department', 'Head of department'], ['inclusion_lead', 'Inclusion lead'], ['admin_staff', 'Admin staff'], ['teacher', 'Teacher'], ['student', 'Student']];
 const SC_LEADERS = ['principal', 'vice_principal', 'assistant_principal', 'coordinator', 'head_of_department', 'inclusion_lead', 'admin_staff'];
 const SC_MANAGERS = ['principal', 'vice_principal', 'assistant_principal', 'admin_staff'];
@@ -579,7 +579,16 @@ async function startSchool() {
       <td class="meta">${SC_E([].concat(p.scope_grades || [], p.scope_subjects || []).join(', ') || (SC_LEADERS.includes(p.role) ? 'Whole school' : ''))}</td>
       <td>${canManage && p.user_id !== user.id ? '<button type="button" class="link-btn" data-rm>Remove</button>' : ''}</td></tr>`;
     const group = (title, list) => list.length ? `<h3 class="sc-h3">${title} <span class="count">${list.length}</span></h3><div class="in-scroll"><table class="ac-table"><thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Scope</th><th></th></tr></thead><tbody>${list.map(row).join('')}</tbody></table></div>` : '';
-    pane().innerHTML = `${canManage ? `<section class="panel sc-add"><h2>➕ Add a person</h2>
+    const isAdmin = S.my_role === 'principal' || profile.role === 'admin';
+    const admins = P.filter(p => p.role === 'principal'), staffPool = P.filter(p => !['principal', 'student', 'parent'].includes(p.role) && p.email);
+    const adminPanel = `<section class="panel sc-admins"><div class="in-head"><h2>🛡️ School admins <span class="count">${admins.length}</span></h2></div>
+      <p class="meta">Admins have full access to everything in ${SC_E(S.name)}: settings, people, data and every report. ${isAdmin ? 'You can add as many as you need.' : 'Only an admin can add or remove admins.'}</p>
+      <div class="sc-admin-list">${admins.map(a => `<div class="sc-admin" data-uid="${a.user_id}"><span class="initials">${SC_E((a.full_name || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</span>
+        <div><b>${SC_E(a.full_name || '')}</b>${a.user_id === user.id ? ' <small class="meta">(you)</small>' : ''}<small class="meta">${SC_E(a.title || 'Principal')} · ${SC_E(a.email || '')}</small></div>
+        ${isAdmin && admins.length > 1 ? `<button type="button" class="link-btn danger" data-unadmin data-email="${SC_E(a.email || '')}">Remove admin rights</button>` : ''}</div>`).join('')}</div>
+      ${isAdmin ? `<form class="sc-admin-add" id="sc-admin-add"><label>Make a staff member an admin <select name="who"><option value="">Choose a staff member…</option>${staffPool.map(p => `<option value="${SC_E(p.email)}">${SC_E(p.full_name)} · ${SC_E(scRole(p.role))}</option>`).join('')}</select></label>
+        <span class="meta">or</span><label>Email <input type="email" name="email" placeholder="name@school.ae"></label><button class="btn btn-red">🛡️ Add admin</button></form>` : ''}</section>`;
+    pane().innerHTML = adminPanel + `${canManage ? `<section class="panel sc-add"><h2>➕ Add a person</h2>
         <p class="meta">Add someone who already has a Think Nest account, using their email. (Bulk import for whole staff and student lists is coming next.)</p>
         <form id="sc-add" class="sc-add-grid">
           <label>Email <input type="email" name="email" required placeholder="name@school.ae"></label>
@@ -589,7 +598,7 @@ async function startSchool() {
           <fieldset class="sc-scope" hidden><legend>Limit to subjects (optional)</legend>${SC_SUBJECTS.map(g => `<label><input type="checkbox" name="s" value="${g}"> ${g}</label>`).join('')}</fieldset>
           <button class="btn btn-red">Add to school</button></form></section>` : ''}
       <section class="panel"><h2>👥 People in ${SC_E(S.name)}</h2>
-        ${group('🧭 Leadership team', P.filter(p => SC_LEADERS.includes(p.role)))}${group('👩‍🏫 Teachers', P.filter(p => p.role === 'teacher'))}${group('🎒 Students', P.filter(p => p.role === 'student'))}
+        ${group('🧭 Leadership team', P.filter(p => SC_LEADERS.includes(p.role) && p.role !== 'principal'))}${group('👩‍🏫 Teachers', P.filter(p => p.role === 'teacher'))}${group('🎒 Students', P.filter(p => p.role === 'student'))}
         ${P.length ? '' : '<p class="meta">No one yet.</p>'}</section>`;
     const f = document.getElementById('sc-add');
     if (f) {
@@ -607,6 +616,20 @@ async function startSchool() {
         say(`✅ ${nm} added as ${scRole(f.role.value)}.`); people();
       };
     }
+    const af = document.getElementById('sc-admin-add');
+    if (af) af.onsubmit = async e => {
+      e.preventDefault(); const email = af.who.value || af.email.value.trim();
+      if (!email) return say('Choose a staff member, or enter their email.');
+      if (!confirm(`Give ${af.who.value ? af.who.options[af.who.selectedIndex].text.split(' · ')[0] : email} full admin access to ${S.name}?`)) return;
+      const { data: nm, error: er } = await db.rpc('school_add_member', { sid, member_email: email, mrole: 'principal', mtitle: 'School admin', grades: [], subjects: [] });
+      if (er) return say(friendly(er)); say(`🛡️ ${nm} is now a school admin.`); people();
+    };
+    pane().querySelectorAll('[data-unadmin]').forEach(b => b.onclick = async () => {
+      const row = b.closest('[data-uid]'), name = row.querySelector('b').textContent;
+      if (!confirm(`Remove ${name}’s admin rights? They will become a teacher, and keep their classes.`)) return;
+      const { error: er } = await db.rpc('school_add_member', { sid, member_email: b.dataset.email, mrole: 'teacher', mtitle: '', grades: [], subjects: [] });
+      if (er) return say(friendly(er)); say(`${name} is now a teacher.`); people();
+    });
     pane().querySelectorAll('[data-rm]').forEach(b => b.onclick = async () => {
       const tr = b.closest('[data-uid]');
       if (!confirm(`Remove ${tr.cells[0].innerText.split('\n')[0]} from ${S.name}?`)) return;

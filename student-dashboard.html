@@ -8,11 +8,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=116">
-  <link rel="stylesheet" href="app.css?v=116">
-  <link rel="stylesheet" href="paths.css?v=116">
-  <link rel="stylesheet" href="rtl.css?v=116">
-  <script src="i18n.js?v=116"></script>
+  <link rel="stylesheet" href="style.css?v=117">
+  <link rel="stylesheet" href="app.css?v=117">
+  <link rel="stylesheet" href="paths.css?v=117">
+  <link rel="stylesheet" href="rtl.css?v=117">
+  <script src="i18n.js?v=117"></script>
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -110,20 +110,20 @@
   <div class="side-shade" id="side-shade"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=116"></script>
-  <script src="app.js?v=116"></script>
-  <script src="nav.js?v=116"></script>
-  <script src="notify.js?v=116" defer></script>
-  <script src="student.js?v=116"></script>
-  <script src="friends.js?v=116"></script>
-  <script src="attendance.js?v=116"></script>
-  <script src="rewards.js?v=116"></script>
-  <script src="curriculum.js?v=116"></script>
-  <script src="paths.js?v=116"></script>
-  <script src="groups.js?v=116"></script>
+  <script src="supabase-config.js?v=117"></script>
+  <script src="app.js?v=117"></script>
+  <script src="nav.js?v=117"></script>
+  <script src="notify.js?v=117" defer></script>
+  <script src="student.js?v=117"></script>
+  <script src="friends.js?v=117"></script>
+  <script src="attendance.js?v=117"></script>
+  <script src="rewards.js?v=117"></script>
+  <script src="curriculum.js?v=117"></script>
+  <script src="paths.js?v=117"></script>
+  <script src="groups.js?v=117"></script>
   <script>startDashboard().then(() => { showParentRequests(); friendBanner(); groupBanner(); db.auth.getSession().then(({ data }) => data.session && db.from('profiles').select('grade, curriculum').eq('id', data.session.user.id).maybeSingle().then(r => curriculumCard(r.data))); });</script>
   <script>document.addEventListener("DOMContentLoaded", () => {}); setTimeout(() => { initPaths(); document.querySelectorAll("[data-path-find]").forEach(b => b.addEventListener("click", () => openPathChooser(null))); resumePendingPath(); if (typeof attendanceOverviewFor === 'function') db.auth.getSession().then(({ data }) => { if (!data.session) return; attendanceOverviewFor(data.session.user.id, 'my-att-all').then(() => { const b = document.getElementById('my-att-box'); if (b && !document.getElementById('my-att-all').textContent.includes('No attendance')) b.hidden = false; }); }); if (typeof getRewards === 'function') getRewards().then(s => { const b = document.getElementById('my-rewards'); if (s && b) { b.hidden = false; b.innerHTML = '<h2>My rewards</h2>' + rewardMiniHtml(s); } }); }, 600);</script>
-  <script src="wellbeing.js?v=116"></script>
+  <script src="wellbeing.js?v=117"></script>
   <script>tnCheckin();</script>
 </body>
 </html>

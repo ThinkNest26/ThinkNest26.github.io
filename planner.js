@@ -47,7 +47,7 @@ async function startPlanner() {
   let custom = (srow && srow.planner_sections) || {};
   const subjects = Object.keys((srow && srow.curriculum_map) || { English: 1, Maths: 1, Science: 1 }).filter(k => ((srow && srow.curriculum_map) || {})[k] !== 'none');
   const sections = tpl => PL_TEMPLATES[tpl].sections.map(sec => Object.assign({}, sec, { label: ((custom[tpl] || {})[sec.key] || {}).label || sec.label, hidden: !!((custom[tpl] || {})[sec.key] || {}).hidden }));
-  let gradeFilter = sessionStorage.getItem('tn_pl_grade') || '';
+  let gradeFilter = sessionStorage.getItem('tn_pl_grade') || '', myGrades = null;
   // two modes: unit plans and weekly plans
   box.innerHTML = '<div class="tabs sc-tabs pl-mode" role="tablist"><button role="tab" data-pm="units">🗂️ Unit plans</button><button role="tab" data-pm="weeks">📅 Weekly plans</button></div><div id="pl-main"></div>';
   box = document.getElementById('pl-main');
@@ -61,11 +61,14 @@ async function startPlanner() {
     const { data, error } = await db.from('unit_plans').select('id, template, grade, subject, title, term, starts_on, ends_on, status, updated_at, edits, created_by').eq('school_id', S.id).order('starts_on', { ascending: true, nullsFirst: false });
     if (error) { box.innerHTML = `<p class="empty">${PL_E(/unit_plans/.test(error.message || '') ? 'Run database update 63 to use the unit planner.' : friendly(error))}</p>`; return; }
     const L = (data || []).filter(p => !gradeFilter || p.grade === gradeFilter);
-    const grades = (S.grades || []).filter(g => !gradeFilter || g === gradeFilter);
+    if (!myGrades) { const { data: mg, error: ge } = await db.rpc('my_planning_grades', { sid: S.id }); myGrades = ge ? (S.grades || []) : (mg || []); }
+    const allowed = isLeader && !(S.scope_grades || []).length ? (S.grades || []) : (S.grades || []).filter(g => myGrades.includes(g));
+    if (gradeFilter && !allowed.includes(gradeFilter)) gradeFilter = '';
+    const grades = allowed.filter(g => !gradeFilter || g === gradeFilter);
     const lastBy = p => { const e = Object.values(p.edits || {}).sort((a, b) => String(b.at).localeCompare(String(a.at)))[0]; return e ? `Last edited by ${e.by} · ${plWhen(e.at)}` : 'Not started'; };
     box.innerHTML = `<div class="page-head"><h1 class="title">📘 Unit planner</h1><div class="pl-head-acts">${canCustomise ? '<button type="button" class="link-btn" id="pl-custom">⚙️ Customise the template</button>' : ''}<button type="button" class="btn btn-red" id="pl-new">➕ New unit</button></div></div>
       <p class="hint">Plan units together as a team. Everyone in your grade team can edit the same plan, and it saves as you type.</p>
-      <div class="feed-filter pl-grades"><button type="button" class="chip ${gradeFilter ? '' : 'on'}" data-gf="">All grades</button>${(S.grades || []).map(g => `<button type="button" class="chip ${gradeFilter === g ? 'on' : ''}" data-gf="${PL_E(g)}">${PL_E(g)}</button>`).join('')}</div>
+      <div class="feed-filter pl-grades"><button type="button" class="chip ${gradeFilter ? '' : 'on'}" data-gf="">${isLeader ? 'All grades' : 'All my grades'}</button>${allowed.map(g => `<button type="button" class="chip ${gradeFilter === g ? 'on' : ''}" data-gf="${PL_E(g)}">${PL_E(g)}</button>`).join('')}</div>
       <section id="pl-form-box"></section>
       ${grades.map(g => { const U = L.filter(p => p.grade === g); return `<section class="pl-grade"><h2 class="sc-h3">${PL_E(g)} <span class="count">${U.length}</span></h2>
         ${U.length ? `<div class="pl-cards">${U.map(p => { const st = PL_STATUS[p.status] || PL_STATUS.draft; return `<button type="button" class="pl-card" data-plan="${p.id}">
@@ -83,7 +86,7 @@ async function startPlanner() {
     fb.innerHTML = `<form class="panel pl-form" id="pl-form"><h2>➕ New unit</h2>
       <div class="pl-tpl-pick">${Object.entries(PL_TEMPLATES).map(([k, t], i) => `<label class="pl-tpl-opt"><input type="radio" name="tpl" value="${k}" ${i ? '' : 'checked'}><span><b>${k === 'pyp' ? '🌍' : '📘'} ${t.name}</b><small>${k === 'pyp' ? 'Central idea, lines of inquiry, concepts, ATL skills, summative assessment…' : 'Objectives, success criteria, assessment, lesson sequence…'}</small></span></label>`).join('')}</div>
       <div class="sc-two"><label>Title <input type="text" name="title" maxlength="140" required placeholder="e.g. How we express ourselves: Stories that shape us"></label>
-        <label>Grade <select name="grade">${(S.grades || []).map(g => `<option ${g === gradeFilter ? 'selected' : ''}>${PL_E(g)}</option>`).join('')}</select></label></div>
+        <label>Grade <select name="grade">${(isLeader && !(S.scope_grades || []).length ? (S.grades || []) : (S.grades || []).filter(g => (myGrades || []).includes(g))).map(g => `<option ${g === gradeFilter ? 'selected' : ''}>${PL_E(g)}</option>`).join('')}</select></label></div>
       <div class="sc-two"><label class="pl-subj" hidden>Subject <select name="subject">${subjects.map(s => `<option>${PL_E(s)}</option>`).join('')}</select></label>
         <label>Term <select name="term"><option value="">–</option>${(S.terms || []).map(t => `<option>${PL_E(t)}</option>`).join('')}</select></label></div>
       <div class="sc-two"><label>Starts <input type="date" name="starts_on"></label><label>Ends <input type="date" name="ends_on"></label></div>

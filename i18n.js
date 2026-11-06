@@ -1734,7 +1734,15 @@
 "Lesson focus": "محور الدرس",
 "📝 Assessment": "📝 التقييم",
 "Choose a subject…": "اختر مادة…",
-"📋 Weekly plans: drop-down choices": "📋 الخطط الأسبوعية: خيارات القوائم"
+"📋 Weekly plans: drop-down choices": "📋 الخطط الأسبوعية: خيارات القوائم",
+"🛡️ School admins": "🛡️ مسؤولو المدرسة",
+"Remove admin rights": "إزالة صلاحيات المسؤول",
+"Make a staff member an admin": "اجعل أحد الموظفين مسؤولًا",
+"Choose a staff member…": "اختر أحد الموظفين…",
+"🛡️ Add admin": "🛡️ أضف مسؤولًا",
+"Principal / school admin": "المدير / مسؤول المدرسة",
+"All my grades": "جميع صفوفي",
+"(you)": "(أنت)"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times
