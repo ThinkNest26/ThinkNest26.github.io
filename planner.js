@@ -295,95 +295,129 @@ async function startPlanner() {
     const C = CLS.find(c => c.id === P.group_id) || { name: 'Class', grade: '' }, D = upgrade(JSON.parse(JSON.stringify(P.data || {})));
     const canEdit = !!CLS.find(c => c.id === P.group_id), canReview = coversGrade(C.grade), ro = canEdit ? '' : 'disabled';
     const { data: units } = await db.from('unit_plans').select('id, title').eq('school_id', S.id).eq('grade', C.grade).order('starts_on', { ascending: true });
-    const picked = new Set(P.objective_ids || []), objs = {}, openPick = new Set(), closedLes = new Set(), showAction = new Set();
+    const picked = new Set(P.objective_ids || []), objs = {}, closedLes = new Set(), showAction = new Set();
+    let active = 0, pickOpen = false;
     const noBank = sj => !sj || sj === 'Unit of inquiry (PYP)' || sj === 'Other';
     const loadObjs = async sj => { if (noBank(sj)) return []; if (objs[sj]) return objs[sj]; const { data } = await db.rpc('planner_objectives', { sid: S.id, sgrade: C.grade, ssubject: sj }); return (objs[sj] = data || []); };
     const st = PL_STATUS[P.status] || PL_STATUS.draft, STG = stages().slice(0, 6);
-    const by = k => { const e = (P.edits || {})[k]; return `<small class="pl-by" data-by="${k}">${e ? 'Edited by ' + PL_E(e.by) + ' · ' + plWhen(e.at) : ''}</small>`; };
-    const chips = (list, on, attr) => `<div class="pl-chips">${list.concat((on || []).filter(x => !list.includes(x))).map(o => `<label class="sc-chip"><input type="checkbox" ${attr} value="${PL_E(o)}" ${(on || []).includes(o) ? 'checked' : ''} ${ro}><span>${PL_E(o)}</span></label>`).join('')}</div>`;
+    const by = k => { const e = (P.edits || {})[k]; return `<small class="pl-by" data-by="${k}">${e ? 'Saved · ' + PL_E(e.by) + ' · ' + plWhen(e.at) : ''}</small>`; };
     const dayName = dk => (DAYS.find(d => d[0] === dk) || ['', ''])[1];
-    const glance = () => `<div class="in-scroll"><table class="wk-glance"><thead><tr>${DAYS.map(([, dn], i) => `<th>${dn}<br><small>${new Date(addDays(P.week_start, i) + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</small></th>`).join('')}</tr></thead>
-      <tbody><tr>${DAYS.map(([dk]) => `<td>${D.subjects.flatMap(sb => (sb.lessons || []).filter(l => l.day === dk).map(l => `<div class="wk-g"><b>${PL_E(sb.subject || 'Subject')}</b>${l.focus ? `<span>${PL_E(l.focus)}</span>` : ''}</div>`)).join('') || '<span class="meta">–</span>'}</td>`).join('')}</tr></tbody></table></div>`;
-    const stageCell = (k, nm, l, optional) => `<div class="wk-s6 ${optional ? 'opt' : ''}"><div class="wk-s6-h"><span class="wk-s6-n">${k + 1}</span><b>${PL_E(nm)}</b>${optional ? '<small class="meta">optional</small>' : ''}</div>
-          <input type="text" list="dl-stage${k}" data-lf="a" data-st="${k}" value="${PL_E((l.stages[k] || {}).a || '')}" placeholder="Choose or type an activity…" ${ro}>
-          <textarea data-lf="t" data-st="${k}" rows="2" maxlength="1500" placeholder="Details (optional)" ${ro}>${PL_E((l.stages[k] || {}).t || '')}</textarea></div>`;
+    // a tidy tag picker: chosen items as tags, the rest in a drop-down
+    const tags = (key, list, on, scope) => { on = on || []; const rest = list.filter(x => !on.includes(x));
+      return `<div class="wk-tags" data-tags="${key}" data-scope="${scope}">${on.map((x, i) => `<span class="wk-tag">${PL_E(x)}${canEdit ? `<button type="button" data-tagrm="${i}" aria-label="Remove ${PL_E(x)}">✕</button>` : ''}</span>`).join('')}
+        ${canEdit ? `<select class="wk-tag-add" data-tagadd aria-label="Add"><option value="">+ Add…</option>${rest.map(x => `<option>${PL_E(x)}</option>`).join('')}<option value="__other">Other… (type your own)</option></select>` : (on.length ? '' : '<span class="meta">–</span>')}</div>`; };
+    const glance = () => `<table class="wk-glance"><thead><tr>${DAYS.map(([, dn], i) => `<th>${dn}<small>${new Date(addDays(P.week_start, i) + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</small></th>`).join('')}</tr></thead>
+      <tbody><tr>${DAYS.map(([dk]) => `<td>${D.subjects.flatMap((sb, si) => (sb.lessons || []).filter(l => l.day === dk).map(l => `<button type="button" class="wk-g" data-goto="${si}"><b>${PL_E(sb.subject || 'Subject')}</b>${l.focus ? `<span>${PL_E(l.focus)}</span>` : ''}</button>`)).join('') || '<span class="meta">–</span>'}</td>`).join('')}</tr></tbody></table>`;
+    const stageRow = (k, nm, l, optional) => `<tr class="${optional ? 'opt' : ''}"><th><span class="wk-s6-n">${k + 1}</span>${PL_E(nm)}${optional ? ' <small>optional</small>' : ''}</th>
+      <td><input type="text" list="dl-stage${k}" data-lf="a" data-st="${k}" value="${PL_E((l.stages[k] || {}).a || '')}" placeholder="Choose or type an activity…" ${ro}></td>
+      <td><textarea data-lf="t" data-st="${k}" rows="1" maxlength="1500" placeholder="Details" ${ro}>${PL_E((l.stages[k] || {}).t || '')}</textarea></td></tr>`;
     const lessonHtml = (si, li, l) => { const key = si + ':' + li, open = !closedLes.has(key), filled = (l.stages || []).slice(0, 5).filter(x => x.a || x.t).length;
       const act = l.stages[5] && (l.stages[5].a || l.stages[5].t), showAct = act || showAction.has(key);
-      return `<div class="wk-les ${open ? 'open' : ''}" data-li="${li}"><div class="wk-les-top">
+      return `<article class="wk-les ${open ? 'open' : ''}" data-li="${li}"><header class="wk-les-top">
+        <span class="wk-les-n">Lesson ${li + 1}</span>
         <select data-lf="day" ${ro} aria-label="Day"><option value="">Day…</option>${DAYS.map(([dk, dn]) => `<option value="${dk}" ${l.day === dk ? 'selected' : ''}>${dn}</option>`).join('')}</select>
         <input type="text" data-lf="focus" maxlength="200" value="${PL_E(l.focus || '')}" placeholder="Lesson focus" ${ro}>
-        <button type="button" class="pill pill-soft wk-tog" data-tog-les title="${open ? 'Fold away' : 'Show the inquiry stages'}">${open ? '▴' : '▾'} ${filled}/5 stages${act ? ' · ✓ ' + PL_E(STG[5] || 'Taking action') : ''}</button>${canEdit ? '<button type="button" class="link-btn danger" data-rm-les aria-label="Remove lesson">✕</button>' : ''}</div>
-        ${open ? `<div class="wk-stages6">${STG.slice(0, 5).map((nm, k) => stageCell(k, nm, l, false)).join('')}
-          ${showAct ? stageCell(5, STG[5] || 'Taking action', l, true) : (canEdit ? `<button type="button" class="wk-add-act" data-add-act>+ Add ${PL_E(STG[5] || 'Taking action')} <small>(optional)</small></button>` : '')}</div>` : ''}</div>`; };
-    const subjectHtml = (sb, si) => { const nObj = (objs[sb.subject] || []).filter(o => picked.has(o.id)).length;
-      return `<section class="panel wk-subj" data-si="${si}"><div class="wk-subj-top"><select data-sf="subject" class="wk-subj-sel" ${ro} aria-label="Subject"><option value="">Choose a subject…</option>${WK_SUBJECTS().map(x => `<option ${sb.subject === x ? 'selected' : ''}>${PL_E(x)}</option>`).join('')}</select>
-          <span class="meta">${(sb.lessons || []).length} lesson${(sb.lessons || []).length === 1 ? '' : 's'} this week</span>${canEdit ? '<button type="button" class="link-btn danger" data-rm-subj>Remove subject</button>' : ''}</div>
-        <div class="wk-sub-grid"><div><h4>🎯 Learning objectives</h4>${noBank(sb.subject) ? '' : `<button type="button" class="pill pill-soft" data-tog-obj>${openPick.has(si) ? '▴ Hide' : '▾ Choose from the curriculum'}${nObj ? ' · ' + nObj + ' chosen' : ''}</button><div class="wk-objpick" data-objbox></div>`}
+        <span class="wk-prog ${filled === 5 ? 'full' : ''}">${filled}/5${act ? ' · ✓ action' : ''}</span>
+        <button type="button" class="wk-icon" data-tog-les aria-label="${open ? 'Fold' : 'Open'}">${open ? '▴' : '▾'}</button>${canEdit ? '<button type="button" class="wk-icon danger" data-rm-les aria-label="Remove lesson">✕</button>' : ''}</header>
+        ${open ? `<table class="wk-stage-t"><tbody>${STG.slice(0, 5).map((nm, k) => stageRow(k, nm, l, false)).join('')}${showAct ? stageRow(5, STG[5] || 'Taking action', l, true) : ''}</tbody></table>
+          ${!showAct && canEdit ? `<button type="button" class="wk-add-act" data-add-act>+ Add ${PL_E(STG[5] || 'Taking action')} <small>(optional)</small></button>` : ''}` : ''}</article>`; };
+    const subjectPanel = si => { const sb = D.subjects[si]; if (!sb) return '';
+      const nObj = (objs[sb.subject] || []).filter(o => picked.has(o.id)).length;
+      return `<section class="wk-panel" data-si="${si}">
+        <div class="wk-panel-head"><h3>${PL_E(sb.subject || 'Subject')}</h3><span class="meta">${(sb.lessons || []).length} lesson${(sb.lessons || []).length === 1 ? '' : 's'} this week</span>
+          ${canEdit ? `<select data-sf="subject" class="wk-chg" aria-label="Change subject"><option value="">Change subject…</option>${WK_SUBJECTS().map(x => `<option ${sb.subject === x ? 'selected' : ''}>${PL_E(x)}</option>`).join('')}</select><button type="button" class="link-btn danger" data-rm-subj>Remove subject</button>` : ''}</div>
+        <div class="wk-part"><h4><span>1</span> Objectives and success criteria</h4><div class="wk-two">
+          <div><label class="wk-l">🎯 Learning objectives</label>
+            ${noBank(sb.subject) ? '' : `<button type="button" class="wk-pickbtn" data-tog-obj>${pickOpen ? '▴ Hide the curriculum' : '▾ Choose from the curriculum'}${nObj ? ` <b>${nObj} chosen</b>` : ''}</button><div class="wk-objpick" data-objbox></div>`}
+            <div class="wk-objchosen" data-objchosen></div>
             <textarea data-sf="obj_note" rows="2" maxlength="1500" placeholder="Objectives in your own words (optional)" ${ro}>${PL_E(sb.obj_note || '')}</textarea></div>
-          <div><h4>✅ Success criteria</h4><textarea data-sf="success" rows="4" maxlength="2000" placeholder="One per line, e.g. I can explain my thinking using a diagram" ${ro}>${PL_E(sb.success || '')}</textarea></div></div>
-        <h4>📆 Lessons this week</h4><div class="wk-lesl">${(sb.lessons || []).map((l, li) => lessonHtml(si, li, l)).join('') || '<p class="meta">No lessons yet.</p>'}</div>${canEdit ? '<button type="button" class="pill pill-soft" data-add-les>+ Add lesson</button>' : ''}
-        <div class="wk-sub-grid wk-sub-4">${[['support', '🧩 Support'], ['challenge', '🚀 Challenge'], ['assessment', '📝 Assessment'], ['resources', '📚 Resources']].map(([k, l]) => `<div><h4>${l}</h4>${chips(wkList(k), sb[k], `data-chip="${k}"`)}
-          <input type="text" data-sf="${k}_note" maxlength="500" value="${PL_E(sb[k + '_note'] || '')}" placeholder="Anything else? (optional)" ${ro}></div>`).join('')}</div></section>`; };
+          <div><label class="wk-l">✅ Success criteria</label><textarea data-sf="success" rows="5" maxlength="2000" placeholder="One per line, e.g. I can explain my thinking using a diagram" ${ro}>${PL_E(sb.success || '')}</textarea></div></div></div>
+        <div class="wk-part"><h4><span>2</span> Lessons, through the inquiry cycle</h4><div class="wk-lesl">${(sb.lessons || []).map((l, li) => lessonHtml(si, li, l)).join('') || '<p class="meta">No lessons yet.</p>'}</div>
+          ${canEdit ? '<button type="button" class="wk-add-les" data-add-les>+ Add a lesson</button>' : ''}</div>
+        <div class="wk-part"><h4><span>3</span> Differentiation, assessment and resources</h4><div class="wk-four">
+          ${[['support', '🧩 Support'], ['challenge', '🚀 Challenge'], ['assessment', '📝 Assessment'], ['resources', '📚 Resources']].map(([k, lab]) => `<div><label class="wk-l">${lab}</label>${tags(k, wkList(k), sb[k], 'subject')}
+            <input type="text" data-sf="${k}_note" maxlength="500" value="${PL_E(sb[k + '_note'] || '')}" placeholder="Notes (optional)" ${ro}></div>`).join('')}</div></div></section>`; };
+    const tabsHtml = () => `<div class="wk-tabs" role="tablist">${D.subjects.map((sb, si) => `<button type="button" role="tab" class="wk-tab ${si === active ? 'on' : ''}" data-tab="${si}" aria-selected="${si === active}"><b>${PL_E(sb.subject || 'Subject')}</b><small>${(sb.lessons || []).length} lesson${(sb.lessons || []).length === 1 ? '' : 's'}</small></button>`).join('')}
+      ${canEdit ? `<select id="wk-new-subj" class="wk-tab-add" aria-label="Add a subject"><option value="">➕ Add subject</option>${WK_SUBJECTS().filter(x => !D.subjects.some(sb => sb.subject === x)).map(x => `<option>${PL_E(x)}</option>`).join('')}</select>` : ''}</div>`;
     const empty = !D.subjects.length && !P.stage;
-    box.innerHTML = `<div class="pl-top"><button type="button" class="link-btn" id="wk-back">‹ All classes</button>
-        <div class="pl-top-acts">${canEdit && empty ? '<button type="button" class="pill pill-soft" id="wk-copy">📋 Copy last week’s plan</button>' : ''}<button type="button" class="pill pill-soft" id="wk-word">⬇ Word</button><button type="button" class="pill pill-soft" id="wk-print">🖨️ Print</button><button type="button" class="link-btn" id="wk-refresh">🔄 Refresh</button></div></div>
-      ${[0, 1, 2, 3, 4, 5].map(k => `<datalist id="dl-stage${k}">${wkList('stage' + k).map(x => `<option value="${PL_E(x)}">`).join('')}</datalist>`).join('')}
-      <section class="panel pl-meta"><span class="pl-tpl">📅 Weekly plan</span><h2 class="wk-title">${PL_E(C.name)} · Week of ${wkLabel(P.week_start)}</h2>
-        <div class="pl-meta-row"><label>Unit <select id="wk-unit" ${ro}><option value="">–</option>${(units || []).map(u => `<option value="${u.id}" ${P.unit_plan_id === u.id ? 'selected' : ''}>${PL_E(u.title)}</option>`).join('')}</select></label><span class="rc-st ${st[0]}">${st[1]}</span></div>
-        <div class="wk-stages" role="radiogroup" aria-label="Main inquiry focus this week"><span class="meta">🔄 Main inquiry focus this week (optional):</span>${STG.map(x => `<button type="button" class="wk-st ${P.stage === x ? 'on' : ''}" data-stage="${PL_E(x)}" ${ro}>${PL_E(x)}</button>`).join('')}</div>
-        <div class="wk-sub-grid"><div><h4>🧠 ATL skills this week</h4>${chips(wkList('atl'), D.atl, 'data-wchip="atl"')}</div><div><h4>🌟 Learner profile focus</h4>${chips(wkList('profile'), D.profile, 'data-wchip="profile"')}</div></div>
-        ${P.feedback ? `<p class="note">${P.status === 'returned' ? '↩' : '💬'} <b>Feedback from your school leader:</b> ${PL_E(P.feedback)}</p>` : ''}
-        <div class="ca-bar pl-flow">${canEdit && (P.status === 'draft' || P.status === 'returned') ? '<button type="button" class="btn btn-red" data-flow="submit">📤 Submit for review</button>' : ''}
-          ${P.status === 'review' && canReview ? '<button type="button" class="btn btn-white outline" data-flow="return">↩ Return with feedback</button><button type="button" class="btn btn-red" data-flow="approve">✅ Approve</button>' : ''}
-          ${P.status === 'approved' && canReview ? '<button type="button" class="btn btn-white outline" data-flow="return">💬 Add feedback</button>' : ''}
-          ${canEdit && (P.status === 'approved' || P.status === 'review') ? '<button type="button" class="link-btn" data-flow="reopen">✏️ Reopen for editing</button>' : ''}
-          ${canEdit ? '<button type="button" class="link-btn danger" id="wk-del">Delete plan</button>' : ''}</div></section>
-      <section class="panel"><h3>🗓️ Week at a glance</h3><div id="wk-glance">${glance()}</div></section>
-      <div id="wk-subjects"></div>
-      <div class="wk-add-subj">${canEdit ? `<select id="wk-new-subj"><option value="">➕ Add a subject…</option>${WK_SUBJECTS().map(x => `<option>${PL_E(x)}</option>`).join('')}</select>` : ''}${by('subjects')}</div>
-      <section class="panel pl-sec"><h3>💭 Reflection (after the week)</h3><textarea data-f="reflection" rows="3" maxlength="4000" placeholder="What worked well? What will you change next week?" ${canEdit ? '' : 'readonly'}>${PL_E(D.reflection || '')}</textarea>${by('reflection')}</section>`;
-    const subBox = document.getElementById('wk-subjects');
-    const drawPicker = async si => {
-      const sec = subBox.querySelector(`.wk-subj[data-si="${si}"] [data-objbox]`); if (!sec) return;
+    box.innerHTML = `<div class="wk-root">${[0, 1, 2, 3, 4, 5].map(k => `<datalist id="dl-stage${k}">${wkList('stage' + k).map(x => `<option value="${PL_E(x)}">`).join('')}</datalist>`).join('')}
+      <div class="wk-bar2"><button type="button" class="link-btn" id="wk-back">‹ All classes</button>
+        <div class="wk-bar2-t"><b>${PL_E(C.name)}</b><span>Week of ${wkLabel(P.week_start)}</span></div><span class="rc-st ${st[0]}">${st[1]}</span>${by('subjects')}
+        <div class="wk-bar2-a">${canEdit && empty ? '<button type="button" class="pill pill-soft" id="wk-copy">📋 Copy last week</button>' : ''}
+          ${canEdit && (P.status === 'draft' || P.status === 'returned') ? '<button type="button" class="btn btn-red" data-flow="submit">📤 Submit for review</button>' : ''}
+          ${P.status === 'review' && canReview ? '<button type="button" class="btn btn-white outline" data-flow="return">↩ Return</button><button type="button" class="btn btn-red" data-flow="approve">✅ Approve</button>' : ''}
+          ${P.status === 'approved' && canReview ? '<button type="button" class="btn btn-white outline" data-flow="return">💬 Feedback</button>' : ''}
+          <details class="wk-more"><summary class="pill pill-soft" aria-label="More">⋯</summary><div class="wk-more-m">
+            <button type="button" id="wk-word">⬇ Download Word</button><button type="button" id="wk-print">🖨️ Print</button><button type="button" id="wk-refresh">🔄 Refresh</button>
+            ${canEdit && (P.status === 'approved' || P.status === 'review') ? '<button type="button" data-flow="reopen">✏️ Reopen for editing</button>' : ''}${canEdit ? '<button type="button" class="danger" id="wk-del">🗑 Delete plan</button>' : ''}</div></details></div></div>
+      ${P.feedback ? `<p class="note wk-fb">${P.status === 'returned' ? '↩' : '💬'} <b>Feedback from your school leader:</b> ${PL_E(P.feedback)}</p>` : ''}
+      <section class="panel wk-over"><h3>📋 Week overview</h3><div class="wk-over-g">
+        <div><label class="wk-l">📘 Unit</label><select id="wk-unit" ${ro}><option value="">–</option>${(units || []).map(u => `<option value="${u.id}" ${P.unit_plan_id === u.id ? 'selected' : ''}>${PL_E(u.title)}</option>`).join('')}</select>
+          <label class="wk-l">🔄 Main inquiry focus (optional)</label><select id="wk-stage" ${ro}><option value="">–</option>${STG.map(x => `<option ${P.stage === x ? 'selected' : ''}>${PL_E(x)}</option>`).join('')}</select></div>
+        <div><label class="wk-l">🧠 ATL skills</label>${tags('atl', wkList('atl'), D.atl, 'week')}<label class="wk-l">🌟 Learner profile</label>${tags('profile', wkList('profile'), D.profile, 'week')}</div></div></section>
+      <details class="panel wk-glance-box" open><summary><h3>🗓️ Week at a glance</h3></summary><div class="in-scroll" id="wk-glance">${glance()}</div></details>
+      <section class="wk-subjects-box"><div id="wk-tabs"></div><div id="wk-subjects"></div></section>
+      <section class="panel pl-sec"><h3>💭 Reflection (after the week)</h3><textarea data-f="reflection" rows="3" maxlength="4000" placeholder="What worked well? What will you change next week?" ${canEdit ? '' : 'readonly'}>${PL_E(D.reflection || '')}</textarea>${by('reflection')}</section></div>`;
+    const root = box.querySelector('.wk-root');
+    const subBox = document.getElementById('wk-subjects'), tabBox = document.getElementById('wk-tabs');
+    const drawChosen = async () => { const el = subBox.querySelector('[data-objchosen]'); if (!el) return; const sb = D.subjects[active]; const L = await loadObjs(sb.subject), ch = L.filter(o => picked.has(o.id));
+      el.innerHTML = ch.length ? `<ul class="wk-objlist">${ch.map(o => `<li>${PL_E(o.text)}</li>`).join('')}</ul>` : ''; };
+    const drawPicker = async () => {
+      const sec = subBox.querySelector('[data-objbox]'); if (!sec || !pickOpen) { if (sec) sec.innerHTML = ''; return; }
       sec.innerHTML = '<p class="meta">Loading…</p>';
-      const L = await loadObjs(D.subjects[si].subject), topics = [...new Set(L.map(o => o.topic))];
+      const sb = D.subjects[active], L = await loadObjs(sb.subject), topics = [...new Set(L.map(o => o.topic))];
       sec.innerHTML = L.length ? topics.map(tp => `<details class="pl-topic" ${L.filter(o => o.topic === tp).some(o => picked.has(o.id)) ? 'open' : ''}><summary>${PL_E(tp)} <small class="meta">${L.filter(o => o.topic === tp && picked.has(o.id)).length}/${L.filter(o => o.topic === tp).length}</small></summary>
-        ${L.filter(o => o.topic === tp).map(o => `<label class="pl-obj"><input type="checkbox" data-obj value="${o.id}" ${picked.has(o.id) ? 'checked' : ''} ${ro}><span>${PL_E(o.text)}</span></label>`).join('')}</details>`).join('') : `<p class="meta">No ${PL_E(D.subjects[si].subject)} objectives for ${PL_E(C.grade)} in your school’s curriculum yet.</p>`;
+        ${L.filter(o => o.topic === tp).map(o => `<label class="pl-obj"><input type="checkbox" data-obj value="${o.id}" ${picked.has(o.id) ? 'checked' : ''} ${ro}><span>${PL_E(o.text)}</span></label>`).join('')}</details>`).join('') : `<p class="meta">No ${PL_E(sb.subject)} objectives for ${PL_E(C.grade)} in your school’s curriculum yet.</p>`;
     };
-    const drawSubjects = () => { subBox.innerHTML = D.subjects.map(subjectHtml).join('') || '<div class="empty-box"><p>Add the subjects you’re teaching this week (➕ Add a subject below), or copy last week’s plan.</p></div>'; openPick.forEach(si => drawPicker(si)); };
-    // saving: all subjects are saved together, a moment after each change
+    const draw = () => { if (active >= D.subjects.length) active = Math.max(0, D.subjects.length - 1);
+      tabBox.innerHTML = tabsHtml();
+      subBox.innerHTML = D.subjects.length ? subjectPanel(active) : '<div class="empty-box"><p>Start by adding the subjects you’re teaching this week (➕ Add subject), or copy last week’s plan.</p></div>';
+      drawPicker(); drawChosen(); subBox.querySelectorAll('textarea[data-lf="t"]').forEach(autoGrow); };
+    const autoGrow = t => { t.style.height = 'auto'; t.style.height = Math.max(38, t.scrollHeight + 2) + 'px'; };
+    // saving
     const saved = (k, t) => { const b = box.querySelector(`[data-by="${k}"]`); if (b) b.textContent = t; };
-    const save = async (k, v) => { saved(k, 'Saving…'); const { error } = await db.rpc('set_weekly_field', { pid, fkey: k, fval: v }); if (error) { saved(k, '⚠️ Not saved'); return say(friendly(error)); } saved(k, '✓ Saved just now by you'); };
+    const save = async (k, v) => { saved(k, 'Saving…'); const { error } = await db.rpc('set_weekly_field', { pid, fkey: k, fval: v }); if (error) { saved(k, '⚠️ Not saved'); return say(friendly(error)); } saved(k, '✓ Saved'); };
     let sTimer; const saveSubjects = () => { clearTimeout(sTimer); saved('subjects', 'Saving…'); sTimer = setTimeout(() => { save('subjects', D.subjects); document.getElementById('wk-glance').innerHTML = glance(); }, 700); };
-    const upd = async row => { const { error } = await db.from('weekly_plans').update(row).eq('id', pid); if (error) say(friendly(error)); };
-    drawSubjects();
-    const field = e => { const el = e.target, sec = el.closest('[data-si]'); if (!sec || !canEdit) return; const sb = D.subjects[Number(sec.dataset.si)];
-      if (el.dataset.sf) { sb[el.dataset.sf] = el.value; if (el.dataset.sf === 'subject' && e.type === 'change') drawSubjects(); saveSubjects(); return; }
-      if (el.dataset.chip) { const k = el.dataset.chip; sb[k] = [...sec.querySelectorAll(`[data-chip="${k}"]:checked`)].map(x => x.value); saveSubjects(); return; }
-      if (el.hasAttribute('data-obj')) { if (e.type !== 'change') return; const id = Number(el.value); el.checked ? picked.add(id) : picked.delete(id); upd({ objective_ids: [...picked] }); return; }
+    const upd = async row => { const { error } = await db.from('weekly_plans').update(row).eq('id', pid); if (error) say(friendly(error)); else saved('subjects', '✓ Saved'); };
+    draw();
+    // tags (subject or week)
+    const tagTarget = el => { const w = el.closest('[data-tags]'); return w && (w.dataset.scope === 'week' ? D : D.subjects[active]); };
+    const tagsChanged = w => { if (w.dataset.scope === 'week') save(w.dataset.tags, D[w.dataset.tags]); else saveSubjects(); };
+    const onTagAdd = (sel) => { const w = sel.closest('[data-tags]'), obj = tagTarget(sel), k = w.dataset.tags; let v = sel.value; if (!v) return;
+      if (v === '__other') { v = (prompt('Type your own:', '') || '').trim(); if (!v) { sel.value = ''; return; } }
+      obj[k] = (obj[k] || []).concat(v).filter((x, i, a) => a.indexOf(x) === i); tagsChanged(w); w.outerHTML = tags(k, wkList(k), obj[k], w.dataset.scope); };
+    const onTagRm = (b) => { const w = b.closest('[data-tags]'), obj = tagTarget(b), k = w.dataset.tags; obj[k].splice(Number(b.dataset.tagrm), 1); tagsChanged(w); w.outerHTML = tags(k, wkList(k), obj[k], w.dataset.scope); };
+    root.addEventListener('change', e => { if (e.target.matches('[data-tagadd]') && canEdit) onTagAdd(e.target); });
+    root.addEventListener('click', e => { const b = e.target.closest('[data-tagrm]'); if (b && canEdit) onTagRm(b); const g = e.target.closest('[data-goto]'); if (g) { active = Number(g.dataset.goto); pickOpen = false; draw(); tabBox.scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
+    // subject fields and lessons
+    const field = e => { const el = e.target, sec = el.closest('[data-si]'); if (!sec || !canEdit || el.matches('[data-tagadd]')) return; const sb = D.subjects[active];
+      if (el.dataset.sf) { if (el.dataset.sf === 'subject') { if (e.type !== 'change' || !el.value) return; sb.subject = el.value; pickOpen = false; draw(); saveSubjects(); return; } sb[el.dataset.sf] = el.value; saveSubjects(); return; }
+      if (el.hasAttribute('data-obj')) { if (e.type !== 'change') return; const id = Number(el.value); el.checked ? picked.add(id) : picked.delete(id); upd({ objective_ids: [...picked] }); drawChosen();
+        const pb = subBox.querySelector('[data-tog-obj]'); if (pb) { const n = (objs[sb.subject] || []).filter(o => picked.has(o.id)).length; pb.innerHTML = `▴ Hide the curriculum${n ? ` <b>${n} chosen</b>` : ''}`; } return; }
       const les = el.closest('[data-li]'); if (les && el.dataset.lf) { const l = sb.lessons[Number(les.dataset.li)];
         if (el.dataset.st !== undefined) l.stages[Number(el.dataset.st)][el.dataset.lf] = el.value; else l[el.dataset.lf] = el.value;
-        if (el.dataset.lf === 'a' || el.dataset.lf === 't') { const tg = les.querySelector('.wk-tog'), act = l.stages[5] && (l.stages[5].a || l.stages[5].t); if (tg) tg.textContent = `▴ ${l.stages.slice(0, 5).filter(x => x.a || x.t).length}/5 stages${act ? ' · ✓ ' + (STG[5] || 'Taking action') : ''}`; }
+        if (el.tagName === 'TEXTAREA') autoGrow(el);
+        const pg = les.querySelector('.wk-prog'), f = l.stages.slice(0, 5).filter(x => x.a || x.t).length, act = l.stages[5] && (l.stages[5].a || l.stages[5].t);
+        if (pg) { pg.textContent = `${f}/5${act ? ' · ✓ action' : ''}`; pg.classList.toggle('full', f === 5); }
+        if (el.dataset.lf === 'day' && e.type === 'change') { document.getElementById('wk-glance').innerHTML = glance(); }
         saveSubjects(); } };
     subBox.addEventListener('change', field);
     subBox.addEventListener('input', e => { if (e.target.matches('textarea, input[type=text]')) field(e); });
     subBox.addEventListener('click', e => {
-      const sec = e.target.closest('[data-si]'); if (!sec) return; const si = Number(sec.dataset.si), sb = D.subjects[si];
-      if (e.target.closest('[data-tog-obj]')) { openPick.has(si) ? openPick.delete(si) : openPick.add(si); drawSubjects(); return; }
-      if (e.target.closest('[data-rm-subj]')) { if (!confirm(`Remove ${sb.subject || 'this subject'} from this week’s plan?`)) return; D.subjects.splice(si, 1); openPick.clear(); closedLes.clear(); showAction.clear(); drawSubjects(); saveSubjects(); return; }
-      if (e.target.closest('[data-add-les]')) { const used = (sb.lessons || []).map(l => l.day), next = (DAYS.find(([dk]) => !used.includes(dk)) || DAYS[0])[0]; sb.lessons.push(blankLesson(next)); drawSubjects(); saveSubjects(); return; }
-      const les = e.target.closest('[data-li]'); if (!les) return; const li = Number(les.dataset.li), key = si + ':' + li;
-      if (e.target.closest('[data-tog-les]')) { closedLes.has(key) ? closedLes.delete(key) : closedLes.add(key); drawSubjects(); return; }
-      if (e.target.closest('[data-add-act]')) { showAction.add(key); drawSubjects(); const inp = subBox.querySelector(`.wk-subj[data-si="${si}"] .wk-les[data-li="${li}"] [data-st="5"][data-lf="a"]`); if (inp) inp.focus(); return; }
-      if (e.target.closest('[data-rm-les]')) { if (!confirm('Remove this lesson?')) return; sb.lessons.splice(li, 1); closedLes.clear(); showAction.clear(); drawSubjects(); saveSubjects(); }
+      const sec = e.target.closest('[data-si]'); if (!sec) return; const sb = D.subjects[active];
+      if (e.target.closest('[data-tog-obj]')) { pickOpen = !pickOpen; draw(); return; }
+      if (e.target.closest('[data-rm-subj]')) { if (!confirm(`Remove ${sb.subject || 'this subject'} from this week’s plan?`)) return; D.subjects.splice(active, 1); closedLes.clear(); showAction.clear(); active = Math.max(0, active - 1); draw(); saveSubjects(); return; }
+      if (e.target.closest('[data-add-les]')) { const used = (sb.lessons || []).map(l => l.day), next = (DAYS.find(([dk]) => !used.includes(dk)) || DAYS[0])[0]; sb.lessons.push(blankLesson(next)); draw(); saveSubjects(); return; }
+      const les = e.target.closest('[data-li]'); if (!les) return; const li = Number(les.dataset.li), key = active + ':' + li;
+      if (e.target.closest('[data-tog-les]')) { closedLes.has(key) ? closedLes.delete(key) : closedLes.add(key); draw(); return; }
+      if (e.target.closest('[data-add-act]')) { showAction.add(key); draw(); const inp = subBox.querySelector(`.wk-les[data-li="${li}"] [data-st="5"][data-lf="a"]`); if (inp) inp.focus(); return; }
+      if (e.target.closest('[data-rm-les]')) { if (!confirm('Remove this lesson?')) return; sb.lessons.splice(li, 1); closedLes.clear(); showAction.clear(); draw(); saveSubjects(); }
     });
-    const ns = document.getElementById('wk-new-subj');
-    if (ns) ns.onchange = () => { if (!ns.value) return; D.subjects.push(blankSubject(ns.value)); ns.value = ''; drawSubjects(); saveSubjects();
-      const last = subBox.lastElementChild; if (last) last.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-    box.querySelectorAll('[data-wchip]').forEach(w => w.onchange = () => { const k = w.dataset.wchip; D[k] = [...box.querySelectorAll(`[data-wchip="${k}"]:checked`)].map(x => x.value); save(k, D[k]); });
+    tabBox.addEventListener('click', e => { const t = e.target.closest('[data-tab]'); if (!t) return; active = Number(t.dataset.tab); pickOpen = false; draw(); });
+    tabBox.addEventListener('change', e => { if (e.target.id !== 'wk-new-subj' || !e.target.value) return; D.subjects.push(blankSubject(e.target.value)); active = D.subjects.length - 1; pickOpen = false; draw(); saveSubjects(); });
     const rf = box.querySelector('textarea[data-f="reflection"]'); let lastR = rf.value; rf.onblur = () => { if (!canEdit || rf.value === lastR) return; lastR = rf.value; save('reflection', rf.value); };
     document.getElementById('wk-unit').onchange = e => upd({ unit_plan_id: e.target.value ? Number(e.target.value) : null });
-    box.querySelectorAll('[data-stage]').forEach(b => b.onclick = () => { const v = P.stage === b.dataset.stage ? null : b.dataset.stage; P.stage = v; box.querySelectorAll('[data-stage]').forEach(x => x.classList.toggle('on', x.dataset.stage === v)); upd({ stage: v }); });
+    document.getElementById('wk-stage').onchange = e => upd({ stage: e.target.value || null });
     // review flow
     box.querySelectorAll('[data-flow]').forEach(b => b.onclick = async () => {
       const a = b.dataset.flow; let note = '';
@@ -421,7 +455,7 @@ async function startPlanner() {
         <h3>Week at a glance</h3><table><tr>${DAYS.map(([, dn]) => `<th>${dn}</th>`).join('')}</tr><tr>${DAYS.map(([dk]) => `<td>${D.subjects.flatMap(sb => (sb.lessons || []).filter(l => l.day === dk).map(l => `<b>${E(sb.subject)}</b>${l.focus ? ': ' + E(l.focus) : ''}`)).join('<br>') || '–'}</td>`).join('')}</tr></table>
         ${D.subjects.map(sb => { const ob = (objs[sb.subject] || []).filter(o => picked.has(o.id));
           return `<h2>${E(sb.subject || 'Subject')}</h2><table><tr><th style="width:50%">Learning objectives</th><th>Success criteria</th></tr><tr><td>${ob.length ? `<ul>${ob.map(o => `<li>${E(o.text)}</li>`).join('')}</ul>` : ''}${sb.obj_note ? `<p>${E(sb.obj_note).replace(/\n/g, '<br>')}</p>` : ''}${!ob.length && !sb.obj_note ? '–' : ''}</td><td>${E(sb.success || '–').replace(/\n/g, '<br>')}</td></tr></table>
-            ${(sb.lessons || []).map(l => `<h3>${E(dayName(l.day) || 'Lesson')}${l.focus ? ': ' + E(l.focus) : ''}</h3><table><tr><th style="width:24%">Inquiry stage</th><th style="width:30%">Activity</th><th>Details</th></tr>
+            ${(sb.lessons || []).map((l, li) => `<h3>Lesson ${li + 1} · ${E(dayName(l.day) || '')}${l.focus ? ': ' + E(l.focus) : ''}</h3><table><tr><th style="width:24%">Inquiry stage</th><th style="width:30%">Activity</th><th>Details</th></tr>
               ${STG.map((nm, k) => k === 5 && !((l.stages[5] || {}).a || (l.stages[5] || {}).t) ? '' : `<tr><td><b>${k + 1}. ${E(nm)}</b>${k === 5 ? ' <i>(optional)</i>' : ''}</td><td>${E((l.stages[k] || {}).a || '')}</td><td>${E((l.stages[k] || {}).t || '').replace(/\n/g, '<br>')}</td></tr>`).join('')}</table>`).join('')}
             <table><tr><th>Support</th><th>Challenge</th><th>Assessment</th><th>Resources</th></tr><tr><td>${list(sb.support, sb.support_note)}</td><td>${list(sb.challenge, sb.challenge_note)}</td><td>${list(sb.assessment, sb.assessment_note)}</td><td>${list(sb.resources, sb.resources_note)}</td></tr></table>`; }).join('')}
         <h2>Reflection</h2><p>${E(D.reflection || '–').replace(/\n/g, '<br>')}</p></body></html>`;

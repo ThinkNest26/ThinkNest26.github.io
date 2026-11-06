@@ -1744,7 +1744,25 @@
 "All my grades": "جميع صفوفي",
 "(you)": "(أنت)",
 "optional": "اختياري",
-"+ Add Taking action": "+ أضف اتخاذ الإجراء"
+"+ Add Taking action": "+ أضف اتخاذ الإجراء",
+"📋 Week overview": "📋 نظرة على الأسبوع",
+"📘 Unit": "📘 الوحدة",
+"🔄 Main inquiry focus (optional)": "🔄 محور البحث الرئيسي (اختياري)",
+"🧠 ATL skills": "🧠 مهارات منهجيات التعلم",
+"🌟 Learner profile": "🌟 ملف المتعلم",
+"+ Add…": "+ أضف…",
+"➕ Add subject": "➕ أضف مادة",
+"Objectives and success criteria": "الأهداف ومعايير النجاح",
+"Lessons, through the inquiry cycle": "الدروس عبر دورة البحث",
+"Differentiation, assessment and resources": "التمايز والتقييم والمصادر",
+"+ Add a lesson": "+ أضف درسًا",
+"Notes (optional)": "ملاحظات (اختياري)",
+"▾ Choose from the curriculum": "▾ اختر من المنهج",
+"🗑 Delete plan": "🗑 احذف الخطة",
+"Change subject…": "غيّر المادة…",
+"📋 Copy last week": "📋 انسخ الأسبوع الماضي",
+"💬 Feedback": "💬 ملاحظات",
+"Details": "التفاصيل"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times
