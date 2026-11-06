@@ -1533,3 +1533,9 @@ html.tn-ar .ca-bar .btn-red { margin-left: 0; margin-right: auto; }
 #t-ins .in-cards { margin-top: 4px; }
 .ca-err { background: #FDECEC; color: #8A1C1C; border: 1px solid #F5C2C2; border-radius: 12px; padding: 10px 14px; margin: 0; }
 .ca-next { flex: 1; min-width: 200px; }
+/* ===== Class community ===== */
+.tn-class-banner { display: flex; align-items: center; gap: 14px; background: linear-gradient(120deg, #3E4B94, #6A78C9 65%, #8E7CE6); color: #fff; border-radius: 22px; padding: 16px 20px; margin-bottom: 14px; }
+.tn-cb-ic { font-size: 1.8rem; flex: none; } .tn-class-banner > div { flex: 1; } .tn-class-banner b { font-size: 1.15rem; }
+.tn-class-banner p { margin: 2px 0 0; opacity: .92; font-size: .95rem; }
+.tn-class-banner .btn { background: #fff !important; color: #3E4B94 !important; text-decoration: none; font-weight: 800; white-space: nowrap; }
+@media (max-width: 640px) { .tn-class-banner { flex-wrap: wrap; } .tn-class-banner .btn { width: 100%; text-align: center; } }

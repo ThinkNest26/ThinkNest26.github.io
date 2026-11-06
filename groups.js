@@ -122,7 +122,7 @@ async function startGroup() {
     const likes = p.group_post_likes || [], comments = (p.group_post_comments || []).slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     const liked = likes.some(l => l.user_id === user.id);
     return `<article class="panel post" data-gpost="${p.id}">
-        <header class="post-head"><span class="initials">${esc(gIni(p.author_name))}</span><div><b>${esc(p.author_name || 'Member')}</b> ${gTag(p.author_role)}<span class="meta">${gAgo(p.created_at)}</span></div>
+        <header class="post-head"><span class="initials" data-av="${p.author_id}">${esc(gIni(p.author_name))}</span><div><b>${esc(p.author_name || 'Member')}</b> ${gTag(p.author_role)}<span class="meta">${gAgo(p.created_at)}</span></div>
         <div class="post-menu">${p.author_id === user.id || isOwner || isAdmin ? '<button class="link-btn" data-del-gpost>Delete</button>' : ''}${p.author_id !== user.id ? '<button class="link-btn" data-rep-gpost>Report</button>' : ''}</div></header>
         <p class="post-body">${esc(p.body).replace(/\n/g, '<br>')}</p>
         ${p.image_path && gsigned[p.image_path] ? `<img class="post-img" src="${gsigned[p.image_path]}" alt="Picture shared by ${esc(p.author_name || 'a member')}">` : ''}

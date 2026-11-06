@@ -221,3 +221,29 @@ function tnRiddleCard(host, band) {
   });
   draw();
 }
+
+// ----- Make each class page feel like its own private community -----
+async function tnClassCommunity() {
+  const gid = Number(new URLSearchParams(location.search).get('id')); if (!gid) return;
+  const { data: g } = await db.from('study_groups').select('id, name, kind').eq('id', gid).maybeSingle();
+  if (!g || g.kind !== 'class') return;
+  const ar = typeof tnLang === 'function' && tnLang() === 'ar';
+  const T = (en, a) => ar ? a : en;
+  const lab = { 't-feed': T('💬 Class community', '💬 مجتمع الفصل'), 't-res': T('📚 Resources', '📚 المصادر'), 't-mem': T('👥 Members', '👥 الأعضاء') };
+  document.querySelectorAll('.tabs [data-tab]').forEach(b => { if (lab[b.dataset.tab]) { b.textContent = lab[b.dataset.tab]; b.setAttribute('data-no-tr', ''); } });
+  const feed = document.getElementById('t-feed'); if (!feed || document.getElementById('tn-class-banner')) return;
+  const safe = String(g.name).replace(/[<>&]/g, '');
+  const banner = document.createElement('section'); banner.className = 'tn-class-banner'; banner.id = 'tn-class-banner'; banner.setAttribute('data-no-tr', '');
+  banner.innerHTML = `<span class="tn-cb-ic" aria-hidden="true">🔒</span><div><b>${T(safe + ' community', 'مجتمع ' + safe)}</b><p>${T('A private space just for this class. Only the teacher and students in this class can see it.', 'مساحة خاصة بهذا الفصل فقط. لا يراها إلا المعلّم وطلاب هذا الفصل.')}</p></div>
+    <a class="btn btn-red" href="messages.html?group=${gid}">${T('💬 Open class chat', '💬 افتح محادثة الفصل')}</a>`;
+  feed.prepend(banner);
+  const comp = document.getElementById('gcomposer');
+  if (comp && !comp.hidden) {
+    const ch = tnToday(TN_CHALLENGES);
+    const card = document.createElement('section'); card.className = 'tn-challenge'; card.id = 'tn-class-challenge';
+    card.innerHTML = `<span class="tn-ch-ic" aria-hidden="true">🎯</span><div><span class="tn-ch-k">${T('Today’s challenge', 'تحدّي اليوم')}</span><p>${ch}</p></div><button type="button" class="btn btn-red">${T('Answer this', 'أجب عن هذا')}</button>`;
+    card.setAttribute('data-no-tr', '');
+    banner.after(card);
+    card.querySelector('button').onclick = () => { const t = comp.querySelector('textarea'); if (!t) return; t.value = '🎯 ' + ch + '\n'; t.focus(); comp.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+  }
+}
