@@ -54,13 +54,15 @@ function startTeacherSignup() {
     const school = f.school_pick.value === 'A school' ? f.school.value.trim() : f.school_pick.value;
     const btn = f.querySelector('button[type=submit]'); btn.disabled = true; btn.textContent = 'Sending…';
     if (f.agree_terms && !f.agree_terms.checked) { btn.disabled = false; btn.textContent = 'Send request'; return showError(err, 'Please tick the box to agree to the Terms of use.'); }
+    if (typeof captchaMissing === 'function' && captchaMissing()) { btn.disabled = false; btn.textContent = 'Send request'; return showError(err, CAPTCHA_MSG); }
     if (!f.querySelector('input[name=also_parent]:checked')) { document.getElementById('parent-q').scrollIntoView({ behavior: 'smooth', block: 'center' }); btn.disabled = false; btn.textContent = 'Send request'; return showError(err, 'Please answer: are you also a parent at Think Nest?'); }
     const { data: su, error } = await db.auth.signUp({
       email: f.email.value.trim(), password: f.password.value,
-      options: { data: { role: 'teacher', full_name: f.full_name.value.trim(), subject: f.subject.value.trim(), school, phone: f.phone.value.trim(),
+      options: { captchaToken: (typeof captchaToken === 'function' ? captchaToken() : undefined), data: { role: 'teacher', full_name: f.full_name.value.trim(), subject: f.subject.value.trim(), school, phone: f.phone.value.trim(),
         grade_levels: f.grade_levels.value, education_degree: f.education_degree.value, teaching_method: f.teaching_method.value,
         curriculum: f.curriculum.value, experience_years: f.experience_years.value, bio: f.bio.value.trim(), also_parent: (f.querySelector('input[name=also_parent]:checked') || {}).value === 'yes', agreed_terms: true } }
     });
+    if (typeof captchaReset === 'function') captchaReset();
     btn.disabled = false; btn.textContent = 'Send request';
     if (error) return showError(err, friendly(error));
     if (alreadyRegistered(su)) return showError(err, ALREADY_MSG);

@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=67">
-  <link rel="stylesheet" href="app.css?v=67">
+  <link rel="stylesheet" href="style.css?v=69">
+  <link rel="stylesheet" href="app.css?v=69">
 </head>
 <body class="auth">
   <header class="app-top">
@@ -51,6 +51,7 @@
           </fieldset>
         </section>
         <p class="form-error" id="psignup-error" role="alert" hidden></p>
+        <div class="captcha-box" data-captcha></div>
         <label class="remember agree-box"><input type="checkbox" name="agree_terms" required> <span>I agree to the <a href="terms.html" target="_blank" rel="noopener">Terms of use</a> and have read the <a href="privacy.html" target="_blank" rel="noopener">Privacy notice</a>.</span></label>
         <button type="submit" class="btn btn-red auth-btn">Continue</button>
         <p class="switch">Already have an account? <a href="parent-login.html">Log in</a></p>
@@ -59,10 +60,11 @@
   </main>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=67"></script>
-  <script src="app.js?v=67"></script>
-  <script src="family.js?v=67"></script>
-  <script src="parent.js?v=67"></script>
+  <script src="supabase-config.js?v=69"></script>
+  <script src="app.js?v=69"></script>
+  <script src="captcha.js?v=69"></script>
+  <script src="family.js?v=69"></script>
+  <script src="parent.js?v=69"></script>
   <script>startParentSignup(); initFamilySignup();</script>
 </body>
 </html>

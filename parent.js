@@ -21,11 +21,13 @@ function startParentSignup() {
     if (f.agree_terms && !f.agree_terms.checked) return showError(err, 'Please tick the box to agree to the Terms of use.');
     const kids = typeof famCollect === 'function' ? famCollect() : [];
     const joined = (f.querySelector('input[name=family_joined]:checked') || {}).value !== 'no';
+    if (typeof captchaMissing === 'function' && captchaMissing()) return showError(err, CAPTCHA_MSG);
     const btn = f.querySelector('button[type=submit]'); btn.disabled = true; btn.textContent = 'Creating account…';
     const { data, error } = await db.auth.signUp({
       email: f.email.value.trim(), password: f.password.value,
-      options: { data: { role: 'parent', full_name: (f.first.value.trim() + ' ' + f.last.value.trim()).trim(), phone: f.phone.value.trim(), country: f.country.value, children: kids, family_joined: joined, agreed_terms: true } }
+      options: { captchaToken: (typeof captchaToken === 'function' ? captchaToken() : undefined), data: { role: 'parent', full_name: (f.first.value.trim() + ' ' + f.last.value.trim()).trim(), phone: f.phone.value.trim(), country: f.country.value, children: kids, family_joined: joined, agreed_terms: true } }
     });
+    if (typeof captchaReset === 'function') captchaReset();
     btn.disabled = false; btn.textContent = 'Continue';
     if (error) return showError(err, friendly(error));
     if (alreadyRegistered(data)) { if (typeof btn !== 'undefined' && btn) { btn.disabled = false; } return showError(err, ALREADY_MSG); }
