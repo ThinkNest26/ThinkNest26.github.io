@@ -59,7 +59,7 @@ async function startSchool() {
     document.documentElement.style.setProperty('--school2', S.color_accent || '#F27A6F');
   };
   paint();
-  const tabs = [['overview', '🏠 Overview'], ['people', '👥 People']].concat(canManage ? [['import', '📥 Import']] : [], [['settings', '⚙️ School settings']]);
+  const tabs = [['overview', '🏠 Overview'], ['dashboard', '📊 Dashboard'], ['people', '👥 People']].concat(canManage ? [['import', '📥 Import']] : [], [['settings', '⚙️ School settings']]);
   box.innerHTML = `<section class="sc-hero" id="sc-hero"></section>
     ${mine.length > 1 ? `<label class="sc-switch">School <select id="sc-pick">${mine.map(s => `<option value="${s.id}" ${s.id === sid ? 'selected' : ''}>${SC_E(s.name)}</option>`).join('')}</select></label>` : ''}
     <div class="tabs sc-tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="false" data-sct="${k}">${l}</button>`).join('')}</div>
@@ -73,7 +73,7 @@ async function startSchool() {
   const show = k => {
     document.querySelectorAll('[data-sct]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.sct === k)));
     history.replaceState(null, '', '#' + k);
-    ({ overview, people, settings, import: importTab })[k]();
+    ({ overview, dashboard, people, settings, import: importTab })[k]();
   };
   document.querySelector('.sc-tabs').addEventListener('click', e => { const b = e.target.closest('[data-sct]'); if (b) show(b.dataset.sct); });
   const pane = () => document.getElementById('sc-pane');
@@ -103,6 +103,81 @@ async function startSchool() {
       if (!sel.value) return;
       const { error: er } = await db.rpc('school_set_class_teacher', { gid: Number(sel.closest('[data-cls]').dataset.cls), uid: sel.value });
       if (er) return say(friendly(er)); say('✅ Class teacher saved.');
+    });
+  }
+
+
+  // ----- Whole-school dashboard
+  async function dashboard() {
+    pane().innerHTML = '<p class="empty">Gathering the whole-school data…</p>';
+    const { data: d, error } = await db.rpc('school_dashboard', { sid });
+    if (error) { pane().innerHTML = `<p class="empty">${SC_E(/school_dashboard|function/.test(error.message || '') ? 'Run database update 59 to see the dashboard.' : friendly(error))}</p>`; return; }
+    const T = d.totals || {}, C = d.classes || [], O = d.objectives || [], Wt = d.watch || [], Wk = d.weeks || [];
+    const pc = v => v == null ? '–' : v + '%';
+    const band = v => v == null ? 'none' : v >= 80 ? 'secure' : v >= 60 ? 'dev' : 'gap';
+    const scope = [].concat((d.scope || {}).grades || [], (d.scope || {}).subjects || []);
+    const steps = [];
+    C.filter(c => c.avg != null && c.avg < 60).forEach(c => steps.push(['🔴', `${c.name}: average ${c.avg}%${c.gaps ? ` with ${c.gaps} gap objective${c.gaps === 1 ? '' : 's'}` : ''}`, `Consider a check-in with ${c.teacher || 'the class teacher'} and a short support plan for the ${c.support} student${c.support === 1 ? '' : 's'} below 60%.`]));
+    const weak = O.find(o => o.avg < 60);
+    if (weak) steps.push(['🎯', `Weakest objective: “${weak.objective}”`, `${weak.avg}% across ${weak.classes} class${weak.classes === 1 ? '' : 'es'}${weak.grade ? ' in ' + weak.grade : ''}. A good focus for planning meetings or teacher development.`]);
+    C.filter(c => c.att != null && c.att < 85).forEach(c => steps.push(['📋', `Attendance in ${c.name} is ${c.att}%`, 'Look at the early warning list and contact families where needed.']));
+    C.filter(c => c.marking >= 5).forEach(c => steps.push(['✍️', `${c.marking} pieces of work to mark in ${c.name}`, `${c.teacher || 'The class teacher'} may need time or support to catch up.`]));
+    if (Wt.length) steps.push(['⚠️', `${Wt.length} student${Wt.length === 1 ? '' : 's'} on the early warning list`, 'Share the list with class teachers and the inclusion lead.']);
+    const best = C.filter(c => c.avg != null && c.avg >= 85).sort((a, b) => b.avg - a.avg)[0];
+    if (best) steps.push(['🌟', `${best.name} is your strongest class (${best.avg}%)`, `Celebrate it, and invite ${best.teacher || 'its teacher'} to share what works.`]);
+    // the weekly trend chart (attendance and average score)
+    const chart = () => {
+      const pts = Wk.map((w, i) => ({ i, att: w.att, avg: w.avg, label: new Date(w.week + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) }));
+      if (!pts.some(p => p.att != null || p.avg != null)) return '<p class="meta">Trends appear once registers are taken and work is marked.</p>';
+      const W = 1000, H = 260, L = 46, R = 20, Tp = 18, B = 36, x = i => L + i * (W - L - R) / Math.max(1, pts.length - 1), y = v => Tp + (100 - v) * (H - Tp - B) / 100;
+      const line = (k, col) => { let dPath = '', pen = false; pts.forEach(p => { if (p[k] == null) { pen = false; return; } dPath += (pen ? 'L' : 'M') + x(p.i).toFixed(1) + ' ' + y(p[k]).toFixed(1) + ' '; pen = true; });
+        return `<path d="${dPath}" fill="none" stroke="${col}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>` + pts.filter(p => p[k] != null).map(p => `<circle cx="${x(p.i)}" cy="${y(p[k])}" r="4" fill="${col}"><title>${p.label}: ${p[k]}%</title></circle>`).join(''); };
+      return `<svg class="sc-trend" viewBox="0 0 ${W} ${H}" role="img" aria-label="Attendance and average score over the last 10 weeks">
+        ${[0, 25, 50, 75, 100].map(v => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#ECEEF6"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" font-size="13" fill="#8A8FA3">${v}%</text>`).join('')}
+        ${pts.map(p => true ? `<text x="${x(p.i)}" y="${H - 10}" text-anchor="middle" font-size="13" fill="#8A8FA3">${p.label}</text>` : '').join('')}
+        ${line('att', '#2FA08A')}${line('avg', 'var(--school2)')}</svg>
+        <p class="sc-legend"><span><i style="background:#2FA08A"></i>Attendance</span><span><i style="background:var(--school2)"></i>Average score</span></p>`;
+    };
+    const flags = w => [w.avg != null && w.avg < 60 ? `<span class="sc-flag gap">Scores ${w.avg}%</span>` : '', w.att != null && w.att < 80 ? `<span class="sc-flag att">Attendance ${w.att}%</span>` : '',
+      w.done != null && w.done < 50 ? `<span class="sc-flag miss">Work done ${w.done}%</span>` : ''].join('');
+    pane().innerHTML = `${scope.length ? `<p class="note">🔎 Showing your area: <b>${SC_E(scope.join(', '))}</b></p>` : ''}
+      <section class="in-cards sc-cards sc-cards6">
+        <div class="in-card"><span>🎯</span><b>${pc(T.avg)}</b><small>Average score</small></div>
+        <div class="in-card"><span>📚</span><b>${pc(T.done)}</b><small>Work completed</small></div>
+        <div class="in-card"><span>📋</span><b>${pc(T.att)}</b><small>Attendance</small></div>
+        <div class="in-card"><span>🎒</span><b>${T.students || 0}</b><small>Students · ${T.classes || 0} classes</small></div>
+        <div class="in-card ${T.support ? 'warn' : ''}"><span>🧡</span><b>${T.support || 0}</b><small>Need support</small></div>
+        <div class="in-card"><span>✍️</span><b>${T.marking || 0}</b><small>To mark</small></div></section>
+      <section class="panel sc-chart-panel"><h2>📈 The last 10 weeks</h2>${chart()}</section>
+      <section class="panel in-steps"><h2>💡 Suggested next steps</h2>${steps.length ? steps.slice(0, 6).map(s => `<article class="in-step"><span class="in-step-ic">${s[0]}</span><div><b>${SC_E(s[1])}</b><p>${SC_E(s[2])}</p></div></article>`).join('')
+          : '<p class="meta">Suggestions appear once teachers link courses to their classes and students complete work. 🌱</p>'}</section>
+      <section class="panel"><div class="in-head"><h2>🏫 Classes</h2>${C.length ? '<button type="button" class="pill pill-soft" id="sc-csv">⬇ Download CSV</button>' : ''}</div>
+        ${C.length ? `<div class="in-scroll"><table class="ac-table sc-dtable"><thead><tr><th>Class</th><th>Teacher</th><th>Students</th><th>Average</th><th>Completed</th><th>Attendance</th><th>Gaps</th><th>Need support</th><th>To mark</th></tr></thead><tbody>
+          ${C.map(c => `<tr><td><button type="button" class="link-btn sc-drill" data-gid="${c.id}" data-cid="${c.course_id || ''}" data-name="${SC_E(c.name)}">${SC_E(c.name)}</button>${c.course_id ? '' : '<br><small class="meta">No course linked yet</small>'}</td>
+            <td>${SC_E(c.teacher || '–')}</td><td>${c.students}</td><td class="in-c ${band(c.avg)}">${pc(c.avg)}</td><td>${pc(c.done)}</td><td class="${c.att != null && c.att < 85 ? 'sc-low' : ''}">${pc(c.att)}</td>
+            <td>${c.gaps || 0}</td><td>${c.support || 0}</td><td>${c.marking || 0}</td></tr>`).join('')}</tbody></table></div>` : '<p class="meta">No classes yet.</p>'}
+        <div id="sc-drill"></div></section>
+      <div class="sc-two-col">
+        <section class="panel"><h2>🎯 Weakest objectives</h2>${O.length ? `<div class="in-objs">${O.slice(0, 8).map(o => `<div class="in-obj ${band(o.avg)}"><div class="in-obj-top"><b>${SC_E(o.objective)}</b><span class="in-tag">${o.avg}%</span></div>
+            <div class="in-bar"><i style="width:${o.avg}%"></i></div><span class="meta">${SC_E([o.grade, o.subject].filter(Boolean).join(' · '))} · ${o.results} results · ${o.classes} class${o.classes === 1 ? '' : 'es'}</span></div>`).join('')}</div>`
+          : '<p class="meta">Objectives appear once marked work is linked to learning objectives.</p>'}</section>
+        <section class="panel"><h2>⚠️ Early warning list</h2>${Wt.length ? `<div class="in-scroll"><table class="ac-table"><thead><tr><th>Student</th><th>Class</th><th>Why</th></tr></thead><tbody>
+            ${Wt.map(w => `<tr><td><b>${SC_E(w.name)}</b></td><td>${SC_E(w.class)}</td><td>${flags(w)}</td></tr>`).join('')}</tbody></table></div>`
+          : '<p class="meta">No students flagged. 🎉</p>'}</section></div>`;
+    const csvB = document.getElementById('sc-csv');
+    if (csvB) csvB.onclick = () => {
+      const rows = [['Class', 'Teacher', 'Students', 'Average %', 'Completed %', 'Attendance %', 'Gap objectives', 'Need support', 'To mark']].concat(C.map(c => [c.name, c.teacher || '', c.students, c.avg ?? '', c.done ?? '', c.att ?? '', c.gaps || 0, c.support || 0, c.marking || 0]));
+      const t = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + t], { type: 'text/csv' })); a.download = S.name.replace(/[^\w]+/g, '-').toLowerCase() + '-classes.csv'; document.body.appendChild(a); a.click(); a.remove();
+    };
+    pane().querySelectorAll('.sc-drill').forEach(b => b.onclick = () => {
+      const box = document.getElementById('sc-drill');
+      box.innerHTML = `<div class="sc-drill-head"><h3>📊 ${SC_E(b.dataset.name)}</h3><button type="button" class="link-btn" id="sc-drill-x">✕ Close</button></div><div id="sc-drill-in" class="insights"></div>`;
+      document.getElementById('sc-drill-x').onclick = () => { box.innerHTML = ''; };
+      const inBox = document.getElementById('sc-drill-in');
+      if (!b.dataset.cid) inBox.innerHTML = '<p class="meta">This class has no course linked yet, so there’s no work to analyse. Its class teacher can link a course in the class’s 📊 Insights tab.</p>';
+      else if (typeof inClassTab === 'function') inClassTab(inBox, Number(b.dataset.gid), Number(b.dataset.cid), b.dataset.name);
+      box.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }
 

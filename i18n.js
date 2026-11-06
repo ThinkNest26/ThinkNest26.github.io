@@ -395,7 +395,7 @@
 "Contact Us": "تواصل معنا",
 "Create a new course": "إنشاء دورة جديدة",
 "Curriculum editor": "محرّر المناهج",
-"Dashboard": "لوحة التحكم",
+"Dashboard": "لوحة المؤشرات",
 "Download my certificates": "تنزيل شهاداتي",
 "Enrol another child": "تسجيل ابن/ابنة آخر",
 "Family calendar": "تقويم العائلة",
@@ -1452,7 +1452,19 @@
 "on Think Nest": "على ثينك نست",
 "👩‍🏫 Staff room ": "👩‍🏫 غرفة المعلمين",
 "🔒 The staff room is only for teachers and leaders of a school.": "🔒 غرفة المعلمين خاصة بمعلمي المدرسة وقيادتها فقط.",
-"🔒 The school community is only for members of a school on Think Nest.": "🔒 مجتمع المدرسة خاص بأعضاء المدرسة على ثينك نست فقط."
+"🔒 The school community is only for members of a school on Think Nest.": "🔒 مجتمع المدرسة خاص بأعضاء المدرسة على ثينك نست فقط.",
+"📊 Dashboard": "📊 لوحة المؤشرات",
+"Average score": "متوسط الدرجات",
+"Need support": "يحتاجون دعمًا",
+"📈 The last 10 weeks": "📈 آخر 10 أسابيع",
+"🏫 Classes": "🏫 الفصول",
+"Gaps": "الفجوات",
+"🎯 Weakest objectives": "🎯 أضعف الأهداف",
+"⚠️ Early warning list": "⚠️ قائمة الإنذار المبكر",
+"Why": "السبب",
+"No students flagged. 🎉": "لا يوجد طلاب في القائمة. 🎉",
+"No course linked yet": "لم تُربط دورة بعد",
+"Gathering the whole-school data…": "جارٍ جمع بيانات المدرسة كاملة…"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

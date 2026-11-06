@@ -1711,3 +1711,23 @@ html.tn-school .app-bar .initials, html.tn-school #me-initials-small { backgroun
 /* closed school: hide public hubs and self-enrolment */
 html.tn-school #hub-banner-box, html.tn-school .hub-banner, html.tn-school .kc-add, html.tn-school a[href="add-child.html"], html.tn-school .pf-open { display: none !important; }
 html.tn-school .fam-add { display: none !important; }
+/* ===== Whole-school dashboard ===== */
+.sc-cards6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.sc-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+.sc-two-col > .panel { margin: 0 !important; }
+.school-page .sc-two-col + .panel, .school-page .panel + .sc-two-col { margin-top: 16px; }
+.sc-trend { width: 100%; height: auto; display: block; }
+.sc-legend { display: flex; gap: 16px; margin: 6px 0 0; font-size: .88rem; font-weight: 700; color: #4A4E5E; }
+.sc-legend i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+.sc-dtable td, .sc-dtable th { text-align: center; } .sc-dtable td:first-child, .sc-dtable th:first-child, .sc-dtable td:nth-child(2), .sc-dtable th:nth-child(2) { text-align: left; }
+.sc-drill { font-weight: 800; color: var(--school); text-decoration: underline; font-size: .95rem; padding: 0; }
+.sc-low { color: #B3461E; font-weight: 800; }
+.sc-flag { display: inline-block; font-size: .78rem; font-weight: 800; padding: 3px 9px; border-radius: 20px; margin: 2px 4px 2px 0; }
+.sc-flag.gap { background: #FDE6E6; color: #B3261E; } .sc-flag.att { background: #FFF4D6; color: #8A6100; } .sc-flag.miss { background: #EEF0FB; color: #3E4B94; }
+#sc-drill:not(:empty) { margin-top: 18px; border-top: 2px dashed #E4E6F1; padding-top: 14px; }
+.sc-drill-head { display: flex; justify-content: space-between; align-items: center; } .sc-drill-head h3 { margin: 0; }
+@media (max-width: 1100px) { .sc-cards6 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 860px) { .sc-two-col { grid-template-columns: 1fr; } .sc-cards6 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.school-page svg.sc-trend, svg.sc-trend { width: 100% !important; height: auto !important; max-width: none !important; }
+.school-page .sc-chart-panel, .school-page .in-steps { margin-top: 16px; } .sc-chart-panel .sc-trend { max-height: 300px; }
+#sc-drill .in-step .pill { display: none; }
