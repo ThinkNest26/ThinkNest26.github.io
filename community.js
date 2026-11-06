@@ -378,7 +378,7 @@ async function loadNewAccounts() {
   rows.filter(r => r.role === 'student').forEach(async r => {
     const { data: by } = await db.rpc('registered_by', { kid: r.id });
     const el = box.querySelector(`[data-acc="${r.id}"] .person-info`);
-    if (by && el) el.insertAdjacentHTML('beforeend', `<span class="meta">👪 Registered by parent: <b>${esc(by)}</b></span>`);
+    if (typeof by === 'string' && by && el) el.insertAdjacentHTML('beforeend', `<span class="meta">👪 Registered by parent: <b>${esc(by)}</b></span>`);
   });
   box.onclick = async e => {
     const row = e.target.closest('[data-acc]'); if (!row) return;
@@ -397,7 +397,7 @@ async function loadContactMessages() {
   const { data, error } = await db.from('contact_messages').select('*').order('created_at', { ascending: false }).limit(100);
   if (error) { box.innerHTML = '<p class="empty">Run database update 35 to see website messages.</p>'; return; }
   const open = (data || []).filter(m => !m.handled), done = (data || []).filter(m => m.handled).slice(0, 20);
-  document.getElementById('n-msgs').textContent = open.length;
+  document.getElementById('n-contact').textContent = open.length;
   const card = m => `<article class="panel msg-card ${m.handled ? 'done' : ''}" data-mid="${m.id}">
       <header><b>${esc(m.name)}</b> <span class="tag">${esc(m.who || '')}</span><span class="meta">${new Date(m.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</span></header>
       <p class="meta"><b>${esc(m.topic || '')}</b> · <a href="mailto:${esc(m.email)}?subject=${encodeURIComponent('Re: ' + (m.topic || 'your message to Think Nest'))}">${esc(m.email)}</a></p>

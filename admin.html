@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Approvals – Think Nest</title>
+  <title>Admin dashboard – Think Nest</title>
   <link rel="icon" href="images/tn-logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=67">
-  <link rel="stylesheet" href="app.css?v=67">
+  <link rel="stylesheet" href="style.css?v=70">
+  <link rel="stylesheet" href="app.css?v=70">
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -26,54 +26,71 @@
   <div class="app-main">
     <header class="app-bar">
       <button class="side-toggle" id="side-toggle" aria-label="Open menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
-      <span class="bar-title">Teacher area</span>
+      <span class="bar-title">Admin</span>
       <div class="bar-right"><span class="initials" id="me-initials-small" title="Your profile"></span></div>
     </header>
 
-    <main class="dash">
-      <h1 class="dash-h">Teacher approvals</h1>
-      <p class="hint">Check each person before approving. Approved teachers can create courses and see the students on their own courses.</p>
+    <main class="dash admin-dash">
+      <div class="page-head"><h1 class="title">Admin dashboard</h1><span class="meta" id="adm-updated"></span></div>
+      <section class="stats">
+        <div class="stat s1"><span class="stat-ic">👩‍🎓</span><div><b id="st-students">0</b><span>Students</span></div></div>
+        <div class="stat s2"><span class="stat-ic">🧑‍🏫</span><div><b id="st-teachers">0</b><span>Teachers</span></div></div>
+        <div class="stat s3"><span class="stat-ic">📚</span><div><b id="st-courses">0</b><span>Courses</span></div></div>
+        <div class="stat s4"><span class="stat-ic">👪</span><div><b id="st-parents">0</b><span>Parents</span></div></div>
+        <div class="stat s1"><span class="stat-ic">✅</span><div><b id="st-enrol">0</b><span>Course enrolments</span></div></div>
+        <div class="stat stat-wait"><span class="stat-ic">🔔</span><div><b id="st-waiting">0</b><span>Waiting for you</span></div></div>
+      </section>
+      <div class="adm-tabs" role="tablist" aria-label="Admin sections">
+        <button role="tab" id="tab-accounts" aria-controls="pane-accounts" aria-selected="false" data-tab="accounts"><span>👥</span>Accounts<i class="adm-badge" data-badge="accounts" hidden>0</i></button>
+        <button role="tab" id="tab-hubs" aria-controls="pane-hubs" aria-selected="false" data-tab="hubs"><span>🏠</span>Hubs<i class="adm-badge" data-badge="hubs" hidden>0</i></button>
+        <button role="tab" id="tab-messages" aria-controls="pane-messages" aria-selected="false" data-tab="messages"><span>✉️</span>Messages<i class="adm-badge" data-badge="messages" hidden>0</i></button>
+        <button role="tab" id="tab-safety" aria-controls="pane-safety" aria-selected="false" data-tab="safety"><span>🛡️</span>Safety<i class="adm-badge" data-badge="safety" hidden>0</i></button>
+        <button role="tab" id="tab-learning" aria-controls="pane-learning" aria-selected="false" data-tab="learning"><span>📚</span>Learning<i class="adm-badge" data-badge="learning" hidden>0</i></button>
+      </div>
+      <section class="adm-pane" id="pane-accounts" role="tabpanel" aria-labelledby="tab-accounts" hidden>
+      <h2 class="dash-h" id="new-accounts">New accounts <span class="count" id="n-newacc">0</span></h2>
+      <p class="hint">Every new student and parent waits here for your approval (teachers appear under Teachers). You also get an email at thinknest2026@gmail.com.</p>
+      <section class="approve-list" id="newacc-box"><p class="empty">Loading…</p></section>
       <h2 class="dash-h">Waiting for approval <span class="count" id="n-pending">0</span></h2>
       <section class="approve-list" id="pending"><p class="empty">Loading…</p></section>
       <h2 class="dash-h">Approved teachers <span class="count" id="n-teachers">0</span></h2>
       <section class="approve-list" id="teachers"></section>
       <details class="panel declined-box"><summary>Declined or removed <span class="count" id="n-declined">0</span></summary><section class="approve-list" id="declined"></section></details>
-      <h2 class="dash-h" id="waitlists">Waiting lists</h2>
-      <p class="hint">Students waiting for a class to open. Ask a teacher to create a course with this subject, curriculum and grade, and everyone waiting is told automatically.</p>
-      <section class="panel" id="waitlist-box"><p class="empty">Loading…</p></section>
       <h2 class="dash-h" id="data-requests">🗑️ Account deletion requests <span class="count" id="n-delreq">0</span></h2>
       <p class="hint">People asking for their account, or their child’s account, to be deleted. Check it’s really them (for example, reply to their email) before deleting.</p>
       <section class="approve-list" id="delreq-box"><p class="empty">Loading…</p></section>
-      <h2 class="dash-h" id="email-admin">📧 Emails</h2>
-      <p class="hint">Emails sent automatically from thinknest2026@gmail.com for approvals, certificates and your alerts.</p>
-      <section class="panel" id="email-admin-box"><p class="empty">Loading…</p></section>
-      <h2 class="dash-h" id="connect-admin">☕ Coffee &amp; Connections</h2>
-      <p class="hint">Switch features on or off for both hubs, and keep an eye on group meetups. Flagged private messages appear under “Messages to check”.</p>
-      <section class="panel" id="connect-admin-box"><p class="empty">Loading…</p></section>
-      <h2 class="dash-h" id="messages">✉️ Messages from the website <span class="count" id="n-msgs">0</span></h2>
-      <p class="hint">Everything sent through the Contact form. A copy is also emailed to thinknest2026@gmail.com.</p>
-      <section class="approve-list" id="msgs-box"><p class="empty">Loading…</p></section>
-      <h2 class="dash-h" id="new-accounts">New accounts <span class="count" id="n-newacc">0</span></h2>
-      <p class="hint">Every new student and parent waits here for your approval (teachers appear under Teachers). You also get an email at thinknest2026@gmail.com.</p>
-      <section class="approve-list" id="newacc-box"><p class="empty">Loading…</p></section>
+      </section>
+      <section class="adm-pane" id="pane-hubs" role="tabpanel" aria-labelledby="tab-hubs" hidden>
       <h2 class="dash-h" id="hub-requests">Hub requests <span class="count" id="n-hubreq">0</span></h2>
       <p class="hint">Teachers and parents asking to join Beyond the Bell or Beyond the School Run. You also get an email at thinknest2026@gmail.com.</p>
       <section class="approve-list" id="hubreq-box"><p class="empty">Loading…</p></section>
-      <h2 class="dash-h">Curriculum guide</h2>
-      <section class="panel req-row"><span>Edit the British, IB and American guides that students see when they choose their curriculum.</span><a class="btn btn-red" href="admin-curriculum.html">Open the editor</a></section>
-      <h2 class="dash-h">Community settings</h2>
-      <section class="panel" id="approval-setting"></section>
+      <h2 class="dash-h" id="connect-admin">☕ Coffee &amp; Connections</h2>
+      <p class="hint">Switch features on or off for both hubs, and keep an eye on group meetups. Flagged private messages appear under “Messages to check”.</p>
+      <section class="panel" id="connect-admin-box"><p class="empty">Loading…</p></section>
+      </section>
+      <section class="adm-pane" id="pane-messages" role="tabpanel" aria-labelledby="tab-messages" hidden>
+      <h2 class="dash-h" id="messages">✉️ Messages from the website <span class="count" id="n-contact">0</span></h2>
+      <p class="hint">Everything sent through the Contact form. A copy is also emailed to thinknest2026@gmail.com.</p>
+      <section class="approve-list" id="msgs-box"><p class="empty">Loading…</p></section>
+      <h2 class="dash-h" id="email-admin">📧 Emails</h2>
+      <p class="hint">Emails sent automatically from thinknest2026@gmail.com for approvals, certificates and your alerts.</p>
+      <section class="panel" id="email-admin-box"><p class="empty">Loading…</p></section>
+      </section>
+      <section class="adm-pane" id="pane-safety" role="tabpanel" aria-labelledby="tab-safety" hidden>
       <h2 class="dash-h">Reported community posts <span class="count" id="n-reports">0</span></h2>
       <section class="approve-list" id="reports"></section>
       <h2 class="dash-h">Messages to check <span class="count" id="n-msgs">0</span></h2>
       <p class="hint">Messages that were reported, or that look like they contain a phone number or email address.</p>
       <section class="approve-list" id="msg-review"></section>
-      <h2 class="dash-h">Site overview</h2>
-      <section class="stats">
-        <div class="stat s1"><span class="stat-ic">👩‍🎓</span><div><b id="st-students">0</b><span>Students</span></div></div>
-        <div class="stat s2"><span class="stat-ic">🧑‍🏫</span><div><b id="st-teachers">0</b><span>Teachers</span></div></div>
-        <div class="stat s3"><span class="stat-ic">📚</span><div><b id="st-courses">0</b><span>Courses</span></div></div>
-        <div class="stat s4"><span class="stat-ic">✅</span><div><b id="st-enrol">0</b><span>Course enrolments</span></div></div>
+      <h2 class="dash-h">Community settings</h2>
+      <section class="panel" id="approval-setting"></section>
+      </section>
+      <section class="adm-pane" id="pane-learning" role="tabpanel" aria-labelledby="tab-learning" hidden>
+      <h2 class="dash-h" id="waitlists">Waiting lists</h2>
+      <p class="hint">Students waiting for a class to open. Ask a teacher to create a course with this subject, curriculum and grade, and everyone waiting is told automatically.</p>
+      <section class="panel" id="waitlist-box"><p class="empty">Loading…</p></section>
+      <h2 class="dash-h">Curriculum guide</h2>
+      <section class="panel req-row"><span>Edit the British, IB and American guides that students see when they choose their curriculum.</span><a class="btn btn-red" href="admin-curriculum.html">Open the editor</a></section>
       </section>
     </main>
 
@@ -94,14 +111,15 @@
   <div class="side-shade" id="side-shade"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=67"></script>
-  <script src="app.js?v=67"></script>
-  <script src="nav.js?v=67"></script>
-  <script src="notify.js?v=67" defer></script>
-  <script src="teacher.js?v=67"></script>
+  <script src="supabase-config.js?v=70"></script>
+  <script src="app.js?v=70"></script>
+  <script src="nav.js?v=70"></script>
+  <script src="notify.js?v=70" defer></script>
+  <script src="teacher.js?v=70"></script>
   <script>startAdmin();</script>
-  <script src="community.js?v=67"></script>
-  <script src="chat.js?v=67"></script>
+  <script src="admintabs.js?v=70"></script>
+  <script src="community.js?v=70"></script>
+  <script src="chat.js?v=70"></script>
   <script>loadReports().then(loadGroupReports); loadMessageReview(); loadApprovalSetting(); loadWaitlists(); loadHubRequests(); loadNewAccounts(); loadContactMessages(); loadConnectAdmin(); loadEmailAdmin(); loadDeletionRequests();</script>
 </body>
 </html>
