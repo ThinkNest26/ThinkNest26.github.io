@@ -1892,3 +1892,11 @@ html.tn-school .find-class, html.tn-school [data-path-find] { display: none !imp
 .in-rv { border-left: 4px solid var(--school2); background: #FAFAFD; border-radius: 0 12px 12px 0; padding: 8px 12px; } .in-rv p { margin: 4px 0 0; } .in-pg { font-size: .8rem; font-weight: 800; }
 @media (max-width: 760px) { .in-add-grid, #in-rf { grid-template-columns: 1fr; } .in-target { grid-template-columns: 30px 1fr; } .in-due-row { grid-template-columns: 1fr; } }
 .in-fld textarea, .in-fld input, .in-planform input[type=text], #in-rf textarea, .in-add input { font-weight: 400 !important; }
+.ob-group { margin: 14px 0 2px; font-size: .95rem; text-transform: uppercase; letter-spacing: .05em; color: var(--school); border-bottom: 2px solid color-mix(in srgb, var(--school) 25%, transparent); padding-bottom: 4px; }
+.ob-crits .ob-group:first-child, .ob-v-crits .ob-group:first-child { margin-top: 0; }
+.ob-levels .ob-lv { flex: 1 1 90px; } .ob-presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.ob-rub-c4 { grid-template-columns: minmax(0, 1fr) 80px minmax(0, 2fr) minmax(0, 2fr) auto !important; }
+@media (max-width: 900px) { .ob-rub-c4 { grid-template-columns: 1fr !important; } }
+.ob-lv.lv-top.on, .ob-chip.lv-top, .ob-dist .lv-top, .sc-legend .lv-top { background: #3E4B94; border-color: #3E4B94; }
+.ob-lv.lv-vlo.on, .ob-chip.lv-vlo, .ob-dist .lv-vlo, .sc-legend .lv-vlo { background: #8E1B1B; border-color: #8E1B1B; }
+.sc-legend .lv-top, .sc-legend .lv-vlo { display: inline-block; }

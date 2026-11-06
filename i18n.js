@@ -1626,7 +1626,19 @@
 "🟢 Good progress": "🟢 تقدم جيد",
 "🟡 Some progress": "🟡 بعض التقدم",
 "🔴 Little progress": "🔴 تقدم محدود",
-"All students": "جميع الطلاب"
+"All students": "جميع الطلاب",
+"Outstanding": "متميز",
+"Very good": "جيد جدًا",
+"Acceptable": "مقبول",
+"Weak": "ضعيف",
+"Very weak": "ضعيف جدًا",
+"1.3 Learning skills": "1.3 مهارات التعلم",
+"3.1 Teaching for effective learning": "3.1 التدريس من أجل التعلم الفعال",
+"3.2 Assessment": "3.2 التقييم",
+"Judgement": "الحكم",
+"Reset to the MOE framework": "العودة إلى إطار وزارة التربية والتعليم",
+"🇦🇪 UAE MOE inspection framework (1.3, 3.1, 3.2)": "🇦🇪 إطار الرقابة المدرسية لوزارة التربية والتعليم (1.3، 3.1، 3.2)",
+"📋 General rubric (4 levels)": "📋 سلم تقدير عام (4 مستويات)"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

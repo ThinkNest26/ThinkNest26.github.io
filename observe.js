@@ -1,6 +1,23 @@
 // ===== Think Nest for Schools: lesson observations =====
 const OB_E = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const OB_DEFAULT = {
+const OB_MOE = {
+  preset: 'moe',
+  scale: [{ n: 1, label: 'Very weak' }, { n: 2, label: 'Weak' }, { n: 3, label: 'Acceptable' }, { n: 4, label: 'Good' }, { n: 5, label: 'Very good' }, { n: 6, label: 'Outstanding' }],
+  criteria: [
+    { key: 'ls1', group: '1.3 Learning skills', code: '1.3.1', label: 'Engagement in and responsibility for learning', desc: 'Students are motivated, take responsibility for their learning and know how to improve.' },
+    { key: 'ls2', group: '1.3 Learning skills', code: '1.3.2', label: 'Interactions, collaboration and communication', desc: 'Students work well together, discuss and communicate their learning clearly.' },
+    { key: 'ls3', group: '1.3 Learning skills', code: '1.3.3', label: 'Application of learning to the real world and making connections', desc: 'Students connect learning across subjects and apply it to real-life situations.' },
+    { key: 'ls4', group: '1.3 Learning skills', code: '1.3.4', label: 'Innovation, enterprise, inquiry, research, critical thinking and use of learning technologies', desc: 'Students inquire, research, think critically, solve problems and use technology to learn.' },
+    { key: 't1', group: '3.1 Teaching for effective learning', code: '3.1.1', label: 'Teachers’ knowledge of their subjects and how students learn them', desc: 'Secure subject knowledge and understanding of how students learn it.' },
+    { key: 't2', group: '3.1 Teaching for effective learning', code: '3.1.2', label: 'Lesson planning, the learning environment, and the use of time and resources', desc: 'Well-planned lessons, a stimulating environment, good use of time and resources.' },
+    { key: 't3', group: '3.1 Teaching for effective learning', code: '3.1.3', label: 'Teacher–student interactions, including questioning and dialogue', desc: 'Questions and dialogue deepen thinking and check understanding.' },
+    { key: 't4', group: '3.1 Teaching for effective learning', code: '3.1.4', label: 'Teaching strategies to meet the needs of individuals and groups', desc: 'Support and challenge for all groups, including students of determination, G&T and language learners.' },
+    { key: 't5', group: '3.1 Teaching for effective learning', code: '3.1.5', label: 'Teaching to develop critical thinking, problem-solving, innovation and independent learning', desc: 'Students are given chances to think critically, solve problems, innovate and learn independently.' },
+    { key: 'a4', group: '3.2 Assessment', code: '3.2.4', label: 'Use of assessment information to influence teaching and students’ progress', desc: 'The teacher checks learning during the lesson and adapts teaching to it.' },
+    { key: 'a5', group: '3.2 Assessment', code: '3.2.5', label: 'Teachers’ knowledge of students’ strengths and weaknesses, feedback, and self- and peer-assessment', desc: 'Useful feedback; students assess their own and each other’s work and know their next steps.' }]
+};
+const OB_GENERAL = {
+  preset: 'general',
   scale: [{ n: 1, label: 'Needs support' }, { n: 2, label: 'Developing' }, { n: 3, label: 'Effective' }, { n: 4, label: 'Highly effective' }],
   criteria: [
     { key: 'planning', label: 'Planning and subject knowledge', desc: 'Clear objectives, well-sequenced activities, secure subject knowledge.' },
@@ -23,11 +40,14 @@ async function startObserve() {
   const isLead = ['principal', 'vice_principal', 'assistant_principal', 'coordinator', 'head_of_department'].includes(S.my_role) || profile.role === 'admin';
   const canRubric = ['principal', 'vice_principal', 'assistant_principal', 'coordinator'].includes(S.my_role) || profile.role === 'admin';
   const { data: srow } = await db.from('schools').select('obs_rubric').eq('id', S.id).maybeSingle();
-  let R = Object.assign({}, OB_DEFAULT, (srow && srow.obs_rubric) || {});
+  let R = Object.assign({}, OB_MOE, (srow && srow.obs_rubric) || {});
   const { data: staffRows } = await db.rpc('obs_staff', { sid: S.id });
   const STAFF = staffRows || [], nameOf = id => (STAFF.find(p => p.user_id === id) || {}).full_name || '–';
+  const cTitle = c => (c.code ? c.code + ' ' : '') + c.label;
+  const grouped = (list, fn) => { let last = null; return list.map(c => { const h = c.group && c.group !== last ? `<h3 class="ob-group">${OB_E(c.group)}</h3>` : ''; last = c.group || last; return h + fn(c); }).join(''); };
+  const SCALE_DESC = () => R.scale.slice().sort((a, b) => b.n - a.n);
   const lvLabel = n => n ? ((R.scale.find(x => x.n === Number(n)) || {}).label || n) : 'Not seen';
-  const lvClass = n => { n = Number(n); if (!n) return 'none'; const r = n / R.scale.length; return r >= 0.99 ? 'hi' : r >= 0.7 ? 'ok' : r >= 0.45 ? 'mid' : 'lo'; };
+  const lvClass = n => { n = Number(n); if (!n) return 'none'; const r = n / R.scale.length; return r >= 0.99 ? 'top' : r >= 0.8 ? 'hi' : r >= 0.65 ? 'ok' : r >= 0.45 ? 'mid' : r > 0.2 ? 'lo' : 'vlo'; };
   const tabs = isLead ? [['new', '➕ New observation'], ['list', '📋 Observations'], ['trends', '📈 Trends'], ['mine', '📥 My feedback']].concat(canRubric ? [['rubric', '⚙️ Rubric']] : [])
     : [['mine', '📥 My feedback'], ['new', '🤝 Peer observation'], ['list', '✍️ Observations I wrote']];
   box.innerHTML = `<div class="page-head"><h1 class="title">👀 Lesson observations</h1></div>
@@ -48,10 +68,10 @@ async function startObserve() {
         <label>Grade <select name="grade"><option value="">–</option>${(S.grades || []).map(g => `<option ${o.grade === g ? 'selected' : ''}>${OB_E(g)}</option>`).join('')}</select></label>
         <label>Subject <input type="text" name="subject" maxlength="60" value="${OB_E(o.subject || '')}" placeholder="e.g. Maths"></label></div>
       <label>Focus of the observation (optional) <input type="text" name="focus" maxlength="200" value="${OB_E(o.focus || '')}" placeholder="e.g. Questioning, or support for English language learners"></label>
-      <div class="ob-crits">${R.criteria.map(c => `<section class="ob-crit" data-c="${OB_E(c.key)}"><div><b>${OB_E(c.label)}</b>${c.desc ? `<small class="meta">${OB_E(c.desc)}</small>` : ''}</div>
-        <div class="ob-levels" role="radiogroup" aria-label="${OB_E(c.label)}">${R.scale.map(l => `<button type="button" class="ob-lv lv-${lvClass(l.n)} ${Number(rt[c.key]) === l.n ? 'on' : ''}" data-lv="${l.n}" aria-pressed="${Number(rt[c.key]) === l.n}"><b>${l.n}</b><span>${OB_E(l.label)}</span></button>`).join('')}
+      <div class="ob-crits">${grouped(R.criteria, c => `<section class="ob-crit" data-c="${OB_E(c.key)}"><div><b>${OB_E(cTitle(c))}</b>${c.desc ? `<small class="meta">${OB_E(c.desc)}</small>` : ''}</div>
+        <div class="ob-levels" role="radiogroup" aria-label="${OB_E(c.label)}">${SCALE_DESC().map(l => `<button type="button" class="ob-lv lv-${lvClass(l.n)} ${Number(rt[c.key]) === l.n ? 'on' : ''}" data-lv="${l.n}" aria-pressed="${Number(rt[c.key]) === l.n}"><b>${l.n}</b><span>${OB_E(l.label)}</span></button>`).join('')}
           <button type="button" class="ob-lv lv-none ${rt[c.key] === 0 ? 'on' : ''}" data-lv="0" aria-pressed="${rt[c.key] === 0}"><b>–</b><span>Not seen</span></button></div>
-        <textarea rows="2" maxlength="2000" placeholder="Evidence: what did you see and hear?">${OB_E(nt[c.key] || '')}</textarea></section>`).join('')}</div>
+        <textarea rows="2" maxlength="2000" placeholder="Evidence: what did you see and hear?">${OB_E(nt[c.key] || '')}</textarea></section>`)}</div>
       <label>💪 Strengths <textarea name="strengths" rows="3" maxlength="3000">${OB_E(o.strengths || '')}</textarea></label>
       <label>🎯 Next steps <textarea name="next" rows="3" maxlength="3000">${OB_E(o.next_steps || '')}</textarea></label>
       <div class="ca-bar"><span class="meta">The teacher sees it only after you click Share.</span><span><button type="button" class="btn btn-white outline" data-save="draft">💾 Save draft</button> <button type="button" class="btn btn-red" data-save="share">📤 Save and share with the teacher</button></span></div></form>`;
@@ -123,8 +143,8 @@ async function startObserve() {
         <div class="ob-v-acts"><button type="button" class="pill pill-soft" id="ob-word">⬇ Word</button>${isObs && o.status === 'draft' ? '<button type="button" class="pill pill-soft" id="ob-edit">✏️ Edit</button><button type="button" class="btn btn-red" id="ob-share">📤 Share</button>' : ''}
           ${isObs || isLead ? '<button type="button" class="link-btn danger" id="ob-del">Delete</button>' : ''}</div></div>
       ${o.status === 'draft' ? '<p class="note">✏️ Draft: the teacher can’t see this yet.</p>' : ''}
-      <div class="ob-v-crits">${crit.map(c => `<div class="ob-v-c"><div><b>${OB_E(c.label)}</b>${(o.notes || {})[c.key] ? `<p>${OB_E(o.notes[c.key]).replace(/\n/g, '<br>')}</p>` : ''}</div>
-        <span class="ob-chip lv-${lvClass(o.ratings[c.key])}">${o.ratings[c.key] ? o.ratings[c.key] + ' · ' : ''}${OB_E(lvLabel(o.ratings[c.key]))}</span></div>`).join('') || '<p class="meta">No criteria rated.</p>'}</div>
+      <div class="ob-v-crits">${grouped(crit, c => `<div class="ob-v-c"><div><b>${OB_E(cTitle(c))}</b>${(o.notes || {})[c.key] ? `<p>${OB_E(o.notes[c.key]).replace(/\n/g, '<br>')}</p>` : ''}</div>
+        <span class="ob-chip lv-${lvClass(o.ratings[c.key])}">${OB_E(lvLabel(o.ratings[c.key]))}</span></div>`) || '<p class="meta">No criteria rated.</p>'}</div>
       ${o.strengths ? `<h3 class="sc-h3">💪 Strengths</h3><p class="ob-text">${OB_E(o.strengths).replace(/\n/g, '<br>')}</p>` : ''}
       ${o.next_steps ? `<h3 class="sc-h3">🎯 Next steps</h3><p class="ob-text">${OB_E(o.next_steps).replace(/\n/g, '<br>')}</p>` : ''}
       <h3 class="sc-h3">✍️ Teacher’s reflection</h3>
@@ -140,7 +160,7 @@ async function startObserve() {
       const html = `<html><head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;margin:32px;color:#1D2026}h1{color:${S.color_primary};margin:0}h2{color:${S.color_primary};font-size:13pt;border-bottom:2px solid ${S.color_accent};padding-bottom:3px;margin-top:18px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:6px;vertical-align:top;text-align:left}.meta{color:#555}</style></head><body>
         <p class="meta">${OB_E(S.name)} · ${OB_E((OB_KIND[o.kind] || '').replace(/^\S+\s/, ''))}</p><h1>Lesson observation: ${OB_E(nameOf(o.teacher_id))}</h1>
         <p class="meta">${obDate(o.observed_on)}${o.class_name ? ' · ' + OB_E(o.class_name) : ''}${o.subject ? ' · ' + OB_E(o.subject) : ''} · Observed by ${OB_E(nameOf(o.observer_id))}</p>${o.focus ? `<p><b>Focus:</b> ${OB_E(o.focus)}</p>` : ''}
-        <h2>Criteria</h2><table><tr><th>Criterion</th><th>Level</th><th>Evidence</th></tr>${crit.map(c => `<tr><td>${OB_E(c.label)}</td><td>${o.ratings[c.key] ? o.ratings[c.key] + ' – ' : ''}${OB_E(lvLabel(o.ratings[c.key]))}</td><td>${OB_E((o.notes || {})[c.key] || '')}</td></tr>`).join('')}</table>
+        <h2>Criteria</h2><table><tr><th>Criterion</th><th>Judgement</th><th>Evidence</th></tr>${crit.map(c => `<tr><td>${c.group ? `<small>${OB_E(c.group)}</small><br>` : ''}${OB_E(cTitle(c))}</td><td>${OB_E(lvLabel(o.ratings[c.key]))}</td><td>${OB_E((o.notes || {})[c.key] || '')}</td></tr>`).join('')}</table>
         <h2>Strengths</h2><p>${OB_E(o.strengths || '–').replace(/\n/g, '<br>')}</p><h2>Next steps</h2><p>${OB_E(o.next_steps || '–').replace(/\n/g, '<br>')}</p>
         <h2>Teacher’s reflection</h2><p>${OB_E(o.reflection || '–').replace(/\n/g, '<br>')}</p></body></html>`;
       const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + html], { type: 'application/msword' }));
@@ -160,11 +180,11 @@ async function startObserve() {
     pane().innerHTML = `<div class="ob-filters"><label>Period <select id="ob-since">${opts.map(([v, l]) => `<option value="${v}" ${v === since ? 'selected' : ''}>${l}</option>`).join('')}</select></label></div>
       <section class="in-cards sc-cards"><div class="in-card"><span>👀</span><b>${d.total}</b><small>Observations shared</small></div>
         ${Object.entries(OB_KIND).map(([k, l]) => `<div class="in-card"><span>${l.split(' ')[0]}</span><b>${(d.by_kind || {})[k] || 0}</b><small>${l.replace(/^\S+\s/, '')}</small></div>`).join('')}</section>
-      <div class="sc-two-col"><section class="panel"><h2>📈 Criteria across the school</h2><p class="meta">Average level (out of ${max}) and how the levels are spread. No names are shown.</p>
-        ${R.criteria.map(c => { const x = (d.criteria || {})[c.key]; if (!x) return `<div class="ob-tr"><b>${OB_E(c.label)}</b><small class="meta">Not rated yet</small></div>`;
-          return `<div class="ob-tr"><div class="ob-tr-top"><b>${OB_E(c.label)}</b><span class="ob-chip lv-${lvClass(Math.round(x.avg))}">${x.avg} / ${max}</span></div>
-            <div class="ob-dist">${R.scale.map(l => { const n = (x.dist || {})[l.n] || 0; return n ? `<i class="lv-${lvClass(l.n)}" style="flex:${n}" title="${OB_E(l.label)}: ${n}">${n}</i>` : ''; }).join('')}</div><small class="meta">${x.n} rating${x.n === 1 ? '' : 's'}</small></div>`; }).join('')}
-        <p class="sc-legend">${R.scale.map(l => `<span><i class="lv-${lvClass(l.n)}"></i>${l.n} ${OB_E(l.label)}</span>`).join('')}</p></section>
+      <div class="sc-two-col"><section class="panel"><h2>📈 Criteria across the school</h2><p class="meta">The average judgement for each criterion, and how judgements are spread. No names are shown.</p>
+        ${grouped(R.criteria, c => { const x = (d.criteria || {})[c.key]; if (!x) return `<div class="ob-tr"><b>${OB_E(cTitle(c))}</b><small class="meta">Not rated yet</small></div>`;
+          return `<div class="ob-tr"><div class="ob-tr-top"><b>${OB_E(cTitle(c))}</b><span class="ob-chip lv-${lvClass(Math.round(x.avg))}">${OB_E(lvLabel(Math.round(x.avg)))} · ${x.avg}</span></div>
+            <div class="ob-dist">${R.scale.map(l => { const n = (x.dist || {})[l.n] || 0; return n ? `<i class="lv-${lvClass(l.n)}" style="flex:${n}" title="${OB_E(l.label)}: ${n}">${n}</i>` : ''; }).join('')}</div><small class="meta">${x.n} rating${x.n === 1 ? '' : 's'}</small></div>`; })}
+        <p class="sc-legend">${SCALE_DESC().map(l => `<span><i class="lv-${lvClass(l.n)}"></i>${OB_E(l.label)}</span>`).join('')}</p></section>
       <section class="panel"><h2>👩‍🏫 Teachers</h2>${notYet.length ? `<p class="note">🔔 <b>${notYet.length} teacher${notYet.length === 1 ? '' : 's'}</b> not observed in this period.</p>` : ''}
         <div class="in-scroll"><table class="ac-table"><thead><tr><th>Teacher</th><th>Observations</th><th>Last</th></tr></thead><tbody>
         ${T.map(t => `<tr class="${t.count ? '' : 'sc-low'}"><td>${OB_E(t.name)}</td><td>${t.count}</td><td>${t.last ? obDate(t.last) : 'Not yet'}</td></tr>`).join('') || '<tr><td colspan="3" class="meta">No teachers yet.</td></tr>'}</tbody></table></div></section></div>`;
@@ -175,19 +195,22 @@ async function startObserve() {
   function rubric() {
     const C = R.criteria.map(c => Object.assign({}, c)), SC = R.scale.map(l => Object.assign({}, l));
     const draw = () => {
-      pane().innerHTML = `<section class="panel ob-rub"><h2>⚙️ Your school’s observation rubric</h2><p class="meta">Rename the criteria and levels to match your school’s framework. Changes apply to new observations.</p>
+      pane().innerHTML = `<section class="panel ob-rub"><h2>⚙️ Your school’s observation rubric</h2><p class="meta">Start from a framework, then rename, add or remove criteria and levels to match your school. Changes apply to new observations.</p>
+        <div class="ob-presets"><button type="button" class="pill pill-soft" data-preset="moe">🇦🇪 UAE MOE inspection framework (1.3, 3.1, 3.2)</button><button type="button" class="pill pill-soft" data-preset="general">📋 General rubric (4 levels)</button></div>
         <h3 class="sc-h3">Levels</h3><div class="ob-rub-scale">${SC.map((l, i) => `<label><b>${l.n}</b><input type="text" data-sl="${i}" maxlength="40" value="${OB_E(l.label)}"></label>`).join('')}
-          <span>${SC.length < 6 ? '<button type="button" class="pill pill-soft" id="ob-lv-add">+ Level</button>' : ''}${SC.length > 3 ? '<button type="button" class="link-btn" id="ob-lv-rm">− Level</button>' : ''}</span></div>
-        <h3 class="sc-h3">Criteria</h3>${C.map((c, i) => `<div class="ob-rub-c"><input type="text" data-cl="${i}" maxlength="80" value="${OB_E(c.label)}" aria-label="Criterion name"><input type="text" data-cd="${i}" maxlength="200" value="${OB_E(c.desc || '')}" placeholder="What it looks like (optional)" aria-label="Description">
+          <span>${SC.length < 7 ? '<button type="button" class="pill pill-soft" id="ob-lv-add">+ Level</button>' : ''}${SC.length > 3 ? '<button type="button" class="link-btn" id="ob-lv-rm">− Level</button>' : ''}</span></div>
+        <h3 class="sc-h3">Criteria</h3><p class="meta">Standard (for grouping) · code · criterion · what it looks like</p>${C.map((c, i) => `<div class="ob-rub-c ob-rub-c4"><input type="text" data-cg="${i}" maxlength="80" value="${OB_E(c.group || '')}" placeholder="e.g. 3.1 Teaching" aria-label="Standard"><input type="text" data-cc="${i}" maxlength="12" value="${OB_E(c.code || '')}" placeholder="3.1.1" aria-label="Code"><input type="text" data-cl="${i}" maxlength="160" value="${OB_E(c.label)}" aria-label="Criterion name"><input type="text" data-cd="${i}" maxlength="200" value="${OB_E(c.desc || '')}" placeholder="What it looks like (optional)" aria-label="Description">
           <button type="button" class="link-btn danger" data-crm="${i}" aria-label="Remove">✕</button></div>`).join('')}
         <button type="button" class="pill pill-soft" id="ob-c-add">+ Add a criterion</button>
-        <div class="ca-bar"><button type="button" class="link-btn" id="ob-reset">Use the Think Nest default</button><button type="button" class="btn btn-red" id="ob-rub-save">💾 Save rubric</button></div></section>`;
-      const sync = () => { pane().querySelectorAll('[data-sl]').forEach(x => SC[x.dataset.sl].label = x.value.trim()); pane().querySelectorAll('[data-cl]').forEach(x => C[x.dataset.cl].label = x.value.trim()); pane().querySelectorAll('[data-cd]').forEach(x => C[x.dataset.cd].desc = x.value.trim()); };
+        <div class="ca-bar"><button type="button" class="link-btn" id="ob-reset">Reset to the MOE framework</button><button type="button" class="btn btn-red" id="ob-rub-save">💾 Save rubric</button></div></section>`;
+      const sync = () => { pane().querySelectorAll('[data-cg]').forEach(x => C[x.dataset.cg].group = x.value.trim()); pane().querySelectorAll('[data-cc]').forEach(x => C[x.dataset.cc].code = x.value.trim()); pane().querySelectorAll('[data-sl]').forEach(x => SC[x.dataset.sl].label = x.value.trim()); pane().querySelectorAll('[data-cl]').forEach(x => C[x.dataset.cl].label = x.value.trim()); pane().querySelectorAll('[data-cd]').forEach(x => C[x.dataset.cd].desc = x.value.trim()); };
       const a = document.getElementById('ob-lv-add'); if (a) a.onclick = () => { sync(); SC.push({ n: SC.length + 1, label: 'Level ' + (SC.length + 1) }); draw(); };
       const r = document.getElementById('ob-lv-rm'); if (r) r.onclick = () => { sync(); SC.pop(); draw(); };
       document.getElementById('ob-c-add').onclick = () => { sync(); C.push({ key: 'c' + Date.now().toString(36), label: 'New criterion', desc: '' }); draw(); };
       pane().querySelectorAll('[data-crm]').forEach(b => b.onclick = () => { sync(); if (C.length <= 1) return say('Keep at least one criterion.'); C.splice(Number(b.dataset.crm), 1); draw(); });
-      document.getElementById('ob-reset').onclick = () => { C.splice(0, C.length, ...OB_DEFAULT.criteria.map(c => Object.assign({}, c))); SC.splice(0, SC.length, ...OB_DEFAULT.scale.map(l => Object.assign({}, l))); draw(); };
+      const usePreset = P => { C.splice(0, C.length, ...P.criteria.map(c => Object.assign({}, c))); SC.splice(0, SC.length, ...P.scale.map(l => Object.assign({}, l))); draw(); say('Loaded. Click 💾 Save rubric to use it.'); };
+      pane().querySelectorAll('[data-preset]').forEach(b => b.onclick = () => usePreset(b.dataset.preset === 'moe' ? OB_MOE : OB_GENERAL));
+      document.getElementById('ob-reset').onclick = () => usePreset(OB_MOE);
       document.getElementById('ob-rub-save').onclick = async () => {
         sync(); if (C.some(c => !c.label) || SC.some(l => !l.label)) return say('Every criterion and level needs a name.');
         const val = { criteria: C, scale: SC }; const { error } = await db.rpc('set_obs_rubric', { sid: S.id, val });
