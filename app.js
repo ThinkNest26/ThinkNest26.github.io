@@ -337,7 +337,7 @@ document.addEventListener('click', e => {
 
 
 // ===== Forgot / reset password =====
-const SITE = 'https://thinknest26.github.io/';
+const SITE = 'https://thinknestonline.com/';
 function startForgot() {
   const f = document.getElementById('forgot-form'), err = document.getElementById('forgot-error');
   f.addEventListener('submit', async e => {

@@ -31,7 +31,7 @@ function certificateHtml(c) {
         <div class="cert-seal"><span>${T.ic}</span><small>THINK NEST</small></div>
         <div class="cert-sig"><b class="cert-sign">The Think Nest Team</b><span>Think Nest</span></div>
       </div>
-      ${c.code ? `<div class="cert-verify">Certificate code ${cEsc(c.code)} · Check it at thinknest26.github.io/verify.html</div>` : ''}
+      ${c.code ? `<div class="cert-verify">Certificate code ${cEsc(c.code)} · Check it at thinknestonline.com/verify.html</div>` : ''}
     </div>
   </div>`;
 }
