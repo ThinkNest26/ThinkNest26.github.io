@@ -18,6 +18,22 @@ const SPACE = (document.body && document.body.dataset.space) || 'community';
 const CAFE = { teachers: { title: '☕ Teacher Café', who: ['teacher', 'school_leader', 'admin'], lead: 'Grab a coffee, pull up a chair. A private space just for teachers to swap hacks, share resources, ask the staffroom and celebrate each other.', ph: 'What’s brewing' }, parents: { title: '☕ Parent Café', who: ['parent', 'admin'], lead: 'Pull up a chair! A private space just for parents to swap tips, ask questions, share recommendations and cheer each other on.', ph: 'What’s on your mind' } }[SPACE];
 async function startCommunity() {
   const { user, profile: me } = await initShell();
+  let SCHOOL = null;
+  if (SPACE === 'school' || SPACE === 'staff') {
+    const { data: scs } = await db.rpc('my_schools');
+    const list = scs || [];
+    SCHOOL = list.find(s => SPACE === 'school' ? s.my_role !== 'parent' : !['student', 'parent'].includes(s.my_role)) || null;
+    if (!SCHOOL && me.role !== 'admin') { document.querySelector('main').innerHTML = `<div class="empty-box"><p>🔒 ${SPACE === 'staff' ? 'The staff room is only for teachers and leaders of a school.' : 'The school community is only for members of a school on Think Nest.'}</p></div>`; return; }
+    if (SCHOOL) {
+      const T = SPACE === 'staff' ? ['👩‍🏫 Staff room', `A private space for the teachers and leaders of ${SCHOOL.name}: share ideas, resources, questions and good news.`, 'Share something with your colleagues']
+                                  : [`🏫 ${SCHOOL.name} community`, `Only students, teachers and leaders of ${SCHOOL.name} can see this. Ask questions, share ideas and celebrate together.`, 'What’s on your mind'];
+      document.title = T[0].replace(/^\S+\s/, '') + ' – Think Nest';
+      const h1 = document.querySelector('.comm-hero h1'); if (h1) h1.textContent = T[0];
+      const p = document.querySelector('.comm-hero-text p:not(.meta)'); if (p) p.textContent = T[1];
+      const pb = document.getElementById('post-body'); if (pb) pb.dataset.ph = T[2];
+      if (SPACE === 'staff') document.querySelectorAll('.comm-tabs').forEach(x => x.hidden = true);
+    }
+  }
   if (CAFE && !(CAFE.who.includes(me.role) || (SPACE === 'parents' && me.also_parent))) { document.querySelector('main').innerHTML = `<div class="empty-box"><p>${CAFE.title} is a private space for ${SPACE}.</p><a class="btn btn-red" href="community.html">Go to the Community</a></div>`; return; }
   if (CAFE && me.role !== 'admin') {
     const { data: ok } = await db.rpc('is_hub_member', { h: SPACE });
@@ -27,7 +43,7 @@ async function startCommunity() {
   if (CAFE) { document.title = CAFE.title.replace('☕ ', '') + ' – Think Nest'; const h1 = document.querySelector('.comm-hero h1'); if (h1) h1.textContent = CAFE.title; const p = document.querySelector('.comm-hero-text p:not(.meta)'); if (p) p.textContent = CAFE.lead; document.querySelectorAll('.comm-tabs, #side-groups, #side-board').forEach(x => x.hidden = true); const r = document.querySelector('.comm-rules'); if (r) r.innerHTML = '🔒 Only ' + SPACE + ' can see this café. Be kind, keep it friendly, and use <b>Report</b> if something isn’t right.'; }
   const isAdmin = me.role === 'admin';
   // Teachers and the admin get their own menu
-  if (window.buildNav) window.buildNav(me.role === 'school_leader' ? 'teacher' : me.role);
+  if (window.buildNav) window.buildNav(me.role);
   else if (['teacher', 'school_leader', 'admin'].includes(me.role)) {
     document.querySelector('.side nav').innerHTML = `<h5 class="first">Teacher</h5><ul>
       ${isAdmin ? '<li><a href="admin.html"><span>Approvals</span></a></li>' : ''}
@@ -133,6 +149,7 @@ async function startCommunity() {
 
   async function load(older) {
     let q = db.from('posts').select('*, post_likes(user_id), post_comments(id, author_id, author_name, author_role, body, created_at)').eq('space', SPACE).or('status.eq.published,author_id.eq.' + user.id).order('created_at', { ascending: false }).limit(PAGE);
+    if (SCHOOL) q = q.eq('school_id', SCHOOL.id);
     if (older && oldest) q = q.lt('created_at', oldest);
     const { data, error } = await q;
     if (error) return say(friendly(error));
@@ -204,8 +221,8 @@ async function startCommunity() {
     const ptype = (form.querySelector('input[name=ptype]:checked') || {}).value || 'post';
     const extra = typeof cafeExtra === 'function' ? cafeExtra(ptype) : {};
     if (extra && extra.error) { btn.disabled = false; btn.textContent = 'Post'; return say(extra.error); }
-    if (await tnBlocked(body, SPACE === 'community' ? 'community post' : 'café post', null)) { if (typeof btn !== 'undefined' && btn) { btn.disabled = false; btn.textContent = 'Post'; } return; }
-    let { data: np, error } = await db.from('posts').insert(Object.assign({ body, image_path, post_type: ptype, space: SPACE }, extra || {})).select('status').single();
+    if (await tnBlocked(body, SPACE === 'community' ? 'community post' : SPACE === 'school' ? 'school community post' : SPACE === 'staff' ? 'staff room post' : 'café post', null)) { if (typeof btn !== 'undefined' && btn) { btn.disabled = false; btn.textContent = 'Post'; } return; }
+    let { data: np, error } = await db.from('posts').insert(Object.assign({ body, image_path, post_type: ptype, space: SPACE }, SCHOOL ? { school_id: SCHOOL.id } : {}, extra || {})).select('status').single();
     if (error && SPACE === 'community' && String(error.message).includes('column')) ({ data: np, error } = await db.from('posts').insert({ body, image_path }).select('status').single());
     btn.disabled = false; btn.textContent = 'Post';
     if (error) return say(friendly(error));

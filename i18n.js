@@ -1442,7 +1442,17 @@
 "⬇ Parent logins (CSV)": "⬇ بيانات دخول أولياء الأمور (CSV)",
 "📥 Import another file": "📥 استورد ملفًا آخر",
 "Class teacher": "معلّم الفصل",
-"✅ Class teacher saved.": "✅ تم حفظ معلّم الفصل."
+"✅ Class teacher saved.": "✅ تم حفظ معلّم الفصل.",
+"Messages & community": "الرسائل والمجتمع",
+"🏫 School community": "🏫 مجتمع المدرسة",
+"👩‍🏫 Staff room": "👩‍🏫 غرفة المعلمين",
+"My lessons": "دروسي",
+"Friends & community": "الأصدقاء والمجتمع",
+"📊 Insights": "📊 التحليلات",
+"on Think Nest": "على ثينك نست",
+"👩‍🏫 Staff room ": "👩‍🏫 غرفة المعلمين",
+"🔒 The staff room is only for teachers and leaders of a school.": "🔒 غرفة المعلمين خاصة بمعلمي المدرسة وقيادتها فقط.",
+"🔒 The school community is only for members of a school on Think Nest.": "🔒 مجتمع المدرسة خاص بأعضاء المدرسة على ثينك نست فقط."
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

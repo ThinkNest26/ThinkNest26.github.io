@@ -33,10 +33,31 @@
     { ic: '📥', label: 'Import', href: 'school.html#import' },
     { ic: '⚙️', label: 'School settings', href: 'school.html#settings' },
     { ic: '🏫', label: 'Classes', dyn: 'classes', items: [['classes.html', 'All classes'], ['classes.html?new=1', '➕ New class']] },
-    { ic: '💬', label: 'Messages', href: 'messages.html' }
+    { ic: '💬', label: 'Messages & community', items: [['messages.html', 'Messages'], ['school-community.html', '🏫 School community'], ['staff-room.html', '👩‍🏫 Staff room']] }
+  ];
+  // Think Nest for Schools: everyone in a school sees only their school
+  MENUS.school_teacher = [
+    { ic: '🏠', label: 'Home', href: 'teacher-dashboard.html' },
+    { ic: '🏫', label: 'My Classes', dyn: 'classes', items: [['classes.html', 'All my classes'], ['teacher-attendance.html', 'Attendance overview']] },
+    { ic: '📘', label: 'Lessons', items: [['teacher-courses.html', 'My courses'], ['teacher-calendar.html', 'Live classes'], ['teacher-insights.html', '📊 Insights'], ['teacher-certificates.html', '🏅 Certificates']] },
+    { ic: '💬', label: 'Messages & community', items: [['messages.html', 'Messages'], ['school-community.html', '🏫 School community'], ['staff-room.html', '👩‍🏫 Staff room']] },
+    { ic: '🧰', label: 'Resources', items: [['revision.html', 'Revision Hub'], ['curriculum.html', 'Curriculum guide']] }
+  ];
+  MENUS.school_student = [
+    { ic: '🏠', label: 'Home', href: 'student-dashboard.html' },
+    { ic: '🏫', label: 'My Classes', dyn: 'classes', items: [['classes.html', 'All my classes']] },
+    { ic: '📘', label: 'My lessons', items: [['my-courses.html', 'My courses'], ['calendar.html', 'My calendar'], ['recordings.html', 'Recordings'], ['files.html', 'My files']] },
+    { ic: '🏆', label: 'My Progress', items: [['rewards.html', 'My rewards'], ['certificates.html', 'My certificates'], ['reports.html', 'My reports']] },
+    { ic: '💬', label: 'Friends & community', items: [['school-community.html', '🏫 School community'], ['friends.html', 'My friends'], ['groups.html', 'Study groups'], ['messages.html', 'Messages']] },
+    { ic: '🧰', label: 'Revision Hub', href: 'revision.html' }
+  ];
+  MENUS.school_parent = [
+    { ic: '🏠', label: 'My Children', dyn: 'kids', items: [['parent-dashboard.html', 'All my children']] },
+    { ic: '📅', label: 'Family calendar', href: 'parent-calendar.html' },
+    { ic: '📝', label: 'Reports', href: 'reports.html' }
   ];
   MENUS.admin = [{ ic: '🛡️', label: 'Admin', items: [['admin.html', 'Admin dashboard'], ['admin-curriculum.html', 'Curriculum editor'], ['admin-founders.html', 'Founders page']] }].concat(MENUS.teacher);
-  const SETTINGS = { student: 'settings.html', teacher: 'teacher-settings.html', admin: 'teacher-settings.html', parent: 'parent-settings.html', school_leader: 'teacher-settings.html' };
+  const SETTINGS = { student: 'settings.html', teacher: 'teacher-settings.html', admin: 'teacher-settings.html', parent: 'parent-settings.html', school_leader: 'teacher-settings.html', school_teacher: 'teacher-settings.html', school_student: 'settings.html', school_parent: 'parent-settings.html' };
   // pages that aren't in the menu, and which menu item they belong to
   const ALIAS = { 'course.html': 'my-courses.html', 'teacher-course.html': 'teacher-courses.html', 'group.html': 'groups.html', 'child.html': 'parent-dashboard.html' };
   const PARENT_PAGES = ['parent-dashboard.html', 'add-child.html', 'parent-hub.html', 'parent-cafe.html', 'parent-connect.html', 'child.html', 'parent-settings.html', 'parent-calendar.html', 'reports.html'];
@@ -49,6 +70,12 @@
         window.TN_UID = session.user.id;
         const { data } = await db.from('profiles').select('role, also_parent').eq('id', session.user.id).maybeSingle();
         window.TN_ALSO_PARENT = !!(data && data.also_parent);
+        try {
+          const { data: sc } = await db.rpc('my_schools');
+          const LEAD = ['principal', 'vice_principal', 'assistant_principal', 'coordinator', 'head_of_department', 'inclusion_lead', 'admin_staff'];
+          window.TN_SCHOOL = (sc || []).find(s => LEAD.includes(s.my_role)) || (sc || [])[0] || null;
+          try { sessionStorage.setItem('tn_school_ctx', JSON.stringify(window.TN_SCHOOL)); } catch (_) {}
+        } catch (_) { window.TN_SCHOOL = null; }
         if (data && data.role) return data.role;
       }
     } catch (_) {}
@@ -62,7 +89,14 @@
     const page = location.pathname.split('/').pop() || 'index.html';
     const dual = window.TN_ALSO_PARENT && (role === 'teacher' || role === 'admin');
     const inParent = dual && PARENT_PAGES.includes(page);
-    const view = inParent ? 'parent' : role;
+    let view = inParent ? 'parent' : role;
+    const sc = window.TN_SCHOOL;
+    if (sc && role !== 'admin') {
+      view = ['principal', 'vice_principal', 'assistant_principal', 'coordinator', 'head_of_department', 'inclusion_lead', 'admin_staff'].includes(sc.my_role) ? 'school_leader'
+        : (sc.my_role === 'parent' || role === 'parent') ? 'school_parent' : (sc.my_role === 'student' || role === 'student') ? 'school_student' : 'school_teacher';
+      window.TN_ROLE = view;
+      schoolBrand(sc, view);
+    }
     const menu = MENUS[view] || MENUS.student;
     let here = ALIAS[page] || page;
     if (page === 'school.html' && /^#(people|settings|import)$/.test(location.hash)) here = 'school.html' + location.hash;
@@ -71,7 +105,7 @@
     let saved = {};
     try { saved = JSON.parse(localStorage.getItem('tn_nav_open') || '{}'); } catch (_) {}
     nav.classList.add('nav2');
-    const switcher = dual ? `<a class="nav2-switch" href="${inParent ? 'teacher-dashboard.html' : 'parent-dashboard.html'}">${inParent ? '👩‍🏫 Switch to teacher view' : '👪 Switch to parent view'}</a>` : '';
+    const switcher = dual && !sc ? `<a class="nav2-switch" href="${inParent ? 'teacher-dashboard.html' : 'parent-dashboard.html'}">${inParent ? '👩‍🏫 Switch to teacher view' : '👪 Switch to parent view'}</a>` : '';
     nav.innerHTML = switcher + menu.map((sec, i) => {
       if (sec.href) {
         const on = sec.href === here;
@@ -104,10 +138,10 @@
     try {
       if (cls) {
         let list = [];
-        if (view === 'student') { const { data } = await db.rpc('my_groups'); list = (data || []).filter(g => g.kind === 'class' && g.my_status === 'active').map(g => ({ id: g.id, name: g.name })); }
+        if (view === 'student' || view === 'school_student') { const { data } = await db.rpc('my_groups'); list = (data || []).filter(g => g.kind === 'class' && g.my_status === 'active').map(g => ({ id: g.id, name: g.name })); }
         else { const { data } = await db.from('study_groups').select('id, name').eq('owner_id', uid).eq('kind', 'class').order('name'); list = data || []; }
         cls.outerHTML = list.slice(0, 8).map(g => { const on = page === 'group.html' && String(g.id) === qid; return `<li><a href="group.html?id=${g.id}" class="nav2-item ${on ? 'active' : ''}" ${on ? 'aria-current="page"' : ''}>🏫 ${navEsc(g.name)}</a></li>`; }).join('')
-          || (view === 'student' ? '<li><span class="nav2-none">No classes yet</span></li>' : '');
+          || (/student/.test(view) ? '<li><span class="nav2-none">No classes yet</span></li>' : '');
       }
       if (kids) {
         const { data: links } = await db.from('parent_links').select('student_id').eq('parent_id', uid);
@@ -116,6 +150,32 @@
         kids.outerHTML = list.map(k => { const on = page === 'child.html' && k.id === qid; return `<li><a href="child.html?id=${k.id}" class="nav2-item ${on ? 'active' : ''}" ${on ? 'aria-current="page"' : ''}>👧 ${navEsc(String(k.full_name || 'My child').split(' ')[0])}</a></li>`; }).join('');
       }
     } catch (_) { if (cls) cls.remove(); if (kids) kids.remove(); }
+  }
+
+  // The school's own logo, name and colours
+  const SCHOOL_HOME = { school_leader: 'school.html', school_teacher: 'teacher-dashboard.html', school_student: 'student-dashboard.html', school_parent: 'parent-dashboard.html' };
+  function schoolBrand(sc, view) {
+    document.documentElement.style.setProperty('--school', sc.color_primary || '#3E4B94');
+    document.documentElement.style.setProperty('--school2', sc.color_accent || '#F27A6F');
+    document.documentElement.classList.add('tn-school');
+    const logo = document.querySelector('.side .side-logo'); if (!logo || logo.dataset.school) return;
+    logo.dataset.school = '1'; logo.href = SCHOOL_HOME[view] || 'index.html'; logo.classList.add('sc-side');
+    const ini = String(sc.name || '').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+    logo.innerHTML = `<span class="sc-side-pic">${sc.logo_url ? `<img src="${navEsc(sc.logo_url)}" alt="">` : `<b>${navEsc(ini)}</b>`}</span><span class="sc-side-name">${navEsc(sc.name)}</span><small class="sc-side-by">on Think Nest</small>`;
+    logo.setAttribute('aria-label', sc.name + ' home');
+    const bt = document.querySelector('.app-bar .bar-title'); if (bt) { bt.textContent = sc.name; bt.setAttribute('data-no-tr', ''); }
+  }
+  // public pages a school member should not use: send them back to their school
+  const PUBLIC_ONLY = { 'community.html': 'school-community.html', 'all-courses.html': 1, 'mentors.html': 1, 'teacher-cafe.html': 'staff-room.html', 'parent-cafe.html': 1,
+    'teacher-connect.html': 1, 'parent-connect.html': 1, 'teacher-hub.html': 1, 'parent-hub.html': 1, 'hub.html': 1, 'teacher-requests.html': 1, 'path.html': 1 };
+  function keepInSchool(role) {
+    const sc = window.TN_SCHOOL; if (!sc || role === 'admin') return false;
+    const page = location.pathname.split('/').pop() || 'index.html', go = PUBLIC_ONLY[page];
+    if (!go) return false;
+    const view = window.TN_ROLE;
+    const ok = typeof go === 'string' && !(go === 'staff-room.html' && /student|parent/.test(view)) && !(go === 'school-community.html' && view === 'school_parent');
+    location.replace(ok ? go : (SCHOOL_HOME[view] || 'index.html'));
+    return true;
   }
 
   // Account, help and log out live in the profile circle (top right)
@@ -191,6 +251,7 @@
     draw(); d.showModal();
   }
 
+  try { const c = JSON.parse(sessionStorage.getItem('tn_school_ctx') || 'null'); if (c && c.color_primary) { document.documentElement.style.setProperty('--school', c.color_primary); document.documentElement.style.setProperty('--school2', c.color_accent || '#F27A6F'); } } catch (_) {}
   window.buildNav = build;
   window.TN_MENUS = MENUS;
   window.TN_ROLE = null;
@@ -199,7 +260,8 @@
     const role = await roleNow();
     window.TN_ROLE = role;
     build(role);
-    setTimeout(() => welcomeTour(role), 900);
+    if (keepInSchool(role)) return;
+    if (!window.TN_SCHOOL) setTimeout(() => welcomeTour(role), 900);
     // other scripts may redraw the menu while the page loads; put ours back
     setTimeout(() => { if (!document.querySelector('.side nav.nav2 .nav2-top')) build(role); }, 1500);
   });

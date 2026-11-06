@@ -1695,3 +1695,19 @@ html.tn-ar .sc-step { text-align: right; }
 .sc-bar { height: 14px; background: #EEF0F8; border-radius: 10px; overflow: hidden; } .sc-bar i { display: block; height: 100%; background: var(--school); transition: width .3s; }
 .sc-teach { font: inherit; padding: 5px 8px; border: 1px solid #D9DCEB; border-radius: 8px; max-width: 220px; }
 @media (max-width: 760px) { .sc-imp-cards { grid-template-columns: 1fr; } }
+/* ===== Closed school: school branding everywhere ===== */
+.side .side-logo.sc-side { display: grid; justify-items: center; gap: 6px; text-decoration: none; padding: 10px 12px 14px; }
+.sc-side-pic { width: 86px; height: 86px; border-radius: 22px; background: #fff; display: grid; place-items: center; overflow: hidden; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+.sc-side-pic img { width: 100% !important; height: 100% !important; object-fit: contain; padding: 6px; max-width: none !important; }
+.sc-side-pic b { font-size: 1.8rem; font-weight: 900; color: var(--school); }
+.sc-side-name { color: #fff; font-weight: 800; font-size: 1rem; text-align: center; line-height: 1.25; }
+.sc-side-by { color: rgba(255,255,255,.6); font-size: .72rem; letter-spacing: .04em; }
+html.tn-school .side { background: color-mix(in srgb, var(--school) 22%, #1C2140); }
+html.tn-school .side nav.nav2 .nav2-sub a.active, html.tn-school .side nav.nav2 .nav2-top.active { background: color-mix(in srgb, var(--school) 70%, #fff 0%); }
+html.tn-school .side nav.nav2 .nav2-sec.has-active > .nav2-toggle .nav2-arrow { background: var(--school2); }
+html.tn-school .comm-hero { background: linear-gradient(120deg, var(--school), color-mix(in srgb, var(--school) 65%, var(--school2))) !important; }
+html.tn-school .btn-red { background: var(--school2); }
+html.tn-school .app-bar .initials, html.tn-school #me-initials-small { background: var(--school2); }
+/* closed school: hide public hubs and self-enrolment */
+html.tn-school #hub-banner-box, html.tn-school .hub-banner, html.tn-school .kc-add, html.tn-school a[href="add-child.html"], html.tn-school .pf-open { display: none !important; }
+html.tn-school .fam-add { display: none !important; }
