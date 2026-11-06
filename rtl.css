@@ -1,0 +1,44 @@
+/* ===== Think Nest: Arabic (right-to-left) ===== */
+.tn-lang { border: 1px solid rgba(62,75,148,.25); background: #fff; color: #3E4B94; border-radius: 30px; padding: 8px 14px; font: inherit; font-weight: 800; font-size: .9rem; cursor: pointer; white-space: nowrap; font-family: 'Tajawal', 'Raleway', Arial, sans-serif; }
+.tn-lang:hover { border-color: #3E4B94; }
+.nav-buttons .tn-lang { background: transparent; color: #fff; border-color: rgba(255,255,255,.6); }
+.app-top .tn-lang { margin-inline-end: 14px; }
+.bar-right .tn-lang { margin-inline-end: 10px; }
+.tn-lang.floating { position: fixed; bottom: 16px; inset-inline-start: 16px; z-index: 60; box-shadow: 0 6px 16px rgba(0,0,0,.12); }
+
+html.tn-ar body, html.tn-ar button, html.tn-ar input, html.tn-ar select, html.tn-ar textarea { font-family: 'Tajawal', 'Raleway', Arial, sans-serif; }
+html.tn-ar body { line-height: 1.75; }
+html.tn-ar h1, html.tn-ar h2, html.tn-ar h3, html.tn-ar .title { letter-spacing: 0; }
+html.tn-ar .plot-title, html.tn-ar .cert-kicker, html.tn-ar .hub-kicker, html.tn-ar .pc-kicker { letter-spacing: 0; }
+/* text alignment */
+html.tn-ar .legal ul, html.tn-ar .rv-cols ul { padding-left: 0; padding-right: 20px; }
+html.tn-ar .fd-card p.fd-bio, html.tn-ar .agree-box, html.tn-ar .also-parent-box { text-align: right; }
+/* phone sidebar slides in from the right */
+@media (max-width: 900px) {
+  html.tn-ar .side { left: auto; right: 0; transform: translateX(100%); }
+  html.tn-ar .side.open { transform: none; }
+}
+/* small direction fixes */
+html.tn-ar .nav2-arrow, html.tn-ar .wc-bar .meta, html.tn-ar .rv-dh .link-btn, html.tn-ar .cx-going .meta { margin-left: 0; margin-right: auto; }
+html.tn-ar .nav2-sub { margin-left: 0; margin-right: 26px; border-left: 0; border-right: 2px solid rgba(255,255,255,.12); padding-left: 0; padding-right: 10px; }
+html.tn-ar .nav2-sub .nav-dot { margin-left: 0; margin-right: auto; }
+html.tn-ar .search-results { text-align: right; }
+html.tn-ar .wc-times { border-right: 0; border-left: 1px solid #ECEEF6; }
+html.tn-ar .wc-times span { right: auto; left: 6px; }
+html.tn-ar .wc-ev { border-left: 0; border-right: 4px solid var(--c); text-align: right; }
+html.tn-ar .wc-now::before { left: auto; right: -5px; }
+html.tn-ar .post.pt-question, html.tn-ar .post.pt-idea, html.tn-ar .post.pt-celebrate, html.tn-ar .post.pt-showcase, html.tn-ar .post.pt-hack, html.tn-ar .post.pt-resource,
+html.tn-ar .post.pt-help, html.tn-ar .post.pt-funny, html.tn-ar .post.pt-shoutout, html.tn-ar .post.pt-poll { border-right-width: 5px; border-right-style: solid; border-right-color: inherit; }
+html.tn-ar .att-row, html.tn-ar .hub-row { border-left-width: 1px; border-right-width: 5px; }
+html.tn-ar .rv-dh { border-left: 0; border-right: 6px solid var(--c); padding-left: 0; padding-right: 14px; }
+html.tn-ar .pc-burst { left: auto; right: 50%; transform: translateX(50%); }
+html.tn-ar .poll-bar { left: auto; right: 0; }
+html.tn-ar .tour-btns, html.tn-ar .step-buttons { direction: rtl; }
+/* keep codes, emails and numbers readable */
+html.tn-ar input[type=email], html.tn-ar input[type=url], html.tn-ar input[type=tel], html.tn-ar .cert-verify { direction: ltr; text-align: right; }
+/* certificates stay in English (official design) */
+html.tn-ar .tncert { direction: ltr; font-family: 'Raleway', Arial, sans-serif; }
+/* footer links wrap onto more lines when needed (both languages) */
+.footer-middle { min-width: 0; max-width: 100%; }
+.footer-links { flex-wrap: wrap; row-gap: 10px; max-width: 100%; }
+html.tn-ar body { overflow-x: hidden; }

@@ -103,8 +103,24 @@
       ['🔔', 'Beyond the Bell', 'Our Teacher Hub is for <i>you</i>: workshops, the <b>Teacher Café</b> and <b>Coffee &amp; Connections</b>.']]
   };
   TOURS.admin = TOURS.teacher;
+  const TOURS_AR = {
+    student: [['👋', 'أهلًا بك في ثينك نست!', 'هذا عشّك التعليمي. إليك جولة سريعة على أجمل ما فيه، تستغرق 30 ثانية فقط.'],
+      ['📚', 'دوراتك', 'ابحث عن الدورات وانضم إليها من <b>التعلّم ← جميع الدورات</b>. ستجد داخل كل درس اختبارات وأوراق عمل وفيديوهات وأنشطة.'],
+      ['🏆', 'اجمع نقاط نست', 'سلّم أعمالك، واحضر حصصك، وساعد الآخرين لتجمع النقاط والأوسمة. انتقل من 🥚 فرخ صغير إلى 🏆 نسر في <b>تقدّمي</b>!'],
+      ['💬', 'تعلّموا معًا', 'كوّن صداقات، وانضم إلى مجموعات الدراسة، وشارك في <b>المجتمع</b>. كن لطيفًا، واستخدم <b>إبلاغ</b> إذا رأيت شيئًا غير مناسب.']],
+    parent: [['👋', 'أهلًا بك في ثينك نست!', 'إليك جولة سريعة تساعدك على متابعة تعلّم أبنائك.'],
+      ['👧👦', 'أبناؤك', 'تعرض صفحة <b>أبنائي</b> دورات كل طفل وتقدّمه وشهاداته وحضوره. تنتظر انضمام أحد أبنائك؟ انسخ <b>رابط الدعوة</b> الخاص به.'],
+      ['🧭', 'ابحث عن فصل', 'من الصفحة الرئيسية، اختر مادة ضمن <b>مسارات التفكير</b> لترى الفصول المناسبة لمنهج طفلك وصفه.'],
+      ['🚗', 'شيء لك أنت أيضًا', '<b>ما بعد مشوار المدرسة</b> هو مجتمع أولياء الأمور: ورش مخصّصة لك، و<b>مقهى أولياء الأمور</b> الخاص.']],
+    teacher: [['👋', 'أهلًا بك في ثينك نست!', 'شكرًا لتدريسك معنا. إليك جولة سريعة على أدواتك.'],
+      ['📘', 'الدورات والدروس', '<b>التدريس ← دوراتي</b>: أنشئ دورة، وأضف دروسًا، ثم <b>+ أضف إلى هذا الدرس</b> لتختار من 10 أدوات، كثير منها بمساعدة الذكاء الاصطناعي.'],
+      ['📋', 'الفصول والحضور والشهادات', 'أنشئ فصلًا من <b>فصولي</b>، وسجّل الحضور من لوحة التحكم، وامنح شهادات مصمّمة من <b>🏅 الشهادات</b>.'],
+      ['🔔', 'ما بعد الجرس', 'مجتمع المعلمين لدينا مخصّص <i>لك</i>: ورش عمل، و<b>مقهى المعلمين</b>، و<b>قهوة وتواصل</b>.']]
+  };
+  TOURS_AR.admin = TOURS_AR.teacher;
+
   async function welcomeTour(role) {
-    const steps = TOURS[role]; if (!steps || document.getElementById('tn-tour')) return;
+    const steps = ((typeof tnLang === 'function' && tnLang() === 'ar') ? TOURS_AR : TOURS)[role]; if (!steps || document.getElementById('tn-tour')) return;
     let uid = 'x'; try { const { data } = await db.auth.getSession(); uid = data.session ? data.session.user.id : 'x'; } catch (_) {}
     const key = 'tn_tour_' + role + '_' + uid, forced = /[?&]tour=1/.test(location.search);
     try { if (!forced && localStorage.getItem(key)) return; } catch (_) { if (!forced) return; }
@@ -118,7 +134,7 @@
         <div class="tour-dots" aria-hidden="true">${steps.map((_, k) => `<i class="${k === i ? 'on' : ''}"></i>`).join('')}</div>
         <div class="tour-btns">${i ? '<button type="button" class="link-btn" data-tb="back">‹ Back</button>' : '<button type="button" class="link-btn" data-tb="skip">Skip tour</button>'}
           <button type="button" class="btn btn-red" data-tb="next">${last ? 'Let’s go! 🚀' : 'Next ›'}</button></div>
-        ${last ? '<p class="tour-help">Need help later? Find the <a href="help.html">Help Centre</a> under ⚙️ Account.</p>' : ''}`;
+        ${last ? ((typeof tnLang === 'function' && tnLang() === 'ar') ? '<p class="tour-help">تحتاج إلى مساعدة لاحقًا؟ ستجد <a href="help.html">مركز المساعدة</a> ضمن ⚙️ الحساب.</p>' : '<p class="tour-help">Need help later? Find the <a href="help.html">Help Centre</a> under ⚙️ Account.</p>') : ''}`;
       d.querySelector('[data-tb=next]').focus();
     }
     d.addEventListener('click', e => { const b = e.target.closest('[data-tb]'); if (!b) return;
