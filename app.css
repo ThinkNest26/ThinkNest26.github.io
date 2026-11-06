@@ -1376,3 +1376,5 @@ dialog.wc-dialog::backdrop { background: rgba(30,35,82,.45); }
 @media (max-width: 900px) { .pp-grid { grid-template-columns: 1fr; } .pp-side { position: static; } .pp-hero { padding: 20px; } .pp-ic { width: 70px; height: 70px; font-size: 2.1rem; } }
 html.tn-ar .pp-class { border-left: 1px solid #ECEEF6; border-right: 5px solid var(--c); }
 html.tn-ar .pp-topic ul { padding: 0 66px 14px 18px; }
+a.hub-cat.hub-cat-cafe { text-decoration: none; background: linear-gradient(160deg, #FFF6EC, #F6E6D3); border-color: #EAD3B8; color: inherit; }
+a.hub-cat.hub-cat-cafe small { color: #8B5A2B; font-weight: 700; }
