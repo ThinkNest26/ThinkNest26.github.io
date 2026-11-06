@@ -373,7 +373,7 @@ function startReset() {
 // Privacy notice and Terms of use in every footer
 function addLegalLinks() {
   document.querySelectorAll('.footer-links').forEach(ul => {
-    [['privacy.html', 'Privacy notice'], ['terms.html', 'Terms of use']].forEach(([h, t]) => {
+    [['help.html', 'Help Centre'], ['privacy.html', 'Privacy notice'], ['terms.html', 'Terms of use']].forEach(([h, t]) => {
       if (!ul.querySelector(`a[href="${h}"]`)) { const li = document.createElement('li'); li.innerHTML = `<a href="${h}">${t}</a>`; ul.appendChild(li); }
     });
   });

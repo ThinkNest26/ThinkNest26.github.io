@@ -7,7 +7,7 @@
       { ic: '📚', label: 'Learning', items: [['my-courses.html', 'My Courses'], ['all-courses.html', 'All Courses'], ['calendar.html', 'My Calendar'], ['revision.html', 'Revision Hub'], ['mentors.html', 'Mentors'], ['recordings.html', 'My Recordings'], ['files.html', 'My Files']] },
       { ic: '🏆', label: 'My Progress', items: [['rewards.html', 'My Rewards'], ['certificates.html', 'My Certificates']] },
       { ic: '💬', label: 'Community', items: [['community.html', 'Community'], ['classes.html', 'My Classes'], ['groups.html', 'Study Groups'], ['friends.html', 'My Friends'], ['messages.html', 'Messages']] },
-      { ic: '⚙️', label: 'Account', items: [['settings.html', 'Account Settings'], ['contact.html', 'Contact Us'], ['#logout', 'Log out']] }
+      { ic: '⚙️', label: 'Account', items: [['settings.html', 'Account Settings'], ['help.html', 'Help Centre'], ['contact.html', 'Contact Us'], ['#logout', 'Log out']] }
     ],
     teacher: [
       { ic: '🏠', label: 'Dashboard', href: 'teacher-dashboard.html' },
@@ -15,7 +15,7 @@
       { ic: '🏫', label: 'My Classes', items: [['classes.html', 'My Classes'], ['teacher-attendance.html', 'Attendance'], ['groups.html', 'Study Groups']] },
       { ic: '🏅', label: 'Certificates', href: 'teacher-certificates.html' },
       { ic: '💬', label: 'Community', items: [['community.html', 'Community'], ['teacher-cafe.html', '☕ Teacher Café'], ['teacher-connect.html', '🤝 Coffee & Connections'], ['messages.html', 'Messages'], ['teacher-requests.html', 'Session Requests']] },
-      { ic: '⚙️', label: 'Account', items: [['teacher-settings.html', 'Account Settings'], ['contact.html', 'Contact Us'], ['index.html', 'Think Nest website'], ['#logout', 'Log out']] }
+      { ic: '⚙️', label: 'Account', items: [['teacher-settings.html', 'Account Settings'], ['help.html', 'Help Centre'], ['contact.html', 'Contact Us'], ['index.html', 'Think Nest website'], ['#logout', 'Log out']] }
     ],
     parent: [
       { ic: '🏠', label: 'My children', href: 'parent-dashboard.html' },
@@ -23,7 +23,7 @@
       { ic: '🪺', label: 'Beyond the School Run', href: 'parent-hub.html' },
       { ic: '☕', label: 'Parent Café', href: 'parent-cafe.html' },
       { ic: '💬', label: 'Community', href: 'community.html' },
-      { ic: '⚙️', label: 'Account', items: [['parent-settings.html', 'Account Settings'], ['contact.html', 'Contact Us'], ['#logout', 'Log out']] }
+      { ic: '⚙️', label: 'Account', items: [['parent-settings.html', 'Account Settings'], ['help.html', 'Help Centre'], ['contact.html', 'Contact Us'], ['#logout', 'Log out']] }
     ]
   };
   MENUS.admin = [{ ic: '🛡️', label: 'Admin', items: [['admin.html', 'Admin dashboard'], ['admin-curriculum.html', 'Curriculum editor'], ['admin-founders.html', 'Founders page']] }].concat(MENUS.teacher);
@@ -85,6 +85,47 @@
     if (lo) lo.addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; });
   }
 
+  // ----- Welcome tour (first visit, once per role) -----
+  const TOURS = {
+    student: [['👋', 'Welcome to Think Nest!', 'This is your learning nest. Here’s a quick tour of the best bits. It takes 30 seconds.'],
+      ['📚', 'Your courses', 'Find and join courses in <b>Learning → All Courses</b>. Inside each lesson you’ll find quizzes, worksheets, videos and activities.'],
+      ['🏆', 'Earn Nest Points', 'Hand in work, come to class and help others to earn points and badges. Grow from 🥚 Hatchling to 🏆 Eagle in <b>My Progress</b>!'],
+      ['💬', 'Learn together', 'Make friends, join study groups and post in the <b>Community</b>. Be kind, and use <b>Report</b> if something isn’t right.']],
+    parent: [['👋', 'Welcome to Think Nest!', 'Here’s a quick tour to help you follow your children’s learning.'],
+      ['👧👦', 'Your children', '<b>My children</b> shows each child’s courses, progress, certificates and attendance. Waiting for a child to join? Copy their <b>invite link</b>.'],
+      ['🧭', 'Find a class', 'On the home page, choose a subject under <b>Think Paths</b> to see classes for your child’s curriculum and grade.'],
+      ['🚗', 'Something for you too', '<b>Beyond the School Run</b> is our Parent Hub: workshops just for you, and the private <b>Parent Café</b>.']],
+    teacher: [['👋', 'Welcome to Think Nest!', 'Thank you for teaching with us. Here’s a quick tour of your toolkit.'],
+      ['📘', 'Courses and lessons', '<b>Teaching → My Courses</b>: create a course, add lessons, then <b>+ Add to this lesson</b> for 10 tools, many with AI help.'],
+      ['📋', 'Classes, attendance and certificates', 'Create a class in <b>My Classes</b>, take the register from your dashboard, and award designed certificates from <b>🏅 Certificates</b>.'],
+      ['🔔', 'Beyond the Bell', 'Our Teacher Hub is for <i>you</i>: workshops, the <b>Teacher Café</b> and <b>Coffee &amp; Connections</b>.']]
+  };
+  TOURS.admin = TOURS.teacher;
+  async function welcomeTour(role) {
+    const steps = TOURS[role]; if (!steps || document.getElementById('tn-tour')) return;
+    let uid = 'x'; try { const { data } = await db.auth.getSession(); uid = data.session ? data.session.user.id : 'x'; } catch (_) {}
+    const key = 'tn_tour_' + role + '_' + uid, forced = /[?&]tour=1/.test(location.search);
+    try { if (!forced && localStorage.getItem(key)) return; } catch (_) { if (!forced) return; }
+    let i = 0;
+    const d = document.createElement('dialog'); d.id = 'tn-tour'; d.className = 'tour'; d.setAttribute('aria-labelledby', 'tour-title');
+    document.body.appendChild(d);
+    const done = () => { try { localStorage.setItem(key, '1'); } catch (_) {} d.close(); d.remove(); };
+    function draw() {
+      const [ic, title, text] = steps[i], last = i === steps.length - 1;
+      d.innerHTML = `<div class="tour-ic" aria-hidden="true">${ic}</div><h2 id="tour-title">${title}</h2><p>${text}</p>
+        <div class="tour-dots" aria-hidden="true">${steps.map((_, k) => `<i class="${k === i ? 'on' : ''}"></i>`).join('')}</div>
+        <div class="tour-btns">${i ? '<button type="button" class="link-btn" data-tb="back">‹ Back</button>' : '<button type="button" class="link-btn" data-tb="skip">Skip tour</button>'}
+          <button type="button" class="btn btn-red" data-tb="next">${last ? 'Let’s go! 🚀' : 'Next ›'}</button></div>
+        ${last ? '<p class="tour-help">Need help later? Find the <a href="help.html">Help Centre</a> under ⚙️ Account.</p>' : ''}`;
+      d.querySelector('[data-tb=next]').focus();
+    }
+    d.addEventListener('click', e => { const b = e.target.closest('[data-tb]'); if (!b) return;
+      if (b.dataset.tb === 'next') { if (i === steps.length - 1) return done(); i++; draw(); }
+      else if (b.dataset.tb === 'back') { i--; draw(); } else done(); });
+    d.addEventListener('cancel', e => { e.preventDefault(); done(); });
+    draw(); d.showModal();
+  }
+
   window.buildNav = build;
   window.TN_MENUS = MENUS;
   window.TN_ROLE = null;
@@ -93,6 +134,7 @@
     const role = await roleNow();
     window.TN_ROLE = role;
     build(role);
+    setTimeout(() => welcomeTour(role), 900);
     // other scripts may redraw the menu while the page loads; put ours back
     setTimeout(() => { if (!document.querySelector('.side nav.nav2 .nav2-top')) build(role); }, 1500);
   });
