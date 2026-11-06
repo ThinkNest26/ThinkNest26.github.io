@@ -4,14 +4,14 @@
   const MENUS = {
     student: [
       { ic: '🏠', label: 'Dashboard', href: 'student-dashboard.html' },
-      { ic: '📚', label: 'Learning', items: [['my-courses.html', 'My Courses'], ['all-courses.html', 'All Courses'], ['my-activities.html', 'My Activities'], ['calendar.html', 'My Calendar'], ['revision.html', 'Revision Hub'], ['mentors.html', 'Mentors'], ['recordings.html', 'My Recordings'], ['files.html', 'My Files']] },
+      { ic: '📚', label: 'Learning', items: [['my-courses.html', 'My Courses'], ['all-courses.html', 'All Courses'], ['calendar.html', 'My Calendar'], ['revision.html', 'Revision Hub'], ['mentors.html', 'Mentors'], ['recordings.html', 'My Recordings'], ['files.html', 'My Files']] },
       { ic: '🏆', label: 'My Progress', items: [['rewards.html', 'My Rewards'], ['certificates.html', 'My Certificates']] },
       { ic: '💬', label: 'Community', items: [['community.html', 'Community'], ['classes.html', 'My Classes'], ['groups.html', 'Study Groups'], ['friends.html', 'My Friends'], ['messages.html', 'Messages']] },
       { ic: '⚙️', label: 'Account', items: [['settings.html', 'Account Settings'], ['contact.html', 'Contact Us'], ['#logout', 'Log out']] }
     ],
     teacher: [
       { ic: '🏠', label: 'Dashboard', href: 'teacher-dashboard.html' },
-      { ic: '📚', label: 'Teaching', items: [['teacher-courses.html', 'My Courses'], ['teacher-calendar.html', 'Live Classes'], ['teacher-objectives.html', 'Objectives & Activities'], ['revision.html', 'Revision Hub'], ['teacher-hub.html', 'Beyond the Bell (hub)']] },
+      { ic: '📚', label: 'Teaching', items: [['teacher-courses.html', 'My Courses'], ['teacher-calendar.html', 'Live Classes'], ['revision.html', 'Revision Hub'], ['teacher-hub.html', 'Beyond the Bell (hub)']] },
       { ic: '🏫', label: 'My Classes', items: [['classes.html', 'My Classes'], ['teacher-attendance.html', 'Attendance'], ['groups.html', 'Study Groups']] },
       { ic: '🏅', label: 'Certificates', href: 'teacher-certificates.html' },
       { ic: '💬', label: 'Community', items: [['community.html', 'Community'], ['teacher-cafe.html', '☕ Teacher Café'], ['teacher-connect.html', '🤝 Coffee & Connections'], ['messages.html', 'Messages'], ['teacher-requests.html', 'Session Requests']] },
@@ -86,11 +86,66 @@
   }
 
   window.buildNav = build;
+  window.TN_MENUS = MENUS;
+  window.TN_ROLE = null;
   document.addEventListener('DOMContentLoaded', async () => {
     if (!document.querySelector('.side nav') || typeof db === 'undefined') return;
     const role = await roleNow();
+    window.TN_ROLE = role;
     build(role);
     // other scripts may redraw the menu while the page loads; put ours back
     setTimeout(() => { if (!document.querySelector('.side nav.nav2 .nav2-top')) build(role); }, 1500);
+  });
+})();
+
+// ===== Top search bar: live results for courses and pages =====
+(function () {
+  const esc3 = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const EXTRA = { teacher: [['teacher-certificates.html', 'Award a certificate'], ['teacher-attendance.html', 'Take attendance'], ['teacher-courses.html', 'Create a new course']],
+                  student: [['rewards.html', 'Nest Points and badges'], ['certificates.html', 'Download my certificates']], parent: [['add-child.html', 'Enrol another child']], admin: [] };
+  function pages(role) {
+    const m = (window.TN_MENUS || {})[role] || [];
+    const out = [];
+    m.forEach(s => s.href ? out.push([s.href, s.label, s.ic]) : (s.items || []).forEach(([h, l]) => h !== '#logout' && out.push([h, l, s.ic])));
+    (EXTRA[role] || []).concat(role === 'admin' ? EXTRA.teacher : []).forEach(([h, l]) => out.push([h, l, '✨']));
+    return out;
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.querySelector('form.search'), input = form && form.querySelector('input'); if (!input) return;
+    input.setAttribute('autocomplete', 'off'); input.setAttribute('aria-autocomplete', 'list'); input.setAttribute('aria-controls', 'search-results');
+    const box = document.createElement('div'); box.className = 'search-results'; box.id = 'search-results'; box.setAttribute('role', 'listbox'); box.hidden = true;
+    form.style.position = 'relative'; form.appendChild(box);
+    let items = [], pick = -1, timer = null, uid = null;
+    db.auth.getSession().then(({ data }) => { uid = data.session && data.session.user.id; });
+    const draw = () => {
+      box.hidden = !items.length && !input.value.trim();
+      box.innerHTML = items.length ? items.map((it, i) => `<a href="${esc3(it.href)}" role="option" class="sr-item ${i === pick ? 'on' : ''}" aria-selected="${i === pick}"><span class="sr-ic">${it.ic}</span><span><b>${esc3(it.title)}</b>${it.sub ? `<small>${esc3(it.sub)}</small>` : ''}</span></a>`).join('')
+        : `<p class="sr-none">No results for “${esc3(input.value.trim())}”. Try a subject, course name or teacher.</p>`;
+    };
+    async function run() {
+      const q = input.value.trim(); pick = -1;
+      if (q.length < 2) { items = []; box.hidden = true; return; }
+      const role = window.TN_ROLE || 'student', ql = q.toLowerCase();
+      const pg = pages(role).filter(([, l]) => l.toLowerCase().includes(ql)).slice(0, 4).map(([h, l, ic]) => ({ href: h, title: l, sub: 'Page', ic: ic || '📄' }));
+      let cs = [];
+      try {
+        const safe = q.replace(/[%,()]/g, ' ');
+        const { data } = await db.from('courses').select('id, title, teacher_name, teacher_id, subject, grade, audience').or(`title.ilike.%${safe}%,teacher_name.ilike.%${safe}%,subject.ilike.%${safe}%`).limit(6);
+        cs = (data || []).map(c => ({ href: (c.teacher_id && c.teacher_id === uid ? 'teacher-course.html?id=' : 'course.html?id=') + c.id, title: c.title, ic: c.audience === 'teachers' ? '🔔' : c.audience === 'parents' ? '🚗' : '📘',
+          sub: [c.subject, c.grade, c.teacher_name ? 'with ' + c.teacher_name : ''].filter(Boolean).join(' · ') || 'Course' }));
+      } catch (_) {}
+      items = cs.concat(pg); draw();
+    }
+    input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(run, 220); });
+    input.addEventListener('focus', () => { if (items.length) box.hidden = false; });
+    input.addEventListener('keydown', e => {
+      if (box.hidden || !items.length) return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); pick = (pick + 1) % items.length; draw(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); pick = (pick - 1 + items.length) % items.length; draw(); }
+      else if (e.key === 'Escape') { box.hidden = true; }
+    });
+    form.addEventListener('submit', e => { e.preventDefault(); const it = items[pick >= 0 ? pick : 0]; if (it) location.href = it.href; else if (input.value.trim()) location.href = 'all-courses.html?q=' + encodeURIComponent(input.value.trim()); });
+    document.addEventListener('click', e => { if (!form.contains(e.target)) box.hidden = true; });
+    input.placeholder = 'Search courses, teachers or pages';
   });
 })();

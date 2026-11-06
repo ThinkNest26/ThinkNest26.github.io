@@ -260,7 +260,7 @@ async function startTeacherCourse() {
         <td>${esc(r.profiles ? r.profiles.full_name : 'Student')}</td><td>${esc(r.profiles ? r.profiles.grade || '' : '')}</td>
         <td>${new Date(r.created_at).toLocaleDateString('en-GB')}</td>
         <td><div class="bar small"><i style="width:${r.progress}%"></i></div> ${r.progress}%</td>
-        <td><a class="pill pill-live" href="teacher-certificates.html?course=${id}&student=${r.user_id}">🏅 Award</a> ${has.has(r.user_id) ? '<span class="tag tag-now">Issued</span>' : `<button class="pill pill-soft" data-cert="${r.user_id}" data-name="${esc(r.profiles ? r.profiles.full_name : 'this student')}">Issue</button>`}</td></tr>`).join('')
+        <td><a class="pill pill-live" href="teacher-certificates.html?course=${id}&student=${r.user_id}">🏅 Award</a></td></tr>`).join('')
       : '<tr><td colspan="5" class="empty">No students have joined this course yet.</td></tr>';
   }
   loadStudents();
