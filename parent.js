@@ -25,7 +25,7 @@ function startParentSignup() {
     const btn = f.querySelector('button[type=submit]'); btn.disabled = true; btn.textContent = 'Creating account…';
     const { data, error } = await db.auth.signUp({
       email: f.email.value.trim(), password: f.password.value,
-      options: { captchaToken: (typeof captchaToken === 'function' ? captchaToken() : undefined), data: { role: 'parent', full_name: (f.first.value.trim() + ' ' + f.last.value.trim()).trim(), phone: f.phone.value.trim(), country: f.country.value, children: kids, family_joined: joined, agreed_terms: true } }
+      options: { captchaToken: (typeof captchaToken === 'function' ? captchaToken() : undefined), data: { role: 'parent', full_name: (f.first.value.trim() + ' ' + f.last.value.trim()).trim(), phone: f.phone.value.trim(), country: f.country.value, children: kids, family_joined: joined, agreed_terms: true, lang: (typeof tnLang === 'function' ? tnLang() : 'en') } }
     });
     if (typeof captchaReset === 'function') captchaReset();
     btn.disabled = false; btn.textContent = 'Continue';

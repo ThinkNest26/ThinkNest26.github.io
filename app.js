@@ -183,7 +183,7 @@ function startSignupPage() {
       email: f.email.value.trim(),
       password: f.password.value,
       options: { captchaToken: (typeof captchaToken === 'function' ? captchaToken() : undefined),  data: {
-        full_name: f.full_name.value.trim(), role: 'student', age: f.age ? f.age.value : '', agreed_terms: true,
+        full_name: f.full_name.value.trim(), role: 'student', age: f.age ? f.age.value : '', agreed_terms: true, lang: (typeof tnLang === 'function' ? tnLang() : 'en'),
         grade: f.grade.value, curriculum: f.curriculum.value, school: f.school.value.trim(),
         parent_name: f.parent_name.value.trim(), parent_email: f.parent_email.value.trim(),
         parent_consent: f.parent_consent.checked

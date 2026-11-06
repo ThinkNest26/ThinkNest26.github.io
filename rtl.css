@@ -42,3 +42,11 @@ html.tn-ar .tncert { direction: ltr; font-family: 'Raleway', Arial, sans-serif; 
 .footer-middle { min-width: 0; max-width: 100%; }
 .footer-links { flex-wrap: wrap; row-gap: 10px; max-width: 100%; }
 html.tn-ar body { overflow-x: hidden; }
+/* Privacy notice & Terms: one language at a time */
+.legal-ar { display: none; }
+html.tn-ar .legal-ar { display: block; }
+html.tn-ar .legal-en { display: none; }
+html.tn-ar.show-en .legal-en { display: block; direction: ltr; text-align: left; }
+html.tn-ar.show-en .legal-ar { display: none; }
+.legal-ar ul { padding-left: 0 !important; padding-right: 20px; }
+.legal-note { background: #FFF6E6; border-radius: 12px; padding: 10px 14px; font-size: .92rem; }

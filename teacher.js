@@ -60,7 +60,7 @@ function startTeacherSignup() {
       email: f.email.value.trim(), password: f.password.value,
       options: { captchaToken: (typeof captchaToken === 'function' ? captchaToken() : undefined), data: { role: 'teacher', full_name: f.full_name.value.trim(), subject: f.subject.value.trim(), school, phone: f.phone.value.trim(),
         grade_levels: f.grade_levels.value, education_degree: f.education_degree.value, teaching_method: f.teaching_method.value,
-        curriculum: f.curriculum.value, experience_years: f.experience_years.value, bio: f.bio.value.trim(), also_parent: (f.querySelector('input[name=also_parent]:checked') || {}).value === 'yes', agreed_terms: true } }
+        curriculum: f.curriculum.value, experience_years: f.experience_years.value, bio: f.bio.value.trim(), also_parent: (f.querySelector('input[name=also_parent]:checked') || {}).value === 'yes', agreed_terms: true, lang: (typeof tnLang === 'function' ? tnLang() : 'en') } }
     });
     if (typeof captchaReset === 'function') captchaReset();
     btn.disabled = false; btn.textContent = 'Send request';
