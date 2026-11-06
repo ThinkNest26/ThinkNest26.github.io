@@ -338,3 +338,7 @@
 .founders .fd-link { margin-top: auto; padding-top: 14px; }
 @media (max-width: 640px) { .fd-grid { grid-template-columns: minmax(0, 420px) !important; } }
 
+/* Founders on the home page: all three on one line on computers and tablets */
+@media (min-width: 900px) {
+  .founders .fd-grid:has(> .fd-card:nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; max-width: 1180px; margin-left: auto; margin-right: auto; }
+}
