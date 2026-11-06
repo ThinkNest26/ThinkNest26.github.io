@@ -1154,7 +1154,8 @@
 "Link copied. Paste it anywhere to share.": "تم نسخ الرابط. الصقه في أي مكان لمشاركته.",
 "Open as a full page ↗": "افتح كصفحة كاملة ↗",
 "✅ You’re on the waiting list. We’ll send a notification as soon as a class opens.": "✅ أنت في قائمة الانتظار. سنرسل لك إشعارًا فور افتتاح فصل.",
-"✅ Joined": "✅ تم الانضمام"
+"✅ Joined": "✅ تم الانضمام",
+"Plot Twist": "مفاجأة"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times
