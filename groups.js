@@ -279,7 +279,7 @@ async function startGroup() {
         <div><b>${esc(m.full_name)}</b> ${m.role === 'teacher' ? gTag('teacher') : ''}<span class="meta">${m.role === 'owner' ? 'Created the group' : m.status === 'invited' ? 'Invited, hasn’t joined yet' : (m.grade || 'Member')}</span></div>
         ${teacherRun && (isOwner || isAdmin) && m.role === 'member' && m.status === 'active' ? `<button class="pill pill-soft" data-star="${m.user_id}" data-name="${esc(m.full_name)}">⭐ Stars</button>` : ''}
         ${(isOwner || isAdmin) && m.role !== 'owner' ? `<button class="link-btn" data-kick="${m.user_id}" data-name="${esc(m.full_name)}">${m.status === 'invited' ? 'Cancel invite' : 'Remove'}</button>` : ''}</div>`).join('');
-    document.getElementById('danger').innerHTML = isOwner || isAdmin ? '<button class="pill pill-soft big danger" id="del-group">Delete this group</button>' : isMember ? '<button class="pill pill-soft big danger" id="leave">Leave this group</button>' : '';
+    document.getElementById('danger').innerHTML = isOwner || isAdmin ? `<button class="pill pill-soft big danger" id="del-group">${isClass ? '🗑️ Delete this class' : 'Delete this group'}</button>` : isMember ? '<button class="pill pill-soft big danger" id="leave">Leave this group</button>' : '';
     if (isOwner) drawInvites();
   }
   async function drawInvites() {
@@ -334,9 +334,10 @@ async function startGroup() {
       if (error) return say(friendly(error)); location.href = 'groups.html';
     }
     if (e.target.closest('#del-group')) {
-      if (!confirm('Delete “' + g.name + '” for everyone? All its posts and resources will be deleted.')) return;
+      if (!confirm(isClass ? 'Delete the class “' + g.name + '”?\n\nThis removes its community posts, resources, chat and member list for everyone. Students’ accounts are NOT deleted: they can still log in and be added to another class.'
+                           : 'Delete “' + g.name + '” for everyone? All its posts and resources will be deleted.')) return;
       const { error } = await db.rpc('delete_group', { gid });
-      if (error) return say(friendly(error)); location.href = 'groups.html';
+      if (error) return say(friendly(error)); location.href = isClass ? 'classes.html' : 'groups.html';
     }
   });
 
