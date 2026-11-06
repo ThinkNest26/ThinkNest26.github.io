@@ -15,12 +15,12 @@ async function initTeacher() {
   const side = document.getElementById('side'), shade = document.getElementById('side-shade'), st = document.getElementById('side-toggle');
   st.addEventListener('click', () => { side.classList.add('open'); shade.classList.add('show'); });
   shade.addEventListener('click', () => { side.classList.remove('open'); shade.classList.remove('show'); });
-  document.getElementById('logout').addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; });
+  (document.getElementById('logout') || document.createElement('a')).addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; });
   const initials = (p.full_name || session.user.email).split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
   document.querySelectorAll('#me-initials, #me-initials-small').forEach(el => el.textContent = initials);
   if (p.role === 'admin' && !document.querySelector('a[href="admin.html"]')) {
     const ul = document.querySelector('.side nav ul');
-    ul.insertAdjacentHTML('afterbegin', '<li><a href="admin.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg><span>Approvals</span></a></li>');
+    if (ul) ul.insertAdjacentHTML('afterbegin', '<li><a href="admin.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg><span>Approvals</span></a></li>');
   }
   document.querySelectorAll('dialog [data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
   return { user: session.user, profile: p };

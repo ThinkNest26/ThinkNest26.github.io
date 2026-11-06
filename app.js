@@ -228,7 +228,7 @@ async function startDashboard() {
   document.body.classList.remove('loading');
   const uid = session.user.id;
 
-  document.getElementById('logout').addEventListener('click', async e => {
+  (document.getElementById('logout') || document.createElement('a')).addEventListener('click', async e => {
     e.preventDefault(); await db.auth.signOut(); location.href = 'index.html';
   });
   const side = document.getElementById('side'), shade = document.getElementById('side-shade'), st = document.getElementById('side-toggle');

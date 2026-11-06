@@ -11,7 +11,7 @@ async function initShell() {
   const side = document.getElementById('side'), shade = document.getElementById('side-shade'), st = document.getElementById('side-toggle');
   st.addEventListener('click', () => { side.classList.add('open'); shade.classList.add('show'); });
   shade.addEventListener('click', () => { side.classList.remove('open'); shade.classList.remove('show'); });
-  document.getElementById('logout').addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; });
+  (document.getElementById('logout') || document.createElement('a')).addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; });
   const { data: p } = await db.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
   gateApproval(p);
   const initials = ((p && p.full_name) || session.user.email).split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();

@@ -35,14 +35,14 @@ async function startCommunity() {
       <li><a href="teacher-calendar.html"><span>Live Classes</span></a></li><li><a href="teacher-objectives.html"><span>Objectives &amp; Activities</span></a></li><li><a href="teacher-requests.html"><span>Session Requests</span></a></li><li><a href="classes.html"><span>My Classes</span></a></li><li><a href="teacher-attendance.html"><span>Attendance</span></a></li><li><a href="groups.html"><span>Study Groups</span></a></li><li><a href="messages.html"><span>Messages</span></a></li>
       <li><a href="community.html" class="active" aria-current="page"><span>Community</span></a></li><li><a href="teacher-settings.html"><span>Account Settings</span></a></li></ul>
       <h5>Others</h5><ul><li><a href="#" id="logout"><span>Log out</span></a></li></ul>`;
-    document.getElementById('logout').addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; });
+    (document.getElementById('logout') || document.createElement('a')).addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; });
   }
   if (!window.buildNav && me.role === 'parent') {
     document.querySelector('.side nav').innerHTML = `<h5 class="first">Parent</h5><ul>
       <li><a href="parent-dashboard.html"><span>My children</span></a></li><li><a href="add-child.html"><span>Add a child</span></a></li>
       <li><a href="community.html" class="active" aria-current="page"><span>Community</span></a></li><li><a href="parent-settings.html"><span>Account Settings</span></a></li></ul>
       <h5>Others</h5><ul><li><a href="#" id="logout"><span>Log out</span></a></li></ul>`;
-    document.getElementById('logout').addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; });
+    (document.getElementById('logout') || document.createElement('a')).addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; });
   }
   const first = (me.full_name || '').split(' ')[0];
   document.getElementById('me-ini').textContent = iniOf(me.full_name || user.email);
