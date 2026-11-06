@@ -453,3 +453,31 @@ async function loadEmailAdmin() {
     say(er ? friendly(er) : 'Sending… refresh in a minute.'); setTimeout(loadEmailAdmin, 6000);
   };
 }
+
+// ---------- Admin: account deletion requests ----------
+async function loadDeletionRequests() {
+  const box = document.getElementById('delreq-box'); if (!box) return;
+  const { data, error } = await db.from('data_requests').select('*').order('created_at', { ascending: false }).limit(50);
+  if (error) { box.innerHTML = '<p class="empty">Run database update 40 to see deletion requests.</p>'; return; }
+  const open = (data || []).filter(r => r.status === 'pending'), done = (data || []).filter(r => r.status !== 'pending').slice(0, 15);
+  document.getElementById('n-delreq').textContent = open.length;
+  const card = r => `<article class="panel person" data-dr="${r.id}" data-target="${r.about_child || r.user_id || ''}">
+      <span class="initials">🗑️</span>
+      <div class="person-info"><h4>${esc(r.child_name ? r.child_name + ' (child of ' + (r.user_name || '') + ')' : (r.user_name || 'Account already removed'))}</h4>
+        <span class="meta">Asked by ${esc(r.user_name || '')} · <a href="mailto:${esc(r.user_email || '')}">${esc(r.user_email || '')}</a> · ${new Date(r.created_at).toLocaleDateString('en-GB')}</span>
+        ${r.reason ? `<span class="meta">Reason: ${esc(r.reason)}</span>` : ''}${r.status !== 'pending' ? `<span class="meta">${r.status === 'done' ? '✅ Deleted' : 'Cancelled'}</span>` : ''}</div>
+      ${r.status === 'pending' ? `<div class="person-actions"><a class="pill pill-soft" href="mailto:${esc(r.user_email || '')}?subject=${encodeURIComponent('Your Think Nest account deletion request')}">✉️ Email them</a><button class="pill pill-live danger" data-ddel>Delete account now</button><button class="link-btn" data-dcancel>Cancel request</button></div>` : ''}</article>`;
+  box.innerHTML = (open.length ? open.map(card).join('') : '<p class="empty">No deletion requests. 🎉</p>') + (done.length ? `<details class="hubreq-done"><summary>Finished (${done.length})</summary>${done.map(card).join('')}</details>` : '');
+  box.onclick = async e => {
+    const row = e.target.closest('[data-dr]'); if (!row) return;
+    if (e.target.closest('[data-dcancel]')) { await db.from('data_requests').update({ status: 'cancelled' }).eq('id', Number(row.dataset.dr)); return loadDeletionRequests(); }
+    if (e.target.closest('[data-ddel]')) {
+      if (!row.dataset.target) return say('This account has already been removed.');
+      if (!confirm('Delete this account and all its information? This CAN’T be undone.')) return;
+      if (prompt('To confirm, type DELETE') !== 'DELETE') return say('Not deleted.');
+      const { error: er } = await db.rpc('admin_delete_account', { person: row.dataset.target });
+      if (er) return say(friendly(er));
+      say('Account deleted.'); loadDeletionRequests();
+    }
+  };
+}

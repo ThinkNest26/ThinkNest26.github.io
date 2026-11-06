@@ -18,12 +18,13 @@ function startParentSignup() {
     }
     if (f.password.value !== f.password2.value) { f.password2.focus(); return showError(err, 'The two passwords don’t match.'); }
     if (typeof famValidate === 'function') { const fe = famValidate(); if (fe) return showError(err, fe); }
+    if (f.agree_terms && !f.agree_terms.checked) return showError(err, 'Please tick the box to agree to the Terms of use.');
     const kids = typeof famCollect === 'function' ? famCollect() : [];
     const joined = (f.querySelector('input[name=family_joined]:checked') || {}).value !== 'no';
     const btn = f.querySelector('button[type=submit]'); btn.disabled = true; btn.textContent = 'Creating account…';
     const { data, error } = await db.auth.signUp({
       email: f.email.value.trim(), password: f.password.value,
-      options: { data: { role: 'parent', full_name: (f.first.value.trim() + ' ' + f.last.value.trim()).trim(), phone: f.phone.value.trim(), country: f.country.value, children: kids, family_joined: joined } }
+      options: { data: { role: 'parent', full_name: (f.first.value.trim() + ' ' + f.last.value.trim()).trim(), phone: f.phone.value.trim(), country: f.country.value, children: kids, family_joined: joined, agreed_terms: true } }
     });
     btn.disabled = false; btn.textContent = 'Continue';
     if (error) return showError(err, friendly(error));

@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=66">
-  <link rel="stylesheet" href="app.css?v=66">
+  <link rel="stylesheet" href="style.css?v=67">
+  <link rel="stylesheet" href="app.css?v=67">
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -41,6 +41,9 @@
       <h2 class="dash-h" id="waitlists">Waiting lists</h2>
       <p class="hint">Students waiting for a class to open. Ask a teacher to create a course with this subject, curriculum and grade, and everyone waiting is told automatically.</p>
       <section class="panel" id="waitlist-box"><p class="empty">Loading…</p></section>
+      <h2 class="dash-h" id="data-requests">🗑️ Account deletion requests <span class="count" id="n-delreq">0</span></h2>
+      <p class="hint">People asking for their account, or their child’s account, to be deleted. Check it’s really them (for example, reply to their email) before deleting.</p>
+      <section class="approve-list" id="delreq-box"><p class="empty">Loading…</p></section>
       <h2 class="dash-h" id="email-admin">📧 Emails</h2>
       <p class="hint">Emails sent automatically from thinknest2026@gmail.com for approvals, certificates and your alerts.</p>
       <section class="panel" id="email-admin-box"><p class="empty">Loading…</p></section>
@@ -91,14 +94,14 @@
   <div class="side-shade" id="side-shade"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=66"></script>
-  <script src="app.js?v=66"></script>
-  <script src="nav.js?v=66"></script>
-  <script src="notify.js?v=66" defer></script>
-  <script src="teacher.js?v=66"></script>
+  <script src="supabase-config.js?v=67"></script>
+  <script src="app.js?v=67"></script>
+  <script src="nav.js?v=67"></script>
+  <script src="notify.js?v=67" defer></script>
+  <script src="teacher.js?v=67"></script>
   <script>startAdmin();</script>
-  <script src="community.js?v=66"></script>
-  <script src="chat.js?v=66"></script>
-  <script>loadReports().then(loadGroupReports); loadMessageReview(); loadApprovalSetting(); loadWaitlists(); loadHubRequests(); loadNewAccounts(); loadContactMessages(); loadConnectAdmin(); loadEmailAdmin();</script>
+  <script src="community.js?v=67"></script>
+  <script src="chat.js?v=67"></script>
+  <script>loadReports().then(loadGroupReports); loadMessageReview(); loadApprovalSetting(); loadWaitlists(); loadHubRequests(); loadNewAccounts(); loadContactMessages(); loadConnectAdmin(); loadEmailAdmin(); loadDeletionRequests();</script>
 </body>
 </html>
