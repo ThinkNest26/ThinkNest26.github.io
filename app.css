@@ -1445,3 +1445,36 @@ html.tn-ar .tn-av .tn-av-x { right: auto; left: -.35em; transform: rotate(-14deg
 .community .comm-hero { display: flex !important; flex-direction: row; align-items: center; flex-wrap: nowrap; }
 .community .comm-hero .comm-hero-text { flex: 1; min-width: 0; }
 @media (max-width: 640px) { .community .comm-hero { flex-direction: column !important; } }
+/* ===== Class Insights ===== */
+.in-pick { margin-bottom: 16px; } .in-pick label { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-weight: 800; }
+.in-pick select { font: inherit; font-weight: 700; padding: 10px 14px; border: 2px solid #E4E6F1; border-radius: 14px; min-width: 280px; }
+.in-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 16px; }
+.in-card { background: #fff; border-radius: 20px; padding: 16px; display: grid; gap: 2px; box-shadow: 0 8px 22px rgba(30,35,82,.06); }
+.in-card span { font-size: 1.5rem; } .in-card b { font-size: 1.9rem; color: #1D2026; } .in-card small { color: #6E7485; font-weight: 700; }
+.in-card.warn { background: #FFF6E6; }
+.insights .panel h2 { font-size: 1.2rem; margin: 0 0 12px; }
+.in-steps { background: linear-gradient(160deg, #F7F8FD, #fff); border: 1px solid #E4E6F1; }
+.in-step { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px dashed #E4E6F1; } .in-step:last-child { border-bottom: 0; }
+.in-step-ic { font-size: 1.5rem; flex: none; } .in-step p { margin: 4px 0 8px; line-height: 1.55; color: #2F3241; }
+.in-objs { display: grid; gap: 10px; }
+.in-obj { border: 1px solid #ECEEF6; border-left: 6px solid #C9CCDA; border-radius: 14px; padding: 12px 14px; }
+.in-obj.secure { border-left-color: #2FA08A; } .in-obj.dev { border-left-color: #E8B22E; } .in-obj.gap { border-left-color: #E5484D; background: #FFF7F7; }
+.in-obj-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; } .in-obj-top b { color: #1D2026; line-height: 1.4; }
+.in-tag { white-space: nowrap; font-size: .82rem; font-weight: 800; }
+.in-bar { height: 8px; background: #EEF0F8; border-radius: 6px; margin: 8px 0 6px; overflow: hidden; } .in-bar i { display: block; height: 100%; border-radius: 6px; background: #C9CCDA; }
+.in-obj.secure .in-bar i { background: #2FA08A; } .in-obj.dev .in-bar i { background: #E8B22E; } .in-obj.gap .in-bar i { background: #E5484D; }
+.in-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.in-scroll { overflow-x: auto; border: 1px solid #ECEEF6; border-radius: 14px; }
+.in-table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+.in-table th, .in-table td { padding: 9px 10px; border-bottom: 1px solid #F1F2F8; text-align: center; white-space: nowrap; }
+.in-table tbody th { text-align: left; font-weight: 700; color: #1D2026; position: sticky; left: 0; background: #fff; }
+.in-table thead th { background: #F7F8FD; font-size: .8rem; color: #4A4E5E; }
+.in-c { font-weight: 800; } .in-c.secure { background: #E3F5EE; color: #1F7A4D; } .in-c.dev { background: #FFF4D6; color: #8A6100; } .in-c.gap { background: #FDE6E6; color: #B3261E; }
+.in-c.none, .in-c.miss { color: #9A9FB0; }
+.in-st { font-size: .8rem; font-weight: 800; padding: 3px 10px; border-radius: 20px; background: #F1F2F8; } .in-st.gap { background: #FFEDE6; color: #B3461E; } .in-st.star { background: #EEF0FB; color: #3E4B94; } .in-st.secure { background: #E3F5EE; color: #1F7A4D; }
+.in-key { margin-top: 10px; } .in-key ol { margin: 8px 0 0; padding-left: 22px; display: grid; gap: 4px; }
+.in-legend { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; } .in-legend .in-c { padding: 2px 8px; border-radius: 6px; }
+@media (max-width: 800px) { .in-cards { grid-template-columns: repeat(2, 1fr); } }
+html.tn-ar .in-obj { border-left: 1px solid #ECEEF6; border-right: 6px solid #C9CCDA; } html.tn-ar .in-obj.secure { border-right-color: #2FA08A; } html.tn-ar .in-obj.dev { border-right-color: #E8B22E; } html.tn-ar .in-obj.gap { border-right-color: #E5484D; }
+html.tn-ar .in-table tbody th { text-align: right; left: auto; right: 0; }
+.insights .panel h2, .in-step b { color: #1D2026; }
