@@ -1592,3 +1592,31 @@ html.tn-ar .ca-bar .btn-red { margin-left: 0; margin-right: auto; }
 .prof-menu a:hover, .prof-menu a:focus-visible { background: #F1F2FA; outline: none; }
 .prof-menu .prof-out { color: #B3261E; border-top: 1px solid #F1F2F8; margin-top: 4px; }
 html.tn-ar .prof-menu { right: auto; left: 0; }
+/* ===== Question of the day + riddle answers ===== */
+.tn-quiz { position: relative; overflow: hidden; align-items: flex-start !important; }
+.tn-qz { flex: 1; } .tn-qz > p:first-of-type { margin: 2px 0 10px; font-weight: 800; color: #1D2026; font-size: 1.05rem; }
+.tn-qz-opts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.tn-qz-opts button { border: 2px solid #F2D27A; background: #fff; border-radius: 14px; padding: 10px 12px; font: inherit; font-weight: 800; color: #1D2026; cursor: pointer; text-align: left; transition: transform .12s, background .2s; }
+.tn-qz-opts button:hover:not(:disabled) { transform: translateY(-2px); border-color: #E8A92E; }
+.tn-qz-opts button.right { background: #2FA08A; border-color: #2FA08A; color: #fff; animation: tn-pop .4s ease; }
+.tn-qz-opts button.wrong { background: #FDE6E6; border-color: #F5B5B5; color: #B3261E; text-decoration: line-through; }
+.tn-qz-opts button:disabled { cursor: default; }
+.tn-qz-msg { margin: 10px 0 0; min-height: 1.4em; font-weight: 600; color: #4A4E5E; }
+.tn-quiz.solved { background: linear-gradient(120deg, #E8F8F1, #F3FFF9) !important; border-color: #8ED9BE !important; }
+@keyframes tn-pop { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
+.tn-wobble { animation: tn-wob .5s ease; }
+@keyframes tn-wob { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-8px) rotate(-1deg); } 40% { transform: translateX(7px) rotate(1deg); } 60% { transform: translateX(-5px); } 80% { transform: translateX(3px); } }
+.tn-rd-try { display: flex; gap: 6px; margin: 0 0 8px; }
+.tn-rd-try input { flex: 1; min-width: 0; font: inherit; border: 2px solid #CFE6DD; border-radius: 12px; padding: 7px 10px; }
+.tn-rd-try input:focus { border-color: #2FA08A; outline: none; }
+.tn-rd-try button { border: 0; background: #3E4B94; color: #fff; border-radius: 12px; padding: 7px 12px; font: inherit; font-weight: 800; cursor: pointer; }
+.tn-rd-try :disabled { opacity: .6; }
+.tn-rd-msg { margin: 0 0 8px; font-weight: 700; color: #2F6F5A; min-height: 1.2em; }
+.tn-riddle { position: relative; overflow: hidden; }
+/* confetti */
+.tn-confetti { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+.tn-confetti i { position: absolute; top: -10px; width: 8px; height: 12px; border-radius: 2px; opacity: 0; animation-name: tn-fall; animation-timing-function: ease-in; animation-fill-mode: forwards; }
+@keyframes tn-fall { 0% { opacity: 1; transform: translate(0, 0) rotate(0); } 100% { opacity: 0; transform: translate(var(--x), 260px) rotate(var(--r)); } }
+@media (max-width: 520px) { .tn-qz-opts { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .tn-wobble, .tn-qz-opts button.right { animation: none; } }
+html.tn-ar .tn-qz-opts button { text-align: right; }

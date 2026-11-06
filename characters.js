@@ -124,18 +124,12 @@ async function tnCommunityExtras() {
     document.getElementById('hero-av-btn').onclick = () => tnOpenBuilder(c => paintHero(c));
   };
   paintHero(me.avatar);
-  // today's challenge, above the composer
+  // question of the day (checked instantly, no posting), above the composer
   const comp = document.getElementById('composer');
   if (comp && !document.getElementById('tn-challenge')) {
-    const ch = tnToday(TN_CHALLENGES);
-    const c = document.createElement('section'); c.className = 'tn-challenge'; c.id = 'tn-challenge';
-    c.innerHTML = `<span class="tn-ch-ic" aria-hidden="true">🎯</span><div><span class="tn-ch-k">Today’s challenge</span><p>${ch}</p></div><button type="button" class="btn btn-red" id="tn-ch-go">Answer this</button>`;
+    const c = document.createElement('section'); c.className = 'tn-challenge tn-quiz'; c.id = 'tn-challenge';
     comp.parentNode.insertBefore(c, comp);
-    document.getElementById('tn-ch-go').onclick = () => {
-      const t = document.getElementById('post-body'); if (!t) return;
-      t.value = '🎯 ' + ch + '\n'; t.focus(); t.setSelectionRange(t.value.length, t.value.length);
-      const r = comp.querySelector('input[value="question"]') ? null : null; comp.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    };
+    tnQuizCard(c, tnRiddleBand(me.role, me.grade));
   }
   // fun fact, top of the sidebar
   const side = document.querySelector('.comm-side');
@@ -238,12 +232,122 @@ async function tnClassCommunity() {
     <a class="btn btn-red" href="messages.html?group=${gid}">${T('💬 Open class chat', '💬 افتح محادثة الفصل')}</a>`;
   feed.prepend(banner);
   const comp = document.getElementById('gcomposer');
-  if (comp && !comp.hidden) {
-    const ch = tnToday(TN_CHALLENGES);
-    const card = document.createElement('section'); card.className = 'tn-challenge'; card.id = 'tn-class-challenge';
-    card.innerHTML = `<span class="tn-ch-ic" aria-hidden="true">🎯</span><div><span class="tn-ch-k">${T('Today’s challenge', 'تحدّي اليوم')}</span><p>${ch}</p></div><button type="button" class="btn btn-red">${T('Answer this', 'أجب عن هذا')}</button>`;
-    card.setAttribute('data-no-tr', '');
-    banner.after(card);
-    card.querySelector('button').onclick = () => { const t = comp.querySelector('textarea'); if (!t) return; t.value = '🎯 ' + ch + '\n'; t.focus(); comp.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+  if (comp && !document.getElementById('tn-class-challenge')) {
+    const { data: { session } } = await db.auth.getSession();
+    const { data: me } = session ? await db.from('profiles').select('role, grade').eq('id', session.user.id).maybeSingle() : { data: null };
+    const card = document.createElement('section'); card.className = 'tn-challenge tn-quiz'; card.id = 'tn-class-challenge';
+    banner.after(card); tnQuizCard(card, tnRiddleBand(me && me.role, me && me.grade));
   }
+
 }
+
+// ===== Question of the day (checked instantly) + confetti =====
+// [question, [options], correct index, fun fact] in English, then the same in Arabic
+const TN_QUIZ = {
+  little: [
+    ['How many legs does a spider have?', ['6', '8', '4', '10'], 1, 'Spiders have 8 legs, and most have 8 eyes too! 🕷️', 'كم رجلًا للعنكبوت؟', ['6', '8', '4', '10'], 1, 'للعنكبوت 8 أرجل، ولمعظمها 8 عيون أيضًا! 🕷️'],
+    ['What colour do you get when you mix blue and yellow?', ['Purple', 'Orange', 'Green', 'Pink'], 2, 'Blue + yellow = green, like grass! 🌱', 'ما اللون الذي نحصل عليه عند خلط الأزرق والأصفر؟', ['البنفسجي', 'البرتقالي', 'الأخضر', 'الوردي'], 2, 'أزرق + أصفر = أخضر، مثل العشب! 🌱'],
+    ['Which animal says “moo”?', ['Cat', 'Cow', 'Duck', 'Dog'], 1, 'Cows can recognise their friends in a big herd! 🐄', 'أي حيوان يقول «مووو»؟', ['القطة', 'البقرة', 'البطة', 'الكلب'], 1, 'تستطيع البقرة التعرّف على صديقاتها في القطيع الكبير! 🐄'],
+    ['What is 3 + 2?', ['4', '6', '5', '7'], 2, 'Count on from 3: 4, 5! You did it! 🖐️', 'كم يساوي 3 + 2؟', ['4', '6', '5', '7'], 2, 'عُدّ بدءًا من 3: 4، 5! أحسنت! 🖐️'],
+    ['Which one is a fruit?', ['Carrot', 'Apple', 'Potato', 'Bread'], 1, 'Apples float in water because they are a quarter air! 🍎', 'أيّها فاكهة؟', ['الجزر', 'التفاحة', 'البطاطا', 'الخبز'], 1, 'يطفو التفاح على الماء لأن ربعه هواء! 🍎'],
+    ['How many days are in a week?', ['5', '7', '10', '6'], 1, 'Seven days, then it starts all over again! 📅', 'كم يومًا في الأسبوع؟', ['5', '7', '10', '6'], 1, 'سبعة أيام، ثم يبدأ الأسبوع من جديد! 📅']
+  ],
+  junior: [
+    ['What is 7 × 8?', ['54', '56', '64', '48'], 1, 'Trick: 5, 6, 7, 8 → 56 = 7 × 8! ✖️', 'كم يساوي 7 × 8؟', ['54', '56', '64', '48'], 1, 'حيلة: 5، 6، 7، 8 ← 56 = 7 × 8! ✖️'],
+    ['Which planet is closest to the Sun?', ['Venus', 'Earth', 'Mercury', 'Mars'], 2, 'Mercury zooms around the Sun in just 88 days! ☀️', 'ما الكوكب الأقرب إلى الشمس؟', ['الزهرة', 'الأرض', 'عطارد', 'المريخ'], 2, 'يدور عطارد حول الشمس في 88 يومًا فقط! ☀️'],
+    ['What do plants need to make their own food?', ['Sunlight', 'Sand', 'Milk', 'Darkness'], 0, 'Plants use sunlight, water and air: it’s called photosynthesis! 🌿', 'ماذا تحتاج النباتات لتصنع غذاءها؟', ['ضوء الشمس', 'الرمل', 'الحليب', 'الظلام'], 0, 'تستخدم النباتات ضوء الشمس والماء والهواء، وتسمى هذه العملية البناء الضوئي! 🌿'],
+    ['Which word is a noun?', ['Run', 'Happy', 'Table', 'Quickly'], 2, 'A noun is a person, place or thing, like “table”! 📝', 'أيّ كلمة اسم؟ (فكّر بالإنجليزية)', ['Run', 'Happy', 'Table', 'Quickly'], 2, 'الاسم هو شخص أو مكان أو شيء، مثل «طاولة» (Table)! 📝'],
+    ['What is half of 50?', ['20', '30', '25', '15'], 2, 'Half means split into 2 equal parts: 25 + 25 = 50! ½', 'كم يساوي نصف 50؟', ['20', '30', '25', '15'], 2, 'النصف يعني جزأين متساويين: 25 + 25 = 50! ½'],
+    ['What is the capital city of the UAE?', ['Dubai', 'Sharjah', 'Abu Dhabi', 'Ajman'], 2, 'Abu Dhabi is the capital, and Dubai is the biggest city! 🇦🇪', 'ما عاصمة دولة الإمارات؟', ['دبي', 'الشارقة', 'أبوظبي', 'عجمان'], 2, 'أبوظبي هي العاصمة، ودبي هي أكبر مدينة! 🇦🇪']
+  ],
+  middle: [
+    ['What is 15% of 200?', ['15', '30', '20', '25'], 1, '10% of 200 is 20, 5% is 10, so 15% is 30! 💯', 'كم تساوي 15% من 200؟', ['15', '30', '20', '25'], 1, '10% من 200 هي 20، و5% هي 10، إذن 15% هي 30! 💯'],
+    ['Which gas do humans breathe out?', ['Oxygen', 'Nitrogen', 'Carbon dioxide', 'Helium'], 2, 'Plants take in the carbon dioxide we breathe out. Teamwork! 🌳', 'ما الغاز الذي يخرجه الإنسان مع الزفير؟', ['الأكسجين', 'النيتروجين', 'ثاني أكسيد الكربون', 'الهيليوم'], 2, 'تمتص النباتات ثاني أكسيد الكربون الذي نزفره. تعاون رائع! 🌳'],
+    ['What is the next prime number after 7?', ['9', '11', '13', '10'], 1, 'A prime has exactly two factors: 1 and itself. 11 fits! 🔢', 'ما العدد الأولي التالي بعد 7؟', ['9', '11', '13', '10'], 1, 'للعدد الأولي عاملان فقط: 1 والعدد نفسه. و11 كذلك! 🔢'],
+    ['Water boils at what temperature (at sea level)?', ['50°C', '90°C', '100°C', '120°C'], 2, 'At the top of Mount Everest, water boils at only about 70°C! 🏔️', 'عند أي درجة حرارة يغلي الماء (عند مستوى سطح البحر)؟', ['50°م', '90°م', '100°م', '120°م'], 2, 'على قمة إيفرست يغلي الماء عند نحو 70°م فقط! 🏔️'],
+    ['Which is the largest ocean on Earth?', ['Atlantic', 'Indian', 'Arctic', 'Pacific'], 3, 'The Pacific is bigger than all the land on Earth put together! 🌊', 'ما أكبر محيط على الأرض؟', ['الأطلسي', 'الهندي', 'المتجمد الشمالي', 'الهادئ'], 3, 'المحيط الهادئ أكبر من مساحة اليابسة كلها مجتمعة! 🌊'],
+    ['What is the area of a rectangle 6 cm long and 4 cm wide?', ['10 cm²', '20 cm²', '24 cm²', '12 cm²'], 2, 'Area = length × width = 6 × 4 = 24 cm²! 📐', 'ما مساحة مستطيل طوله 6 سم وعرضه 4 سم؟', ['10 سم²', '20 سم²', '24 سم²', '12 سم²'], 2, 'المساحة = الطول × العرض = 6 × 4 = 24 سم²! 📐']
+  ],
+  senior: [
+    ['Solve: 3x + 5 = 20. What is x?', ['3', '5', '15', '25/3'], 1, '3x = 15, so x = 5. Algebra unlocked! 🔓', 'حلّ: 3س + 5 = 20. كم تساوي س؟', ['3', '5', '15', '25/3'], 1, '3س = 15، إذن س = 5. أحسنت! 🔓'],
+    ['What is the chemical symbol for sodium?', ['S', 'So', 'Na', 'Sd'], 2, 'Na comes from “natrium”, its Latin name! 🧂', 'ما الرمز الكيميائي للصوديوم؟', ['S', 'So', 'Na', 'Sd'], 2, 'الرمز Na مأخوذ من اسمه اللاتيني «ناتريوم»! 🧂'],
+    ['What is the derivative of x²?', ['x', '2x', 'x³/3', '2'], 1, 'Power rule: bring the 2 down and reduce the power by 1! 📈', 'ما مشتقة س²؟', ['س', '2س', 'س³/3', '2'], 1, 'قاعدة القوة: أنزل الأس 2 واطرح 1 من القوة! 📈'],
+    ['Which organelle is known as the “powerhouse of the cell”?', ['Nucleus', 'Ribosome', 'Mitochondrion', 'Vacuole'], 2, 'Mitochondria release energy from glucose in respiration! ⚡', 'أي عُضيّة تُعرف بـ«محطة الطاقة في الخلية»؟', ['النواة', 'الريبوسوم', 'الميتوكوندريا', 'الفجوة'], 2, 'تطلق الميتوكوندريا الطاقة من الجلوكوز أثناء التنفس الخلوي! ⚡'],
+    ['What is the speed of light, roughly?', ['300 km/s', '3,000 km/s', '300,000 km/s', '3 million km/s'], 2, 'Light could circle the Earth about 7.5 times in one second! 💡', 'كم تبلغ سرعة الضوء تقريبًا؟', ['300 كم/ث', '3,000 كم/ث', '300,000 كم/ث', '3 ملايين كم/ث'], 2, 'يستطيع الضوء أن يدور حول الأرض نحو 7.5 مرات في ثانية واحدة! 💡'],
+    ['If a fair coin is tossed twice, what is the probability of two heads?', ['1/2', '1/3', '1/4', '2/3'], 2, '1/2 × 1/2 = 1/4. Probability multiplies for independent events! 🪙', 'إذا رُميت قطعة نقود عادلة مرتين، فما احتمال ظهور الصورة مرتين؟', ['1/2', '1/3', '1/4', '2/3'], 2, '1/2 × 1/2 = 1/4. الاحتمالات تُضرب للأحداث المستقلة! 🪙']
+  ]
+};
+// words that count as a correct riddle answer (English | Arabic), in the same order as TN_RIDDLES
+const TN_RIDDLE_OK = {
+  little: [['clock|ساعة'], ['table|طاولة|طاوله'], ['towel|منشفة|منشفه|فوطة'], ['banana|موز'], ['piano|بيانو'], ['snow|ثلج'], ['umbrella|مظلة|مظله|شمسية'], ['bottle|زجاجة|زجاجه|قارورة']],
+  junior: [['comb|مشط'], ['footstep|footprint|step|خطوات|خطوة|آثار'], ['needle|إبرة|ابرة|ابره'], ['stamp|طابع'], ['coin|عملة|عمله|قطعة نقود|نقود'], ['silence|quiet|صمت|سكوت'], ['map|خريطة|خريطه'], ['age|عمر|السن']],
+  middle: [['bank|بنك|مصرف'], ['left hand|left|يسرى|اليسرى|يدك اليسرى'], ['m|letter m|حرف m|ميم'], ['secret|سر|السر'], ['egg|بيض|بيضة|بيضه'], ['echo|صدى'], ['son|ابنه|ابن'], ['future|tomorrow|مستقبل|غد']],
+  senior: [['9|nine|تسعة|تسعه'], ['match|عود الثقاب|الثقاب|كبريت'], ['0.05|5 fils|five fils|5 فلوس|0.05|خمسة فلوس'], ['21|twenty one|twenty-one|واحد وعشرين|21'], ['5 minutes|5|five minutes|خمس دقائق|5 دقائق'], ['47|day 47|اليوم 47|سبعة واربعين'], ['light|ضوء|الضوء|نور'], ['no missing|none|there is no|no dirham|nothing missing|لا يوجد|ما في|لا شيء']]
+};
+const tnNorm = s => String(s || '').toLowerCase().replace(/[إأآا]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/[^\p{L}\p{N}.\/ ]/gu, ' ').replace(/^(the|a|an)\s+/, '').replace(/\s+/g, ' ').trim();
+function tnConfetti(host) {
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const box = document.createElement('div'); box.className = 'tn-confetti'; box.setAttribute('aria-hidden', 'true');
+  const colors = ['#F27A6F', '#3E4B94', '#2FA08A', '#F2C14E', '#8E7CE6', '#3E8EDE'];
+  for (let i = 0; i < 70; i++) {
+    const p = document.createElement('i');
+    p.style.left = (Math.random() * 100) + '%'; p.style.background = colors[i % colors.length];
+    p.style.animationDelay = (Math.random() * .3) + 's'; p.style.animationDuration = (1.2 + Math.random() * 1.2) + 's';
+    p.style.setProperty('--x', (Math.random() * 160 - 80) + 'px'); p.style.setProperty('--r', (Math.random() * 720 - 360) + 'deg');
+    if (i % 3 === 0) p.style.borderRadius = '50%';
+    box.appendChild(p);
+  }
+  (host || document.body).appendChild(box); setTimeout(() => box.remove(), 2800);
+}
+const TN_YES = { en: ['Brilliant! 🎉', 'You got it! 🌟', 'Superstar! ⭐', 'Amazing! 🙌', 'Spot on! 🎯'], ar: ['رائع! 🎉', 'أحسنت! 🌟', 'نجم! ⭐', 'مذهل! 🙌', 'إجابة صحيحة! 🎯'] };
+const TN_NO = { en: ['Oops! Not quite 🙈 Have another go!', 'So close! 🤏 Try again!', 'Hmm, nope! 🤔 One more try?', 'Nice try! 😅 Give it another shot!'], ar: ['أوه! ليست تمامًا 🙈 حاول مرة أخرى!', 'قريب جدًا! 🤏 حاول من جديد!', 'همم، لا! 🤔 محاولة أخرى؟', 'محاولة جميلة! 😅 جرّب مرة أخرى!'] };
+const tnPick = a => a[Math.floor(Math.random() * a.length)];
+function tnWobble(el) { el.classList.remove('tn-wobble'); void el.offsetWidth; el.classList.add('tn-wobble'); }
+
+function tnQuizCard(host, band) {
+  const list = TN_QUIZ[band] || TN_QUIZ.junior, ar = typeof tnLang === 'function' && tnLang() === 'ar', L = ar ? 'ar' : 'en';
+  const i = Math.floor(Date.now() / 864e5) % list.length, r = list[i];
+  const q = ar ? r[4] : r[0], opts = ar ? r[5] : r[1], ok = ar ? r[6] : r[2], fact = ar ? r[7] : r[3];
+  host.setAttribute('data-no-tr', '');
+  host.innerHTML = `<span class="tn-ch-ic" aria-hidden="true">🧠</span><div class="tn-qz">
+      <span class="tn-ch-k">${ar ? 'سؤال اليوم' : 'Question of the day'}</span><p>${q}</p>
+      <div class="tn-qz-opts">${opts.map((o, k) => `<button type="button" data-k="${k}">${o}</button>`).join('')}</div>
+      <p class="tn-qz-msg" role="status" aria-live="polite"></p></div>`;
+  host.addEventListener('click', e => {
+    const b = e.target.closest('[data-k]'); if (!b || host.classList.contains('solved')) return;
+    const msg = host.querySelector('.tn-qz-msg');
+    if (Number(b.dataset.k) === ok) {
+      b.classList.add('right'); host.classList.add('solved'); host.querySelectorAll('[data-k]').forEach(x => x.disabled = true);
+      msg.innerHTML = `<b>${tnPick(TN_YES[L])}</b> ${fact}`; tnConfetti(host);
+    } else {
+      b.classList.add('wrong'); b.disabled = true; msg.textContent = tnPick(TN_NO[L]); tnWobble(host);
+    }
+  });
+}
+
+// upgrade the riddle card: type an answer and check it
+const _tnRiddleCard = tnRiddleCard;
+tnRiddleCard = function (host, band) {
+  _tnRiddleCard(host, band);
+  const ar = typeof tnLang === 'function' && tnLang() === 'ar', L = ar ? 'ar' : 'en';
+  const list = TN_RIDDLES[band] || TN_RIDDLES.junior, oks = TN_RIDDLE_OK[band] || TN_RIDDLE_OK.junior;
+  let idx = Math.floor(Date.now() / 864e5) % list.length;
+  const addBox = () => {
+    if (host.querySelector('.tn-rd-try')) return;
+    const q = host.querySelector('.tn-rd-q'); if (!q) return;
+    q.insertAdjacentHTML('afterend', `<form class="tn-rd-try"><label class="sr" for="tn-rd-in">${ar ? 'إجابتك' : 'Your answer'}</label><input id="tn-rd-in" autocomplete="off" placeholder="${ar ? 'اكتب إجابتك…' : 'Type your answer…'}"><button type="submit">${ar ? 'تحقّق' : 'Check'}</button></form><p class="tn-rd-msg" role="status" aria-live="polite"></p>`);
+    host.querySelector('.tn-rd-try').addEventListener('submit', e => {
+      e.preventDefault();
+      const val = tnNorm(host.querySelector('#tn-rd-in').value); if (!val) return;
+      const words = String(oks[idx] || '').split('|').map(tnNorm).filter(Boolean);
+      const msg = host.querySelector('.tn-rd-msg');
+      if (words.some(w => val === w || val.includes(w) || (w.length > 3 && w.includes(val) && val.length > 2))) {
+        host.classList.add('solved'); host.querySelector('.tn-rd-ans').hidden = false;
+        msg.innerHTML = `<b>${tnPick(TN_YES[L])}</b>`; tnConfetti(host);
+        host.querySelectorAll('.tn-rd-try input, .tn-rd-try button').forEach(x => x.disabled = true);
+      } else { msg.textContent = tnPick(TN_NO[L]); tnWobble(host); }
+    });
+  };
+  addBox();
+  host.addEventListener('click', e => { const b = e.target.closest('[data-rd="next"]'); if (b) { idx = (idx + 1) % list.length; setTimeout(addBox, 0); } });
+};
