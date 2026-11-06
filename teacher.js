@@ -86,10 +86,15 @@ function courseDialog(onSaved) {
     if (forStudents && f.curriculum && !row.curriculum) return showError(err, 'Choose a curriculum.');
     if (forStudents && f.grade && !row.grade) return showError(err, 'Choose a grade.');
     if (!row.title) return showError(err, 'Give the course a name.');
+    const sb = f.querySelector('button[type=submit], button.btn-red:last-of-type'); const sbText = sb ? sb.textContent : '';
+    if (sb) { sb.disabled = true; sb.textContent = 'Saving…'; }
     let res;
-    if (editing) res = await db.from('courses').update(row).eq('id', editing.id).select().single();
-    else res = await db.from('courses').insert({ ...row, teacher_id: teacher.id, teacher_name: teacher.full_name }).select().single();
-    if (res.error) return showError(err, friendly(res.error));
+    try {
+      if (editing) res = await db.from('courses').update(row).eq('id', editing.id).select().single();
+      else res = await db.from('courses').insert({ ...row, teacher_id: teacher.id, teacher_name: teacher.full_name }).select().single();
+    } catch (x) { res = { error: x }; }
+    if (sb) { sb.disabled = false; sb.textContent = sbText; }
+    if (res.error) return showError(err, '⚠️ The course couldn’t be saved: ' + (res.error.message || friendly(res.error)));
     dlg.close(); say(editing ? 'Course saved.' : 'Course created.'); onSaved(res.data);
   });
   return {
@@ -144,9 +149,10 @@ async function startTeacherCourses() {
   const list = document.getElementById('list');
   let courses = [];
   async function load() {
-    const { data, error } = await db.from('courses').select('*, enrollments(count)').eq('teacher_id', user.id).order('id');
-    if (error) return say(friendly(error));
-    courses = data;
+    let { data, error } = await db.from('courses').select('*, enrollments(count)').eq('teacher_id', user.id).order('id');
+    if (error) { const r = await db.from('courses').select('*').eq('teacher_id', user.id).order('id'); data = r.data; if (r.error) error = r.error; else error = null; }
+    if (error) { list.innerHTML = `<div class="empty-box"><p>⚠️ Your courses couldn’t be loaded: <b>${esc(error.message || friendly(error))}</b></p><p class="meta">Please send a screenshot of this message to the Think Nest team.</p><button class="btn btn-red" onclick="location.reload()">Try again</button></div>`; return; }
+    courses = data || [];
     list.innerHTML = courses.length ? courses.map(c => `<article class="learn">
         <img src="${tImg(c)}" alt="">
         <div class="learn-body">
