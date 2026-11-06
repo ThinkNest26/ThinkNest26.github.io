@@ -1345,7 +1345,9 @@
 "🖨️ Print / Save PDF": "🖨️ اطبع / احفظ PDF",
 "Report cards shared by teachers. Open one to read it, or print it and save it as a PDF.": "التقارير التي شاركها المعلمون. افتح أي تقرير لقراءته، أو اطبعه واحفظه بصيغة PDF.",
 "No reports yet. When a teacher shares a report, it will appear here. 📝": "لا توجد تقارير بعد. عندما يشارك المعلّم تقريرًا، سيظهر هنا. 📝",
-"Child": "الطفل"
+"Child": "الطفل",
+"🗑️ Delete class": "🗑️ احذف الفصل",
+"Class deleted.": "تم حذف الفصل."
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

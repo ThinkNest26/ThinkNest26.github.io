@@ -47,6 +47,15 @@ async function caInit() {
   for (let i = 0; i < 30 && !wait(); i++) await new Promise(r => setTimeout(r, 150));
   const head = wait();
   if (head && !document.getElementById('ca-open')) head.insertAdjacentHTML('afterbegin', '<button type="button" class="pill pill-live big ca-open" id="ca-open">➕ Add students</button>');
+  if (head && !document.getElementById('ca-del')) {
+    head.insertAdjacentHTML('beforeend', '<button type="button" class="pill pill-soft big danger ca-del" id="ca-del">🗑️ Delete class</button>');
+    document.getElementById('ca-del').addEventListener('click', async () => {
+      if (!confirm('Delete the class “' + g.name + '”?\n\nThis removes its community posts, resources, chat, reports and member list for everyone. Students’ accounts are NOT deleted: they can still log in and be added to another class.')) return;
+      const { error } = await db.rpc('delete_group', { gid });
+      if (error) { alert('The class couldn’t be deleted:\n\n' + (error.message || error) + '\n\nPlease send a screenshot of this message to the Think Nest team.'); return; }
+      say('Class deleted.'); location.href = 'classes.html';
+    });
+  }
   const panel = document.createElement('section'); panel.className = 'panel ca-panel'; panel.id = 'ca-panel'; panel.hidden = true;
   document.getElementById('ghead').after(panel);
   let rows = [];
