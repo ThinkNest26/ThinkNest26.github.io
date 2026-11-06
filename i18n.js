@@ -596,7 +596,7 @@
 "Add a lesson": "إضافة درس",
 "Lesson title": "عنوان الدرس",
 "YouTube link": "رابط يوتيوب",
-"Live classes": "الحصص المباشرة",
+"Live classes": "حصص مباشرة",
 "All subjects": "جميع المواد",
 "Write my own": "اكتب هدفي الخاص",
 "Star Learner": "المتعلّم المتميّز",
@@ -1181,7 +1181,16 @@
 "Confident Speaking for Teachers": "التحدث بثقة للمعلمين",
 "Healthy Lunchboxes in 10 Minutes": "علب غداء صحية في 10 دقائق",
 "Family Budgeting Made Simple": "ميزانية الأسرة ببساطة",
-"Me Time: Breathe, Stretch and Reset": "وقت لنفسي: تنفّس، تمدّد، وابدأ من جديد"
+"Me Time: Breathe, Stretch and Reset": "وقت لنفسي: تنفّس، تمدّد، وابدأ من جديد",
+"Live online classes in English, Maths, Science and Arabic, from KG1 to Grade 12.": "حصص مباشرة عبر الإنترنت في الإنجليزية والرياضيات والعلوم والعربية، من الروضة الأولى إلى الصف 12.",
+"🧭 Find a class": "🧭 ابحث عن فصل",
+"How it works": "كيف يعمل",
+"British · IB · American · UAE": "البريطاني · IB · الأمريكي · الإماراتي",
+"Every teacher checked": "كل معلّم تمت مراجعته",
+"Free to join": "الانضمام مجاني",
+"with real teachers": "مع معلمين حقيقيين",
+"for great work": "للعمل المتميّز",
+"At a glance": "لمحة سريعة"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

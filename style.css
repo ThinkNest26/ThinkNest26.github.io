@@ -315,3 +315,25 @@ html.tn-ar .pt2-msg p { border-radius: 14px 4px 14px 14px; }
 html.tn-ar .pt2-w:hover { transform: translateX(-2px); }
 html.tn-ar .pt2-w i { transform: scaleX(-1); }
 .pt2-hub section, .pt2 .pt2-box, .pt2 .pt2-topics-box { margin-top: 0; }
+/* ===== Hero: calm and informative ===== */
+.hero h1 { margin-bottom: 14px; }
+.hero-what { font-size: 1.15rem; line-height: 1.6; color: rgba(255,255,255,.88); max-width: 520px; margin: 0 0 26px; }
+.hero-ctas { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+.hero-ctas .btn-big { text-transform: none; }
+.hero-how { color: #fff; font-weight: 700; text-decoration: none; border-bottom: 2px solid rgba(255,255,255,.35); padding-bottom: 2px; }
+.hero-how:hover { border-color: #fff; }
+.hero-facts { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 22px; padding: 0; margin: 26px 0 0; font-size: .92rem; color: rgba(255,255,255,.8); }
+.hero-facts li { display: flex; align-items: center; gap: 7px; }
+.hero-facts li::before { content: "✓"; display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: rgba(255,255,255,.18); color: #fff; font-size: .7rem; font-weight: 900; }
+.hero-card { position: absolute; display: flex; align-items: center; gap: 10px; background: #fff; color: #1D2026; border-radius: 16px; padding: 10px 14px 10px 10px; box-shadow: 0 14px 30px rgba(15,20,60,.25); animation: hc-float 5s ease-in-out infinite; }
+.hero-card > span { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; font-size: 1.25rem; background: #E8F4FD; }
+.hero-card.hc-2 > span { background: #FFF1D6; }
+.hero-card b { display: block; font-size: .95rem; } .hero-card small { color: #6E7485; font-size: .78rem; }
+.hc-1 { left: 2%; top: 46%; } .hc-2 { right: 5%; top: 14%; animation-delay: -2.5s; }
+@keyframes hc-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@media (prefers-reduced-motion: reduce) { .hero-card { animation: none; } }
+@media (max-width: 900px) { .hero-what { font-size: 1.02rem; } .hero-card { transform: scale(.85); } .hc-1 { left: 0; } }
+@media (max-width: 520px) { .hero-card small { display: none; } .hero-facts { font-size: .85rem; gap: 6px 14px; } }
+html.tn-ar .hero-card { padding: 10px 10px 10px 14px; } html.tn-ar .hc-1 { left: auto; right: 2%; } html.tn-ar .hc-2 { right: auto; left: 0; }
+html.tn-ar .hero-how span { display: inline-block; transform: scaleX(-1); }
+@media (max-width: 900px) { .hero-ctas, .hero-facts { justify-content: center; } .hero-what { margin-left: auto; margin-right: auto; } }
