@@ -59,7 +59,7 @@ async function startSchool() {
     document.documentElement.style.setProperty('--school2', S.color_accent || '#F27A6F');
   };
   paint();
-  const tabs = [['overview', '🏠 Overview'], ['dashboard', '📊 Dashboard'], ['people', '👥 People']].concat(canManage ? [['import', '📥 Import']] : [], [['settings', '⚙️ School settings']]);
+  const tabs = [['overview', '🏠 Overview'], ['dashboard', '📊 Dashboard'], ['reports', '📝 Reports'], ['people', '👥 People']].concat(canManage ? [['import', '📥 Import']] : [], [['settings', '⚙️ School settings']]);
   box.innerHTML = `<section class="sc-hero" id="sc-hero"></section>
     ${mine.length > 1 ? `<label class="sc-switch">School <select id="sc-pick">${mine.map(s => `<option value="${s.id}" ${s.id === sid ? 'selected' : ''}>${SC_E(s.name)}</option>`).join('')}</select></label>` : ''}
     <div class="tabs sc-tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="false" data-sct="${k}">${l}</button>`).join('')}</div>
@@ -73,7 +73,7 @@ async function startSchool() {
   const show = k => {
     document.querySelectorAll('[data-sct]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.sct === k)));
     history.replaceState(null, '', '#' + k);
-    ({ overview, dashboard, people, settings, import: importTab })[k]();
+    ({ overview, dashboard, reports, people, settings, import: importTab })[k]();
   };
   document.querySelector('.sc-tabs').addEventListener('click', e => { const b = e.target.closest('[data-sct]'); if (b) show(b.dataset.sct); });
   const pane = () => document.getElementById('sc-pane');
@@ -179,6 +179,115 @@ async function startSchool() {
       else if (typeof inClassTab === 'function') inClassTab(inBox, Number(b.dataset.gid), Number(b.dataset.cid), b.dataset.name);
       box.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
+  }
+
+
+  // ----- Report cycles: open, track, review, release
+  const canCycle = ['principal', 'vice_principal', 'assistant_principal', 'coordinator'].includes(S.my_role) || profile.role === 'admin';
+  let rcSel = null;
+  async function reports() {
+    pane().innerHTML = '<p class="empty">Loading…</p>';
+    const { data: cys, error } = await db.rpc('school_report_cycles', { sid });
+    if (error) { pane().innerHTML = `<p class="empty">${SC_E(/school_report_cycles|function/.test(error.message || '') ? 'Run database update 60 to use report cycles.' : friendly(error))}</p>`; return; }
+    const list = cys || [];
+    if (!rcSel || !list.some(c => c.id === rcSel)) rcSel = (list.find(c => c.status === 'open') || list[0] || {}).id || null;
+    const fmt = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+    const term0 = ((S.terms || [])[0] || 'Term 1');
+    pane().innerHTML = `<section class="panel sc-cycles"><div class="in-head"><h2>📝 Report cycles</h2>${canCycle ? '<button type="button" class="btn btn-red" id="rc-new-open">➕ Open a report cycle</button>' : ''}</div>
+        <form class="sc-cyform" id="rc-form" hidden>
+          <label>Title <input type="text" name="title" maxlength="80" required value="${SC_E(term0 + ' Report ' + (S.academic_year || ''))}"></label>
+          <label>Deadline for teachers <input type="date" name="deadline"></label>
+          <fieldset class="sc-scale"><legend>Attainment scale</legend>
+            <label><input type="radio" name="scale" value="levels4" checked> 4 levels (Emerging, Developing, Secure, Exceeding)</label>
+            <label><input type="radio" name="scale" value="1-7"> Levels 1–7</label></fieldset>
+          <label>Extra comment section (optional) <input type="text" name="extra" maxlength="80" placeholder="e.g. Inquiry and ATL skills"></label>
+          <label class="remember"><input type="checkbox" name="approval" checked> Leaders approve reports before they go to families</label>
+          <div class="ca-bar"><button type="button" class="link-btn" id="rc-form-x">Cancel</button><button class="btn btn-red">Open cycle and tell teachers</button></div></form>
+        ${list.length ? `<div class="sc-cylist">${list.map(c => `<button type="button" class="sc-cy ${c.id === rcSel ? 'on' : ''}" data-cy="${c.id}"><b>${SC_E(c.title)}</b>
+            <small>${c.status === 'released' ? '✅ Released ' + fmt((c.released_at || '').slice(0, 10)) : c.deadline ? '⏰ Deadline ' + fmt(c.deadline) : 'Open'}${c.scale === '1-7' ? ' · Levels 1–7' : ''}${c.needs_approval ? ' · Approval' : ''}</small></button>`).join('')}</div>`
+          : `<p class="meta">No report cycles yet. ${canCycle ? 'Open one to ask every class teacher to write their reports.' : 'Your principal or a coordinator can open one.'}</p>`}
+      </section><section id="rc-cycle"></section>`;
+    const f = document.getElementById('rc-form'), nb = document.getElementById('rc-new-open');
+    if (nb) nb.onclick = () => { f.hidden = false; nb.hidden = true; f.title.focus(); };
+    document.getElementById('rc-form-x').onclick = () => { f.hidden = true; if (nb) nb.hidden = false; };
+    f.onsubmit = async e => {
+      e.preventDefault(); if (f.title.value.trim().length < 2) return say('Give the report cycle a title.');
+      const b = f.querySelector('.btn-red'); b.disabled = true;
+      const { data: id, error: er } = await db.rpc('create_report_cycle', { sid, ctitle: f.title.value.trim(), cdeadline: f.deadline.value || null,
+        cscale: f.querySelector('input[name=scale]:checked').value, cextra: f.extra.value.trim(), capproval: f.approval.checked });
+      b.disabled = false;
+      if (er) return say(/duplicate|unique/i.test(er.message || '') ? 'A report cycle with this title already exists.' : friendly(er));
+      rcSel = id; say('📝 Report cycle opened. Every class teacher has been told.'); reports();
+    };
+    pane().querySelectorAll('[data-cy]').forEach(b => b.onclick = () => { rcSel = Number(b.dataset.cy); reports(); });
+    if (rcSel) cycleView(list.find(c => c.id === rcSel));
+  }
+  async function cycleView(cy) {
+    const box = document.getElementById('rc-cycle'); box.innerHTML = '<p class="empty">Loading…</p>';
+    const { data, error } = await db.rpc('report_cycle_status', { cid: cy.id });
+    if (error) { box.innerHTML = `<p class="empty">${SC_E(friendly(error))}</p>`; return; }
+    const R = data || [], sum = k => R.reduce((a, r) => a + Number(r[k] || 0), 0);
+    const students = sum('students'), sub = sum('submitted'), app = sum('approved'), pub = sum('published'), ret = sum('returned'), dr = sum('draft');
+    const releasable = cy.needs_approval ? app : sum('draft');
+    box.innerHTML = `<section class="panel"><div class="in-head"><h2>${SC_E(cy.title)}</h2>
+        <div class="sc-cy-acts">${cy.status !== 'released' ? '<button type="button" class="pill pill-soft" id="rc-remind">🔔 Remind teachers</button>' : ''}
+          ${canCycle && app ? `<button type="button" class="btn btn-red" id="rc-release">📤 Release ${app} approved report${app === 1 ? '' : 's'}</button>` : ''}</div></div>
+      <div class="sc-prev-sum"><span>🎒 ${students} students</span><span>✏️ ${dr} draft</span><span class="${sub ? 'warn' : ''}">⏳ ${sub} waiting for approval</span><span>↩ ${ret} returned</span><span class="good">✅ ${app} approved</span><span>📤 ${pub} released</span></div>
+      <div class="sc-bar big"><i style="width:${students ? Math.round(100 * (app + pub) / students) : 0}%"></i></div>
+      ${R.length ? `<div class="in-scroll"><table class="ac-table sc-dtable"><thead><tr><th>Class</th><th>Teacher</th><th>Students</th><th>Draft</th><th>Waiting</th><th>Returned</th><th>Approved</th><th>Released</th><th></th></tr></thead><tbody>
+        ${R.map(r => `<tr data-g="${r.group_id}" data-name="${SC_E(r.class_name)}"><td><b>${SC_E(r.class_name)}</b></td><td>${SC_E(r.teacher || '–')}</td><td>${r.students}</td><td>${r.draft}</td>
+          <td class="${r.submitted ? 'sc-low' : ''}">${r.submitted}</td><td>${r.returned}</td><td>${r.approved}</td><td>${r.published}</td>
+          <td><div class="sc-row-acts"><button type="button" class="pill pill-soft" data-rv>👀 Review</button>${r.submitted ? '<button type="button" class="link-btn" data-all>✅ Approve all</button>' : ''}</div></td></tr>`).join('')}</tbody></table></div>` : '<p class="meta">No classes in your area yet.</p>'}
+      <div id="rc-review"></div></section>`;
+    const rem = document.getElementById('rc-remind');
+    if (rem) rem.onclick = async () => { const { data: n, error: er } = await db.rpc('remind_report_cycle', { cid: cy.id }); if (er) return say(friendly(er)); say(n ? `🔔 Reminder sent to ${n} teacher${n === 1 ? '' : 's'}.` : 'Every class is finished. 🎉'); };
+    const rel = document.getElementById('rc-release');
+    if (rel) rel.onclick = async () => {
+      if (!confirm(`Release ${app} approved report${app === 1 ? '' : 's'} to students and parents? They’ll get a notification and an email. Released reports can no longer be changed.`)) return;
+      rel.disabled = true; const { data: n, error: er } = await db.rpc('release_report_cycle', { cid: cy.id }); rel.disabled = false;
+      if (er) return say(friendly(er)); say(`📤 ${n} report${n === 1 ? '' : 's'} released to families.`); reports();
+    };
+    box.querySelectorAll('[data-all]').forEach(b => b.onclick = async () => {
+      const tr = b.closest('[data-g]'); if (!confirm(`Approve every waiting report in ${tr.dataset.name}?`)) return;
+      const { data: n, error: er } = await db.rpc('approve_class_reports', { cid: cy.id, gid: Number(tr.dataset.g) });
+      if (er) return say(friendly(er)); say(`✅ ${n} report${n === 1 ? '' : 's'} approved.`); cycleView(cy);
+    });
+    box.querySelectorAll('[data-rv]').forEach(b => b.onclick = () => { const tr = b.closest('[data-g]'); reviewClass(cy, Number(tr.dataset.g), tr.dataset.name); });
+  }
+  async function reviewClass(cy, gid, cname) {
+    const box = document.getElementById('rc-review'); box.innerHTML = '<p class="empty">Loading…</p>';
+    const { data, error } = await db.rpc('cycle_reports', { cid: cy.id, gid, only_status: null });
+    if (error) { box.innerHTML = `<p class="empty">${SC_E(friendly(error))}</p>`; return; }
+    const L = data || [];
+    const chip = st => ({ draft: '✏️ Draft', ready: '✅ Ready', submitted: '⏳ Waiting', returned: '↩ Returned', approved: '✅ Approved', published: '📤 Released' })[st] || st;
+    box.innerHTML = `<div class="sc-drill-head"><h3>👀 ${SC_E(cname)}</h3><span><button type="button" class="pill pill-soft" id="rc-print-cls">🖨️ Print this class</button> <button type="button" class="link-btn" id="rc-rv-x">✕ Close</button></span></div>
+      ${L.length ? `<div class="in-scroll"><table class="ac-table"><thead><tr><th>Student</th><th>Status</th><th></th></tr></thead><tbody>
+        ${L.map((r, i) => `<tr data-i="${i}"><td><b>${SC_E(r.student_name)}</b>${r.leader_note ? `<br><small class="rc-note">“${SC_E(r.leader_note)}”</small>` : ''}</td><td>${chip(r.status)}</td>
+          <td><div class="sc-row-acts"><button type="button" class="pill pill-soft" data-read>📖 Read</button>${r.status === 'submitted' || r.status === 'ready' ? '<button type="button" class="link-btn" data-ok>✅ Approve</button><button type="button" class="link-btn" data-back>↩ Return</button>' : ''}</div></td></tr>`).join('')}</tbody></table></div>`
+        : '<p class="meta">No reports written for this class yet.</p>'}
+      <div id="rc-read"></div>`;
+    document.getElementById('rc-rv-x').onclick = () => { box.innerHTML = ''; };
+    const meta = r => ({ term: r.term, data: r.data, student_name: r.student_name, class_name: r.class_name, teacher_name: r.teacher });
+    document.getElementById('rc-print-cls').onclick = () => { if (!L.length) return say('No reports to print yet.'); rcPrint(L.map(meta), cname + ' – ' + cy.title); };
+    const act = async (r, ok) => {
+      let note = '';
+      if (!ok) { note = prompt(`What should the teacher change in ${r.student_name}’s report?`, ''); if (note === null) return; }
+      const { error: er } = await db.rpc('review_report', { rid: r.id, ok, note });
+      if (er) return say(friendly(er)); say(ok ? '✅ Approved.' : '↩ Returned to the teacher with your note.'); reviewClass(cy, gid, cname); cycleView(cy);
+    };
+    box.querySelectorAll('[data-i]').forEach(tr => {
+      const r = L[Number(tr.dataset.i)];
+      const rd = tr.querySelector('[data-read]'); if (rd) rd.onclick = () => {
+        const v = document.getElementById('rc-read');
+        v.innerHTML = `<div class="sc-read">${rcReportHtml(meta(r))}${r.status === 'submitted' || r.status === 'ready' ? `<div class="ca-bar sc-read-acts"><button type="button" class="btn btn-white outline" data-rback>↩ Return with a note</button><button type="button" class="btn btn-red" data-rok>✅ Approve</button></div>` : ''}</div>`;
+        const o = v.querySelector('[data-rok]'); if (o) o.onclick = () => act(r, true);
+        const k = v.querySelector('[data-rback]'); if (k) k.onclick = () => act(r, false);
+        v.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+      const ok = tr.querySelector('[data-ok]'); if (ok) ok.onclick = () => act(r, true);
+      const bk = tr.querySelector('[data-back]'); if (bk) bk.onclick = () => act(r, false);
+    });
+    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   // ----- People

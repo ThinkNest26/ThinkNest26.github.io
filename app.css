@@ -1731,3 +1731,24 @@ html.tn-school .fam-add { display: none !important; }
 .school-page svg.sc-trend, svg.sc-trend { width: 100% !important; height: auto !important; max-width: none !important; }
 .school-page .sc-chart-panel, .school-page .in-steps { margin-top: 16px; } .sc-chart-panel .sc-trend { max-height: 300px; }
 #sc-drill .in-step .pill { display: none; }
+/* ===== Report cycles ===== */
+.sc-cycles { display: grid; gap: 12px; }
+.sc-cyform { display: grid; gap: 12px; border: 2px solid #CDD3F2; border-radius: 16px; padding: 16px; }
+.sc-cyform[hidden] { display: none; } .sc-cyform label { display: grid; gap: 4px; font-weight: 700; }
+.sc-cyform input[type=text], .sc-cyform input[type=date] { font: inherit; font-weight: 400; padding: 9px 12px; border: 2px solid #E4E6F1; border-radius: 12px; max-width: 420px; }
+.sc-cyform .remember { display: flex; gap: 8px; align-items: center; }
+.sc-scale { border: 1px solid #ECEEF6; border-radius: 12px; padding: 10px 12px; display: grid; gap: 6px; } .sc-scale legend { font-weight: 800; padding: 0 4px; }
+.sc-scale label { display: flex !important; gap: 8px; align-items: center; font-weight: 600 !important; }
+.sc-cyform .btn, .sc-cycles .btn, .sc-cy-acts .btn, .sc-read-acts .btn { border: 0; cursor: pointer; font: inherit; font-weight: 800; } .sc-read-acts .outline { border: 1px solid #3E4B94; color: #3E4B94; }
+.sc-cylist { display: flex; flex-wrap: wrap; gap: 10px; }
+.sc-cy { text-align: left; border: 2px solid #E4E6F1; background: #fff; border-radius: 14px; padding: 10px 14px; font: inherit; cursor: pointer; display: grid; gap: 2px; }
+.sc-cy small { color: #6E7485; } .sc-cy.on { border-color: var(--school); box-shadow: 0 0 0 3px color-mix(in srgb, var(--school) 18%, transparent); }
+.sc-cy-acts { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.sc-prev-sum .warn { background: #FFF4D6; color: #8A6100; }
+.sc-bar.big { height: 12px; margin: 10px 0 14px; }
+.sc-row-acts { display: flex; gap: 6px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+#rc-review:not(:empty) { margin-top: 18px; border-top: 2px dashed #E4E6F1; padding-top: 14px; }
+.sc-read { margin-top: 14px; background: #F5F6FB; border-radius: 18px; padding: 16px; } .sc-read .rcp { margin-bottom: 12px; }
+.rc-note { color: #B3461E; font-style: italic; } .rc-st.sub { background: #FFF4D6; color: #8A6100; } .rc-st.ret { background: #FDECEC; color: #B3261E; }
+.rc-cycle { margin: 0 0 12px; }
+.rcp-table .lv-l7 { color: #3E4B94; font-weight: 800; } .rcp-table .lv-l6, .rcp-table .lv-l5 { color: #1F7A4D; font-weight: 800; } .rcp-table .lv-l4, .rcp-table .lv-l3 { color: #8A6100; font-weight: 800; } .rcp-table .lv-l2, .rcp-table .lv-l1 { color: #B3261E; font-weight: 800; }
