@@ -31,6 +31,7 @@
     { ic: '🏫', label: 'My school', href: 'school.html' },
     { ic: '📊', label: 'Dashboard', href: 'school.html#dashboard' },
     { ic: '🗺️', label: 'Coverage', href: 'school.html#coverage' },
+    { ic: '🗂️', label: 'Unit planner', href: 'planner.html' },
     { ic: '📝', label: 'Reports', href: 'school.html#reports' },
     { ic: '📣', label: 'Announcements', href: 'school.html#announce', an: 1 },
     { ic: '👥', label: 'People', href: 'school.html#people' },
@@ -44,7 +45,7 @@
     { ic: '🏠', label: 'Home', href: 'teacher-dashboard.html' },
     { ic: '📣', label: 'Announcements', href: 'announcements.html', an: 1 },
     { ic: '🏫', label: 'My Classes', dyn: 'classes', items: [['classes.html', 'All my classes'], ['teacher-attendance.html', 'Attendance overview']] },
-    { ic: '📘', label: 'Lessons', items: [['teacher-courses.html', 'My courses'], ['teacher-calendar.html', 'Live classes'], ['teacher-insights.html', '📊 Insights'], ['teacher-certificates.html', '🏅 Certificates']] },
+    { ic: '📘', label: 'Lessons', items: [['planner.html', '🗂️ Unit planner'], ['teacher-courses.html', 'My courses'], ['teacher-calendar.html', 'Live classes'], ['teacher-insights.html', '📊 Insights'], ['teacher-certificates.html', '🏅 Certificates']] },
     { ic: '💬', label: 'Messages & community', items: [['messages.html', 'Messages'], ['school-community.html', '🏫 School community'], ['staff-room.html', '👩‍🏫 Staff room']] },
     { ic: '🧰', label: 'Resources', items: [['revision.html', 'Revision Hub'], ['curriculum.html', 'Curriculum guide']] }
   ];

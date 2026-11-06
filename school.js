@@ -364,9 +364,9 @@ async function startSchool() {
           ${grades.map(g => `<tr><th>${SC_E(g)}</th>${subjects.map(sj => { const x = cell(g, sj); if (!x) return '<td></td>';
             if (!x.total) return `<td><button type="button" class="sc-cv empty" data-g="${SC_E(g)}" data-s="${SC_E(sj)}"><small>No objectives yet</small></button></td>`;
             return `<td><button type="button" class="sc-cv ${pctT(x) >= 80 ? 'hi' : pctT(x) >= 40 ? 'mid' : 'lo'}" data-g="${SC_E(g)}" data-s="${SC_E(sj)}">
-              <b>${pctT(x)}%</b><span class="sc-cv-bar"><i class="a" style="width:${pctA(x)}%"></i><i class="t" style="width:${Math.max(0, pctT(x) - pctA(x))}%"></i></span>
-              <small>${x.taught}/${x.total} taught · ${x.assessed} assessed</small></button></td>`; }).join('')}</tr>`).join('')}</tbody></table></div>
-          <p class="sc-legend"><span><i style="background:#2FA08A"></i>Assessed</span><span><i style="background:#E8B22E"></i>Taught</span><span><i style="background:#E4E6F1"></i>Not covered yet</span></p>`
+              <b>${pctT(x)}%</b><span class="sc-cv-bar"><i class="a" style="width:${pctA(x)}%"></i><i class="t" style="width:${Math.max(0, pctT(x) - pctA(x))}%"></i><i class="p" style="width:${x.total ? Math.round(100 * (x.planned || 0) / x.total) : 0}%"></i></span>
+              <small>${x.taught}/${x.total} taught · ${x.assessed} assessed${x.planned ? ` · ${x.planned} planned` : ''}</small></button></td>`; }).join('')}</tr>`).join('')}</tbody></table></div>
+          <p class="sc-legend"><span><i style="background:#2FA08A"></i>Assessed</span><span><i style="background:#E8B22E"></i>Taught</span><span><i style="background:#6C8BE0"></i>Planned</span><span><i style="background:#E4E6F1"></i>Not covered yet</span></p>`
           : '<p class="meta">Choose your grades in School settings, and the curriculum for each subject, to see coverage.</p>'}
       </section><section id="cv-detail"></section>`;
     document.getElementById('cv-set').onclick = () => { show('settings'); setTimeout(() => { const el = document.getElementById('sc-curmap'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300); };
@@ -378,18 +378,19 @@ async function startSchool() {
     const { data: d, error } = await db.rpc('school_coverage', { sid, sgrade: g, ssubject: sj });
     if (error) { box.innerHTML = `<p class="empty">${SC_E(friendly(error))}</p>`; return; }
     const L = d.objectives || [];
-    const st = o => o.results > 0 ? ['a', '🟢 Assessed'] : o.taught.length ? ['t', '🟡 Taught'] : ['n', '⚪ Not covered'];
+    const st = o => o.results > 0 ? ['a', '🟢 Assessed'] : o.taught.length ? ['t', '🟡 Taught'] : (o.planned || []).length ? ['p', '🔵 Planned'] : ['n', '⚪ Not covered'];
     let filter = '';
     const draw = () => {
       const shown = L.filter(o => !filter || st(o)[0] === filter), topics = [...new Set(shown.map(o => o.topic))];
       const n = k => L.filter(o => st(o)[0] === k).length;
       box.innerHTML = `<section class="panel"><div class="sc-drill-head"><h2>${SC_E(g)} · ${SC_E(sj)} <small class="meta">${SC_E(CUR_NAMES[d.curriculum] || d.curriculum)} · ${d.courses} course${d.courses === 1 ? '' : 's'}</small></h2>
           <span><button type="button" class="pill pill-soft" id="cv-csv">⬇ CSV</button> <button type="button" class="link-btn" id="cv-x">✕ Close</button></span></div>
-        <div class="feed-filter sc-cv-f">${[['', 'All ' + L.length], ['n', '⚪ Not covered ' + n('n')], ['t', '🟡 Taught ' + n('t')], ['a', '🟢 Assessed ' + n('a')]].map(([k, l]) => `<button type="button" class="chip ${filter === k ? 'on' : ''}" data-f="${k}">${l}</button>`).join('')}</div>
+        <div class="feed-filter sc-cv-f">${[['', 'All ' + L.length], ['n', '⚪ Not covered ' + n('n')], ['p', '🔵 Planned ' + n('p')], ['t', '🟡 Taught ' + n('t')], ['a', '🟢 Assessed ' + n('a')]].map(([k, l]) => `<button type="button" class="chip ${filter === k ? 'on' : ''}" data-f="${k}">${l}</button>`).join('')}</div>
         ${!L.length ? '<p class="meta">There are no objectives for this grade and subject yet. Teachers can add the school’s own objectives when they create lessons (🎯 objective chooser → add your own).</p>' : ''}
         ${!d.courses && L.length ? '<p class="note">No courses for this grade and subject yet. When teachers create courses with this grade and subject, their lessons and activities count here.</p>' : ''}
         ${topics.map(tp => `<h3 class="sc-h3">${SC_E(tp)}</h3><div class="sc-cv-list">${shown.filter(o => o.topic === tp).map(o => { const s2 = st(o);
           return `<div class="sc-cv-row ${s2[0]}"><span class="sc-cv-st">${s2[1]}</span><div><b>${SC_E(o.text)}</b>${o.own ? ' <small class="meta">· school objective</small>' : ''}
+            ${(o.planned || []).length ? `<small class="meta">Planned in: ${SC_E(o.planned.join(' | '))}</small>` : ''}
             ${o.taught.length ? `<small class="meta">Taught in: ${SC_E(o.taught.slice(0, 3).join(' | '))}${o.taught.length > 3 ? ' …' : ''}</small>` : ''}</div>
             <span class="sc-cv-score">${o.results ? `<b class="in-c ${o.avg >= 80 ? 'secure' : o.avg >= 60 ? 'dev' : 'gap'}">${o.avg ?? '–'}%</b><small>${o.results} results</small>` : ''}</span></div>`; }).join('')}</div>`).join('')}</section>`;
       box.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { filter = b.dataset.f; draw(); });
