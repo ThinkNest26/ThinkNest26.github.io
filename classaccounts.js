@@ -103,7 +103,7 @@ async function caInit() {
       if (bad.length) return say(`Please fix the username for ${bad[0].name}: start with a letter, at least 3 characters, only letters, numbers and dots.`);
       b.disabled = true; b.textContent = `Creating ${rows.length} accounts…`;
       try {
-        const res = await caCall({ students: rows, group_id: gid });
+        const res = await caCall({ students: rows, names: rows.map(r => r.name), group_id: gid });
         const list = res.results || []; step3(list.filter(r => r.username), list.filter(r => !r.username)); rows = []; caLogins();
       } catch (err) {
         b.disabled = false; b.textContent = '✅ Try again';
