@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Help Centre – Think Nest</title>
+  <link rel="icon" href="images/tn-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=67">
+  <link rel="stylesheet" href="app.css?v=67">
+</head>
+<body class="auth legal-page">
+  <header class="app-top">
+    <a href="index.html"><img src="images/tn-logo-dark.png" alt="Think Nest home" class="app-top-logo"></a>
+    <a href="index.html" class="app-exit">Exit</a>
+  </header>
+  <main class="legal-wrap">
+    <article class="legal help-page">
+      <h1>Help Centre</h1>
+      <p class="legal-lead">Answers to the questions we’re asked most. Choose who you are, or search.</p>
+      <label class="help-search"><span class="sr">Search help</span><input type="search" id="help-search" placeholder="🔍 Search, for example: certificate, password, attendance"></label>
+      <div class="help-tabs" id="help-tabs" role="tablist" aria-label="Who is this for?"></div>
+      <div id="help-list" class="help-list"></div>
+      <section class="help-more">
+        <div><h2>Still need help?</h2><p>We’re happy to help. We usually reply within two working days.</p></div>
+        <div class="help-more-btns"><a class="btn btn-red" href="contact.html">Contact us</a><button type="button" class="btn btn-white outline" id="tour-again">👋 Show the welcome tour again</button></div>
+      </section>
+      <p class="legal-links"><a href="privacy.html">Privacy notice</a> · <a href="terms.html">Terms of use</a> · <a href="index.html">Home</a></p>
+    </article>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js?v=73"></script>
+  <script src="app.js?v=73"></script>
+  <script src="help.js?v=73"></script>
+  <script>startHelp();</script>
+</body>
+</html>

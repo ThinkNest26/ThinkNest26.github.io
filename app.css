@@ -1235,3 +1235,34 @@ body.cafe-theme .post { border-radius: 20px; }
 .moved-note { margin-bottom: 16px; }
 .moved-note a { color: #3E4B94; font-weight: 700; text-decoration: underline; }
 .adm-head-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; } .adm-head-right .btn { border: 1px solid #3E4B94; color: #3E4B94; font: inherit; font-weight: 700; cursor: pointer; padding: 9px 16px; }
+/* ===== Help Centre ===== */
+.help-search input { width: 100%; font: inherit; font-size: 1.05rem; border: 2px solid #E4E6F1; border-radius: 14px; padding: 13px 16px; margin: 6px 0 4px; }
+.help-search input:focus { border-color: #3E4B94; outline: none; }
+.help-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.help-tabs button { display: inline-flex; gap: 6px; align-items: center; border: 2px solid #E4E6F1; background: #fff; border-radius: 30px; padding: 9px 16px; font: inherit; font-weight: 800; cursor: pointer; color: #2F3241; }
+.help-tabs button[aria-selected=true] { background: #3E4B94; border-color: #3E4B94; color: #fff; }
+.help-list { display: grid; gap: 8px; }
+.help-q { border: 1px solid #ECEEF6; border-radius: 14px; padding: 4px 16px; background: #FAFBFE; }
+.help-q summary { cursor: pointer; font-weight: 700; color: #1D2026; padding: 10px 0; list-style-position: outside; }
+.help-q[open] { background: #fff; border-color: #C9CCDA; }
+.help-q div { padding: 0 0 12px; color: #2F3241; }
+.help-tag { display: inline-block; font-size: .75rem; background: #EEF0FB; color: #3E4B94; border-radius: 20px; padding: 2px 8px; margin-right: 8px; }
+.help-more { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; background: #F7F8FD; border-radius: 16px; padding: 18px 20px; margin-top: 24px; }
+.help-more h2 { margin: 0 !important; }
+.help-more-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+.help-more .btn { border: 0; cursor: pointer; font: inherit; font-weight: 700; text-decoration: none; }
+.help-more .outline { border: 1px solid #3E4B94; color: #3E4B94; }
+/* ===== Welcome tour ===== */
+dialog.tour { border: 0; border-radius: 26px; padding: 30px 30px 24px; width: min(440px, 92vw); text-align: center; box-shadow: 0 30px 70px rgba(30,35,82,.3); }
+dialog.tour::backdrop { background: rgba(30,35,82,.55); }
+.tour-ic { font-size: 3.4rem; line-height: 1; margin-bottom: 8px; }
+.tour h2 { color: #3E4B94; font-size: 1.5rem; margin-bottom: 8px; }
+.tour p { color: #2F3241; line-height: 1.6; }
+.tour-dots { display: flex; justify-content: center; gap: 6px; margin: 16px 0; }
+.tour-dots i { width: 8px; height: 8px; border-radius: 50%; background: #D9DCEB; }
+.tour-dots i.on { background: #F27A6F; width: 22px; border-radius: 6px; }
+.tour-btns { display: flex; justify-content: space-between; align-items: center; }
+.tour-btns .btn { border: 0; cursor: pointer; font: inherit; font-weight: 800; padding: 11px 22px; }
+.tour-help { font-size: .85rem; color: #6E7485 !important; margin-top: 12px; }
+.tour-help a { color: #3E4B94; font-weight: 700; }
+dialog.tour { position: fixed; inset: 0; margin: auto; height: fit-content; max-height: 90vh; }
