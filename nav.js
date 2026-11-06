@@ -31,6 +31,7 @@
     { ic: '🏫', label: 'My school', href: 'school.html' },
     { ic: '📊', label: 'Dashboard', href: 'school.html#dashboard' },
     { ic: '📝', label: 'Reports', href: 'school.html#reports' },
+    { ic: '📣', label: 'Announcements', href: 'school.html#announce', an: 1 },
     { ic: '👥', label: 'People', href: 'school.html#people' },
     { ic: '📥', label: 'Import', href: 'school.html#import' },
     { ic: '⚙️', label: 'School settings', href: 'school.html#settings' },
@@ -40,6 +41,7 @@
   // Think Nest for Schools: everyone in a school sees only their school
   MENUS.school_teacher = [
     { ic: '🏠', label: 'Home', href: 'teacher-dashboard.html' },
+    { ic: '📣', label: 'Announcements', href: 'announcements.html', an: 1 },
     { ic: '🏫', label: 'My Classes', dyn: 'classes', items: [['classes.html', 'All my classes'], ['teacher-attendance.html', 'Attendance overview']] },
     { ic: '📘', label: 'Lessons', items: [['teacher-courses.html', 'My courses'], ['teacher-calendar.html', 'Live classes'], ['teacher-insights.html', '📊 Insights'], ['teacher-certificates.html', '🏅 Certificates']] },
     { ic: '💬', label: 'Messages & community', items: [['messages.html', 'Messages'], ['school-community.html', '🏫 School community'], ['staff-room.html', '👩‍🏫 Staff room']] },
@@ -47,6 +49,7 @@
   ];
   MENUS.school_student = [
     { ic: '🏠', label: 'Home', href: 'student-dashboard.html' },
+    { ic: '📣', label: 'Announcements', href: 'announcements.html', an: 1 },
     { ic: '🏫', label: 'My Classes', dyn: 'classes', items: [['classes.html', 'All my classes']] },
     { ic: '📘', label: 'My lessons', items: [['my-courses.html', 'My courses'], ['calendar.html', 'My calendar'], ['recordings.html', 'Recordings'], ['files.html', 'My files']] },
     { ic: '🏆', label: 'My Progress', items: [['rewards.html', 'My rewards'], ['certificates.html', 'My certificates'], ['reports.html', 'My reports']] },
@@ -56,6 +59,7 @@
   MENUS.school_parent = [
     { ic: '🏠', label: 'My Children', dyn: 'kids', items: [['parent-dashboard.html', 'All my children']] },
     { ic: '📅', label: 'Family calendar', href: 'parent-calendar.html' },
+    { ic: '📣', label: 'Announcements', href: 'announcements.html', an: 1 },
     { ic: '📝', label: 'Reports', href: 'reports.html' }
   ];
   MENUS.admin = [{ ic: '🛡️', label: 'Admin', items: [['admin.html', 'Admin dashboard'], ['admin-curriculum.html', 'Curriculum editor'], ['admin-founders.html', 'Founders page']] }].concat(MENUS.teacher);
@@ -101,7 +105,7 @@
     }
     const menu = MENUS[view] || MENUS.student;
     let here = ALIAS[page] || page;
-    if (page === 'school.html' && /^#(people|settings|import|dashboard|reports)$/.test(location.hash)) here = 'school.html' + location.hash;
+    if (page === 'school.html' && /^#(people|settings|import|dashboard|reports|announce)$/.test(location.hash)) here = 'school.html' + location.hash;
     if (page === 'group.html' && document.querySelector('.class-flag')) here = 'classes.html';
     const qid = new URLSearchParams(location.search).get('id');
     let saved = {};
@@ -111,7 +115,7 @@
     nav.innerHTML = switcher + menu.map((sec, i) => {
       if (sec.href) {
         const on = sec.href === here;
-        return `<a class="nav2-top ${on ? 'active' : ''}" href="${sec.href}" ${on ? 'aria-current="page"' : ''}><span class="nav2-ic" aria-hidden="true">${sec.ic}</span><span>${sec.label}</span></a>`;
+        return `<a class="nav2-top ${on ? 'active' : ''}" href="${sec.href}" ${on ? 'aria-current="page"' : ''}><span class="nav2-ic" aria-hidden="true">${sec.ic}</span><span>${sec.label}</span>${sec.an ? '<i class="nav2-badge" data-an-badge hidden></i>' : ''}</a>`;
       }
       const dynHere = (sec.dyn === 'classes' && page === 'group.html') || (sec.dyn === 'kids' && page === 'child.html');
       const hasHere = dynHere || sec.items.some(([h]) => h === here);
@@ -130,6 +134,7 @@
     }));
     nav.querySelectorAll('.nav2-logout').forEach(a => a.addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; }));
     fillDynamic(view, page, qid);
+    if (sc && role !== 'admin') schoolAnnouncements(view, page);
     profileMenu(view);
   }
 
@@ -166,6 +171,17 @@
     logo.innerHTML = `<span class="sc-side-pic">${sc.logo_url ? `<img src="${navEsc(sc.logo_url)}" alt="">` : `<b>${navEsc(ini)}</b>`}</span><span class="sc-side-name">${navEsc(sc.name)}</span><small class="sc-side-by">on Think Nest</small>`;
     logo.setAttribute('aria-label', sc.name + ' home');
     const bt = document.querySelector('.app-bar .bar-title'); if (bt) { bt.textContent = sc.name; bt.setAttribute('data-no-tr', ''); }
+  }
+  async function schoolAnnouncements(view, page) {
+    let L = [];
+    try { const { data } = await db.rpc('my_announcements'); L = (data || []).filter(a => !a.is_read); } catch (_) { return; }
+    document.querySelectorAll('[data-an-badge]').forEach(b => { b.textContent = L.length; b.hidden = !L.length; });
+    const homes = ['teacher-dashboard.html', 'student-dashboard.html', 'parent-dashboard.html', 'school.html'];
+    if (!L.length || !homes.includes(page) || document.getElementById('an-banner')) return;
+    const main = document.querySelector('main'); if (!main) return;
+    const a = L[0];
+    main.insertAdjacentHTML('afterbegin', `<a class="an-banner" id="an-banner" href="announcements.html#a${a.id}"><span class="an-banner-ic" aria-hidden="true">📣</span>
+      <span><b>${L.length === 1 ? 'New announcement' : L.length + ' new announcements'}</b><span>${navEsc(a.title)}</span></span><span class="an-banner-go">Read →</span></a>`);
   }
   // public pages a school member should not use: send them back to their school
   const PUBLIC_ONLY = { 'community.html': 'school-community.html', 'all-courses.html': 1, 'mentors.html': 1, 'teacher-cafe.html': 'staff-room.html', 'parent-cafe.html': 1,

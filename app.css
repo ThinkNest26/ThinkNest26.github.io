@@ -1752,3 +1752,27 @@ html.tn-school .fam-add { display: none !important; }
 .rc-note { color: #B3461E; font-style: italic; } .rc-st.sub { background: #FFF4D6; color: #8A6100; } .rc-st.ret { background: #FDECEC; color: #B3261E; }
 .rc-cycle { margin: 0 0 12px; }
 .rcp-table .lv-l7 { color: #3E4B94; font-weight: 800; } .rcp-table .lv-l6, .rcp-table .lv-l5 { color: #1F7A4D; font-weight: 800; } .rcp-table .lv-l4, .rcp-table .lv-l3 { color: #8A6100; font-weight: 800; } .rcp-table .lv-l2, .rcp-table .lv-l1 { color: #B3261E; font-weight: 800; }
+/* ===== Announcements ===== */
+.an-top { display: flex; align-items: center; gap: 12px; } .an-count { background: var(--school2, #F27A6F); color: #fff; font-weight: 800; border-radius: 20px; padding: 4px 12px; }
+.an-card { display: grid; gap: 10px; margin-bottom: 14px; border-left: 0; } .an-card h2 { margin: 0 0 4px; font-size: 1.2rem; color: #1D2026; }
+.an-card.new { box-shadow: 0 0 0 2px color-mix(in srgb, var(--school, #3E4B94) 35%, transparent), 0 10px 26px rgba(30,35,82,.08); }
+.an-card.pin { background: linear-gradient(160deg, #FFFBEF, #fff); }
+.an-card.flash { animation: an-flash 1.6s ease 2; } @keyframes an-flash { 50% { box-shadow: 0 0 0 4px var(--school2, #F27A6F); } }
+.an-new { font-size: .75rem; background: var(--school2, #F27A6F); color: #fff; border-radius: 12px; padding: 2px 8px; vertical-align: middle; }
+.an-body { line-height: 1.7; color: #2F3241; } .an-body a { color: var(--school, #3E4B94); font-weight: 700; }
+.an-read { justify-self: start; }
+.an-banner { display: flex; align-items: center; gap: 14px; text-decoration: none; background: linear-gradient(120deg, var(--school, #3E4B94), color-mix(in srgb, var(--school, #3E4B94) 70%, var(--school2, #F27A6F))); color: #fff; border-radius: 18px; padding: 14px 18px; margin-bottom: 16px; }
+.an-banner-ic { font-size: 1.8rem; } .an-banner > span:nth-child(2) { flex: 1; display: grid; } .an-banner b { font-size: 1.05rem; } .an-banner-go { font-weight: 800; background: #fff; color: var(--school, #3E4B94); border-radius: 20px; padding: 6px 14px; }
+.side nav.nav2 .nav2-badge { margin-left: auto; background: var(--school2, #F27A6F); color: #fff; font-style: normal; font-size: .75rem; font-weight: 800; border-radius: 12px; min-width: 22px; padding: 1px 7px; text-align: center; }
+.side nav.nav2 .nav2-badge[hidden] { display: none; }
+.sc-an-form { display: grid; gap: 12px; } .sc-an-form label { display: grid; gap: 4px; font-weight: 700; }
+.sc-an-form input[type=text], .sc-an-form textarea, .sc-an-form select { font: inherit; font-weight: 400; padding: 9px 12px; border: 2px solid #E4E6F1; border-radius: 12px; }
+.sc-an-form .remember { display: flex; gap: 8px; align-items: center; } .sc-an-form .btn { border: 0; cursor: pointer; font: inherit; font-weight: 800; }
+.sc-an-row { display: flex; gap: 14px; align-items: end; flex-wrap: wrap; } .sc-an-row label { min-width: 200px; } .sc-an-t[hidden] { display: none !important; }
+.sc-reach { font-weight: 700; color: var(--school); padding-bottom: 10px; }
+.sc-an { border: 1px solid #ECEEF6; border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; display: grid; gap: 8px; }
+.sc-an-head { display: flex; justify-content: space-between; gap: 10px; } .sc-an-head b { display: block; color: #1D2026; } .sc-an-acts { display: flex; gap: 10px; align-items: start; }
+.sc-an-body { margin: 0; color: #4A4E5E; line-height: 1.6; max-height: 6.4em; overflow: hidden; }
+.sc-an-read { display: flex; align-items: center; gap: 10px; } .sc-an-read .sc-bar { flex: 1; max-width: 260px; height: 10px; }
+.link-btn.danger { color: #B3261E; }
+html.tn-school .find-class, html.tn-school [data-path-find] { display: none !important; }

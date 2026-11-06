@@ -59,7 +59,7 @@ async function startSchool() {
     document.documentElement.style.setProperty('--school2', S.color_accent || '#F27A6F');
   };
   paint();
-  const tabs = [['overview', '🏠 Overview'], ['dashboard', '📊 Dashboard'], ['reports', '📝 Reports'], ['people', '👥 People']].concat(canManage ? [['import', '📥 Import']] : [], [['settings', '⚙️ School settings']]);
+  const tabs = [['overview', '🏠 Overview'], ['dashboard', '📊 Dashboard'], ['reports', '📝 Reports'], ['announce', '📣 Announcements'], ['people', '👥 People']].concat(canManage ? [['import', '📥 Import']] : [], [['settings', '⚙️ School settings']]);
   box.innerHTML = `<section class="sc-hero" id="sc-hero"></section>
     ${mine.length > 1 ? `<label class="sc-switch">School <select id="sc-pick">${mine.map(s => `<option value="${s.id}" ${s.id === sid ? 'selected' : ''}>${SC_E(s.name)}</option>`).join('')}</select></label>` : ''}
     <div class="tabs sc-tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="false" data-sct="${k}">${l}</button>`).join('')}</div>
@@ -73,7 +73,7 @@ async function startSchool() {
   const show = k => {
     document.querySelectorAll('[data-sct]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.sct === k)));
     history.replaceState(null, '', '#' + k);
-    ({ overview, dashboard, reports, people, settings, import: importTab })[k]();
+    ({ overview, dashboard, reports, announce, people, settings, import: importTab })[k]();
   };
   document.querySelector('.sc-tabs').addEventListener('click', e => { const b = e.target.closest('[data-sct]'); if (b) show(b.dataset.sct); });
   const pane = () => document.getElementById('sc-pane');
@@ -288,6 +288,59 @@ async function startSchool() {
       const bk = tr.querySelector('[data-back]'); if (bk) bk.onclick = () => act(r, false);
     });
     box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+
+  // ----- Announcements
+  async function announce() {
+    pane().innerHTML = '<p class="empty">Loading…</p>';
+    const [{ data: sent, error }, { data: cls }] = await Promise.all([db.rpc('school_announcements', { sid }), db.rpc('school_classes', { sid })]);
+    if (error) { pane().innerHTML = `<p class="empty">${SC_E(/school_announcements|function/.test(error.message || '') ? 'Run database update 61 to use announcements.' : friendly(error))}</p>`; return; }
+    const AUD = [['all', '🏫 Whole school'], ['staff', '👩‍🏫 All staff'], ['parents', '👪 All parents'], ['students', '🎒 All students'], ['grade', '🎓 One grade'], ['class', '🏫 One class']];
+    const audLabel = a => a.audience === 'grade' ? '🎓 ' + (a.target || '') : a.audience === 'class' ? '🏫 ' + (((cls || []).find(c => String(c.id) === a.target) || {}).name || 'A class') : (AUD.find(x => x[0] === a.audience) || ['', ''])[1];
+    const L = sent || [];
+    pane().innerHTML = `<form class="panel sc-an-form" id="an-form"><h2>📣 New announcement</h2>
+        <label>Title <input type="text" name="title" maxlength="120" required placeholder="e.g. Sports Day is on Thursday 20 November"></label>
+        <label>Message <textarea name="body" rows="6" maxlength="4000" required placeholder="Write your message. You can add links, e.g. to a form or a newsletter."></textarea></label>
+        <div class="sc-an-row"><label>Who is it for? <select name="aud">${AUD.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
+          <label class="sc-an-t" data-t="grade" hidden>Grade <select name="grade">${(S.grades || []).map(g => `<option>${SC_E(g)}</option>`).join('')}</select></label>
+          <label class="sc-an-t" data-t="class" hidden>Class <select name="cls">${(cls || []).map(c => `<option value="${c.id}">${SC_E(c.name)}</option>`).join('')}</select></label>
+          <span class="sc-reach" id="an-reach"></span></div>
+        <label class="remember"><input type="checkbox" name="pin"> 📌 Pin to the top</label>
+        <label class="remember"><input type="checkbox" name="email"> 📧 Also send by email <small class="meta" id="an-email-note"></small></label>
+        <div class="ca-bar"><span class="meta">Everyone it’s for gets a 🔔 notification straight away.</span><button class="btn btn-red">📣 Post announcement</button></div></form>
+      <section class="panel"><h2>📬 Sent announcements</h2>${L.length ? L.map(a => `<article class="sc-an" data-an="${a.id}">
+          <div class="sc-an-head"><div><b>${a.pinned ? '📌 ' : ''}${SC_E(a.title)}</b><span class="meta">${SC_E(audLabel(a))} · ${new Date(a.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })} · ${SC_E(a.author_name || '')}${a.emailed ? ' · 📧 emailed' : ''}</span></div>
+            <div class="sc-an-acts"><button type="button" class="link-btn" data-pin>${a.pinned ? 'Unpin' : '📌 Pin'}</button><button type="button" class="link-btn danger" data-del>Delete</button></div></div>
+          <p class="sc-an-body">${SC_E(a.body).replace(/\n/g, '<br>')}</p>
+          <div class="sc-an-read"><div class="sc-bar"><i style="width:${a.reach ? Math.round(100 * a.reads / a.reach) : 0}%"></i></div><span class="meta">✓ Read by <b>${a.reads}</b> of ${a.reach}</span></div></article>`).join('')
+        : '<p class="meta">Nothing sent yet.</p>'}</section>`;
+    const f = document.getElementById('an-form');
+    const target = () => f.aud.value === 'grade' ? f.grade.value : f.aud.value === 'class' ? f.cls.value : '';
+    let reachN = 0;
+    const reach = async () => {
+      f.querySelectorAll('.sc-an-t').forEach(x => { x.hidden = x.dataset.t !== f.aud.value; });
+      const el = document.getElementById('an-reach'); el.textContent = 'Counting…';
+      const { data: n, error: er } = await db.rpc('announcement_reach', { sid, aud: f.aud.value, atarget: target() });
+      reachN = er ? 0 : (n || 0); el.innerHTML = er ? '' : `👥 Reaches <b>${reachN}</b> ${reachN === 1 ? 'person' : 'people'}`;
+      document.getElementById('an-email-note').textContent = reachN > 300 ? `(${reachN} emails: email works best for smaller groups, as the email service sends about 500 a day)` : '';
+    };
+    f.aud.onchange = reach; f.grade.onchange = reach; f.cls.onchange = reach; reach();
+    f.onsubmit = async e => {
+      e.preventDefault();
+      if (f.title.value.trim().length < 2 || !f.body.value.trim()) return say('Please write a title and a message.');
+      if (!confirm(`Post this announcement to ${reachN} ${reachN === 1 ? 'person' : 'people'}${f.email.checked ? ', and email them' : ''}?`)) return;
+      const b = f.querySelector('.btn-red'); b.disabled = true;
+      const { data: n, error: er } = await db.rpc('post_announcement', { sid, atitle: f.title.value.trim(), abody: f.body.value.trim(), aud: f.aud.value, atarget: target(), apin: f.pin.checked, aemail: f.email.checked });
+      b.disabled = false;
+      if (er) return say(friendly(er));
+      say(`📣 Posted. ${n} ${n === 1 ? 'person has' : 'people have'} been notified.`); announce();
+    };
+    pane().querySelectorAll('[data-an]').forEach(card => {
+      const id = Number(card.dataset.an), a = L.find(x => x.id === id);
+      card.querySelector('[data-pin]').onclick = async () => { const { error: er } = await db.rpc('update_announcement', { aid: id, apin: !a.pinned, aremove: false }); if (er) return say(friendly(er)); announce(); };
+      card.querySelector('[data-del]').onclick = async () => { if (!confirm('Delete this announcement for everyone?')) return; const { error: er } = await db.rpc('update_announcement', { aid: id, apin: null, aremove: true }); if (er) return say(friendly(er)); say('Deleted.'); announce(); };
+    });
   }
 
   // ----- People
