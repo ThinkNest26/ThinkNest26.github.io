@@ -46,6 +46,7 @@ async function startCommunity() {
   }
   const first = (me.full_name || '').split(' ')[0];
   document.getElementById('me-ini').textContent = iniOf(me.full_name || user.email);
+  document.getElementById('me-ini').dataset.av = user.id;
   document.getElementById('post-body').placeholder = CAFE ? CAFE.ph + (first ? ', ' + first : '') + '…' : 'What’s on your mind' + (first ? ', ' + first : '') + '?';
 
   // ----- welcome banner, rewards and tabs
@@ -110,7 +111,7 @@ async function startCommunity() {
     const PT = { question: ['❓', PAR ? 'Ask other parents' : CAFE ? 'Ask the staffroom' : 'Question'], idea: ['💡', 'Idea'], celebrate: ['🎉', PAR ? 'Family win' : CAFE ? 'Win of the week' : 'Celebration'], showcase: ['🏆', 'Showing my work'],
       hack: ['💡', PAR ? 'Parent tip' : 'Teaching hack'], resource: ['📚', PAR ? 'Recommendation' : 'Resource'], help: ['🆘', PAR ? 'Need advice' : 'Need help'], funny: ['😂', PAR ? 'Parent life' : 'Teacher life'], shoutout: ['🙌', 'Shout-out'], poll: ['📊', 'Poll'] }[p.post_type];
     return `<article class="panel post ${st !== 'published' ? 'post-' + st : ''} ${p.post_type && p.post_type !== 'post' ? 'pt-' + p.post_type : ''}" data-post="${p.id}" id="post-${p.id}">${banner}${PT ? `<span class="pt-badge">${PT[0]} ${PT[1]}</span>` : ''}
-      <header class="post-head"><span class="initials">${esc(iniOf(p.author_name))}</span>
+      <header class="post-head"><span class="initials" data-av="${p.author_id}">${esc(iniOf(p.author_name))}</span>
         <div><b>${esc(p.author_name || 'Member')}</b> ${roleTag(p.author_role)}<span class="meta">${ago(p.created_at)}</span></div>
         <div class="post-menu">${mine || isAdmin ? `<button class="link-btn" data-del-post>Delete</button>` : ''}${!mine ? `<button class="link-btn" data-report>Report</button>` : ''}</div></header>
       <p class="post-body">${esc(p.body).replace(/\n/g, '<br>')}</p>
@@ -120,7 +121,7 @@ async function startCommunity() {
         <button class="act" data-show-comments>💬 Comment${comments.length ? ' · ' + comments.length : ''}</button>
       </div>
       <div class="comments" ${comments.length ? '' : 'hidden'}>
-        ${comments.map(c => `<div class="comment" data-comment="${c.id}"><span class="initials">${esc(iniOf(c.author_name))}</span>
+        ${comments.map(c => `<div class="comment" data-comment="${c.id}"><span class="initials" data-av="${c.author_id}">${esc(iniOf(c.author_name))}</span>
           <div class="bubble"><b>${esc(c.author_name || 'Member')}</b> ${roleTag(c.author_role)}<p>${esc(c.body)}</p><span class="meta">${ago(c.created_at)}${c.author_id === user.id || isAdmin ? ' · <button class="link-btn" data-del-comment>Delete</button>' : ''}</span></div></div>`).join('')}
         <form class="comment-form"><label class="grow"><span class="sr">Write a comment</span><input type="text" name="c" maxlength="1000" placeholder="Write a comment…"></label><button class="pill pill-live">Send</button></form>
       </div>
@@ -172,7 +173,7 @@ async function startCommunity() {
   function sideLists() {
     const seen = new Map();
     posts.forEach(p => { if (!seen.has(p.author_id)) seen.set(p.author_id, p); });
-    document.getElementById('active').innerHTML = [...seen.values()].slice(0, 6).map(p => `<div class="side-row"><span class="initials">${esc(iniOf(p.author_name))}</span><span>${esc(p.author_name || 'Member')} ${roleTag(p.author_role)}</span></div>`).join('') || '<p class="empty">No one yet.</p>';
+    document.getElementById('active').innerHTML = [...seen.values()].slice(0, 6).map(p => `<div class="side-row"><span class="initials" data-av="${p.author_id}">${esc(iniOf(p.author_name))}</span><span>${esc(p.author_name || 'Member')} ${roleTag(p.author_role)}</span></div>`).join('') || '<p class="empty">No one yet.</p>';
     document.getElementById('recent').innerHTML = posts.slice(0, 6).map(p => `<a class="side-row" href="#" data-jump="${p.id}"><span class="recent-text">${esc(p.body.slice(0, 70))}${p.body.length > 70 ? '…' : ''}</span><span class="meta">${ago(p.created_at)}</span></a>`).join('') || '<p class="empty">No posts yet.</p>';
   }
   document.getElementById('recent').addEventListener('click', e => {
