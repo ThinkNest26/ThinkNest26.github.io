@@ -172,13 +172,14 @@ function startSignupPage() {
     e.preventDefault();
     if (!valid(steps[i])) return;
     const f = form;
+    if (f.agree_terms && !f.agree_terms.checked) { f.agree_terms.focus(); return showError(document.getElementById('signup-error') || err, 'Please tick the box to agree to the Terms of use.'); }
     if (f.age && Number(f.age.value) < 13 && !new URLSearchParams(location.search).has('parent_email')) { show(0); ageCheck(); return; }
     create.disabled = true; create.textContent = 'Creating account…';
     const { data, error } = await db.auth.signUp({
       email: f.email.value.trim(),
       password: f.password.value,
       options: { data: {
-        full_name: f.full_name.value.trim(), role: 'student', age: f.age ? f.age.value : '',
+        full_name: f.full_name.value.trim(), role: 'student', age: f.age ? f.age.value : '', agreed_terms: true,
         grade: f.grade.value, curriculum: f.curriculum.value, school: f.school.value.trim(),
         parent_name: f.parent_name.value.trim(), parent_email: f.parent_email.value.trim(),
         parent_consent: f.parent_consent.checked
@@ -361,3 +362,13 @@ function startReset() {
     setTimeout(async () => { location.href = await homeFor(data.user.id); }, 1200);
   });
 }
+
+// Privacy notice and Terms of use in every footer
+function addLegalLinks() {
+  document.querySelectorAll('.footer-links').forEach(ul => {
+    [['privacy.html', 'Privacy notice'], ['terms.html', 'Terms of use']].forEach(([h, t]) => {
+      if (!ul.querySelector(`a[href="${h}"]`)) { const li = document.createElement('li'); li.innerHTML = `<a href="${h}">${t}</a>`; ul.appendChild(li); }
+    });
+  });
+}
+document.addEventListener('DOMContentLoaded', addLegalLinks);
