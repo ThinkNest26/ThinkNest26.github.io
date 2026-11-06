@@ -43,7 +43,8 @@
   // ----- Download a backup of the important data (JSON file) -----
   const BACKUP_TABLES = ['profiles', 'courses', 'lessons', 'lesson_items', 'enrollments', 'lesson_progress', 'item_responses', 'certificates', 'attendance',
     'parent_links', 'family_children', 'study_groups', 'group_members', 'hub_members', 'hub_profiles', 'posts', 'post_comments', 'contact_messages',
-    'cafe_meetups', 'points_log', 'site_settings', 'curriculum_grades', 'data_requests', 'sessions', 'course_interest'];
+    'cafe_meetups', 'meetup_rsvps', 'points_log', 'site_settings', 'curriculum_grades', 'data_requests', 'sessions', 'course_interest',
+    'parent_requests', 'group_posts', 'post_likes', 'friendships'];
   async function backup() {
     const btn = document.getElementById('adm-backup'); btn.disabled = true;
     const out = { made: new Date().toISOString(), site: 'Think Nest', tables: {} }, skipped = [];
