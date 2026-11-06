@@ -1943,3 +1943,22 @@ html.tn-school .find-class, html.tn-school [data-path-find] { display: none !imp
 .at-r { border: 1px solid #ECEEF6; border-radius: 12px; padding: 8px 12px; display: grid; gap: 4px; } .at-r .sc-flag { justify-self: start; }
 .sc-flag.ok { background: #E3F5EE; color: #1F7A4D; } .sc-flag.none { background: #F1F2F8; color: #6E7485; }
 #at-reg:not(:empty) { margin-top: 16px; border-top: 2px dashed #E4E6F1; padding-top: 14px; }
+/* ===== Weekly plans ===== */
+.pl-mode { margin-bottom: 14px; }
+.wk-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 4px 0 14px; } .wk-bar b { font-size: 1.1rem; } .wk-bar .remember { display: flex; gap: 6px; align-items: center; font-weight: 700; margin-left: 8px; }
+.wk-stage { background: color-mix(in srgb, var(--school) 12%, #fff); color: var(--school); font-weight: 800; font-size: .82rem; border-radius: 20px; padding: 3px 10px; white-space: nowrap; }
+.wk-title { margin: 2px 0; }
+.wk-stages { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.wk-st { border: 2px solid #E4E6F1; background: #fff; border-radius: 20px; padding: 6px 12px; font: inherit; font-weight: 700; font-size: .88rem; cursor: pointer; }
+.wk-st.on { background: var(--school); border-color: var(--school); color: #fff; } .wk-st:disabled { cursor: default; }
+.wk-days { display: grid; gap: 12px; }
+.wk-day { border: 1px solid #ECEEF6; border-radius: 16px; padding: 12px 14px; background: #FCFCFE; display: grid; gap: 8px; } .wk-day h4 { margin: 0; color: var(--school); }
+.wk-lessons { display: grid; gap: 10px; }
+.wk-lesson { background: #fff; border: 1px solid #E4E6F1; border-left: 4px solid var(--school2); border-radius: 12px; padding: 10px 12px; display: grid; gap: 8px; }
+.wk-l-top { display: grid; grid-template-columns: 180px minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.wk-l-top select, .wk-l-top input { font: inherit; padding: 7px 10px; border: 2px solid #E4E6F1; border-radius: 10px; min-width: 0; }
+.wk-l-parts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; } .wk-l-parts label { display: grid; gap: 3px; font-weight: 700; font-size: .82rem; color: #4A4E5E; }
+.wk-l-parts textarea { font: inherit; font-size: .92rem; padding: 7px 9px; border: 2px solid #E4E6F1; border-radius: 10px; resize: vertical; }
+.planner-page .pl-secs .sc-two { gap: 12px; } .pl-stages { font: inherit; padding: 10px; border: 2px solid #E4E6F1; border-radius: 12px; width: 100%; box-sizing: border-box; }
+@media (max-width: 900px) { .wk-l-top, .wk-l-parts { grid-template-columns: 1fr; } }
+.wk-l-parts textarea, .wk-l-top input, .pl-sec textarea { font-weight: 400 !important; }

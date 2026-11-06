@@ -34,7 +34,7 @@ const plWhen = d => d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric'
 
 async function startPlanner() {
   const { user, profile } = await initTeacher();
-  const box = document.getElementById('planner');
+  let box = document.getElementById('planner');
   const { data: scs } = await db.rpc('my_schools');
   const S = (scs || []).find(s => !['student', 'parent'].includes(s.my_role));
   if (!S) { box.innerHTML = '<div class="empty-box"><p>The unit planner is part of Think Nest for Schools. It’s for teachers and leaders of a school.</p></div>'; return; }
@@ -48,9 +48,15 @@ async function startPlanner() {
   const subjects = Object.keys((srow && srow.curriculum_map) || { English: 1, Maths: 1, Science: 1 }).filter(k => ((srow && srow.curriculum_map) || {})[k] !== 'none');
   const sections = tpl => PL_TEMPLATES[tpl].sections.map(sec => Object.assign({}, sec, { label: ((custom[tpl] || {})[sec.key] || {}).label || sec.label, hidden: !!((custom[tpl] || {})[sec.key] || {}).hidden }));
   let gradeFilter = sessionStorage.getItem('tn_pl_grade') || '';
+  // two modes: unit plans and weekly plans
+  box.innerHTML = '<div class="tabs sc-tabs pl-mode" role="tablist"><button role="tab" data-pm="units">🗂️ Unit plans</button><button role="tab" data-pm="weeks">📅 Weekly plans</button></div><div id="pl-main"></div>';
+  box = document.getElementById('pl-main');
+  const setMode = m => { document.querySelectorAll('[data-pm]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.pm === m))); sessionStorage.setItem('tn_pl_mode', m); };
+  document.querySelector('.pl-mode').onclick = e => { const b = e.target.closest('[data-pm]'); if (!b) return; history.replaceState(null, '', 'planner.html'); if (b.dataset.pm === 'weeks') weeks(); else list(); };
 
   // ----- the list of units
   async function list() {
+    setMode('units');
     box.innerHTML = '<p class="empty">Loading…</p>';
     const { data, error } = await db.from('unit_plans').select('id, template, grade, subject, title, term, starts_on, ends_on, status, updated_at, edits, created_by').eq('school_id', S.id).order('starts_on', { ascending: true, nullsFirst: false });
     if (error) { box.innerHTML = `<p class="empty">${PL_E(/unit_plans/.test(error.message || '') ? 'Run database update 63 to use the unit planner.' : friendly(error))}</p>`; return; }
@@ -99,6 +105,7 @@ async function startPlanner() {
 
   // ----- one unit: the collaborative editor
   async function openPlan(pid) {
+    setMode('units');
     box.innerHTML = '<p class="empty">Loading…</p>';
     const [{ data: P, error }, { data: C }] = await Promise.all([db.from('unit_plans').select('*').eq('id', pid).maybeSingle(), db.from('unit_plan_comments').select('*').eq('plan_id', pid).order('created_at')]);
     if (error || !P) { box.innerHTML = '<p class="empty">This unit plan couldn’t be found.</p>'; return; }
@@ -203,23 +210,170 @@ async function startPlanner() {
     box.scrollIntoView({ block: 'start' });
   }
 
+
+  // ===== Weekly plans (one per class per week) =====
+  const STAGES_DEF = ['Tuning in', 'Finding out', 'Sorting out', 'Going further', 'Making conclusions', 'Taking action'];
+  const stages = () => ((custom.weekly || {}).stages || []).length ? custom.weekly.stages : STAGES_DEF;
+  const DAYS = [['mon', 'Monday'], ['tue', 'Tuesday'], ['wed', 'Wednesday'], ['thu', 'Thursday'], ['fri', 'Friday']];
+  const isoLocal = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const mondayOf = d => { const x = new Date(d); x.setHours(12); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return isoLocal(x); };
+  const addDays = (iso, n) => { const x = new Date(iso + 'T12:00:00'); x.setDate(x.getDate() + n); return isoLocal(x); };
+  const wkLabel = iso => `${new Date(iso + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} – ${new Date(addDays(iso, 4) + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+  let wk = sessionStorage.getItem('tn_pl_week') || mondayOf(new Date()), CLS = null, onlyMine = !isLeader;
+  async function weeks() {
+    setMode('weeks'); box.innerHTML = '<p class="empty">Loading…</p>';
+    if (!CLS) { const { data, error } = await db.rpc('planning_classes', { sid: S.id }); if (error) { box.innerHTML = `<p class="empty">${PL_E(/planning_classes|function/.test(error.message || '') ? 'Run database update 68 to use weekly plans.' : friendly(error))}</p>`; return; } CLS = data || []; }
+    const { data: W } = await db.from('weekly_plans').select('id, group_id, stage, status, edits, feedback').eq('school_id', S.id).eq('week_start', wk);
+    const L = CLS.filter(c => !onlyMine || c.mine), byG = id => (W || []).find(p => p.group_id === id);
+    const lastBy = p => { const e = Object.values((p && p.edits) || {}).sort((a, b) => String(b.at).localeCompare(String(a.at)))[0]; return e ? `${e.by} · ${plWhen(e.at)}` : ''; };
+    const done = L.filter(c => byG(c.id)).length;
+    box.innerHTML = `<div class="page-head"><h1 class="title">📅 Weekly plans</h1></div>
+      <div class="wk-bar"><button type="button" class="pill pill-soft" data-wk="-7" aria-label="Previous week">‹</button><b>Week of ${wkLabel(wk)}</b><button type="button" class="pill pill-soft" data-wk="7" aria-label="Next week">›</button>
+        ${wk !== mondayOf(new Date()) ? '<button type="button" class="link-btn" data-wk="0">This week</button>' : ''}
+        ${isLeader ? `<label class="remember"><input type="checkbox" id="wk-mine" ${onlyMine ? 'checked' : ''}> Only my classes</label>` : ''}<span class="meta">${done} of ${L.length} plans started</span></div>
+      ${L.length ? `<div class="in-scroll"><table class="ac-table"><thead><tr><th>Class</th><th>Teacher</th><th>Inquiry stage</th><th>Status</th><th>Last edited</th><th></th></tr></thead><tbody>
+        ${L.map(c => { const p = byG(c.id), st = p ? PL_STATUS[p.status] || PL_STATUS.draft : null; return `<tr><td><b>${PL_E(c.name)}</b></td><td>${PL_E(c.teacher || '')}</td><td>${p && p.stage ? `<span class="wk-stage">${PL_E(p.stage)}</span>` : '–'}</td>
+          <td>${st ? `<span class="rc-st ${st[0]}">${st[1]}</span>` : '<span class="meta">Not started</span>'}</td><td class="meta">${PL_E(lastBy(p))}</td>
+          <td>${p ? `<button type="button" class="pill pill-soft" data-wp="${p.id}">Open</button>` : c.mine || isLeader ? `<button type="button" class="pill pill-soft" data-new="${c.id}">➕ Start plan</button>` : ''}</td></tr>`; }).join('')}</tbody></table></div>`
+        : '<div class="empty-box"><p>You don’t have any classes to plan for yet.</p></div>'}`;
+    box.querySelectorAll('[data-wk]').forEach(b => b.onclick = () => { const n = Number(b.dataset.wk); wk = n ? addDays(wk, n) : mondayOf(new Date()); sessionStorage.setItem('tn_pl_week', wk); weeks(); });
+    const m = document.getElementById('wk-mine'); if (m) m.onchange = () => { onlyMine = m.checked; weeks(); };
+    box.querySelectorAll('[data-wp]').forEach(b => b.onclick = () => openWeek(Number(b.dataset.wp)));
+    box.querySelectorAll('[data-new]').forEach(b => b.onclick = async () => {
+      const { data, error } = await db.from('weekly_plans').insert({ school_id: S.id, group_id: Number(b.dataset.new), week_start: wk, created_by: user.id }).select('id').single();
+      if (error) return say(friendly(error)); openWeek(data.id);
+    });
+  }
+  async function openWeek(pid) {
+    setMode('weeks'); box.innerHTML = '<p class="empty">Loading…</p>';
+    const { data: P } = await db.from('weekly_plans').select('*').eq('id', pid).maybeSingle();
+    if (!P) { box.innerHTML = '<p class="empty">This weekly plan couldn’t be found.</p>'; return; }
+    history.replaceState(null, '', '?week=' + pid);
+    if (!CLS) { const { data } = await db.rpc('planning_classes', { sid: S.id }); CLS = data || []; }
+    const C = CLS.find(c => c.id === P.group_id) || { name: 'Class', grade: '' }, D = Object.assign({ days: {} }, P.data || {});
+    const canEdit = !!CLS.find(c => c.id === P.group_id), canReview = coversGrade(C.grade);
+    const { data: units } = await db.from('unit_plans').select('id, title').eq('school_id', S.id).eq('grade', C.grade).order('starts_on', { ascending: true });
+    let picked = new Set(P.objective_ids || []), objs = {}, objSubj = subjects[0];
+    const loadObjs = async sj => { if (objs[sj]) return objs[sj]; const { data } = await db.rpc('planner_objectives', { sid: S.id, sgrade: C.grade, ssubject: sj }); return (objs[sj] = data || []); };
+    const st = PL_STATUS[P.status] || PL_STATUS.draft, by = k => { const e = (P.edits || {})[k]; return `<small class="pl-by" data-by="${k}">${e ? 'Edited by ' + PL_E(e.by) + ' · ' + plWhen(e.at) : ''}</small>`; };
+    const ta = (k, label, rows, ph) => `<section class="panel pl-sec"><h3>${label}</h3><textarea data-f="${k}" rows="${rows}" maxlength="6000" placeholder="${PL_E(ph || '')}" ${canEdit ? '' : 'readonly'}>${PL_E(Array.isArray(D[k]) ? D[k].join('\n') : (D[k] || ''))}</textarea>${by(k)}</section>`;
+    const lesson = (dk, i, l) => `<div class="wk-lesson" data-day="${dk}" data-i="${i}"><div class="wk-l-top"><select data-lf="subject" ${canEdit ? '' : 'disabled'}><option value="">Subject…</option>${subjects.concat(['PYP inquiry', 'Arabic', 'Islamic Education', 'PE', 'Art', 'Music', 'Library', 'Other']).filter((x, j, a) => a.indexOf(x) === j).map(x => `<option ${l.subject === x ? 'selected' : ''}>${PL_E(x)}</option>`).join('')}</select>
+        <input type="text" data-lf="focus" maxlength="200" value="${PL_E(l.focus || '')}" placeholder="Learning focus / objective" ${canEdit ? '' : 'readonly'}>${canEdit ? '<button type="button" class="link-btn danger" data-rml aria-label="Remove lesson">✕</button>' : ''}</div>
+      <div class="wk-l-parts">${[['starter', 'Starter'], ['main', 'Main activity'], ['plenary', 'Plenary']].map(([k, lab]) => `<label>${lab}<textarea data-lf="${k}" rows="2" maxlength="2000" ${canEdit ? '' : 'readonly'}>${PL_E(l[k] || '')}</textarea></label>`).join('')}</div></div>`;
+    const dayHtml = () => DAYS.map(([dk, dn], di) => `<section class="wk-day"><h4>${dn} <small class="meta">${new Date(addDays(P.week_start, di) + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</small></h4>
+      <div class="wk-lessons">${(D.days[dk] || []).map((l, i) => lesson(dk, i, l)).join('') || '<p class="meta">No lessons yet.</p>'}</div>${canEdit ? `<button type="button" class="pill pill-soft" data-addl="${dk}">+ Add lesson</button>` : ''}</section>`).join('');
+    const empty = !Object.values(D.days || {}).some(a => (a || []).length) && !D.success && !P.stage;
+    box.innerHTML = `<div class="pl-top"><button type="button" class="link-btn" id="wk-back">‹ All classes</button>
+        <div class="pl-top-acts">${canEdit && empty ? '<button type="button" class="pill pill-soft" id="wk-copy">📋 Copy last week’s plan</button>' : ''}<button type="button" class="pill pill-soft" id="wk-word">⬇ Word</button><button type="button" class="pill pill-soft" id="wk-print">🖨️ Print</button><button type="button" class="link-btn" id="wk-refresh">🔄 Refresh</button></div></div>
+      <section class="panel pl-meta"><span class="pl-tpl">📅 Weekly plan</span><h2 class="wk-title">${PL_E(C.name)} · Week of ${wkLabel(P.week_start)}</h2>
+        <div class="pl-meta-row"><label>Unit <select id="wk-unit" ${canEdit ? '' : 'disabled'}><option value="">–</option>${(units || []).map(u => `<option value="${u.id}" ${P.unit_plan_id === u.id ? 'selected' : ''}>${PL_E(u.title)}</option>`).join('')}</select></label><span class="rc-st ${st[0]}">${st[1]}</span></div>
+        <div class="wk-stages" role="radiogroup" aria-label="Inquiry cycle stage"><span class="meta">🔄 Inquiry stage this week:</span>${stages().map(x => `<button type="button" class="wk-st ${P.stage === x ? 'on' : ''}" data-stage="${PL_E(x)}" ${canEdit ? '' : 'disabled'}>${PL_E(x)}</button>`).join('')}</div>
+        ${P.feedback ? `<p class="note">${P.status === 'returned' ? '↩' : '💬'} <b>Feedback from your school leader:</b> ${PL_E(P.feedback)}</p>` : ''}
+        <div class="ca-bar pl-flow">${canEdit && (P.status === 'draft' || P.status === 'returned') ? '<button type="button" class="btn btn-red" data-flow="submit">📤 Submit for review</button>' : ''}
+          ${P.status === 'review' && canReview ? '<button type="button" class="btn btn-white outline" data-flow="return">↩ Return with feedback</button><button type="button" class="btn btn-red" data-flow="approve">✅ Approve</button>' : ''}
+          ${P.status === 'approved' && canReview ? '<button type="button" class="btn btn-white outline" data-flow="return">💬 Add feedback</button>' : ''}
+          ${canEdit && (P.status === 'approved' || P.status === 'review') ? '<button type="button" class="link-btn" data-flow="reopen">✏️ Reopen for editing</button>' : ''}
+          ${canEdit ? '<button type="button" class="link-btn danger" id="wk-del">Delete plan</button>' : ''}</div></section>
+      <div class="pl-secs">
+        <section class="panel pl-sec"><h3>🎯 Learning objectives this week</h3><div class="pl-objs" id="wk-objs"><p class="meta">Loading objectives…</p></div></section>
+        ${ta('success', '✅ Success criteria', 3, 'One success criterion per line, e.g. I can add fractions with the same denominator')}
+        <section class="panel pl-sec"><h3>📆 Lessons, day by day</h3><div class="wk-days" id="wk-days">${dayHtml()}</div>${by('days')}</section>
+        <div class="sc-two">${ta('support', '🧩 Support', 4, 'How will you support students who need it? e.g. visuals, sentence starters, adult support, students of determination')}${ta('challenge', '🚀 Challenge', 4, 'How will you stretch students who are ready? e.g. open questions, extension tasks')}</div>
+        ${ta('assessment', '📝 Formative assessment', 3, 'How will you check learning this week?')}${ta('resources', '📚 Resources', 3)}${ta('reflection', '💭 Reflection (after the week)', 3, 'What worked well? What will you change next week?')}</div>`;
+    // saving
+    const saved = (k, t) => { const b = box.querySelector(`[data-by="${k}"]`); if (b) b.textContent = t; };
+    const save = async (k, v) => { saved(k, 'Saving…'); const { error } = await db.rpc('set_weekly_field', { pid, fkey: k, fval: v }); if (error) { saved(k, '⚠️ Not saved'); return say(friendly(error)); } D[k] = v; saved(k, '✓ Saved just now by you'); };
+    const upd = async row => { const { error } = await db.from('weekly_plans').update(row).eq('id', pid); if (error) say(friendly(error)); else say('✓ Saved'); };
+    box.querySelectorAll('textarea[data-f]').forEach(t => { let last = t.value; t.onblur = () => { if (!canEdit || t.value === last) return; last = t.value; save(t.dataset.f, t.dataset.f === 'success' ? t.value.split('\n').map(x => x.trim()).filter(Boolean) : t.value); }; });
+    document.getElementById('wk-unit').onchange = e => upd({ unit_plan_id: e.target.value ? Number(e.target.value) : null });
+    box.querySelectorAll('[data-stage]').forEach(b => b.onclick = () => { const v = P.stage === b.dataset.stage ? null : b.dataset.stage; P.stage = v; box.querySelectorAll('[data-stage]').forEach(x => x.classList.toggle('on', x.dataset.stage === v)); upd({ stage: v }); });
+    // days: lessons are saved together
+    const readDays = () => { const out = {}; DAYS.forEach(([dk]) => { out[dk] = [...box.querySelectorAll(`.wk-lesson[data-day="${dk}"]`)].map(el => { const l = {}; el.querySelectorAll('[data-lf]').forEach(x => l[x.dataset.lf] = x.value.trim()); return l; }); }); return out; };
+    const daysBox = document.getElementById('wk-days');
+    let dTimer; const saveDays = () => { clearTimeout(dTimer); dTimer = setTimeout(() => { D.days = readDays(); save('days', D.days); }, 500); };
+    daysBox.addEventListener('change', e => { if (canEdit && e.target.closest('[data-lf]')) saveDays(); });
+    daysBox.addEventListener('focusout', e => { if (canEdit && e.target.matches('textarea[data-lf], input[data-lf]')) saveDays(); });
+    daysBox.addEventListener('click', e => {
+      const a = e.target.closest('[data-addl]'), r = e.target.closest('[data-rml]');
+      if (a) { D.days = readDays(); (D.days[a.dataset.addl] = D.days[a.dataset.addl] || []).push({}); daysBox.innerHTML = dayHtml(); saveDays(); }
+      if (r) { const el = r.closest('.wk-lesson'); if (!confirm('Remove this lesson?')) return; D.days = readDays(); D.days[el.dataset.day].splice(Number(el.dataset.i), 1); daysBox.innerHTML = dayHtml(); saveDays(); }
+    });
+    // objectives
+    const drawObjs = async () => {
+      const ob = document.getElementById('wk-objs'); const L = await loadObjs(objSubj), topics = [...new Set(L.map(o => o.topic))];
+      const count = sj => (objs[sj] || []).filter(o => picked.has(o.id)).length;
+      ob.innerHTML = `<div class="feed-filter">${subjects.map(sj => `<button type="button" class="chip ${sj === objSubj ? 'on' : ''}" data-os="${PL_E(sj)}">${PL_E(sj)}${count(sj) ? ' · ' + count(sj) : ''}</button>`).join('')}</div>
+        ${L.length ? topics.map(tp => `<details class="pl-topic" ${L.filter(o => o.topic === tp).some(o => picked.has(o.id)) ? 'open' : ''}><summary>${PL_E(tp)} <small class="meta">${L.filter(o => o.topic === tp && picked.has(o.id)).length}/${L.filter(o => o.topic === tp).length}</small></summary>
+          ${L.filter(o => o.topic === tp).map(o => `<label class="pl-obj"><input type="checkbox" value="${o.id}" ${picked.has(o.id) ? 'checked' : ''} ${canEdit ? '' : 'disabled'}><span>${PL_E(o.text)}</span></label>`).join('')}</details>`).join('')
+          : `<p class="meta">No ${PL_E(objSubj)} objectives for ${PL_E(C.grade)} in your school’s curriculum yet.</p>`}`;
+      ob.querySelectorAll('[data-os]').forEach(b => b.onclick = async () => { objSubj = b.dataset.os; await drawObjs(); });
+      ob.onchange = async e => { const cb = e.target.closest('input[type=checkbox]'); if (!cb) return; const id = Number(cb.value); cb.checked ? picked.add(id) : picked.delete(id); upd({ objective_ids: [...picked] }); };
+    };
+    drawObjs();
+    // review flow
+    box.querySelectorAll('[data-flow]').forEach(b => b.onclick = async () => {
+      const a = b.dataset.flow; let note = '';
+      if (a === 'return') { note = prompt(P.status === 'approved' ? 'Your feedback for the teacher:' : 'What should the teacher change?', P.feedback || ''); if (note === null) return; }
+      if (a === 'submit' && !confirm('Submit this weekly plan for review by your school leaders?')) return;
+      const action = a === 'return' && P.status === 'approved' ? 'approve' : a;
+      const { error } = await db.rpc('review_weekly_plan', { pid, action, note });
+      if (error) return say(friendly(error));
+      say({ submit: '📤 Submitted for review.', approve: P.status === 'approved' ? '💬 Feedback sent.' : '✅ Approved.', return: '↩ Returned with your feedback.', reopen: '✏️ Open for editing again.' }[action === 'approve' && a === 'return' ? 'approve' : action]); openWeek(pid);
+    });
+    const del = document.getElementById('wk-del'); if (del) del.onclick = async () => { if (!confirm('Delete this weekly plan? This can’t be undone.')) return; const { error } = await db.from('weekly_plans').delete().eq('id', pid); if (error) return say(friendly(error)); history.replaceState(null, '', 'planner.html'); weeks(); };
+    document.getElementById('wk-back').onclick = () => { history.replaceState(null, '', 'planner.html'); wk = P.week_start; weeks(); };
+    document.getElementById('wk-refresh').onclick = () => openWeek(pid);
+    const cp = document.getElementById('wk-copy');
+    if (cp) cp.onclick = async () => {
+      const { data: prev } = await db.from('weekly_plans').select('*').eq('group_id', P.group_id).lt('week_start', P.week_start).order('week_start', { ascending: false }).limit(1).maybeSingle();
+      if (!prev) return say('There’s no earlier weekly plan for this class to copy.');
+      if (!confirm(`Copy the plan from the week of ${wkLabel(prev.week_start)}? You can then change anything.`)) return;
+      const keep = ['days', 'success', 'support', 'challenge', 'assessment', 'resources'];
+      for (const k of keep) if ((prev.data || {})[k] !== undefined) await db.rpc('set_weekly_field', { pid, fkey: k, fval: prev.data[k] });
+      await db.from('weekly_plans').update({ unit_plan_id: prev.unit_plan_id, stage: prev.stage, objective_ids: prev.objective_ids }).eq('id', pid);
+      say('📋 Copied. Now adjust it for this week.'); openWeek(pid);
+    };
+    const exportHtml = async () => {
+      for (const sj of subjects) await loadObjs(sj);
+      const objList = subjects.map(sj => { const L = (objs[sj] || []).filter(o => picked.has(o.id)); return L.length ? `<p><b>${PL_E(sj)}</b></p><ul>${L.map(o => `<li>${PL_E(o.text)}</li>`).join('')}</ul>` : ''; }).join('') || '<p>–</p>';
+      const txt = k => `<p>${PL_E(Array.isArray(D[k]) ? D[k].join('\n') : (D[k] || '–')).replace(/\n/g, '<br>')}</p>`;
+      const unit = (units || []).find(u => u.id === P.unit_plan_id);
+      return `<html><head><meta charset="utf-8"><title>${PL_E(C.name)} weekly plan</title><style>body{font-family:Arial,sans-serif;color:#1D2026;margin:28px;font-size:10.5pt}h1{color:${S.color_primary};margin:0 0 4px;font-size:18pt}h2{font-size:12pt;color:${S.color_primary};border-bottom:2px solid ${S.color_accent};padding-bottom:3px;margin:14px 0 6px}
+        table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:5px;vertical-align:top;font-size:9.5pt;text-align:left}th{background:${S.color_primary};color:#fff}.meta{color:#555}ul{margin:3px 0 3px 18px}p{margin:3px 0}</style></head><body>
+        <p class="meta">${PL_E(S.name)} · Weekly plan</p><h1>${PL_E(C.name)} · Week of ${wkLabel(P.week_start)}</h1>
+        <p class="meta">${unit ? 'Unit: ' + PL_E(unit.title) + ' · ' : ''}${P.stage ? 'Inquiry stage: ' + PL_E(P.stage) + ' · ' : ''}${PL_E((PL_STATUS[P.status] || PL_STATUS.draft)[1].replace(/^\S+\s/, ''))}</p>
+        <h2>Learning objectives</h2>${objList}<h2>Success criteria</h2>${txt('success')}
+        <h2>Lessons</h2><table><tr><th>Day</th><th>Subject and focus</th><th>Starter</th><th>Main activity</th><th>Plenary</th></tr>
+        ${DAYS.map(([dk, dn]) => (D.days[dk] || []).map((l, i) => `<tr>${i ? '' : `<td rowspan="${(D.days[dk] || []).length}"><b>${dn}</b></td>`}<td><b>${PL_E(l.subject || '')}</b><br>${PL_E(l.focus || '')}</td><td>${PL_E(l.starter || '')}</td><td>${PL_E(l.main || '')}</td><td>${PL_E(l.plenary || '')}</td></tr>`).join('') || `<tr><td><b>${dn}</b></td><td colspan="4">–</td></tr>`).join('')}</table>
+        <h2>Support</h2>${txt('support')}<h2>Challenge</h2>${txt('challenge')}<h2>Formative assessment</h2>${txt('assessment')}<h2>Resources</h2>${txt('resources')}<h2>Reflection</h2>${txt('reflection')}</body></html>`;
+    };
+    document.getElementById('wk-word').onclick = async () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + await exportHtml()], { type: 'application/msword' }));
+      a.download = (C.name + ' weekly plan ' + P.week_start).replace(/[^\w\u0600-\u06FF-]+/g, '-') + '.doc'; document.body.appendChild(a); a.click(); a.remove(); };
+    document.getElementById('wk-print').onclick = async () => { const w = window.open('', '_blank'); if (!w) return say('Please allow pop-ups to print.'); w.document.write(await exportHtml()); w.document.close(); setTimeout(() => w.print(), 400); };
+    box.scrollIntoView({ block: 'start' });
+  }
+
   // ----- leaders: rename or hide sections of the templates
   function customise() {
     const fb = document.getElementById('pl-form-box');
     fb.innerHTML = `<section class="panel pl-form"><h2>⚙️ Customise the template</h2><p class="meta">Rename sections to match your school’s language (for example “Key concepts” → “Specified concepts”), or hide sections you don’t use. Changes apply to every unit.</p>
       ${Object.entries(PL_TEMPLATES).map(([k, t]) => `<h3 class="sc-h3">${k === 'pyp' ? '🌍' : '📘'} ${t.name}</h3><div class="pl-cust">${t.sections.map(sec => { const c = (custom[k] || {})[sec.key] || {};
         return `<div class="pl-cust-row" data-t="${k}" data-k="${sec.key}"><span class="meta">${PL_E(sec.label)}</span><input type="text" maxlength="80" value="${PL_E(c.label || '')}" placeholder="${PL_E(sec.label)}" aria-label="New name for ${PL_E(sec.label)}"><label class="remember"><input type="checkbox" ${c.hidden ? 'checked' : ''}> Hide</label></div>`; }).join('')}</div>`).join('')}
+      <h3 class="sc-h3">📅 Weekly plans: inquiry cycle stages</h3><p class="meta">One stage per line, in order. For example, change “Making conclusions” to “Making connections”.</p>
+      <textarea id="pl-stages" rows="6" class="pl-stages">${PL_E(stages().join('\n'))}</textarea>
       <div class="ca-bar"><button type="button" class="link-btn" id="pl-cu-x">Cancel</button><button type="button" class="btn btn-red" id="pl-cu-save">💾 Save template</button></div></section>`;
     document.getElementById('pl-cu-x').onclick = () => { fb.innerHTML = ''; };
     document.getElementById('pl-cu-save').onclick = async () => {
       const next = {};
       fb.querySelectorAll('.pl-cust-row').forEach(r => { const lab = r.querySelector('input[type=text]').value.trim(), hid = r.querySelector('input[type=checkbox]').checked;
         if (lab || hid) { (next[r.dataset.t] = next[r.dataset.t] || {})[r.dataset.k] = Object.assign({}, lab ? { label: lab } : {}, hid ? { hidden: true } : {}); } });
+      const stl = document.getElementById('pl-stages').value.split('\n').map(x => x.trim()).filter(Boolean);
+      if (stl.length && stl.join('|') !== STAGES_DEF.join('|')) next.weekly = { stages: stl.slice(0, 10) };
       const { error } = await db.rpc('set_planner_sections', { sid: S.id, val: next });
       if (error) return say(friendly(error)); custom = next; say('✅ Template saved.'); fb.innerHTML = '';
     };
   }
 
-  const q = new URLSearchParams(location.search).get('plan');
-  if (q) openPlan(Number(q)); else list();
+  const q = new URLSearchParams(location.search).get('plan'), qw = new URLSearchParams(location.search).get('week');
+  if (qw) openWeek(Number(qw)); else if (q) openPlan(Number(q)); else if (sessionStorage.getItem('tn_pl_mode') === 'weeks') weeks(); else list();
 }
