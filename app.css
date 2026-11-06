@@ -1998,3 +1998,6 @@ html.tn-school .find-class, html.tn-school [data-path-find] { display: none !imp
 .sc-admin-add { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; } .sc-admin-add label { display: grid; gap: 4px; font-weight: 700; }
 .sc-admin-add select, .sc-admin-add input { font: inherit; font-weight: 400; padding: 9px 12px; border: 2px solid #E4E6F1; border-radius: 12px; min-width: 220px; }
 .sc-admin-add .btn { border: 0; cursor: pointer; font: inherit; font-weight: 800; }
+.wk-s6.opt { border-style: dashed; background: #FFFBF2; } .wk-s6.opt .wk-s6-n { background: var(--school2); } .wk-s6-h small { margin-left: auto; font-style: italic; }
+.wk-add-act { border: 2px dashed color-mix(in srgb, var(--school2) 60%, #fff); background: #FFFBF2; color: #8A6100; border-radius: 12px; font: inherit; font-weight: 800; cursor: pointer; padding: 10px; min-height: 90px; }
+.wk-add-act small { font-weight: 600; } .wk-add-act:hover { border-color: var(--school2); }

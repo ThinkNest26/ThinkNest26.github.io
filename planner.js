@@ -295,7 +295,7 @@ async function startPlanner() {
     const C = CLS.find(c => c.id === P.group_id) || { name: 'Class', grade: '' }, D = upgrade(JSON.parse(JSON.stringify(P.data || {})));
     const canEdit = !!CLS.find(c => c.id === P.group_id), canReview = coversGrade(C.grade), ro = canEdit ? '' : 'disabled';
     const { data: units } = await db.from('unit_plans').select('id, title').eq('school_id', S.id).eq('grade', C.grade).order('starts_on', { ascending: true });
-    const picked = new Set(P.objective_ids || []), objs = {}, openPick = new Set(), openLes = new Set();
+    const picked = new Set(P.objective_ids || []), objs = {}, openPick = new Set(), closedLes = new Set(), showAction = new Set();
     const noBank = sj => !sj || sj === 'Unit of inquiry (PYP)' || sj === 'Other';
     const loadObjs = async sj => { if (noBank(sj)) return []; if (objs[sj]) return objs[sj]; const { data } = await db.rpc('planner_objectives', { sid: S.id, sgrade: C.grade, ssubject: sj }); return (objs[sj] = data || []); };
     const st = PL_STATUS[P.status] || PL_STATUS.draft, STG = stages().slice(0, 6);
@@ -304,14 +304,17 @@ async function startPlanner() {
     const dayName = dk => (DAYS.find(d => d[0] === dk) || ['', ''])[1];
     const glance = () => `<div class="in-scroll"><table class="wk-glance"><thead><tr>${DAYS.map(([, dn], i) => `<th>${dn}<br><small>${new Date(addDays(P.week_start, i) + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</small></th>`).join('')}</tr></thead>
       <tbody><tr>${DAYS.map(([dk]) => `<td>${D.subjects.flatMap(sb => (sb.lessons || []).filter(l => l.day === dk).map(l => `<div class="wk-g"><b>${PL_E(sb.subject || 'Subject')}</b>${l.focus ? `<span>${PL_E(l.focus)}</span>` : ''}</div>`)).join('') || '<span class="meta">–</span>'}</td>`).join('')}</tr></tbody></table></div>`;
-    const lessonHtml = (si, li, l) => { const filled = (l.stages || []).filter(x => x.a || x.t).length, open = openLes.has(si + ':' + li);
+    const stageCell = (k, nm, l, optional) => `<div class="wk-s6 ${optional ? 'opt' : ''}"><div class="wk-s6-h"><span class="wk-s6-n">${k + 1}</span><b>${PL_E(nm)}</b>${optional ? '<small class="meta">optional</small>' : ''}</div>
+          <input type="text" list="dl-stage${k}" data-lf="a" data-st="${k}" value="${PL_E((l.stages[k] || {}).a || '')}" placeholder="Choose or type an activity…" ${ro}>
+          <textarea data-lf="t" data-st="${k}" rows="2" maxlength="1500" placeholder="Details (optional)" ${ro}>${PL_E((l.stages[k] || {}).t || '')}</textarea></div>`;
+    const lessonHtml = (si, li, l) => { const key = si + ':' + li, open = !closedLes.has(key), filled = (l.stages || []).slice(0, 5).filter(x => x.a || x.t).length;
+      const act = l.stages[5] && (l.stages[5].a || l.stages[5].t), showAct = act || showAction.has(key);
       return `<div class="wk-les ${open ? 'open' : ''}" data-li="${li}"><div class="wk-les-top">
         <select data-lf="day" ${ro} aria-label="Day"><option value="">Day…</option>${DAYS.map(([dk, dn]) => `<option value="${dk}" ${l.day === dk ? 'selected' : ''}>${dn}</option>`).join('')}</select>
         <input type="text" data-lf="focus" maxlength="200" value="${PL_E(l.focus || '')}" placeholder="Lesson focus" ${ro}>
-        <button type="button" class="pill pill-soft wk-tog" data-tog-les>${open ? '▴' : '▾'} Inquiry stages · ${filled}/6</button>${canEdit ? '<button type="button" class="link-btn danger" data-rm-les aria-label="Remove lesson">✕</button>' : ''}</div>
-        ${open ? `<div class="wk-stages6">${STG.map((nm, k) => `<div class="wk-s6"><div class="wk-s6-h"><span class="wk-s6-n">${k + 1}</span><b>${PL_E(nm)}</b></div>
-          <input type="text" list="dl-stage${k}" data-lf="a" data-st="${k}" value="${PL_E((l.stages[k] || {}).a || '')}" placeholder="Choose or type an activity…" ${ro}>
-          <textarea data-lf="t" data-st="${k}" rows="2" maxlength="1500" placeholder="Details (optional)" ${ro}>${PL_E((l.stages[k] || {}).t || '')}</textarea></div>`).join('')}</div>` : ''}</div>`; };
+        <button type="button" class="pill pill-soft wk-tog" data-tog-les title="${open ? 'Fold away' : 'Show the inquiry stages'}">${open ? '▴' : '▾'} ${filled}/5 stages${act ? ' · ✓ ' + PL_E(STG[5] || 'Taking action') : ''}</button>${canEdit ? '<button type="button" class="link-btn danger" data-rm-les aria-label="Remove lesson">✕</button>' : ''}</div>
+        ${open ? `<div class="wk-stages6">${STG.slice(0, 5).map((nm, k) => stageCell(k, nm, l, false)).join('')}
+          ${showAct ? stageCell(5, STG[5] || 'Taking action', l, true) : (canEdit ? `<button type="button" class="wk-add-act" data-add-act>+ Add ${PL_E(STG[5] || 'Taking action')} <small>(optional)</small></button>` : '')}</div>` : ''}</div>`; };
     const subjectHtml = (sb, si) => { const nObj = (objs[sb.subject] || []).filter(o => picked.has(o.id)).length;
       return `<section class="panel wk-subj" data-si="${si}"><div class="wk-subj-top"><select data-sf="subject" class="wk-subj-sel" ${ro} aria-label="Subject"><option value="">Choose a subject…</option>${WK_SUBJECTS().map(x => `<option ${sb.subject === x ? 'selected' : ''}>${PL_E(x)}</option>`).join('')}</select>
           <span class="meta">${(sb.lessons || []).length} lesson${(sb.lessons || []).length === 1 ? '' : 's'} this week</span>${canEdit ? '<button type="button" class="link-btn danger" data-rm-subj>Remove subject</button>' : ''}</div>
@@ -360,21 +363,22 @@ async function startPlanner() {
       if (el.hasAttribute('data-obj')) { if (e.type !== 'change') return; const id = Number(el.value); el.checked ? picked.add(id) : picked.delete(id); upd({ objective_ids: [...picked] }); return; }
       const les = el.closest('[data-li]'); if (les && el.dataset.lf) { const l = sb.lessons[Number(les.dataset.li)];
         if (el.dataset.st !== undefined) l.stages[Number(el.dataset.st)][el.dataset.lf] = el.value; else l[el.dataset.lf] = el.value;
-        if (el.dataset.lf === 'a' || el.dataset.lf === 't') { const tg = les.querySelector('.wk-tog'); if (tg) tg.textContent = `▴ Inquiry stages · ${l.stages.filter(x => x.a || x.t).length}/6`; }
+        if (el.dataset.lf === 'a' || el.dataset.lf === 't') { const tg = les.querySelector('.wk-tog'), act = l.stages[5] && (l.stages[5].a || l.stages[5].t); if (tg) tg.textContent = `▴ ${l.stages.slice(0, 5).filter(x => x.a || x.t).length}/5 stages${act ? ' · ✓ ' + (STG[5] || 'Taking action') : ''}`; }
         saveSubjects(); } };
     subBox.addEventListener('change', field);
     subBox.addEventListener('input', e => { if (e.target.matches('textarea, input[type=text]')) field(e); });
     subBox.addEventListener('click', e => {
       const sec = e.target.closest('[data-si]'); if (!sec) return; const si = Number(sec.dataset.si), sb = D.subjects[si];
       if (e.target.closest('[data-tog-obj]')) { openPick.has(si) ? openPick.delete(si) : openPick.add(si); drawSubjects(); return; }
-      if (e.target.closest('[data-rm-subj]')) { if (!confirm(`Remove ${sb.subject || 'this subject'} from this week’s plan?`)) return; D.subjects.splice(si, 1); openPick.clear(); openLes.clear(); drawSubjects(); saveSubjects(); return; }
-      if (e.target.closest('[data-add-les]')) { const used = (sb.lessons || []).map(l => l.day), next = (DAYS.find(([dk]) => !used.includes(dk)) || DAYS[0])[0]; sb.lessons.push(blankLesson(next)); openLes.add(si + ':' + (sb.lessons.length - 1)); drawSubjects(); saveSubjects(); return; }
+      if (e.target.closest('[data-rm-subj]')) { if (!confirm(`Remove ${sb.subject || 'this subject'} from this week’s plan?`)) return; D.subjects.splice(si, 1); openPick.clear(); closedLes.clear(); showAction.clear(); drawSubjects(); saveSubjects(); return; }
+      if (e.target.closest('[data-add-les]')) { const used = (sb.lessons || []).map(l => l.day), next = (DAYS.find(([dk]) => !used.includes(dk)) || DAYS[0])[0]; sb.lessons.push(blankLesson(next)); drawSubjects(); saveSubjects(); return; }
       const les = e.target.closest('[data-li]'); if (!les) return; const li = Number(les.dataset.li), key = si + ':' + li;
-      if (e.target.closest('[data-tog-les]')) { openLes.has(key) ? openLes.delete(key) : openLes.add(key); drawSubjects(); return; }
-      if (e.target.closest('[data-rm-les]')) { if (!confirm('Remove this lesson?')) return; sb.lessons.splice(li, 1); openLes.clear(); drawSubjects(); saveSubjects(); }
+      if (e.target.closest('[data-tog-les]')) { closedLes.has(key) ? closedLes.delete(key) : closedLes.add(key); drawSubjects(); return; }
+      if (e.target.closest('[data-add-act]')) { showAction.add(key); drawSubjects(); const inp = subBox.querySelector(`.wk-subj[data-si="${si}"] .wk-les[data-li="${li}"] [data-st="5"][data-lf="a"]`); if (inp) inp.focus(); return; }
+      if (e.target.closest('[data-rm-les]')) { if (!confirm('Remove this lesson?')) return; sb.lessons.splice(li, 1); closedLes.clear(); showAction.clear(); drawSubjects(); saveSubjects(); }
     });
     const ns = document.getElementById('wk-new-subj');
-    if (ns) ns.onchange = () => { if (!ns.value) return; D.subjects.push(blankSubject(ns.value)); openLes.add((D.subjects.length - 1) + ':0'); ns.value = ''; drawSubjects(); saveSubjects();
+    if (ns) ns.onchange = () => { if (!ns.value) return; D.subjects.push(blankSubject(ns.value)); ns.value = ''; drawSubjects(); saveSubjects();
       const last = subBox.lastElementChild; if (last) last.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
     box.querySelectorAll('[data-wchip]').forEach(w => w.onchange = () => { const k = w.dataset.wchip; D[k] = [...box.querySelectorAll(`[data-wchip="${k}"]:checked`)].map(x => x.value); save(k, D[k]); });
     const rf = box.querySelector('textarea[data-f="reflection"]'); let lastR = rf.value; rf.onblur = () => { if (!canEdit || rf.value === lastR) return; lastR = rf.value; save('reflection', rf.value); };
@@ -418,7 +422,7 @@ async function startPlanner() {
         ${D.subjects.map(sb => { const ob = (objs[sb.subject] || []).filter(o => picked.has(o.id));
           return `<h2>${E(sb.subject || 'Subject')}</h2><table><tr><th style="width:50%">Learning objectives</th><th>Success criteria</th></tr><tr><td>${ob.length ? `<ul>${ob.map(o => `<li>${E(o.text)}</li>`).join('')}</ul>` : ''}${sb.obj_note ? `<p>${E(sb.obj_note).replace(/\n/g, '<br>')}</p>` : ''}${!ob.length && !sb.obj_note ? '–' : ''}</td><td>${E(sb.success || '–').replace(/\n/g, '<br>')}</td></tr></table>
             ${(sb.lessons || []).map(l => `<h3>${E(dayName(l.day) || 'Lesson')}${l.focus ? ': ' + E(l.focus) : ''}</h3><table><tr><th style="width:24%">Inquiry stage</th><th style="width:30%">Activity</th><th>Details</th></tr>
-              ${STG.map((nm, k) => `<tr><td><b>${k + 1}. ${E(nm)}</b></td><td>${E((l.stages[k] || {}).a || '')}</td><td>${E((l.stages[k] || {}).t || '').replace(/\n/g, '<br>')}</td></tr>`).join('')}</table>`).join('')}
+              ${STG.map((nm, k) => k === 5 && !((l.stages[5] || {}).a || (l.stages[5] || {}).t) ? '' : `<tr><td><b>${k + 1}. ${E(nm)}</b>${k === 5 ? ' <i>(optional)</i>' : ''}</td><td>${E((l.stages[k] || {}).a || '')}</td><td>${E((l.stages[k] || {}).t || '').replace(/\n/g, '<br>')}</td></tr>`).join('')}</table>`).join('')}
             <table><tr><th>Support</th><th>Challenge</th><th>Assessment</th><th>Resources</th></tr><tr><td>${list(sb.support, sb.support_note)}</td><td>${list(sb.challenge, sb.challenge_note)}</td><td>${list(sb.assessment, sb.assessment_note)}</td><td>${list(sb.resources, sb.resources_note)}</td></tr></table>`; }).join('')}
         <h2>Reflection</h2><p>${E(D.reflection || '–').replace(/\n/g, '<br>')}</p></body></html>`;
     };

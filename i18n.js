@@ -1742,7 +1742,9 @@
 "🛡️ Add admin": "🛡️ أضف مسؤولًا",
 "Principal / school admin": "المدير / مسؤول المدرسة",
 "All my grades": "جميع صفوفي",
-"(you)": "(أنت)"
+"(you)": "(أنت)",
+"optional": "اختياري",
+"+ Add Taking action": "+ أضف اتخاذ الإجراء"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times
