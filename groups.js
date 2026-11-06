@@ -397,6 +397,7 @@ async function startClasses() {
   const isTeach = ['teacher', 'school_leader', 'admin'].includes(me.role);
   const btn = document.getElementById('new-class'); btn.hidden = !isTeach;
   btn.addEventListener('click', () => openTeacherGroupDialog('class'));
+  if (isTeach && /[?&]new=1/.test(location.search)) setTimeout(() => openTeacherGroupDialog('class'), 300);
   const { data } = await db.rpc('my_groups');
   const cls = (data || []).filter(g => g.kind === 'class' && g.my_status === 'active');
   const box = document.getElementById('class-list');

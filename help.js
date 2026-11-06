@@ -1,11 +1,11 @@
 const HELP_AR = {
   students: { ic: '🎒', name: 'الطلاب', qs: [
-    ['كيف أنضم إلى دورة؟', 'افتح <b>التعلّم ← جميع الدورات</b>، واختر دورة واضغط <b>انضم</b>. ستظهر بعدها في <b>دوراتي</b>. يمكنك أيضًا اختيار مادة من الصفحة الرئيسية ضمن <b>مسارات التفكير</b>.'],
+    ['كيف أنضم إلى دورة؟', 'افتح <b>الدورات عبر الإنترنت ← ابحث عن دورة</b>، واختر دورة واضغط <b>انضم</b>. ستظهر بعدها في <b>دوراتي</b>. يمكنك أيضًا اختيار مادة من الصفحة الرئيسية ضمن <b>مسارات التفكير</b>.'],
     ['أين أجد أوراق العمل والاختبارات والأنشطة؟', 'افتح <b>دوراتي</b>، واختر الدورة ثم الدرس. ستجد كل ما أضافه معلّمك تحت كل درس. تُصحَّح الاختبارات فورًا، أما بقية الأعمال فيصحّحها معلّمك.'],
     ['كيف أسلّم عملي؟', 'افتح النشاط داخل الدرس. اكتب إجابتك، أو اضغط <b>رفع ملف</b> لإضافة صورة أو ملف، ثم اضغط <b>تسليم</b>. سيصلك إشعار 🔔 عندما يصحّح معلّمك عملك.'],
     ['كيف أنضم إلى حصة مباشرة؟', 'تجد الحصص المباشرة في <b>تقويمي</b> وفي صفحة الدورة. قبل بدء الحصة بـ15 دقيقة، اضغط <b>✋ تسجيل الحضور</b> في صفحة الدورة ليعرف معلّمك أنك موجود.'],
     ['ما هي نقاط نست والأوسمة؟', 'تحصل على نقاط نست عند تسليم الأعمال، والحصول على الدرجة الكاملة، وإنهاء الدروس، وحضور الحصص، ومساعدة الآخرين. اجمع الأوسمة وانتقل من 🥚 فرخ صغير إلى 🏆 نسر! تجد كل ذلك في <b>تقدّمي ← مكافآتي</b>.'],
-    ['كيف أضيف صديقًا؟', 'افتح <b>المجتمع ← أصدقائي</b>، وابحث عن زميلك وأرسل له طلب صداقة. يمكنكما الدردشة على انفراد بعد أن يوافق كلاكما.'],
+    ['كيف أضيف صديقًا؟', 'افتح <b>الأصدقاء والمجتمع ← أصدقائي</b>، وابحث عن زميلك وأرسل له طلب صداقة. يمكنكما الدردشة على انفراد بعد أن يوافق كلاكما.'],
     ['كيف أنزّل شهادتي؟', 'افتح <b>تقدّمي ← شهاداتي</b>، واضغط <b>فتح وتنزيل</b>، ثم <b>تنزيل PDF / طباعة</b> واختر <b>حفظ بصيغة PDF</b>.'],
     ['عمري أقل من 13 سنة. هل يمكنني التسجيل بنفسي؟', 'لا. يجب أن يسجّل وليّ أمرك أولًا ويضيفك، ثم يرسل لك رابط دعوة خاصًا لإكمال انضمامك.']
   ] },
@@ -19,11 +19,11 @@ const HELP_AR = {
     ['أنا معلّم أيضًا. هل أحتاج إلى حسابين؟', 'لا. افتح <b>إعدادات الحساب</b> واضغط <b>تقدّم للتدريس</b>. بعد الموافقة، ستحصل على منطقتي المعلّم ووليّ الأمر في حساب واحد.']
   ] },
   teachers: { ic: '👩‍🏫', name: 'المعلمون', qs: [
-    ['كيف أنشئ دورة؟', 'افتح <b>التدريس ← دوراتي ← دورة جديدة</b>. اختر لمن هي، ثم المادة والمنهج والصف، وسيُقترح الاسم تلقائيًا. لورش المعلمين أو أولياء الأمور، اختر موضوعًا من المجتمع بدلًا من ذلك.'],
+    ['كيف أنشئ دورة؟', 'افتح <b>الدورات عبر الإنترنت ← دوراتي ← دورة جديدة</b>. اختر لمن هي، ثم المادة والمنهج والصف، وسيُقترح الاسم تلقائيًا. لورش المعلمين أو أولياء الأمور، اختر موضوعًا من المجتمع بدلًا من ذلك.'],
     ['كيف أضيف دروسًا وأنشطة؟', 'افتح دورتك، وأضف درسًا، ثم اضغط <b>+ أضف إلى هذا الدرس</b>. اختر من بين 10 أدوات: رفع ملفات، نماذج، اختبارات، أوراق عمل، فيديوهات، مهام كتابية، بطاقات تعليمية، أنشطة، روابط تفاعلية، وبطاقات خروج. يمكن إنشاء كثير منها بالذكاء الاصطناعي انطلاقًا من هدف تعلّمي.'],
     ['كيف أصحّح الأعمال؟', 'تُصحَّح الاختبارات تلقائيًا. أما بقية الأعمال، فافتح النشاط في دورتك لترى ما سلّمه الطلاب، وأضف درجة وتعليقًا. سيصل للطلاب إشعار.'],
     ['كيف أسجّل الحضور؟', 'استخدم <b>فصولي ← الحضور</b>، أو مربع الحضور في لوحة التحكم، أو تبويب 📋 الحضور في الدورة. سجّل كل طالب حاضرًا أو متأخرًا أو غائبًا أو بعذر، ثم اضغط <b>حفظ السجل</b>. يُبلَّغ أولياء الأمور إذا تغيّب أبناؤهم أو تأخروا.'],
-    ['كيف أنشئ فصلًا؟', 'افتح <b>فصولي ← + إنشاء فصل</b> واختر دورة: سيُضاف جميع طلابها. لكل فصل صفحة منشورات ومصادر ومحادثة جماعية ولوحة متصدّرين.'],
+    ['كيف أنشئ فصلًا؟', 'افتح <b>فصولي ← ➕ فصل جديد</b> واختر دورة: سيُضاف جميع طلابها. لكل فصل صفحة منشورات ومصادر ومحادثة جماعية ولوحة متصدّرين.'],
     ['كيف أمنح شهادة؟', 'اضغط <b>🏅 الشهادات</b> في القائمة الجانبية. اختر نوعًا، ودورة أو فصلًا، وحدّد الطلاب، وأضف السبب، وراجع المعاينة ثم اضغط <b>منح</b>. يُبلَّغ الطلاب وأولياء أمورهم.'],
     ['ما هو «ما بعد الجرس»؟', 'هو مجتمع المعلمين لدينا: ورش ولقاءات لنموّ المعلمين ورفاهيتهم، و<b>مقهى المعلمين</b>، و<b>قهوة وتواصل</b> (شركاء التعلّم، اللقاءات الجماعية، ودليل الزملاء). اطلب الانضمام من صفحة المجتمع.'],
     ['أنا وليّ أمر أيضًا. هل أحتاج إلى حسابين؟', 'لا. في <b>إعدادات الحساب</b>، فعّل خيار <b>أنا وليّ أمر أيضًا</b>. سيظهر قسم 👪 وليّ الأمر في القائمة الجانبية، مع زر للتبديل بين واجهتي المعلّم ووليّ الأمر.']
@@ -42,13 +42,13 @@ const HELP_AR = {
 // ===== Think Nest Help Centre =====
 const HELP_EN = {
   students: { ic: '🎒', name: 'Students', qs: [
-    ['How do I join a course?', 'Open <b>Learning → All Courses</b>, choose a course and click <b>Join</b>. It then appears in <b>My Courses</b>. You can also choose a subject on the home page under <b>Think Paths</b>.'],
+    ['How do I join a course?', 'Open <b>Online Courses → Find a course</b>, choose a course and click <b>Join</b>. It then appears in <b>My Courses</b>. You can also choose a subject on the home page under <b>Think Paths</b>.'],
     ['Where are my worksheets, quizzes and activities?', 'Open <b>My Courses</b>, choose the course, then a lesson. Everything your teacher added is listed under each lesson. Quizzes are marked straight away; other work is marked by your teacher.'],
     ['How do I hand in my work?', 'Open the activity in the lesson. Type your answer, or click <b>Upload</b> to add a photo or file, then click <b>Hand in</b>. You’ll get a 🔔 notification when your teacher marks it.'],
     ['How do I join a live class?', 'Live classes are in <b>My Calendar</b> and on the course page. From 15 minutes before the class starts, click <b>✋ Check in</b> on the course page so your teacher knows you’re there.'],
-    ['What are Nest Points and badges?', 'You earn Nest Points for handing in work, perfect scores, finishing lessons, coming to class, and helping others. Collect badges and grow from 🥚 Hatchling to 🏆 Eagle! See <b>My Progress → My Rewards</b>.'],
-    ['How do I add a friend?', 'Open <b>Community → My Friends</b>, search for a classmate and send a request. You can chat privately once you’ve both agreed.'],
-    ['How do I download my certificate?', 'Open <b>My Progress → My Certificates</b>, click <b>Open &amp; download</b>, then <b>Download PDF / Print</b> and choose <b>Save as PDF</b>.'],
+    ['What are Nest Points and badges?', 'You earn Nest Points for handing in work, perfect scores, finishing lessons, coming to class, and helping others. Collect badges and grow from 🥚 Hatchling to 🏆 Eagle! See <b>My Progress → My rewards</b>.'],
+    ['How do I add a friend?', 'Open <b>Friends & Community → My friends</b>, search for a classmate and send a request. You can chat privately once you’ve both agreed.'],
+    ['How do I download my certificate?', 'Open <b>My Progress → My certificates</b>, click <b>Open &amp; download</b>, then <b>Download PDF / Print</b> and choose <b>Save as PDF</b>.'],
     ['I’m under 13. Can I sign up myself?', 'No. A parent or guardian needs to sign up first and add you. They’ll send you a special invite link to finish joining.']
   ] },
   parents: { ic: '👪', name: 'Parents', qs: [
@@ -58,25 +58,25 @@ const HELP_EN = {
     ['How do I enrol my child in a class?', 'On the home page, choose a subject under <b>Think Paths</b>, then the curriculum and grade, and click <b>Enrol my child</b>. If there’s no class yet, join the waiting list and we’ll tell you when one opens.'],
     ['What is Beyond the School Run?', 'It’s our Parent Hub: workshops, talks and classes for parents themselves (wellbeing, cooking, money, careers and more), plus the private <b>Parent Café</b>. Click <b>Request to join</b>; the Think Nest team approves new members.'],
     ['Will I be told if my child is absent?', 'Yes. If a teacher marks your child absent or late, you get a 🔔 notification.'],
-    ['I’m also a teacher. Do I need two accounts?', 'No. Open <b>Account Settings</b> and click <b>Apply to teach</b>. Once approved, you’ll have both the teacher and parent areas in one account.']
+    ['I’m also a teacher. Do I need two accounts?', 'No. Open <b>Account settings</b> (tap your initials, top right) and click <b>Apply to teach</b>. Once approved, you’ll have both the teacher and parent areas in one account.']
   ] },
   teachers: { ic: '👩‍🏫', name: 'Teachers', qs: [
-    ['How do I create a course?', 'Open <b>Teaching → My Courses → New course</b>. Choose who it’s for, then the subject, curriculum and grade: the name is suggested for you. For teacher or parent workshops, choose a hub topic instead.'],
+    ['How do I create a course?', 'Open <b>Online Courses → My courses → New course</b>. Choose who it’s for, then the subject, curriculum and grade: the name is suggested for you. For teacher or parent workshops, choose a hub topic instead.'],
     ['How do I add lessons and activities?', 'Open your course, add a lesson, then click <b>+ Add to this lesson</b>. Choose from 10 tools: uploads, forms, quizzes, worksheets, videos, writing tasks, flashcards, activities, interactive links and exit tickets. Many can be created with AI from a learning objective.'],
     ['How do I mark work?', 'Quizzes are marked automatically. For other work, open the activity in your course to see what students handed in, add a score and a comment. Students are notified.'],
-    ['How do I take attendance?', 'Use <b>My Classes → Attendance</b>, the Attendance box on your dashboard, or the 📋 Attendance tab in a course. Mark each student Present, Late, Absent or Excused, then click <b>Save register</b>. Parents are told if their child is absent or late.'],
-    ['How do I create a class?', 'Open <b>My Classes → + Create a class</b> and choose a course: all its students are added. Each class has a feed, resources, group chat and leaderboard.'],
+    ['How do I take attendance?', 'Use <b>My Classes</b> (open a class → 📋 Attendance), the Attendance box on your dashboard, or the 📋 Attendance tab in a course. Mark each student Present, Late, Absent or Excused, then click <b>Save register</b>. Parents are told if their child is absent or late.'],
+    ['How do I create a class?', 'Open <b>My Classes → ➕ New class</b> and choose a course: all its students are added. Each class has a feed, resources, group chat and leaderboard.'],
     ['How do I award a certificate?', 'Click <b>🏅 Certificates</b> in the sidebar. Choose a type, a course or class, tick the students, add a reason, check the preview and click <b>Award</b>. Students and parents are notified.'],
     ['What is Beyond the Bell?', 'Our Teacher Hub: workshops and meetups for teachers’ own growth and wellbeing, the <b>Teacher Café</b>, and <b>Coffee &amp; Connections</b> (Learning Partners, group meetups and a colleague directory). Request to join from the hub page.'],
-    ['I’m also a parent. Do I need two accounts?', 'No. In <b>Account Settings</b>, tick <b>I’m also a parent</b>. A 👪 Parent section appears in your sidebar, and a switch lets you move between teacher and parent views.']
+    ['I’m also a parent. Do I need two accounts?', 'No. In <b>Account settings</b> (tap your initials, top right), tick <b>I’m also a parent</b>. A 👪 Parent section appears in your sidebar, and a switch lets you move between teacher and parent views.']
   ] },
   account: { ic: '🔐', name: 'Account & safety', qs: [
     ['Why is my account waiting for approval?', 'Every new account is checked by the Think Nest team to keep our community safe. This usually takes less than one working day, and you’ll get an email when you’re approved.'],
     ['I forgot my password.', 'Click <b>Forgot password?</b> on the log in page and type your email. We’ll email you a link to choose a new password (check your spam folder too).'],
     ['What is the “Verify you are human” box?', 'It stops robots creating fake accounts. Wait for it to show a ✅ tick before clicking the button. If it doesn’t appear, refresh the page.'],
     ['How do I report something?', 'Click <b>Report</b> on any post or message. The Think Nest team will look at it. You can also block someone from <b>My Friends</b>.'],
-    ['How do I stop the emails?', 'Open <b>Account Settings</b> and switch off <b>Send me email updates</b>. You’ll still see notifications on the 🔔 bell.'],
-    ['How do I delete my account?', 'Open <b>Account Settings</b>, scroll to <b>Delete an account</b> and click <b>Request account deletion</b>. Parents can also ask us to delete their child’s account. See our <a href="privacy.html">Privacy notice</a>.'],
+    ['How do I stop the emails?', 'Open <b>Account settings</b> (tap your initials, top right) and switch off <b>Send me email updates</b>. You’ll still see notifications on the 🔔 bell.'],
+    ['How do I delete my account?', 'Open <b>Account settings</b> (tap your initials, top right), scroll to <b>Delete an account</b> and click <b>Request account deletion</b>. Parents can also ask us to delete their child’s account. See our <a href="privacy.html">Privacy notice</a>.'],
     ['The website looks old or isn’t updating.', 'Your browser may be showing a saved copy. Hold <b>⌥ Option + ⌘ Command</b> and press <b>R</b> (Mac), or <b>Ctrl + F5</b> (Windows).']
   ] }
 };

@@ -1,43 +1,44 @@
 // ===== Think Nest sidebar: a few main sections with drop-down sub-menus =====
 // Uses db from supabase-config.js
 (function () {
+  // Each role has its own menu, built around what they came to do.
+  // 'dyn' sections are filled with the person's own classes or children.
   const MENUS = {
     student: [
-      { ic: '🏠', label: 'Dashboard', href: 'student-dashboard.html' },
-      { ic: '📚', label: 'Learning', items: [['my-courses.html', 'My Courses'], ['all-courses.html', 'All Courses'], ['calendar.html', 'My Calendar'], ['revision.html', 'Revision Hub'], ['mentors.html', 'Mentors'], ['recordings.html', 'My Recordings'], ['files.html', 'My Files']] },
-      { ic: '🏆', label: 'My Progress', items: [['rewards.html', 'My Rewards'], ['certificates.html', 'My Certificates']] },
-      { ic: '💬', label: 'Community', items: [['community.html', 'Community'], ['classes.html', 'My Classes'], ['groups.html', 'Study Groups'], ['friends.html', 'My Friends'], ['messages.html', 'Messages']] },
-      { ic: '⚙️', label: 'Account', items: [['settings.html', 'Account Settings'], ['help.html', 'Help Centre'], ['contact.html', 'Contact Us'], ['#logout', 'Log out']] }
+      { ic: '🏠', label: 'Home', href: 'student-dashboard.html' },
+      { ic: '🏫', label: 'My Classes', dyn: 'classes', items: [['classes.html', 'All my classes']] },
+      { ic: '📘', label: 'Online Courses', items: [['my-courses.html', 'My courses'], ['all-courses.html', 'Find a course'], ['calendar.html', 'My calendar'], ['recordings.html', 'Recordings'], ['mentors.html', 'Mentors'], ['files.html', 'My files']] },
+      { ic: '🏆', label: 'My Progress', items: [['rewards.html', 'My rewards'], ['certificates.html', 'My certificates'], ['reports.html', 'My reports']] },
+      { ic: '💬', label: 'Friends & Community', items: [['community.html', 'Community'], ['friends.html', 'My friends'], ['groups.html', 'Study groups'], ['messages.html', 'Messages']] },
+      { ic: '🧰', label: 'Revision Hub', href: 'revision.html' }
     ],
     teacher: [
-      { ic: '🏠', label: 'Dashboard', href: 'teacher-dashboard.html' },
-      { ic: '📚', label: 'Teaching', items: [['teacher-courses.html', 'My Courses'], ['teacher-calendar.html', 'Live Classes'], ['teacher-insights.html', '📊 Class Insights'], ['revision.html', 'Revision Hub'], ['teacher-hub.html', 'Beyond the Bell (hub)']] },
-      { ic: '🏫', label: 'My Classes', items: [['classes.html', 'My Classes'], ['teacher-attendance.html', 'Attendance'], ['groups.html', 'Study Groups']] },
-      { ic: '🏅', label: 'Certificates', href: 'teacher-certificates.html' },
-      { ic: '💬', label: 'Community', items: [['community.html', 'Community'], ['teacher-cafe.html', '☕ Teacher Café'], ['teacher-connect.html', '🤝 Coffee & Connections'], ['messages.html', 'Messages'], ['teacher-requests.html', 'Session Requests']] },
-      { ic: '⚙️', label: 'Account', items: [['teacher-settings.html', 'Account Settings'], ['help.html', 'Help Centre'], ['contact.html', 'Contact Us'], ['index.html', 'Think Nest website'], ['#logout', 'Log out']] }
+      { ic: '🏠', label: 'Home', href: 'teacher-dashboard.html' },
+      { ic: '🏫', label: 'My Classes', dyn: 'classes', items: [['classes.html', 'All my classes'], ['classes.html?new=1', '➕ New class'], ['teacher-attendance.html', 'Attendance overview'], ['groups.html', 'Study groups']] },
+      { ic: '📘', label: 'Online Courses', items: [['teacher-courses.html', 'My courses'], ['teacher-calendar.html', 'Live classes'], ['teacher-requests.html', 'Session requests'], ['teacher-certificates.html', '🏅 Certificates'], ['teacher-insights.html', '📊 Course insights']] },
+      { ic: '💬', label: 'Messages & Community', items: [['messages.html', 'Messages'], ['community.html', 'Community']] },
+      { ic: '☕', label: 'For me', items: [['teacher-hub.html', 'Beyond the Bell workshops'], ['teacher-cafe.html', '☕ Teacher Café'], ['teacher-connect.html', '🤝 Coffee & Connections']] },
+      { ic: '🧰', label: 'Resources', items: [['revision.html', 'Revision Hub'], ['curriculum.html', 'Curriculum guide']] }
     ],
     parent: [
-      { ic: '🏠', label: 'My children', href: 'parent-dashboard.html' },
-      { ic: '➕', label: 'Add a child', href: 'add-child.html' },
+      { ic: '🏠', label: 'My Children', dyn: 'kids', items: [['parent-dashboard.html', 'All my children'], ['add-child.html', '➕ Add a child']] },
       { ic: '📅', label: 'Family calendar', href: 'parent-calendar.html' },
       { ic: '📝', label: 'Reports', href: 'reports.html' },
-      { ic: '🪺', label: 'Beyond the School Run', href: 'parent-hub.html' },
-      { ic: '☕', label: 'Parent Café', href: 'parent-cafe.html' },
-      { ic: '🤝', label: 'Parent Connections', href: 'parent-connect.html' },
-      { ic: '💬', label: 'Community', href: 'community.html' },
-      { ic: '⚙️', label: 'Account', items: [['parent-settings.html', 'Account Settings'], ['help.html', 'Help Centre'], ['contact.html', 'Contact Us'], ['#logout', 'Log out']] }
+      { ic: '🌟', label: 'For me', items: [['parent-hub.html', 'Beyond the School Run workshops'], ['parent-cafe.html', '☕ Parent Café'], ['parent-connect.html', '🤝 Parent Connections'], ['community.html', 'Community']] }
     ]
   };
   MENUS.admin = [{ ic: '🛡️', label: 'Admin', items: [['admin.html', 'Admin dashboard'], ['admin-curriculum.html', 'Curriculum editor'], ['admin-founders.html', 'Founders page']] }].concat(MENUS.teacher);
+  const SETTINGS = { student: 'settings.html', teacher: 'teacher-settings.html', admin: 'teacher-settings.html', parent: 'parent-settings.html' };
   // pages that aren't in the menu, and which menu item they belong to
   const ALIAS = { 'course.html': 'my-courses.html', 'teacher-course.html': 'teacher-courses.html', 'group.html': 'groups.html', 'child.html': 'parent-dashboard.html' };
+  const PARENT_PAGES = ['parent-dashboard.html', 'add-child.html', 'parent-hub.html', 'parent-cafe.html', 'parent-connect.html', 'child.html', 'parent-settings.html', 'parent-calendar.html', 'reports.html'];
 
   async function roleNow() {
     const nav = document.querySelector('.side nav'); if (!nav) return null;
     try {
       const { data: { session } } = await db.auth.getSession();
       if (session) {
+        window.TN_UID = session.user.id;
         const { data } = await db.from('profiles').select('role, also_parent').eq('id', session.user.id).maybeSingle();
         window.TN_ALSO_PARENT = !!(data && data.also_parent);
         if (data && data.role) return data.role === 'school_leader' ? 'teacher' : data.role;
@@ -46,37 +47,35 @@
     const label = nav.getAttribute('aria-label') || '';
     return label.includes('Teacher') ? 'teacher' : label.includes('Parent') ? 'parent' : 'student';
   }
+  const navEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   function build(role) {
     const nav = document.querySelector('.side nav'); if (!nav) return;
-    let menu = MENUS[role] || MENUS.student;
-    if (window.TN_ALSO_PARENT && (role === 'teacher' || role === 'admin')) {
-      const acc = menu[menu.length - 1];
-      menu = menu.slice(0, -1).concat([{ ic: '👪', label: 'Parent', items: [['parent-dashboard.html', 'My children'], ['add-child.html', 'Add a child'], ['parent-calendar.html', 'Family calendar'], ['reports.html', 'Reports'], ['parent-hub.html', 'Beyond the School Run'], ['parent-cafe.html', '☕ Parent Café'], ['parent-connect.html', '🤝 Parent Connections']] }, acc]);
-    }
-    let here = location.pathname.split('/').pop() || 'index.html';
-    if (ALIAS[here]) here = ALIAS[here];
-    if (here === 'group.html' && document.querySelector('.class-flag')) here = 'classes.html';
+    const page = location.pathname.split('/').pop() || 'index.html';
+    const dual = window.TN_ALSO_PARENT && (role === 'teacher' || role === 'admin');
+    const inParent = dual && PARENT_PAGES.includes(page);
+    const view = inParent ? 'parent' : role;
+    const menu = MENUS[view] || MENUS.student;
+    let here = ALIAS[page] || page;
+    if (page === 'group.html' && document.querySelector('.class-flag')) here = 'classes.html';
+    const qid = new URLSearchParams(location.search).get('id');
     let saved = {};
     try { saved = JSON.parse(localStorage.getItem('tn_nav_open') || '{}'); } catch (_) {}
     nav.classList.add('nav2');
-    const parentPages = ['parent-dashboard.html', 'add-child.html', 'parent-hub.html', 'parent-cafe.html', 'child.html', 'parent-settings.html'];
-    const inParent = parentPages.includes(location.pathname.split('/').pop());
-    const switcher = window.TN_ALSO_PARENT && (role === 'teacher' || role === 'admin')
-      ? `<a class="nav2-switch" href="${inParent ? 'teacher-dashboard.html' : 'parent-dashboard.html'}">${inParent ? '👩‍🏫 Switch to teacher view' : '👪 Switch to parent view'}</a>` : '';
+    const switcher = dual ? `<a class="nav2-switch" href="${inParent ? 'teacher-dashboard.html' : 'parent-dashboard.html'}">${inParent ? '👩‍🏫 Switch to teacher view' : '👪 Switch to parent view'}</a>` : '';
     nav.innerHTML = switcher + menu.map((sec, i) => {
       if (sec.href) {
         const on = sec.href === here;
         return `<a class="nav2-top ${on ? 'active' : ''}" href="${sec.href}" ${on ? 'aria-current="page"' : ''}><span class="nav2-ic" aria-hidden="true">${sec.ic}</span><span>${sec.label}</span></a>`;
       }
-      const hasHere = sec.items.some(([h]) => h === here);
-      const open = hasHere || saved[sec.label] === true;
+      const dynHere = (sec.dyn === 'classes' && page === 'group.html') || (sec.dyn === 'kids' && page === 'child.html');
+      const hasHere = dynHere || sec.items.some(([h]) => h === here);
+      const open = hasHere || saved[sec.label] === true || (sec.dyn && saved[sec.label] !== false);
       return `<div class="nav2-sec ${hasHere ? 'has-active' : ''}">
         <button type="button" class="nav2-top nav2-toggle" aria-expanded="${open}" aria-controls="nav2-${i}"><span class="nav2-ic" aria-hidden="true">${sec.ic}</span><span>${sec.label}</span><span class="nav2-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span></button>
-        <ul class="nav2-sub" id="nav2-${i}" ${open ? '' : 'hidden'}>${sec.items.map(([h, l]) => h === '#logout'
-          ? `<li><a href="#" id="logout">${l}</a></li>`
-          : `<li><a href="${h}" class="${h === here ? 'active' : ''}" ${h === here ? 'aria-current="page"' : ''}>${l}${h === 'messages.html' ? '<i class="nav-dot" id="nav-unread" hidden></i>' : ''}</a></li>`).join('')}</ul></div>`;
-    }).join('');
+        <ul class="nav2-sub" id="nav2-${i}" ${open ? '' : 'hidden'}>${sec.dyn ? `<li class="nav2-dyn" data-dyn="${sec.dyn}"></li>` : ''}${sec.items.map(([h, l]) =>
+          `<li><a href="${h}" class="${h === here && !dynHere ? 'active' : ''} ${h.includes('new=1') || h.includes('add-child') ? 'nav2-add' : ''}" ${h === here && !dynHere ? 'aria-current="page"' : ''}>${l}${h === 'messages.html' ? '<i class="nav-dot" id="nav-unread" hidden></i>' : ''}</a></li>`).join('')}</ul></div>`;
+    }).join('') + `<div class="nav2-foot"><a href="${SETTINGS[view] || 'settings.html'}">⚙️ Settings</a><a href="help.html">❓ Help</a><a href="#" class="nav2-logout">↩ Log out</a></div>`;
     nav.querySelectorAll('.nav2-toggle').forEach(b => b.addEventListener('click', () => {
       const ul = document.getElementById(b.getAttribute('aria-controls'));
       const open = b.getAttribute('aria-expanded') !== 'true';
@@ -84,14 +83,52 @@
       const label = b.querySelector('span:nth-child(2)').textContent;
       try { saved[label] = open; localStorage.setItem('tn_nav_open', JSON.stringify(saved)); } catch (_) {}
     }));
-    const lo = document.getElementById('logout');
-    if (lo) lo.addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; });
+    nav.querySelectorAll('.nav2-logout').forEach(a => a.addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; }));
+    fillDynamic(view, page, qid);
+    profileMenu(view);
+  }
+
+  // Put the person's own classes / children into the menu, by name
+  async function fillDynamic(view, page, qid) {
+    const uid = window.TN_UID; if (!uid) return;
+    const cls = document.querySelector('[data-dyn="classes"]'), kids = document.querySelector('[data-dyn="kids"]');
+    try {
+      if (cls) {
+        let list = [];
+        if (view === 'student') { const { data } = await db.rpc('my_groups'); list = (data || []).filter(g => g.kind === 'class' && g.my_status === 'active').map(g => ({ id: g.id, name: g.name })); }
+        else { const { data } = await db.from('study_groups').select('id, name').eq('owner_id', uid).eq('kind', 'class').order('name'); list = data || []; }
+        cls.outerHTML = list.slice(0, 8).map(g => { const on = page === 'group.html' && String(g.id) === qid; return `<li><a href="group.html?id=${g.id}" class="nav2-item ${on ? 'active' : ''}" ${on ? 'aria-current="page"' : ''}>🏫 ${navEsc(g.name)}</a></li>`; }).join('')
+          || (view === 'student' ? '<li><span class="nav2-none">No classes yet</span></li>' : '');
+      }
+      if (kids) {
+        const { data: links } = await db.from('parent_links').select('student_id').eq('parent_id', uid);
+        const ids = (links || []).map(l => l.student_id); let list = [];
+        if (ids.length) { const { data } = await db.from('profiles').select('id, full_name').in('id', ids).order('full_name'); list = data || []; }
+        kids.outerHTML = list.map(k => { const on = page === 'child.html' && k.id === qid; return `<li><a href="child.html?id=${k.id}" class="nav2-item ${on ? 'active' : ''}" ${on ? 'aria-current="page"' : ''}>👧 ${navEsc(String(k.full_name || 'My child').split(' ')[0])}</a></li>`; }).join('');
+      }
+    } catch (_) { if (cls) cls.remove(); if (kids) kids.remove(); }
+  }
+
+  // Account, help and log out live in the profile circle (top right)
+  function profileMenu(view) {
+    const pic = document.getElementById('me-initials-small') || document.querySelector('.bar-right .initials');
+    if (!pic || pic.dataset.menu) return;
+    pic.dataset.menu = '1'; pic.setAttribute('role', 'button'); pic.setAttribute('tabindex', '0'); pic.setAttribute('aria-haspopup', 'true'); pic.setAttribute('aria-expanded', 'false');
+    pic.style.cursor = 'pointer';
+    const m = document.createElement('div'); m.className = 'prof-menu'; m.hidden = true; m.setAttribute('role', 'menu');
+    m.innerHTML = `<a role="menuitem" href="${SETTINGS[view] || 'settings.html'}">⚙️ Account settings</a><a role="menuitem" href="help.html">❓ Help Centre</a><a role="menuitem" href="contact.html">✉️ Contact us</a><a role="menuitem" href="index.html">🌐 Think Nest website</a><a role="menuitem" href="#" class="prof-out">↩ Log out</a>`;
+    (pic.parentElement || document.body).style.position = 'relative'; pic.after(m);
+    const toggle = open => { m.hidden = !open; pic.setAttribute('aria-expanded', String(open)); };
+    pic.addEventListener('click', e => { e.stopPropagation(); toggle(m.hidden); });
+    pic.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(m.hidden); } if (e.key === 'Escape') toggle(false); });
+    document.addEventListener('click', e => { if (!m.contains(e.target)) toggle(false); });
+    m.querySelector('.prof-out').addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; });
   }
 
   // ----- Welcome tour (first visit, once per role) -----
   const TOURS = {
     student: [['👋', 'Welcome to Think Nest!', 'This is your learning nest. Here’s a quick tour of the best bits. It takes 30 seconds.'],
-      ['📚', 'Your courses', 'Find and join courses in <b>Learning → All Courses</b>. Inside each lesson you’ll find quizzes, worksheets, videos and activities.'],
+      ['📚', 'Your courses', 'Find and join courses in <b>Online Courses → Find a course</b>. Your school class is under <b>🏫 My Classes</b>. Inside each lesson you’ll find quizzes, worksheets, videos and activities.'],
       ['🏆', 'Earn Nest Points', 'Hand in work, come to class and help others to earn points and badges. Grow from 🥚 Hatchling to 🏆 Eagle in <b>My Progress</b>!'],
       ['💬', 'Learn together', 'Make friends, join study groups and post in the <b>Community</b>. Be kind, and use <b>Report</b> if something isn’t right.']],
     parent: [['👋', 'Welcome to Think Nest!', 'Here’s a quick tour to help you follow your children’s learning.'],
@@ -99,14 +136,14 @@
       ['🧭', 'Find a class', 'On the home page, choose a subject under <b>Think Paths</b> to see classes for your child’s curriculum and grade.'],
       ['🚗', 'Something for you too', '<b>Beyond the School Run</b> is our Parent Hub: workshops just for you, and the private <b>Parent Café</b>.']],
     teacher: [['👋', 'Welcome to Think Nest!', 'Thank you for teaching with us. Here’s a quick tour of your toolkit.'],
-      ['📘', 'Courses and lessons', '<b>Teaching → My Courses</b>: create a course, add lessons, then <b>+ Add to this lesson</b> for 10 tools, many with AI help.'],
-      ['📋', 'Classes, attendance and certificates', 'Create a class in <b>My Classes</b>, take the register from your dashboard, and award designed certificates from <b>🏅 Certificates</b>.'],
+      ['📘', 'Courses and lessons', '<b>📘 Online Courses → My courses</b>: create a course, add lessons, then <b>+ Add to this lesson</b> for 10 tools, many with AI help.'],
+      ['📋', 'Classes, attendance and certificates', 'Create a class in <b>🏫 My Classes</b>: add students, then use its community, attendance, insights and report cards, all inside the class.'],
       ['🔔', 'Beyond the Bell', 'Our Teacher Hub is for <i>you</i>: workshops, the <b>Teacher Café</b> and <b>Coffee &amp; Connections</b>.']]
   };
   TOURS.admin = TOURS.teacher;
   const TOURS_AR = {
     student: [['👋', 'أهلًا بك في ثينك نست!', 'هذا عشّك التعليمي. إليك جولة سريعة على أجمل ما فيه، تستغرق 30 ثانية فقط.'],
-      ['📚', 'دوراتك', 'ابحث عن الدورات وانضم إليها من <b>التعلّم ← جميع الدورات</b>. ستجد داخل كل درس اختبارات وأوراق عمل وفيديوهات وأنشطة.'],
+      ['📚', 'دوراتك', 'ابحث عن الدورات وانضم إليها من <b>الدورات عبر الإنترنت ← ابحث عن دورة</b>. وتجد فصلك المدرسي في <b>🏫 فصولي</b>. ستجد داخل كل درس اختبارات وأوراق عمل وفيديوهات وأنشطة.'],
       ['🏆', 'اجمع نقاط نست', 'سلّم أعمالك، واحضر حصصك، وساعد الآخرين لتجمع النقاط والأوسمة. انتقل من 🥚 فرخ صغير إلى 🏆 نسر في <b>تقدّمي</b>!'],
       ['💬', 'تعلّموا معًا', 'كوّن صداقات، وانضم إلى مجموعات الدراسة، وشارك في <b>المجتمع</b>. كن لطيفًا، واستخدم <b>إبلاغ</b> إذا رأيت شيئًا غير مناسب.']],
     parent: [['👋', 'أهلًا بك في ثينك نست!', 'إليك جولة سريعة تساعدك على متابعة تعلّم أبنائك.'],
@@ -114,8 +151,8 @@
       ['🧭', 'ابحث عن فصل', 'من الصفحة الرئيسية، اختر مادة ضمن <b>مسارات التفكير</b> لترى الفصول المناسبة لمنهج طفلك وصفه.'],
       ['🚗', 'شيء لك أنت أيضًا', '<b>ما بعد مشوار المدرسة</b> هو مجتمع أولياء الأمور: ورش مخصّصة لك، و<b>مقهى أولياء الأمور</b> الخاص.']],
     teacher: [['👋', 'أهلًا بك في ثينك نست!', 'شكرًا لتدريسك معنا. إليك جولة سريعة على أدواتك.'],
-      ['📘', 'الدورات والدروس', '<b>التدريس ← دوراتي</b>: أنشئ دورة، وأضف دروسًا، ثم <b>+ أضف إلى هذا الدرس</b> لتختار من 10 أدوات، كثير منها بمساعدة الذكاء الاصطناعي.'],
-      ['📋', 'الفصول والحضور والشهادات', 'أنشئ فصلًا من <b>فصولي</b>، وسجّل الحضور من لوحة التحكم، وامنح شهادات مصمّمة من <b>🏅 الشهادات</b>.'],
+      ['📘', 'الدورات والدروس', '<b>📘 الدورات عبر الإنترنت ← دوراتي</b>: أنشئ دورة، وأضف دروسًا، ثم <b>+ أضف إلى هذا الدرس</b> لتختار من 10 أدوات، كثير منها بمساعدة الذكاء الاصطناعي.'],
+      ['📋', 'الفصول والحضور والشهادات', 'أنشئ فصلًا من <b>🏫 فصولي</b>: أضف الطلاب، ثم استخدم مجتمعه والحضور والتحليلات والتقارير، كلها داخل الفصل.'],
       ['🔔', 'ما بعد الجرس', 'مجتمع المعلمين لدينا مخصّص <i>لك</i>: ورش عمل، و<b>مقهى المعلمين</b>، و<b>قهوة وتواصل</b>.']]
   };
   TOURS_AR.admin = TOURS_AR.teacher;
