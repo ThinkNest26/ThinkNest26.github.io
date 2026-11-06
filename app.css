@@ -1623,3 +1623,6 @@ html.tn-ar .tn-qz-opts button { text-align: right; }
 .tn-riddle-wide { margin-bottom: 14px; }
 .tn-rd-msg.no, .tn-qz-msg.no { color: #C2410C; } .tn-rd-msg.ok, .tn-qz-msg.ok { color: #1F7A4D; }
 .blocked-text { margin: 6px 0 0; background: #FFF4F2; border-left: 4px solid #E5484D; padding: 8px 12px; color: #6B2121; border-radius: 0; white-space: pre-wrap; }
+.att-result { margin: 10px 0 0; padding: 10px 14px; border-radius: 12px; font-weight: 700; }
+.att-result.good { background: #E3F5EE; color: #1F7A4D; } .att-result.bad { background: #FDECEC; color: #8A1C1C; font-weight: 600; }
+dialog .toast { z-index: 100; }

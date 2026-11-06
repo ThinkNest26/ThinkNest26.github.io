@@ -17,7 +17,7 @@ async function attendancePanel(host, ctx) {
         <button type="button" class="pill pill-soft big" data-allp>✅ Mark everyone present</button>
       </div>
       <div class="att-list"><p class="empty">Loading…</p></div>
-      <div class="att-save"><span class="meta att-count"></span><button type="button" class="btn btn-red" data-save-att>Save register</button></div>
+      <div class="att-save"><span class="meta att-count"></span><button type="button" class="btn btn-red" data-save-att>Save register</button></div><p class="att-result" role="status" aria-live="polite" hidden></p>
     </div>
     <div data-avp="overview" hidden></div>
     <div data-avp="history" hidden></div>
@@ -58,12 +58,19 @@ async function attendancePanel(host, ctx) {
     if (e.target.closest('[data-save-att]')) {
       const marked = rows.filter(r => r.status);
       if (!marked.length) return say('Mark at least one student first.');
-      const btn = e.target.closest('[data-save-att]'); btn.disabled = true;
+      const btn = e.target.closest('[data-save-att]'); btn.disabled = true; const label = btn.textContent; btn.textContent = 'Saving…';
+      const res = $('.att-result'); res.hidden = true;
+      host.querySelectorAll('.att-note').forEach((inp, i) => { if (rows[i]) rows[i].note = inp.value; });
       const sess = cid && $('.att-sess').value ? Number($('.att-sess').value) : null;
-      const { data, error } = await db.rpc('save_attendance', { cid, gid, d: $('.att-date').value, sess, rows: marked.map(r => ({ student_id: r.student_id, status: r.status, note: r.note })) });
-      btn.disabled = false;
-      if (error) return say(friendly(error));
-      return say(`Register saved for ${data} student${data === 1 ? '' : 's'}. Parents of absent or late students have been told.`);
+      let data, error;
+      try { ({ data, error } = await db.rpc('save_attendance', { cid, gid, d: $('.att-date').value, sess, rows: rows.filter(r => r.status).map(r => ({ student_id: r.student_id, status: r.status, note: r.note })) })); }
+      catch (x) { error = x; }
+      btn.disabled = false; btn.textContent = label;
+      res.hidden = false;
+      if (error) { res.className = 'att-result bad'; res.innerHTML = '⚠️ The register couldn’t be saved: <b>' + esc(error.message || friendly(error)) + '</b><br><small>Please send a screenshot of this message to the Think Nest team.</small>'; return; }
+      const msg = `✅ Register saved for ${data} student${data === 1 ? '' : 's'} on ${new Date($('.att-date').value + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}. Parents of absent or late students have been told.`;
+      res.className = 'att-result good'; res.textContent = msg; say(msg);
+      return;
     }
     const v = e.target.closest('[data-av]');
     if (v) {

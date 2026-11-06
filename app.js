@@ -3,6 +3,10 @@ const toast = document.getElementById('toast');
 let toastTimer;
 function say(msg) {
   if (!toast) return alert(msg);
+  // show the message on top of any open pop-up window, not hidden behind it
+  const open = [...document.querySelectorAll('dialog[open]')].pop();
+  const host = open || document.body;
+  if (toast.parentElement !== host) host.appendChild(toast);
   toast.textContent = msg;
   toast.classList.add('show');
   clearTimeout(toastTimer);
