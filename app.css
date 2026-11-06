@@ -1285,3 +1285,42 @@ body.parent-cafe .react:hover, body.parent-cafe .react.on { background: #FFE6E1;
 .parent-connect .cx-date { background: #FFEDEA; color: #8A2E36; }
 .parent-connect .cx-note { background: #FFF3F0; color: #7A2E2A; }
 .parent-connect .cx-plus { color: #E0606B; }
+/* ===== Weekly calendar ===== */
+.wc { display: grid; gap: 12px; }
+.wc-bar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.wc-title { color: #1D2026; font-size: 1.15rem; margin: 0; }
+.wc-bar .meta { margin-left: auto; }
+.wc-nav { display: flex; gap: 6px; }
+.wc-nav button { border: 1px solid #E4E6F1; background: #fff; border-radius: 10px; padding: 7px 12px; font: inherit; font-weight: 800; cursor: pointer; color: #3E4B94; }
+.wc-nav button:hover { border-color: #3E4B94; }
+.wc-legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .85rem; color: #4A4E5E; }
+.wc-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.wc-legend i { width: 12px; height: 12px; border-radius: 4px; display: inline-block; }
+.wc-scroll { overflow: auto; max-height: 620px; border: 1px solid #ECEEF6; border-radius: 14px; }
+.wc-grid { display: grid; grid-template-columns: 56px repeat(7, minmax(110px, 1fr)); grid-template-rows: auto calc(var(--rows) * var(--h)); min-width: 830px; position: relative; }
+.wc-head { position: sticky; top: 0; z-index: 3; background: #fff; border-bottom: 1px solid #ECEEF6; padding: 8px 4px; text-align: center; display: grid; }
+.wc-head span { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: #6E7485; font-weight: 700; }
+.wc-head b { font-size: 1.2rem; color: #1D2026; }
+.wc-head.today b { background: #F27A6F; color: #fff; border-radius: 50%; width: 34px; height: 34px; display: grid; place-items: center; margin: 2px auto 0; }
+.wc-times { position: relative; border-right: 1px solid #ECEEF6; }
+.wc-times span { position: absolute; right: 6px; transform: translateY(-50%); font-size: .72rem; color: #8A8FA0; }
+.wc-times span:first-child { transform: none; }
+.wc-day { position: relative; border-right: 1px solid #F1F2F8; background-image: repeating-linear-gradient(to bottom, #F1F2F8 0 1px, transparent 1px var(--h)); }
+.wc-day.today { background-color: #FFF8F6; }
+.wc-now { position: absolute; left: 0; right: 0; height: 2px; background: #E5484D; z-index: 2; }
+.wc-now::before { content: ""; position: absolute; left: -5px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: #E5484D; }
+.wc-ev { position: absolute; border: 0; border-left: 4px solid var(--c); background: color-mix(in srgb, var(--c) 16%, #fff); border-radius: 8px; padding: 4px 6px; text-align: left; font: inherit; cursor: pointer; overflow: hidden; display: grid; align-content: start; gap: 1px; color: #1D2026; z-index: 1; transition: transform .12s, box-shadow .12s; }
+.wc-ev:hover, .wc-ev:focus-visible { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(30,35,82,.16); z-index: 4; }
+.wc-ev b { font-size: .8rem; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wc-ev span { font-size: .72rem; color: #4A4E5E; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+dialog.wc-dialog { border: 0; border-radius: 20px; padding: 0; width: min(380px, 92vw); position: fixed; inset: 0; margin: auto; height: fit-content; box-shadow: 0 24px 60px rgba(30,35,82,.3); }
+dialog.wc-dialog::backdrop { background: rgba(30,35,82,.45); }
+.wc-d-top { background: var(--c); color: #fff; padding: 16px 18px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.wc-d-top b { font-size: 1.1rem; } .wc-d-top .link-btn { color: #fff; }
+.wc-dialog p { padding: 0 18px; margin: 12px 0 0; line-height: 1.6; }
+.wc-d-btns { display: flex; gap: 8px; padding: 14px 18px 18px; flex-wrap: wrap; }
+.wc-d-btns .btn { text-decoration: none; font-weight: 800; }
+.wc-switch { display: inline-flex; background: #EEF0F8; border-radius: 30px; padding: 4px; }
+.wc-switch button { border: 0; background: transparent; border-radius: 30px; padding: 7px 18px; font: inherit; font-weight: 800; cursor: pointer; color: #4A4E5E; }
+.wc-switch button[aria-selected=true] { background: #fff; color: #3E4B94; box-shadow: 0 2px 6px rgba(0,0,0,.08); }
+.month-arrows { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 8px; }

@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=36">
-  <link rel="stylesheet" href="app.css?v=36">
+  <link rel="stylesheet" href="style.css?v=75">
+  <link rel="stylesheet" href="app.css?v=75">
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -37,7 +37,10 @@
 
     <main class="dash">
       <div class="page-head"><h1 class="dash-h">My calendar</h1>
-        <div class="arrows"><button id="prev-month" aria-label="Previous month">←</button><button id="next-month" aria-label="Next month">→</button></div></div>
+        <div class="wc-switch" role="tablist" aria-label="Calendar view"><button role="tab" aria-selected="true" data-view="week">Week</button><button role="tab" aria-selected="false" data-view="month">Month</button></div></div>
+      <section class="panel wc" id="week-cal"><p class="empty">Loading…</p></section>
+      <div id="month-view" hidden>
+      <div class="arrows month-arrows"><button id="prev-month" aria-label="Previous month">←</button><button id="next-month" aria-label="Next month">→</button></div>
       <section class="panel cal">
         <h2 id="month-title"></h2>
         <div class="cal-grid cal-days" aria-hidden="true"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
@@ -46,6 +49,7 @@
       </section>
       <h2 class="dash-h" id="day-title">Coming up</h2>
       <section class="event-list" id="events"><p class="empty">Loading…</p></section>
+      </div>
     </main>
 
     <footer class="footer app-footer">
@@ -65,11 +69,17 @@
   <div class="side-shade" id="side-shade"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=36"></script>
-  <script src="app.js?v=36"></script>
-  <script src="nav.js?v=36"></script>
-  <script src="notify.js?v=36" defer></script>
-  <script src="student.js?v=36"></script>
-  <script>startCalendar();</script>
+  <script src="supabase-config.js?v=75"></script>
+  <script src="app.js?v=75"></script>
+  <script src="nav.js?v=75"></script>
+  <script src="notify.js?v=75" defer></script>
+  <script src="student.js?v=75"></script>
+  <script src="weekcal.js?v=75"></script>
+  <script>startCalendar();
+    db.auth.getSession().then(({ data }) => data.session && weekForStudent(document.getElementById('week-cal'), data.session.user.id));
+    document.querySelector('.wc-switch').addEventListener('click', e => { const b = e.target.closest('[data-view]'); if (!b) return;
+      document.querySelectorAll('[data-view]').forEach(x => x.setAttribute('aria-selected', String(x === b)));
+      document.getElementById('week-cal').hidden = b.dataset.view !== 'week'; document.getElementById('month-view').hidden = b.dataset.view !== 'month'; });
+  </script>
 </body>
 </html>
