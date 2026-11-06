@@ -204,6 +204,7 @@ async function startCommunity() {
     const ptype = (form.querySelector('input[name=ptype]:checked') || {}).value || 'post';
     const extra = typeof cafeExtra === 'function' ? cafeExtra(ptype) : {};
     if (extra && extra.error) { btn.disabled = false; btn.textContent = 'Post'; return say(extra.error); }
+    if (await tnBlocked(body, SPACE === 'community' ? 'community post' : 'café post', null)) { if (typeof btn !== 'undefined' && btn) { btn.disabled = false; btn.textContent = 'Post'; } return; }
     let { data: np, error } = await db.from('posts').insert(Object.assign({ body, image_path, post_type: ptype, space: SPACE }, extra || {})).select('status').single();
     if (error && SPACE === 'community' && String(error.message).includes('column')) ({ data: np, error } = await db.from('posts').insert({ body, image_path }).select('status').single());
     btn.disabled = false; btn.textContent = 'Post';
@@ -253,6 +254,7 @@ async function startCommunity() {
     const id = Number(f.closest('[data-post]').dataset.post), body = f.c.value.trim();
     if (!body) return;
     f.querySelector('button').disabled = true;
+    if (await tnBlocked(body, 'comment', null)) return;
     const { error } = await db.from('post_comments').insert({ post_id: id, body });
     f.querySelector('button').disabled = false;
     if (error) return say(friendly(error));
@@ -316,15 +318,18 @@ async function loadGroupReports() {
 // ---------- Admin: switch teacher approval on/off ----------
 async function loadApprovalSetting() {
   const box = document.getElementById('approval-setting'); if (!box) return;
-  const { data } = await db.from('site_settings').select('value').eq('key', 'approve_student_posts').maybeSingle();
-  const on = data ? data.value === true : false;
-  box.innerHTML = `<label class="remember"><input type="checkbox" id="approve-toggle" ${on ? 'checked' : ''}> Teachers approve student posts before they appear in the community</label>
-    <p class="hint">${on ? 'On: new student posts wait for a teacher or you to approve them.' : 'Off: student posts appear straight away. Reports still come to you.'}</p>`;
-  document.getElementById('approve-toggle').addEventListener('change', async e => {
-    const { error } = await db.from('site_settings').update({ value: e.target.checked }).eq('key', 'approve_student_posts');
-    if (error) { e.target.checked = !e.target.checked; return say(friendly(error)); }
-    say(e.target.checked ? 'Teacher approval is on.' : 'Teacher approval is off.'); loadApprovalSetting();
-  });
+  box.innerHTML = `<p><b>🛡️ Automatic safety filter is on.</b> Posts and comments appear straight away. Anything with swear words, insults, bullying or sexual words (English or Arabic) is blocked automatically, and the student’s teacher is told.</p>`;
+  loadBlockedPosts();
+}
+async function loadBlockedPosts() {
+  const host = document.getElementById('approval-setting'); if (!host || document.getElementById('blocked-box')) return;
+  host.insertAdjacentHTML('afterend', '<h2 class="dash-h">🛡️ Blocked posts</h2><p class="hint">Posts and comments the filter stopped. They were never shown to anyone.</p><section class="approve-list" id="blocked-box"><p class="empty">Loading…</p></section>');
+  const { data, error } = await db.from('moderation_log').select('*').order('created_at', { ascending: false }).limit(30);
+  const box = document.getElementById('blocked-box');
+  if (error) { box.innerHTML = '<p class="empty">Run database update 54 to see blocked posts.</p>'; return; }
+  box.innerHTML = (data || []).length ? data.map(r => `<article class="panel person"><span class="initials">🛡️</span><div class="person-info"><h4>${esc(r.user_name || 'Someone')}</h4>
+      <span class="meta">${esc(r.place || 'post')} · ${new Date(r.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</span>
+      <p class="blocked-text">${esc(r.body)}</p></div></article>`).join('') : '<p class="empty">Nothing blocked. 🎉</p>';
 }
 
 // ---------- Admin: waiting lists for subject paths ----------

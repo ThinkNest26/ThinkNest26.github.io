@@ -169,6 +169,7 @@ async function startGroup() {
     e.preventDefault();
     const body = gc.body.value.trim(); if (!body) return say('Write something before posting.');
     const btn = gc.querySelector('.btn'); btn.disabled = true;
+    if (await tnBlocked(body, isClass ? 'class post' : 'group post', gid)) { btn.disabled = false; return; }
     let image_path = null; const f = gc.pic.files[0];
     if (f) {
       image_path = gid + '/posts/' + Date.now() + '-' + f.name.replace(/[^\w.\-]+/g, '_');
@@ -217,6 +218,7 @@ async function startGroup() {
     e.preventDefault();
     const id = Number(f.closest('[data-gpost]').dataset.gpost), body = f.c.value.trim(); if (!body) return;
     f.querySelector('button').disabled = true;
+    if (await tnBlocked(body, 'comment', gid)) return;
     const { error } = await db.from('group_post_comments').insert({ post_id: id, body });
     f.querySelector('button').disabled = false;
     if (error) return say(friendly(error));

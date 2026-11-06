@@ -381,3 +381,15 @@ function addLegalLinks() {
   });
 }
 document.addEventListener('DOMContentLoaded', addLegalLinks);
+
+// ----- Safety filter: check text before it's shared (blocked posts never appear; the teacher is told)
+async function tnBlocked(body, place, gid) {
+  try {
+    const { data, error } = await db.rpc('check_post_text', { body, place, gid: gid || null });
+    if (error || !data) return false;
+  } catch (_) { return false; }
+  const ar = typeof tnLang === 'function' && tnLang() === 'ar';
+  say(ar ? '🙅 لم تتم المشاركة لأنها تحتوي على كلمات غير مسموح بها في ثينك نست. استخدم كلمات لطيفة من فضلك. تم إبلاغ معلّمك.'
+         : '🙅 This wasn’t shared because it contains words that aren’t allowed on Think Nest. Please use kind words. Your teacher has been told.');
+  return true;
+}
