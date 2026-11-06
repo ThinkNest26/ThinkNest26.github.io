@@ -1190,7 +1190,17 @@
 "Free to join": "الانضمام مجاني",
 "with real teachers": "مع معلمين حقيقيين",
 "for great work": "للعمل المتميّز",
-"At a glance": "لمحة سريعة"
+"At a glance": "لمحة سريعة",
+"Think Nest is an online learning community where students learn, teachers teach and parents stay connected, all in one safe place.": "ثينك نست مجتمع تعليمي عبر الإنترنت يتعلّم فيه الطلاب، ويدرّس فيه المعلمون، ويبقى فيه أولياء الأمور على تواصل، كل ذلك في مكان واحد آمن.",
+"Live classes + lessons anytime": "حصص مباشرة + دروس في أي وقت",
+"Small live online classes with real teachers, plus quizzes, worksheets and videos to do at your own pace.": "حصص مباشرة صغيرة عبر الإنترنت مع معلمين حقيقيين، إضافة إلى اختبارات وأوراق عمل وفيديوهات تنجزها بالسرعة التي تناسبك.",
+"Your curriculum, your grade": "منهجك، صفك",
+"British (including IGCSE and A Level), IB, American and UAE Arabic, matched to each grade from KG1 to Grade 12.": "البريطاني (بما في ذلك IGCSE وA Level) وIB والأمريكي والعربية وفق المنهج الإماراتي، مطابقة لكل صف من الروضة الأولى إلى الصف 12.",
+"Parents always in the loop": "أولياء الأمور على اطلاع دائم",
+"Follow progress, attendance and certificates, and get a message if your child misses a class.": "تابع التقدّم والحضور والشهادات، وتلقَّ رسالة إذا غاب طفلك عن حصة.",
+"Safe by design": "آمن بطبيعته",
+"Every account is checked by our team, and adults can never message children privately.": "يراجع فريقنا كل حساب، ولا يمكن للبالغين أبدًا مراسلة الأطفال على انفراد.",
+"Meet the people behind Think Nest": "تعرّف على الأشخاص وراء ثينك نست"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

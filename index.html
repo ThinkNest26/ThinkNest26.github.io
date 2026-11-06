@@ -9,10 +9,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=81">
-  <link rel="stylesheet" href="paths.css?v=81">
-  <link rel="stylesheet" href="rtl.css?v=81">
-  <script src="i18n.js?v=81"></script>
+  <link rel="stylesheet" href="style.css?v=82">
+  <link rel="stylesheet" href="paths.css?v=82">
+  <link rel="stylesheet" href="rtl.css?v=82">
+  <script src="i18n.js?v=82"></script>
 </head>
 <body>
 
@@ -73,21 +73,28 @@
     <!-- ============ ABOUT ============ -->
     <section id="about" class="about container">
       <div class="about-text">
+        <p class="about-kicker">How it works</p>
         <h2 class="title">About Think Nest</h2>
-        <ul class="features">
+        <p class="about-intro">Think Nest is an online learning community where students learn, teachers teach and parents stay connected, all in one safe place.</p>
+        <ul class="features features-v2">
           <li>
-            <span class="feature-icon"><i class="ic-grid"></i></span>
-            <p><strong>Unified Platform</strong> Brings students, teachers, and parents together in one connected space.</p>
+            <span class="feature-icon fi-1" aria-hidden="true">🎥</span>
+            <p><strong>Live classes + lessons anytime</strong>Small live online classes with real teachers, plus quizzes, worksheets and videos to do at your own pace.</p>
           </li>
           <li>
-            <span class="feature-icon"><i class="ic-layers"></i></span>
-            <p><strong>Curriculum-Friendly</strong> Supports global systems like IGCSE, American, and local curricula.</p>
+            <span class="feature-icon fi-2" aria-hidden="true">🧭</span>
+            <p><strong>Your curriculum, your grade</strong>British (including IGCSE and A Level), IB, American and UAE Arabic, matched to each grade from KG1 to Grade 12.</p>
           </li>
           <li>
-            <span class="feature-icon"><i class="ic-users"></i></span>
-            <p><strong>Smart &amp; Simple</strong> Modern design with powerful tools that are easy to use for all ages.</p>
+            <span class="feature-icon fi-3" aria-hidden="true">👪</span>
+            <p><strong>Parents always in the loop</strong>Follow progress, attendance and certificates, and get a message if your child misses a class.</p>
+          </li>
+          <li>
+            <span class="feature-icon fi-4" aria-hidden="true">🛡️</span>
+            <p><strong>Safe by design</strong>Every account is checked by our team, and adults can never message children privately.</p>
           </li>
         </ul>
+        <a class="about-more" href="about.html">Meet the people behind Think Nest <span aria-hidden="true">→</span></a>
       </div>
       <div class="about-image">
         <img src="images/tn-about-collage.png" alt="Students, a parent and a teacher learning together">
@@ -230,15 +237,15 @@
     </div>
   </dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="site.js?v=81"></script>
+  <script src="site.js?v=82"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=81"></script>
-  <script src="app.js?v=81"></script>
-  <script src="curriculum.js?v=81"></script>
-  <script src="paths.js?v=81"></script>
-  <script src="founders.js?v=81"></script>
-  <script src="hubs.js?v=81"></script>
-  <script src="plottwist.js?v=81"></script>
+  <script src="supabase-config.js?v=82"></script>
+  <script src="app.js?v=82"></script>
+  <script src="curriculum.js?v=82"></script>
+  <script src="paths.js?v=82"></script>
+  <script src="founders.js?v=82"></script>
+  <script src="hubs.js?v=82"></script>
+  <script src="plottwist.js?v=82"></script>
   <script>
     // Top menu drop-downs (kept separate so nothing else can stop them working)
     document.querySelectorAll('.nav-drop-btn').forEach(b => b.addEventListener('click', e => {

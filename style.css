@@ -337,3 +337,16 @@ html.tn-ar .pt2-w i { transform: scaleX(-1); }
 html.tn-ar .hero-card { padding: 10px 10px 10px 14px; } html.tn-ar .hc-1 { left: auto; right: 2%; } html.tn-ar .hc-2 { right: auto; left: 0; }
 html.tn-ar .hero-how span { display: inline-block; transform: scaleX(-1); }
 @media (max-width: 900px) { .hero-ctas, .hero-facts { justify-content: center; } .hero-what { margin-left: auto; margin-right: auto; } }
+/* ===== About: what you get ===== */
+.about-kicker { text-transform: uppercase; letter-spacing: .14em; font-size: .82rem; font-weight: 800; color: #F27A6F; margin: 0 0 6px; }
+.about-intro { font-size: 1.12rem; line-height: 1.7; color: #4A4E5E; max-width: 500px; margin: 18px 0 0; }
+.features-v2 { margin-top: 30px; gap: 22px; }
+.features-v2 li { align-items: flex-start; gap: 18px; }
+.features-v2 .feature-icon { flex: 0 0 54px; height: 54px; font-size: 1.5rem; }
+.features-v2 .fi-1 { background: #E8F4FD; } .features-v2 .fi-2 { background: #EEF0FB; } .features-v2 .fi-3 { background: #FFEDEA; } .features-v2 .fi-4 { background: #E7F6EF; }
+.features-v2 p { font-size: 1rem; line-height: 1.6; color: #4A4E5E; max-width: 470px; margin: 0; font-weight: 500; }
+.features-v2 strong { display: block; font-size: 1.1rem; color: #1D2026; margin-bottom: 2px; }
+.about-more { display: inline-block; margin-top: 26px; color: #3E4B94; font-weight: 800; text-decoration: none; border-bottom: 2px solid #D9DCEB; padding-bottom: 2px; }
+.about-more:hover { border-color: #3E4B94; }
+html.tn-ar .about-more span { display: inline-block; transform: scaleX(-1); }
+@media (max-width: 900px) { .about-intro { font-size: 1.02rem; } }
