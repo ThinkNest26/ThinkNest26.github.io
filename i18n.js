@@ -1517,7 +1517,19 @@
 "📌 Pin": "📌 تثبيت",
 "New announcement": "إعلان جديد",
 "Read →": "اقرأ ←",
-"Everyone it’s for gets a 🔔 notification straight away.": "يصل إشعار 🔔 فورًا إلى كل من يخصّهم الإعلان."
+"Everyone it’s for gets a 🔔 notification straight away.": "يصل إشعار 🔔 فورًا إلى كل من يخصّهم الإعلان.",
+"🗺️ Coverage": "🗺️ تغطية المنهج",
+"Coverage": "تغطية المنهج",
+"🗺️ Coverage by grade and subject": "🗺️ التغطية حسب الصف والمادة",
+"Objectives to cover": "أهداف يجب تغطيتها",
+"Taught": "تم تدريسه",
+"Assessed": "تم تقييمه",
+"Not covered yet": "لم يُغطَّ بعد",
+"⚙️ Curriculum for each subject": "⚙️ المنهج لكل مادة",
+"📚 Curriculum for each subject": "📚 المنهج لكل مادة",
+"+ Add subject": "+ أضف مادة",
+"Not tracked": "غير متابَع",
+"No objectives yet": "لا أهداف بعد"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

@@ -59,7 +59,7 @@ async function startSchool() {
     document.documentElement.style.setProperty('--school2', S.color_accent || '#F27A6F');
   };
   paint();
-  const tabs = [['overview', '🏠 Overview'], ['dashboard', '📊 Dashboard'], ['reports', '📝 Reports'], ['announce', '📣 Announcements'], ['people', '👥 People']].concat(canManage ? [['import', '📥 Import']] : [], [['settings', '⚙️ School settings']]);
+  const tabs = [['overview', '🏠 Overview'], ['dashboard', '📊 Dashboard'], ['coverage', '🗺️ Coverage'], ['reports', '📝 Reports'], ['announce', '📣 Announcements'], ['people', '👥 People']].concat(canManage ? [['import', '📥 Import']] : [], [['settings', '⚙️ School settings']]);
   box.innerHTML = `<section class="sc-hero" id="sc-hero"></section>
     ${mine.length > 1 ? `<label class="sc-switch">School <select id="sc-pick">${mine.map(s => `<option value="${s.id}" ${s.id === sid ? 'selected' : ''}>${SC_E(s.name)}</option>`).join('')}</select></label>` : ''}
     <div class="tabs sc-tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="false" data-sct="${k}">${l}</button>`).join('')}</div>
@@ -73,7 +73,7 @@ async function startSchool() {
   const show = k => {
     document.querySelectorAll('[data-sct]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.sct === k)));
     history.replaceState(null, '', '#' + k);
-    ({ overview, dashboard, reports, announce, people, settings, import: importTab })[k]();
+    ({ overview, dashboard, coverage, reports, announce, people, settings, import: importTab })[k]();
   };
   document.querySelector('.sc-tabs').addEventListener('click', e => { const b = e.target.closest('[data-sct]'); if (b) show(b.dataset.sct); });
   const pane = () => document.getElementById('sc-pane');
@@ -343,6 +343,66 @@ async function startSchool() {
     });
   }
 
+
+  // ----- Curriculum coverage map
+  const CUR_NAMES = { british: 'British', american: 'American', ib: 'IB', moe: 'UAE MOE', none: '–' };
+  async function coverage(pick) {
+    pane().innerHTML = '<p class="empty">Checking every objective… this can take a few seconds.</p>';
+    const { data: ov, error } = await db.rpc('school_coverage_overview', { sid });
+    if (error) { pane().innerHTML = `<p class="empty">${SC_E(/coverage|function/.test(error.message || '') ? 'Run database update 62 to see curriculum coverage.' : friendly(error))}</p>`; return; }
+    const O = ov || [], grades = [...new Set(O.map(x => x.grade))], subjects = [...new Set(O.map(x => x.subject))];
+    const cell = (g, sj) => O.find(x => x.grade === g && x.subject === sj);
+    const pctT = x => x && x.total ? Math.round(100 * x.taught / x.total) : 0, pctA = x => x && x.total ? Math.round(100 * x.assessed / x.total) : 0;
+    const tot = O.reduce((a, x) => ({ total: a.total + x.total, taught: a.taught + x.taught, assessed: a.assessed + x.assessed }), { total: 0, taught: 0, assessed: 0 });
+    pane().innerHTML = `<section class="in-cards sc-cards">
+        <div class="in-card"><span>📚</span><b>${tot.total}</b><small>Objectives to cover</small></div>
+        <div class="in-card"><span>🟡</span><b>${tot.total ? Math.round(100 * tot.taught / tot.total) : 0}%</b><small>Taught</small></div>
+        <div class="in-card"><span>🟢</span><b>${tot.total ? Math.round(100 * tot.assessed / tot.total) : 0}%</b><small>Assessed</small></div>
+        <div class="in-card"><span>⚪</span><b>${tot.total - tot.taught}</b><small>Not covered yet</small></div></section>
+      <section class="panel"><div class="in-head"><h2>🗺️ Coverage by grade and subject</h2><button type="button" class="link-btn" id="cv-set">⚙️ Curriculum for each subject</button></div>
+        ${O.length ? `<div class="in-scroll"><table class="sc-cov"><thead><tr><th>Grade</th>${subjects.map(sj => `<th>${SC_E(sj)}</th>`).join('')}</tr></thead><tbody>
+          ${grades.map(g => `<tr><th>${SC_E(g)}</th>${subjects.map(sj => { const x = cell(g, sj); if (!x) return '<td></td>';
+            if (!x.total) return `<td><button type="button" class="sc-cv empty" data-g="${SC_E(g)}" data-s="${SC_E(sj)}"><small>No objectives yet</small></button></td>`;
+            return `<td><button type="button" class="sc-cv ${pctT(x) >= 80 ? 'hi' : pctT(x) >= 40 ? 'mid' : 'lo'}" data-g="${SC_E(g)}" data-s="${SC_E(sj)}">
+              <b>${pctT(x)}%</b><span class="sc-cv-bar"><i class="a" style="width:${pctA(x)}%"></i><i class="t" style="width:${Math.max(0, pctT(x) - pctA(x))}%"></i></span>
+              <small>${x.taught}/${x.total} taught · ${x.assessed} assessed</small></button></td>`; }).join('')}</tr>`).join('')}</tbody></table></div>
+          <p class="sc-legend"><span><i style="background:#2FA08A"></i>Assessed</span><span><i style="background:#E8B22E"></i>Taught</span><span><i style="background:#E4E6F1"></i>Not covered yet</span></p>`
+          : '<p class="meta">Choose your grades in School settings, and the curriculum for each subject, to see coverage.</p>'}
+      </section><section id="cv-detail"></section>`;
+    document.getElementById('cv-set').onclick = () => { show('settings'); setTimeout(() => { const el = document.getElementById('sc-curmap'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300); };
+    pane().querySelectorAll('.sc-cv').forEach(b => b.onclick = () => covDetail(b.dataset.g, b.dataset.s));
+    if (pick) covDetail(pick[0], pick[1]);
+  }
+  async function covDetail(g, sj) {
+    const box = document.getElementById('cv-detail'); box.innerHTML = '<p class="empty">Loading…</p>';
+    const { data: d, error } = await db.rpc('school_coverage', { sid, sgrade: g, ssubject: sj });
+    if (error) { box.innerHTML = `<p class="empty">${SC_E(friendly(error))}</p>`; return; }
+    const L = d.objectives || [];
+    const st = o => o.results > 0 ? ['a', '🟢 Assessed'] : o.taught.length ? ['t', '🟡 Taught'] : ['n', '⚪ Not covered'];
+    let filter = '';
+    const draw = () => {
+      const shown = L.filter(o => !filter || st(o)[0] === filter), topics = [...new Set(shown.map(o => o.topic))];
+      const n = k => L.filter(o => st(o)[0] === k).length;
+      box.innerHTML = `<section class="panel"><div class="sc-drill-head"><h2>${SC_E(g)} · ${SC_E(sj)} <small class="meta">${SC_E(CUR_NAMES[d.curriculum] || d.curriculum)} · ${d.courses} course${d.courses === 1 ? '' : 's'}</small></h2>
+          <span><button type="button" class="pill pill-soft" id="cv-csv">⬇ CSV</button> <button type="button" class="link-btn" id="cv-x">✕ Close</button></span></div>
+        <div class="feed-filter sc-cv-f">${[['', 'All ' + L.length], ['n', '⚪ Not covered ' + n('n')], ['t', '🟡 Taught ' + n('t')], ['a', '🟢 Assessed ' + n('a')]].map(([k, l]) => `<button type="button" class="chip ${filter === k ? 'on' : ''}" data-f="${k}">${l}</button>`).join('')}</div>
+        ${!L.length ? '<p class="meta">There are no objectives for this grade and subject yet. Teachers can add the school’s own objectives when they create lessons (🎯 objective chooser → add your own).</p>' : ''}
+        ${!d.courses && L.length ? '<p class="note">No courses for this grade and subject yet. When teachers create courses with this grade and subject, their lessons and activities count here.</p>' : ''}
+        ${topics.map(tp => `<h3 class="sc-h3">${SC_E(tp)}</h3><div class="sc-cv-list">${shown.filter(o => o.topic === tp).map(o => { const s2 = st(o);
+          return `<div class="sc-cv-row ${s2[0]}"><span class="sc-cv-st">${s2[1]}</span><div><b>${SC_E(o.text)}</b>${o.own ? ' <small class="meta">· school objective</small>' : ''}
+            ${o.taught.length ? `<small class="meta">Taught in: ${SC_E(o.taught.slice(0, 3).join(' | '))}${o.taught.length > 3 ? ' …' : ''}</small>` : ''}</div>
+            <span class="sc-cv-score">${o.results ? `<b class="in-c ${o.avg >= 80 ? 'secure' : o.avg >= 60 ? 'dev' : 'gap'}">${o.avg ?? '–'}%</b><small>${o.results} results</small>` : ''}</span></div>`; }).join('')}</div>`).join('')}</section>`;
+      box.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { filter = b.dataset.f; draw(); });
+      document.getElementById('cv-x').onclick = () => { box.innerHTML = ''; };
+      document.getElementById('cv-csv').onclick = () => {
+        const t = [['Topic', 'Objective', 'Status', 'Taught in', 'Results', 'Average %']].concat(L.map(o => [o.topic, o.text, st(o)[1].replace(/^\S+\s/, ''), o.taught.join(' | '), o.results, o.avg ?? '']))
+          .map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + t], { type: 'text/csv' })); a.download = `coverage-${g}-${sj}.csv`.replace(/\s+/g, '-').toLowerCase(); document.body.appendChild(a); a.click(); a.remove();
+      };
+    };
+    draw(); box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   // ----- People
   async function people() {
     pane().innerHTML = '<p class="empty">Loading…</p>';
@@ -410,10 +470,20 @@ async function startSchool() {
         <label>Terms (separate with commas) <input type="text" name="terms" maxlength="200" value="${SC_E((S.terms || []).join(', '))}" ${ro ? 'disabled' : ''}></label></div>
       <h3 class="sc-h3">🎓 Grades your school teaches</h3>
       <div class="sc-grades">${SC_ALL_GRADES.map(g => `<label class="sc-chip"><input type="checkbox" name="grade" value="${g}" ${(S.grades || []).includes(g) ? 'checked' : ''} ${ro ? 'disabled' : ''}><span>${g}</span></label>`).join('')}</div>
+      <h3 class="sc-h3" id="sc-curmap">📚 Curriculum for each subject</h3>
+      <p class="meta">Choose the curriculum your school follows for each subject. The coverage map uses its learning objectives.</p>
+      <div class="sc-curmap" id="sc-curmap-rows"><p class="meta">Loading…</p></div>
+      ${ro ? '' : '<div class="sc-curmap-add"><input type="text" id="sc-cm-new" maxlength="40" placeholder="Add a subject, e.g. Arabic"><button type="button" class="pill pill-soft" id="sc-cm-add">+ Add subject</button></div>'}
       <label class="sc-sections">Sections (separate with commas) <input type="text" name="sections" maxlength="200" value="${SC_E((S.sections || []).join(', '))}" placeholder="e.g. A, B, C" ${ro ? 'disabled' : ''}></label>
       ${ro ? '' : '<button class="btn btn-red">💾 Save settings</button>'}</form>`;
     const f = document.getElementById('sc-set');
-    let logoUrl = S.logo_url;
+    let logoUrl = S.logo_url, curMap = null;
+    const CUR_OPTS = [['british', 'British'], ['american', 'American'], ['ib', 'IB'], ['moe', 'UAE MOE'], ['none', 'Not tracked']];
+    const drawMap = () => { document.getElementById('sc-curmap-rows').innerHTML = Object.keys(curMap).map(k => `<label class="sc-cm-row"><span>${SC_E(k)}</span><select data-cm="${SC_E(k)}" ${ro ? 'disabled' : ''}>${CUR_OPTS.map(([v, l]) => `<option value="${v}" ${curMap[k] === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>`).join('') || '<p class="meta">No subjects yet.</p>'; };
+    db.from('schools').select('curriculum_map').eq('id', sid).maybeSingle().then(({ data }) => { curMap = (data && data.curriculum_map) || { English: 'british', Maths: 'british', Science: 'british' }; drawMap(); });
+    f.addEventListener('change', e => { const sel = e.target.closest('[data-cm]'); if (sel && curMap) curMap[sel.dataset.cm] = sel.value; });
+    const cmAdd = document.getElementById('sc-cm-add');
+    if (cmAdd) cmAdd.onclick = () => { const v = document.getElementById('sc-cm-new').value.trim(); if (!v || !curMap) return; curMap[v] = curMap[v] || 'british'; document.getElementById('sc-cm-new').value = ''; drawMap(); };
     const up = document.getElementById('sc-logo');
     if (up) up.onchange = async () => {
       const file = up.files[0]; if (!file) return;
@@ -433,6 +503,7 @@ async function startSchool() {
       const list = v => v.split(',').map(x => x.trim()).filter(Boolean);
       const row = { name: f.name.value.trim(), short_name: f.short_name.value.trim() || null, logo_url: logoUrl || null, color_primary: f.color_primary.value, color_accent: f.color_accent.value,
         academic_year: f.academic_year.value.trim() || S.academic_year, terms: list(f.terms.value), grades: [...f.querySelectorAll('input[name=grade]:checked')].map(x => x.value), sections: list(f.sections.value) };
+      if (curMap) row.curriculum_map = curMap;
       if (row.name.length < 2) return say('Please enter the school name.');
       if (!row.grades.length) return say('Please choose at least one grade.');
       const { error: er } = await db.from('schools').update(row).eq('id', sid);

@@ -1776,3 +1776,21 @@ html.tn-school .fam-add { display: none !important; }
 .sc-an-read { display: flex; align-items: center; gap: 10px; } .sc-an-read .sc-bar { flex: 1; max-width: 260px; height: 10px; }
 .link-btn.danger { color: #B3261E; }
 html.tn-school .find-class, html.tn-school [data-path-find] { display: none !important; }
+/* ===== Curriculum coverage ===== */
+.sc-cov { border-collapse: separate; border-spacing: 6px; width: 100%; } .sc-cov th { font-size: .85rem; color: #4A4E5E; text-align: center; padding: 4px; } .sc-cov tbody th { text-align: left; white-space: nowrap; }
+.sc-cv { width: 100%; min-width: 120px; border: 0; border-radius: 12px; padding: 10px; font: inherit; cursor: pointer; display: grid; gap: 5px; text-align: left; background: #F1F2F8; transition: transform .12s; }
+.sc-cv:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(30,35,82,.1); }
+.sc-cv b { font-size: 1.2rem; color: #1D2026; } .sc-cv small { font-size: .74rem; color: #4A4E5E; }
+.sc-cv.hi { background: #E3F5EE; } .sc-cv.mid { background: #FFF6DE; } .sc-cv.lo { background: #FDEEEE; } .sc-cv.empty { background: #F7F8FD; color: #9AA0B5; }
+.sc-cv-bar { display: flex; height: 7px; background: #E4E6F1; border-radius: 4px; overflow: hidden; } .sc-cv-bar .a { background: #2FA08A; } .sc-cv-bar .t { background: #E8B22E; }
+.sc-cv-f { margin: 6px 0 4px; }
+.sc-cv-list { display: grid; gap: 6px; }
+.sc-cv-row { display: grid; grid-template-columns: 130px 1fr auto; gap: 12px; align-items: center; padding: 9px 12px; border-radius: 12px; border: 1px solid #ECEEF6; }
+.sc-cv-row.n { background: #FCFCFE; } .sc-cv-row.t { background: #FFFBEF; } .sc-cv-row.a { background: #F3FBF7; }
+.sc-cv-row b { font-weight: 600; color: #1D2026; display: block; line-height: 1.45; } .sc-cv-row small { display: block; }
+.sc-cv-st { font-size: .8rem; font-weight: 800; white-space: nowrap; } .sc-cv-score { display: grid; justify-items: end; gap: 2px; } .sc-cv-score .in-c { padding: 2px 8px; border-radius: 8px; }
+.sc-curmap { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.sc-cm-row { display: flex !important; justify-content: space-between; align-items: center; gap: 8px; border: 1px solid #ECEEF6; border-radius: 12px; padding: 8px 10px; font-weight: 700; }
+.sc-cm-row select { font: inherit; padding: 5px 8px; border-radius: 8px; border: 1px solid #D9DCEB; }
+.sc-curmap-add { display: flex; gap: 8px; } .sc-curmap-add input { font: inherit; padding: 8px 12px; border: 2px solid #E4E6F1; border-radius: 12px; }
+@media (max-width: 760px) { .sc-cv-row { grid-template-columns: 1fr; } .sc-cv-score { justify-items: start; } }
