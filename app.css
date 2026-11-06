@@ -1478,3 +1478,19 @@ html.tn-ar .tn-av .tn-av-x { right: auto; left: -.35em; transform: rotate(-14deg
 html.tn-ar .in-obj { border-left: 1px solid #ECEEF6; border-right: 6px solid #C9CCDA; } html.tn-ar .in-obj.secure { border-right-color: #2FA08A; } html.tn-ar .in-obj.dev { border-right-color: #E8B22E; } html.tn-ar .in-obj.gap { border-right-color: #E5484D; }
 html.tn-ar .in-table tbody th { text-align: right; left: auto; right: 0; }
 .insights .panel h2, .in-step b { color: #1D2026; }
+/* ===== Riddle of the day ===== */
+.tn-riddle { background: linear-gradient(160deg, #F1FBF6, #E6F6FF) !important; border: 0; }
+.tn-rd-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.tn-rd-top h3 { margin: 0; font-size: 1rem; }
+.tn-rd-tag { font-size: .75rem; font-weight: 800; background: #fff; border-radius: 20px; padding: 3px 9px; color: #2F6F5A; white-space: nowrap; }
+.tn-rd-q { font-weight: 800; color: #1D2026; line-height: 1.5; margin: 10px 0; }
+.tn-rd-hint { margin: 0 0 8px; color: #8A6100; background: #FFF6D6; border-radius: 10px; padding: 7px 10px; font-size: .9rem; }
+.tn-rd-ans { margin: 0 0 8px; background: #fff; border-radius: 10px; padding: 9px 12px; animation: rd-pop .35s ease; }
+@keyframes rd-pop { 0% { transform: scale(.9); opacity: 0; } 70% { transform: scale(1.04); } 100% { transform: none; opacity: 1; } }
+.tn-rd-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.tn-rd-btns button { border: 1px solid #CFE6DD; background: #fff; border-radius: 20px; padding: 7px 12px; font: inherit; font-weight: 800; font-size: .85rem; cursor: pointer; color: #2F6F5A; }
+.tn-rd-btns button.main { background: #2FA08A; border-color: #2FA08A; color: #fff; }
+.tn-rd-btns button:disabled { opacity: .5; cursor: default; }
+.tn-rd-next { margin-top: 8px; font-size: .85rem; }
+.tn-riddle.solved { box-shadow: 0 0 0 3px #BFEBDD inset; }
+@media (prefers-reduced-motion: reduce) { .tn-rd-ans { animation: none; } }
