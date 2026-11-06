@@ -1309,7 +1309,8 @@
 "🔑 Student logins": "🔑 بيانات دخول الطلاب",
 "Type one name per line, or upload a list (CSV or text; from Excel use File → Save As → CSV).": "اكتب اسمًا واحدًا في كل سطر، أو ارفع قائمة (CSV أو نص؛ من إكسل استخدم ملف ← حفظ باسم ← CSV).",
 "Check the list. You can change any username (lowercase letters, numbers and dots), or tap 🔄 for a new password.": "راجع القائمة. يمكنك تغيير أي اسم مستخدم (أحرف صغيرة وأرقام ونقاط)، أو اضغط 🔄 لكلمة مرور جديدة.",
-"Students you add with ➕ Add students appear here, so you can give them a new password if they forget it.": "يظهر هنا الطلاب الذين تضيفهم عبر ➕ أضف طلابًا، لتتمكن من إعطائهم كلمة مرور جديدة إذا نسوها."
+"Students you add with ➕ Add students appear here, so you can give them a new password if they forget it.": "يظهر هنا الطلاب الذين تضيفهم عبر ➕ أضف طلابًا، لتتمكن من إعطائهم كلمة مرور جديدة إذا نسوها.",
+"Next: confirm to create the accounts. Then you can 🖨️ print login cards and ⬇ download the list.": "التالي: أكّد لإنشاء الحسابات. بعدها يمكنك 🖨️ طباعة بطاقات الدخول و⬇ تنزيل القائمة."
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

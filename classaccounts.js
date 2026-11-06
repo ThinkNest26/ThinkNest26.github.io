@@ -68,7 +68,8 @@ async function caInit() {
       <div class="in-scroll"><table class="ac-table"><thead><tr><th>Student</th><th>Username</th><th>Password</th><th></th></tr></thead>
       <tbody>${rows.map((r, i) => `<tr data-i="${i}"><td>${caE(r.name)}</td><td><input class="ca-u" value="${caE(r.username)}" maxlength="24" aria-label="Username for ${caE(r.name)}"></td><td><code>${caE(r.password)}</code> <button type="button" class="link-btn" data-ca="pw" aria-label="New password">🔄</button></td><td><button type="button" class="link-btn" data-ca="del" aria-label="Remove">✕</button></td></tr>`).join('')}</tbody></table></div>
       <label class="agree-box ca-ok"><input type="checkbox" id="ca-ok"> <span>I confirm that my school and the students’ parents have agreed to these students having Think Nest accounts.</span></label>
-      <div class="ca-bar"><button type="button" class="link-btn" data-ca="back">‹ Back to names</button><button type="button" class="btn btn-red" data-ca="create">✅ Confirm and create ${rows.length} account${rows.length === 1 ? '' : 's'}</button></div>`;
+      <p class="ca-err" id="ca-err" role="alert" hidden></p>
+      <div class="ca-bar"><button type="button" class="link-btn" data-ca="back">‹ Back to names</button><span class="meta ca-next">Next: confirm to create the accounts. Then you can 🖨️ print login cards and ⬇ download the list.</span><button type="button" class="btn btn-red" data-ca="create">✅ Confirm and create ${rows.length} account${rows.length === 1 ? '' : 's'}</button></div>`;
     panel.querySelectorAll('.ca-u').forEach(inp => inp.addEventListener('input', () => { rows[Number(inp.closest('tr').dataset.i)].username = inp.value.toLowerCase().replace(/[^a-z0-9.]/g, ''); }));
   };
   const step3 = (done, bad) => {
@@ -104,7 +105,12 @@ async function caInit() {
       try {
         const res = await caCall({ students: rows, group_id: gid });
         const list = res.results || []; step3(list.filter(r => r.username), list.filter(r => !r.username)); rows = []; caLogins();
-      } catch (err) { b.disabled = false; b.textContent = '✅ Confirm and create accounts'; say(err.message || 'Something went wrong. Please try again.'); }
+      } catch (err) {
+        b.disabled = false; b.textContent = '✅ Try again';
+        const box = panel.querySelector('#ca-err'); const msg = err.message || 'Something went wrong. Please try again.';
+        if (box) { box.hidden = false; box.innerHTML = '⚠️ The accounts couldn’t be created: <b>' + caE(msg) + '</b><br><small>If this keeps happening, send a screenshot of this message to the Think Nest team.</small>'; box.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        else say(msg);
+      }
       return;
     }
     if (a === 'print') return caPrint(panel._done || [], g.name);

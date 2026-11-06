@@ -1531,3 +1531,5 @@ html.tn-ar .ca-bar .btn-red { margin-left: 0; margin-right: auto; }
 .ca-link { border: 2px dashed #C9CCDA; display: grid; gap: 10px; } .ca-link h3 { margin: 0; }
 .ca-link select { font: inherit; font-weight: 700; padding: 9px 12px; border: 2px solid #E4E6F1; border-radius: 12px; min-width: 240px; }
 #t-ins .in-cards { margin-top: 4px; }
+.ca-err { background: #FDECEC; color: #8A1C1C; border: 1px solid #F5C2C2; border-radius: 12px; padding: 10px 14px; margin: 0; }
+.ca-next { flex: 1; min-width: 200px; }
