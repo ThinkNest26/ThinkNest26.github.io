@@ -350,3 +350,4 @@ html.tn-ar .hero-how span { display: inline-block; transform: scaleX(-1); }
 .about-more:hover { border-color: #3E4B94; }
 html.tn-ar .about-more span { display: inline-block; transform: scaleX(-1); }
 @media (max-width: 900px) { .about-intro { font-size: 1.02rem; } }
+.about-intro b { color: #1D2026; }

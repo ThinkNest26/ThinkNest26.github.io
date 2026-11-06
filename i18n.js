@@ -1200,7 +1200,19 @@
 "Follow progress, attendance and certificates, and get a message if your child misses a class.": "تابع التقدّم والحضور والشهادات، وتلقَّ رسالة إذا غاب طفلك عن حصة.",
 "Safe by design": "آمن بطبيعته",
 "Every account is checked by our team, and adults can never message children privately.": "يراجع فريقنا كل حساب، ولا يمكن للبالغين أبدًا مراسلة الأطفال على انفراد.",
-"Meet the people behind Think Nest": "تعرّف على الأشخاص وراء ثينك نست"
+"Meet the people behind Think Nest": "تعرّف على الأشخاص وراء ثينك نست",
+"One nest. Every learner.": "عشّ واحد. لكل متعلّم.",
+"Students learn, teachers inspire and parents stay close, all in one safe, connected space.": "يتعلّم الطلاب، ويُلهم المعلمون، ويبقى أولياء الأمور قريبين، كل ذلك في مساحة واحدة آمنة ومتصلة.",
+"Learn live. Learn anytime.": "تعلّم مباشرة. تعلّم في أي وقت.",
+"Small live classes with expert teachers, plus quizzes, worksheets and videos ready whenever inspiration strikes.": "حصص مباشرة صغيرة مع معلمين خبراء، إضافة إلى اختبارات وأوراق عمل وفيديوهات جاهزة متى ما حضر الإلهام.",
+"Built around your curriculum.": "مصمّم حول منهجك.",
+"British, IGCSE, A Level, IB, American and UAE Arabic, matched to every grade from KG1 to Grade 12.": "البريطاني وIGCSE وA Level وIB والأمريكي والعربية وفق المنهج الإماراتي، مطابقة لكل صف من الروضة الأولى إلى الصف 12.",
+"Parents, never out of the loop.": "أولياء الأمور، دائمًا على اطلاع.",
+"Progress, attendance and certificates at a glance, with an instant alert if a class is missed.": "التقدّم والحضور والشهادات في لمحة واحدة، مع تنبيه فوري عند الغياب عن أي حصة.",
+"Safe by design, not by chance.": "آمن بالتصميم، لا بالصدفة.",
+"Every account is personally reviewed, and adults can never message children privately.": "يُراجَع كل حساب بعناية، ولا يمكن للبالغين أبدًا مراسلة الأطفال على انفراد.",
+"Where learning feels like home.": "حيث يكون التعلّم كأنه في البيت.",
+"Students grow, teachers inspire and families stay connected, all in one safe online space.": "ينمو الطلاب، ويُلهم المعلمون، وتبقى الأسر على تواصل، كل ذلك في مساحة واحدة آمنة عبر الإنترنت."
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times
