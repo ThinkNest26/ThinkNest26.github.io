@@ -2103,3 +2103,7 @@ html.tn-school .find-class, html.tn-school [data-path-find] { display: none !imp
 @media (max-width: 900px) { .th-two { grid-template-columns: 1fr; } .th-reg, .th-plan { grid-template-columns: 1fr; } }
 /* school teachers and leaders: no question of the day or riddle (students still see them) */
 html.tn-school-staff .tn-riddle, html.tn-school-staff :has(> .tn-qz) { display: none !important; }
+/* sidebar sections */
+.side nav.nav2 .nav2-head { margin: 16px 14px 4px; font-size: .7rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.45); }
+.side nav.nav2 .nav2-flat { margin: 0 0 2px; padding-left: 14px; border-left: 0; } .side nav.nav2 .nav2-flat li a { padding: 8px 12px; }
+.side nav.nav2 > .nav2-top + .nav2-head { margin-top: 18px; }

@@ -47,13 +47,25 @@
   // Think Nest for Schools: everyone in a school sees only their school
   MENUS.school_teacher = [
     { ic: '🏠', label: 'Home', href: 'school-teacher.html' },
-    { ic: '📣', label: 'Announcements', href: 'announcements.html', an: 1 },
-    { ic: '🏫', label: 'My Classes', dyn: 'classes', items: [['classes.html', 'All my classes'], ['classes.html?new=1', '➕ New class']] },
-    { ic: '📊', label: 'My data', items: [['school.html#dashboard', '📊 Dashboard'], ['school.html#attendance', '📋 Attendance'], ['school.html#coverage', '🗺️ Coverage']] },
-    { ic: '📘', label: 'Teaching', items: [['planner.html', '🗂️ Unit and weekly plans'], ['teacher-courses.html', '📘 Lessons and quizzes']] },
-    { ic: '🧩', label: 'Inclusion and wellbeing', items: [['inclusion.html', '🧩 Inclusion'], ['wellbeing.html', '💛 Wellbeing']], roles: 'inclusion_team' },
+    { head: 'My classes' },
+    { flat: true, dyn: 'classes', items: [['classes.html?new=1', '➕ New class']] },
+    { head: 'Planning' },
+    { ic: '📅', label: 'Weekly plans', href: 'planner.html?mode=weeks' },
+    { ic: '🗂️', label: 'Unit plans', href: 'planner.html?mode=units' },
+    { ic: '📘', label: 'Lessons and quizzes', href: 'teacher-courses.html' },
+    { head: 'My data' },
+    { ic: '📋', label: 'Attendance', href: 'school.html#attendance' },
+    { ic: '📊', label: 'Class progress', href: 'school.html#dashboard' },
+    { ic: '🗺️', label: 'Curriculum coverage', href: 'school.html#coverage' },
+    { head: 'For me' },
     { ic: '👀', label: 'My observations', href: 'observe.html' },
-    { ic: '💬', label: 'Messages & community', items: [['messages.html', 'Messages'], ['school-community.html', '🏫 School community'], ['staff-room.html', '👩‍🏫 Staff room']] }
+    { ic: '🧩', label: 'Inclusion', href: 'inclusion.html', roles: 'inclusion_team' },
+    { ic: '💛', label: 'Wellbeing', href: 'wellbeing.html', roles: 'inclusion_team' },
+    { head: 'School' },
+    { ic: '📣', label: 'Announcements', href: 'announcements.html', an: 1 },
+    { ic: '👩‍🏫', label: 'Staff room', href: 'staff-room.html' },
+    { ic: '🏫', label: 'School community', href: 'school-community.html' },
+    { ic: '💬', label: 'Messages', href: 'messages.html' }
   ];
   MENUS.school_student = [
     { ic: '🏠', label: 'Home', href: 'student-dashboard.html' },
@@ -116,15 +128,21 @@
     let here = ALIAS[page] || page;
     if (page === 'school.html' && /^#(people|settings|import|dashboard|reports|announce|coverage|evidence|attendance)$/.test(location.hash)) here = 'school.html' + location.hash;
     if (page === 'group.html' && document.querySelector('.class-flag')) here = 'classes.html';
+    if (page === 'planner.html') { const m = new URLSearchParams(location.search).get('mode') || (new URLSearchParams(location.search).get('week') ? 'weeks' : new URLSearchParams(location.search).get('plan') ? 'units' : sessionStorage.getItem('tn_pl_mode') || 'units'); here = 'planner.html?mode=' + m; }
     const qid = new URLSearchParams(location.search).get('id');
     let saved = {};
     try { saved = JSON.parse(localStorage.getItem('tn_nav_open') || '{}'); } catch (_) {}
     nav.classList.add('nav2');
     const switcher = dual && !sc ? `<a class="nav2-switch" href="${inParent ? 'teacher-dashboard.html' : 'parent-dashboard.html'}">${inParent ? '👩‍🏫 Switch to teacher view' : '👪 Switch to parent view'}</a>` : '';
     nav.innerHTML = switcher + menu.map((sec, i) => {
+      if (sec.head) return `<div class="nav2-head">${sec.head}</div>`;
+      if (sec.flat) {
+        const dynHere = sec.dyn === 'classes' && page === 'group.html';
+        return `<ul class="nav2-sub nav2-flat">${sec.dyn ? `<li class="nav2-dyn" data-dyn="${sec.dyn}"></li>` : ''}${sec.items.map(([h, l]) => `<li><a href="${h}" class="${h === here && !dynHere ? 'active' : ''} ${h.includes('new=1') ? 'nav2-add' : ''}">${l}</a></li>`).join('')}</ul>`;
+      }
       if (sec.href) {
         const on = sec.href === here;
-        return `<a class="nav2-top ${on ? 'active' : ''}" href="${sec.href}" ${on ? 'aria-current="page"' : ''}><span class="nav2-ic" aria-hidden="true">${sec.ic}</span><span>${sec.label}</span>${sec.an ? '<i class="nav2-badge" data-an-badge hidden></i>' : ''}</a>`;
+        return `<a class="nav2-top ${on ? 'active' : ''}" href="${sec.href}" ${on ? 'aria-current="page"' : ''}><span class="nav2-ic" aria-hidden="true">${sec.ic}</span><span>${sec.label}</span>${sec.an ? '<i class="nav2-badge" data-an-badge hidden></i>' : ''}${sec.href === 'messages.html' ? '<i class="nav-dot" id="nav-unread" hidden></i>' : ''}</a>`;
       }
       const dynHere = (sec.dyn === 'classes' && page === 'group.html') || (sec.dyn === 'kids' && page === 'child.html');
       const hasHere = dynHere || sec.items.some(([h]) => h === here);

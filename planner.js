@@ -52,7 +52,7 @@ async function startPlanner() {
   box.innerHTML = '<div class="tabs sc-tabs pl-mode" role="tablist"><button role="tab" data-pm="units">🗂️ Unit plans</button><button role="tab" data-pm="weeks">📅 Weekly plans</button></div><div id="pl-main"></div>';
   box = document.getElementById('pl-main');
   const setMode = m => { document.querySelectorAll('[data-pm]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.pm === m))); sessionStorage.setItem('tn_pl_mode', m); };
-  document.querySelector('.pl-mode').onclick = e => { const b = e.target.closest('[data-pm]'); if (!b) return; history.replaceState(null, '', 'planner.html'); if (b.dataset.pm === 'weeks') weeks(); else list(); };
+  document.querySelector('.pl-mode').onclick = e => { const b = e.target.closest('[data-pm]'); if (!b) return; history.replaceState(null, '', 'planner.html?mode=' + b.dataset.pm); if (b.dataset.pm === 'weeks') weeks(); else list(); };
 
   // ----- the list of units
   async function list() {
@@ -493,5 +493,6 @@ async function startPlanner() {
   }
 
   const q = new URLSearchParams(location.search).get('plan'), qw = new URLSearchParams(location.search).get('week');
-  if (qw) openWeek(Number(qw)); else if (q) openPlan(Number(q)); else if (sessionStorage.getItem('tn_pl_mode') === 'weeks') weeks(); else list();
+  const qm = new URLSearchParams(location.search).get('mode');
+  if (qw) openWeek(Number(qw)); else if (q) openPlan(Number(q)); else if (qm === 'weeks' || (!qm && sessionStorage.getItem('tn_pl_mode') === 'weeks')) weeks(); else list();
 }

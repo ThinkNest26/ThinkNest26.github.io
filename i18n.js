@@ -1358,7 +1358,7 @@
 "🏅 Certificates": "🏅 الشهادات",
 "📊 Course insights": "📊 تحليلات الدورة",
 "Messages & Community": "الرسائل والمجتمع",
-"For me": "لي أنا",
+"For me": "لي",
 "Beyond the Bell workshops": "ورش ما بعد الجرس",
 "My Children": "أبنائي",
 "All my children": "جميع أبنائي",
@@ -1794,7 +1794,15 @@
 "New observation feedback": "ملاحظات زيارة صفية جديدة",
 "➕ Start": "➕ ابدأ",
 "Inclusion team": "فريق الدمج",
-"🧩 Inclusion team": "🧩 فريق الدمج"
+"🧩 Inclusion team": "🧩 فريق الدمج",
+"Planning": "التخطيط",
+"Weekly plans": "الخطط الأسبوعية",
+"Unit plans": "خطط الوحدات",
+"Lessons and quizzes": "الدروس والاختبارات",
+"Class progress": "تقدم الفصل",
+"Curriculum coverage": "تغطية المنهج",
+"Staff room": "غرفة المعلمين",
+"School community": "مجتمع المدرسة"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times
