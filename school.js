@@ -387,6 +387,7 @@ async function startSchool() {
   async function coverage(pick) {
     pane().innerHTML = '<p class="empty">Checking every objective… this can take a few seconds.</p>';
     // subject coordinators: choose the subject(s) they coordinate first
+    let cvLate = null;
     if (S.my_role === 'head_of_department') {
       const { data: cm } = await db.from('schools').select('curriculum_map').eq('id', sid).maybeSingle();
       const map = (cm && cm.curriculum_map) || {}, all = Object.keys(map).filter(k => map[k] !== 'none'), mine = S.scope_subjects || [];
@@ -399,9 +400,10 @@ async function startSchool() {
         const { error: er } = await db.rpc('set_my_subjects', { sid, subs }); if (er) return say(/set_my_subjects|function/.test(er.message || '') ? 'This needs database update 77.' : friendly(er));
         S.scope_subjects = subs; say('📚 Saved. Coverage now shows ' + subs.join(', ') + '.'); coverage(); }; };
       if (!mine.length) { wire(); return; }
-      setTimeout(() => { if (!document.querySelector('.cv-mine')) { pane().insertAdjacentHTML('afterbegin', chooser); wire(); } }, 0);
+      cvLate = () => { if (!document.querySelector('.cv-mine') && pane()) { pane().insertAdjacentHTML('afterbegin', chooser); wire(); } };
     }
     const { data: ov, error } = await db.rpc('school_coverage_overview', { sid });
+    if (cvLate) setTimeout(cvLate, 0);   // runs after the grid below has been drawn
     if (error) { pane().innerHTML = `<p class="empty">${SC_E(/coverage|function/.test(error.message || '') ? 'Run database update 62 to see curriculum coverage.' : friendly(error))}</p>`; return; }
     const O = ov || [], grades = [...new Set(O.map(x => x.grade))], subjects = [...new Set(O.map(x => x.subject))];
     const cell = (g, sj) => O.find(x => x.grade === g && x.subject === sj);
