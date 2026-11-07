@@ -8,10 +8,12 @@ window.tnCaptchaReady = function () {
     try {
       tnWidgets.push(turnstile.render(el, {
         sitekey: TURNSTILE_SITE_KEY, theme: 'light', size: 'flexible',
-        callback: t => { tnCaptchaToken = t; },
+        callback: t => { tnCaptchaToken = t; const h = el.parentNode && el.parentNode.querySelector('.tn-cap-help'); if (h) h.remove(); },
         'expired-callback': () => { tnCaptchaToken = null; },
         'error-callback': () => { tnCaptchaToken = null; }
       }));
+      // still verifying after a while? a gentle hint (Private windows and strict tracking protection can stop the check)
+      setTimeout(() => { if (!tnCaptchaToken && !el.parentNode.querySelector('.tn-cap-help')) el.insertAdjacentHTML('afterend', '<p class="tn-cap-help">⏳ Taking a while? If you’re using a <b>Private window</b>, please try a normal window or another browser.</p>'); }, 12000);
     } catch (_) {}
   });
 };

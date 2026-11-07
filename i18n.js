@@ -1876,7 +1876,10 @@
 "📅 Weekly lesson plans: all grades": "📅 الخطط الأسبوعية: جميع الصفوف",
 "📚 My subject": "📚 مادتي",
 "📚 Which subject do you coordinate?": "📚 ما المادة التي تنسقها؟",
-"Save my subject": "احفظ مادتي"
+"Save my subject": "احفظ مادتي",
+"⏳ Taking a while? If you’re using a": "⏳ يستغرق وقتًا؟ إذا كنت تستخدم",
+"Private window": "نافذة خاصة",
+", please try a normal window or another browser.": "، جرّب نافذة عادية أو متصفحًا آخر."
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times
