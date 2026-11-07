@@ -28,21 +28,33 @@
     ]
   };
   MENUS.school_leader = [
-    { ic: '🏫', label: 'My school', href: 'school.html', roles: '*' },
+    { ic: '🏠', label: 'Home', href: 'school.html', roles: '*' },
+    { head: 'My classes', roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead' },
+    { flat: true, dyn: 'classes', items: [['classes.html?new=1', '➕ New class']], roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead' },
+    { head: 'My teaching', roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead' },
+    { ic: '🌅', label: 'My school day', href: 'school-teacher.html', roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead' },
+    { ic: '📅', label: 'My weekly plans', href: 'planner.html?mode=weeks', roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead' },
+    { ic: '🗂️', label: 'Unit plans', href: 'planner.html?mode=units', roles: 'principal vice_principal assistant_principal coordinator head_of_department' },
+    { ic: '📘', label: 'Lessons and quizzes', href: 'teacher-courses.html', roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead' },
+    { ic: '📥', label: 'My observation feedback', href: 'observe.html?mode=mine', roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead' },
+    { head: 'Leadership', roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead admin_staff' },
     { ic: '📊', label: 'Dashboard', href: 'school.html#dashboard', roles: 'principal vice_principal assistant_principal coordinator head_of_department' },
     { ic: '📋', label: 'Attendance', href: 'school.html#attendance', roles: 'principal vice_principal assistant_principal coordinator inclusion_lead admin_staff' },
     { ic: '🗺️', label: 'Coverage', href: 'school.html#coverage', roles: 'principal vice_principal assistant_principal coordinator head_of_department' },
+    { ic: '👀', label: 'Observe lessons', href: 'observe.html', roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead' },
+    { ic: '✅', label: 'Plans to review', href: 'planner.html?mode=weeks&all=1', roles: 'principal vice_principal assistant_principal coordinator' },
     { ic: '📝', label: 'Reports', href: 'school.html#reports', roles: 'principal vice_principal assistant_principal coordinator' },
-    { ic: '📣', label: 'Announcements', href: 'school.html#announce', an: 1, roles: '*' },
     { ic: '📂', label: 'Evidence', href: 'school.html#evidence', roles: 'principal vice_principal assistant_principal coordinator' },
-    { ic: '🗂️', label: 'Plans', href: 'planner.html', roles: 'principal vice_principal assistant_principal coordinator head_of_department' },
-    { ic: '👀', label: 'Observations', href: 'observe.html', roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead' },
-    { ic: '🧩', label: 'Inclusion and wellbeing', items: [['inclusion.html', '🧩 Inclusion'], ['wellbeing.html', '💛 Wellbeing']], roles: 'principal vice_principal assistant_principal coordinator inclusion_lead' },
+    { ic: '🧩', label: 'Inclusion', href: 'inclusion.html', roles: 'principal vice_principal assistant_principal coordinator inclusion_lead' },
+    { ic: '💛', label: 'Wellbeing', href: 'wellbeing.html', roles: 'principal vice_principal assistant_principal coordinator inclusion_lead' },
+    { head: 'School', roles: '*' },
+    { ic: '📣', label: 'Announcements', href: 'school.html#announce', an: 1, roles: '*' },
     { ic: '👥', label: 'People', href: 'school.html#people', roles: '*' },
     { ic: '📥', label: 'Import', href: 'school.html#import', roles: 'principal vice_principal assistant_principal admin_staff' },
     { ic: '⚙️', label: 'School settings', href: 'school.html#settings', roles: 'principal vice_principal assistant_principal admin_staff' },
-    { ic: '👩‍🏫', label: 'My teaching', dyn: 'classes', items: [['classes.html', 'All my classes'], ['classes.html?new=1', '➕ New class'], ['planner.html', '🗂️ Unit and weekly plans'], ['teacher-courses.html', 'My courses'], ['teacher-calendar.html', 'Live classes']], roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead' },
-    { ic: '💬', label: 'Messages & community', items: [['messages.html', 'Messages'], ['school-community.html', '🏫 School community'], ['staff-room.html', '👩‍🏫 Staff room']], roles: '*' }
+    { ic: '👩‍🏫', label: 'Staff room', href: 'staff-room.html', roles: '*' },
+    { ic: '🏫', label: 'School community', href: 'school-community.html', roles: '*' },
+    { ic: '💬', label: 'Messages', href: 'messages.html', roles: '*' }
   ];
   // Think Nest for Schools: everyone in a school sees only their school
   MENUS.school_teacher = [
@@ -128,7 +140,8 @@
     let here = ALIAS[page] || page;
     if (page === 'school.html' && /^#(people|settings|import|dashboard|reports|announce|coverage|evidence|attendance)$/.test(location.hash)) here = 'school.html' + location.hash;
     if (page === 'group.html' && document.querySelector('.class-flag')) here = 'classes.html';
-    if (page === 'planner.html') { const m = new URLSearchParams(location.search).get('mode') || (new URLSearchParams(location.search).get('week') ? 'weeks' : new URLSearchParams(location.search).get('plan') ? 'units' : sessionStorage.getItem('tn_pl_mode') || 'units'); here = 'planner.html?mode=' + m; }
+    if (page === 'planner.html') { const m = new URLSearchParams(location.search).get('mode') || (new URLSearchParams(location.search).get('week') ? 'weeks' : new URLSearchParams(location.search).get('plan') ? 'units' : sessionStorage.getItem('tn_pl_mode') || 'units'); here = 'planner.html?mode=' + m + (m === 'weeks' && new URLSearchParams(location.search).get('all') === '1' ? '&all=1' : ''); }
+    if (page === 'observe.html' && (new URLSearchParams(location.search).get('mode') === 'mine' || document.querySelector('.ob-mine-mode'))) here = 'observe.html?mode=mine';
     const qid = new URLSearchParams(location.search).get('id');
     let saved = {};
     try { saved = JSON.parse(localStorage.getItem('tn_nav_open') || '{}'); } catch (_) {}

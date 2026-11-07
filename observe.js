@@ -48,14 +48,21 @@ async function startObserve() {
   const SCALE_DESC = () => R.scale.slice().sort((a, b) => b.n - a.n);
   const lvLabel = n => n ? ((R.scale.find(x => x.n === Number(n)) || {}).label || n) : 'Not seen';
   const lvClass = n => { n = Number(n); if (!n) return 'none'; const r = n / R.scale.length; return r >= 0.99 ? 'top' : r >= 0.8 ? 'hi' : r >= 0.65 ? 'ok' : r >= 0.45 ? 'mid' : r > 0.2 ? 'lo' : 'vlo'; };
-  const tabs = isLead ? [['new', '➕ New observation'], ['list', '📋 Observations'], ['trends', '📈 Trends'], ['mine', '📥 My feedback']].concat(canRubric ? [['rubric', '⚙️ Rubric']] : [])
-    : [['mine', '📥 My observations']];
-  box.innerHTML = `<div class="page-head"><h1 class="title">👀 Lesson observations</h1></div>
-    <p class="hint">${isLead ? 'Observe lessons with your school’s rubric, share feedback with teachers, and see trends across the school.' : 'Your lesson observation reports appear here once your observer shares them. Read the feedback and reply with your comments.'}</p>
-    <div class="tabs sc-tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="false" data-ot="${k}">${l}</button>`).join('')}</div><section id="ob-pane"></section>`;
+  const qo = new URLSearchParams(location.search).get('o');
+  let mineMode = !isLead || new URLSearchParams(location.search).get('mode') === 'mine';
+  if (qo && isLead && !mineMode) { const { data: oo } = await db.from('observations').select('teacher_id').eq('id', Number(qo)).maybeSingle(); if (oo && oo.teacher_id === user.id) mineMode = true; }
+  const tabs = mineMode ? [['mine', '📥 My observation feedback']]
+    : [['new', '➕ New observation'], ['list', '📋 Observations I’ve done'], ['trends', '📈 Trends']].concat(canRubric ? [['rubric', '⚙️ Rubric']] : []);
+  if (mineMode) document.querySelector('main').classList.add('ob-mine-mode');
+  box.innerHTML = mineMode
+    ? `<section class="ob-mine-banner"><span class="ob-mine-ic" aria-hidden="true">📥</span><div><h1>My observation feedback</h1><p>Lessons where <b>you</b> were observed. Read your feedback and reply with your comments.${isLead ? ' To observe others, use <a href="observe.html">👀 Observe lessons</a>.' : ''}</p></div></section>`
+    : `<div class="page-head"><h1 class="title">👀 Observe lessons</h1></div>
+    <p class="hint">Observe lessons with your school’s rubric, share feedback with teachers, and see trends. Your own feedback is kept separately in <a href="observe.html?mode=mine">📥 My observation feedback</a>.</p>`;
+  box.innerHTML += `
+    ${tabs.length > 1 ? `<div class="tabs sc-tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="false" data-ot="${k}">${l}</button>`).join('')}</div>` : '<span hidden><button data-ot="mine"></button></span>'}<section id="ob-pane"></section>`;
   const pane = () => document.getElementById('ob-pane');
   const show = (k, arg) => { document.querySelectorAll('[data-ot]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.ot === k))); ({ new: form, list, trends, mine, rubric })[k](arg); };
-  document.querySelector('.sc-tabs').addEventListener('click', e => { const b = e.target.closest('[data-ot]'); if (b) show(b.dataset.ot); });
+  (document.querySelector('.sc-tabs') || document.body).addEventListener('click', e => { const b = e.target.closest('[data-ot]'); if (b) show(b.dataset.ot); });
 
   // ----- the observation form (new or editing a draft)
   function form(o) {
@@ -102,7 +109,7 @@ async function startObserve() {
     if (!isLead) q = q.eq('observer_id', user.id);
     const { data, error } = await q;
     if (error) { pane().innerHTML = `<p class="empty">${OB_E(/observations/.test(error.message || '') ? 'Run database update 64 to use lesson observations.' : friendly(error))}</p>`; return; }
-    const L = (data || []).filter(o => o.teacher_id !== user.id || o.observer_id === user.id);
+    const L = (data || []).filter(o => o.teacher_id !== user.id);
     let who = '', kind = '';
     const draw = () => {
       const shown = L.filter(o => (!who || o.teacher_id === who) && (!kind || o.kind === kind));
@@ -153,7 +160,7 @@ async function startObserve() {
       ${isMine || isObs || isLead ? `<form id="ob-cf" class="ob-cf"><textarea name="t" rows="3" maxlength="2000" placeholder="${isMine ? 'Your comments on this feedback: what you’ll try next, a question, or support you’d like…' : 'Reply to the teacher…'}"></textarea>
         <div class="ca-bar"><span class="meta">${isMine ? (o.read_at ? '✓ You read this on ' + obDate(o.read_at) : '') : (o.status === 'shared' ? (o.read_at ? '✓ Read by the teacher on ' + obDate(o.read_at) : 'Not read yet') : '')}</span>
         <span>${isMine && !o.read_at ? '<button type="button" class="btn btn-white outline" id="ob-read">✓ Mark as read</button> ' : ''}<button class="btn btn-red">💬 Post comment</button></span></div></form>` : ''}</section>`;
-    document.getElementById('ob-back').onclick = () => show(isMine ? 'mine' : 'list');
+    document.getElementById('ob-back').onclick = () => { if (isMine && !mineMode) location.href = 'observe.html?mode=mine'; else show(isMine ? 'mine' : 'list'); };
     const ed = document.getElementById('ob-edit'); if (ed) ed.onclick = () => form(o);
     const sh = document.getElementById('ob-share'); if (sh) sh.onclick = async () => { if (!confirm(`Share this feedback with ${nameOf(o.teacher_id)}?`)) return; const { error } = await db.rpc('share_observation', { oid: id }); if (error) return say(friendly(error)); say('📤 Shared.'); view(id); };
     const dl = document.getElementById('ob-del'); if (dl) dl.onclick = async () => { if (!confirm('Delete this observation? This can’t be undone.')) return; const { error } = await db.from('observations').delete().eq('id', id); if (error) return say(friendly(error)); say('Deleted.'); show(isLead ? 'list' : 'mine'); };
@@ -229,6 +236,5 @@ async function startObserve() {
     draw();
   }
 
-  const q = new URLSearchParams(location.search).get('o');
-  if (q) { document.querySelectorAll('[data-ot]').forEach(b => b.setAttribute('aria-selected', 'false')); view(Number(q)); } else show(isLead ? 'new' : 'mine');
+  if (qo) { document.querySelectorAll('[data-ot]').forEach(b => b.setAttribute('aria-selected', 'false')); view(Number(qo)); } else show(mineMode ? 'mine' : 'new');
 }

@@ -1802,7 +1802,20 @@
 "Class progress": "تقدم الفصل",
 "Curriculum coverage": "تغطية المنهج",
 "Staff room": "غرفة المعلمين",
-"School community": "مجتمع المدرسة"
+"School community": "مجتمع المدرسة",
+"Leadership": "القيادة",
+"My school day": "يومي في المدرسة",
+"My weekly plans": "خططي الأسبوعية",
+"My observation feedback": "ملاحظات زياراتي الصفية",
+"Observe lessons": "زيارة الحصص",
+"Plans to review": "خطط للمراجعة",
+"📋 Observations I’ve done": "📋 زيارات قمت بها",
+"📥 My observation feedback": "📥 ملاحظات زياراتي الصفية",
+"👀 Observe lessons": "👀 زيارة الحصص",
+"✅ Weekly plans to review": "✅ خطط أسبوعية للمراجعة",
+"📅 My weekly plans": "📅 خططي الأسبوعية",
+"✅ Plans to review →": "✅ خطط للمراجعة ←",
+"📅 My weekly plans →": "📅 خططي الأسبوعية ←"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

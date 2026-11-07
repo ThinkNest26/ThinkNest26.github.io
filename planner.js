@@ -222,25 +222,27 @@ async function startPlanner() {
   const mondayOf = d => { const x = new Date(d); x.setHours(12); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return isoLocal(x); };
   const addDays = (iso, n) => { const x = new Date(iso + 'T12:00:00'); x.setDate(x.getDate() + n); return isoLocal(x); };
   const wkLabel = iso => `${new Date(iso + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} – ${new Date(addDays(iso, 4) + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`;
-  let wk = sessionStorage.getItem('tn_pl_week') || mondayOf(new Date()), CLS = null, onlyMine = !isLeader;
+  let wk = sessionStorage.getItem('tn_pl_week') || mondayOf(new Date()), CLS = null, onlyMine = new URLSearchParams(location.search).get('all') !== '1';
   async function weeks() {
     setMode('weeks'); box.innerHTML = '<p class="empty">Loading…</p>';
     if (!CLS) { const { data, error } = await db.rpc('planning_classes', { sid: S.id }); if (error) { box.innerHTML = `<p class="empty">${PL_E(/planning_classes|function/.test(error.message || '') ? 'Run database update 68 to use weekly plans.' : friendly(error))}</p>`; return; } CLS = data || []; }
     const { data: W } = await db.from('weekly_plans').select('id, group_id, stage, status, edits, feedback').eq('school_id', S.id).eq('week_start', wk);
-    const L = CLS.filter(c => !onlyMine || c.mine), byG = id => (W || []).find(p => p.group_id === id);
+    if (onlyMine && isLeader && !CLS.some(c => c.mine)) onlyMine = false;
+    const L = CLS.filter(c => onlyMine ? c.mine : !c.mine), byG = id => (W || []).find(p => p.group_id === id);
     const lastBy = p => { const e = Object.values((p && p.edits) || {}).sort((a, b) => String(b.at).localeCompare(String(a.at)))[0]; return e ? `${e.by} · ${plWhen(e.at)}` : ''; };
     const done = L.filter(c => byG(c.id)).length;
-    box.innerHTML = `<div class="page-head"><h1 class="title">📅 Weekly plans</h1></div>
+    box.innerHTML = `<div class="page-head"><h1 class="title">${onlyMine ? '📅 My weekly plans' : '✅ Weekly plans to review'}</h1></div>
+      <p class="hint">${onlyMine ? 'Plans for the classes you teach.' : 'Weekly plans from the classes you look after. Open one to approve it or give feedback.'}</p>
       <div class="wk-bar"><button type="button" class="pill pill-soft" data-wk="-7" aria-label="Previous week">‹</button><b>Week of ${wkLabel(wk)}</b><button type="button" class="pill pill-soft" data-wk="7" aria-label="Next week">›</button>
         ${wk !== mondayOf(new Date()) ? '<button type="button" class="link-btn" data-wk="0">This week</button>' : ''}
-        ${isLeader ? `<label class="remember"><input type="checkbox" id="wk-mine" ${onlyMine ? 'checked' : ''}> Only my classes</label>` : ''}<span class="meta">${done} of ${L.length} plans started</span></div>
+        ${isLeader && CLS.some(c => c.mine) ? `<a class="link-btn" href="planner.html?mode=weeks${onlyMine ? '&all=1' : ''}">${onlyMine ? '✅ Plans to review →' : '📅 My weekly plans →'}</a>` : ''}<span class="meta">${done} of ${L.length} plans started</span></div>
       ${L.length ? `<div class="in-scroll"><table class="ac-table"><thead><tr><th>Class</th><th>Teacher</th><th>Inquiry stage</th><th>Status</th><th>Last edited</th><th></th></tr></thead><tbody>
         ${L.map(c => { const p = byG(c.id), st = p ? PL_STATUS[p.status] || PL_STATUS.draft : null; return `<tr><td><b>${PL_E(c.name)}</b></td><td>${PL_E(c.teacher || '')}</td><td>${p && p.stage ? `<span class="wk-stage">${PL_E(p.stage)}</span>` : '–'}</td>
           <td>${st ? `<span class="rc-st ${st[0]}">${st[1]}</span>` : '<span class="meta">Not started</span>'}</td><td class="meta">${PL_E(lastBy(p))}</td>
           <td>${p ? `<button type="button" class="pill pill-soft" data-wp="${p.id}">Open</button>` : c.mine || isLeader ? `<button type="button" class="pill pill-soft" data-new="${c.id}">➕ Start plan</button>` : ''}</td></tr>`; }).join('')}</tbody></table></div>`
         : '<div class="empty-box"><p>You don’t have any classes to plan for yet.</p></div>'}`;
     box.querySelectorAll('[data-wk]').forEach(b => b.onclick = () => { const n = Number(b.dataset.wk); wk = n ? addDays(wk, n) : mondayOf(new Date()); sessionStorage.setItem('tn_pl_week', wk); weeks(); });
-    const m = document.getElementById('wk-mine'); if (m) m.onchange = () => { onlyMine = m.checked; weeks(); };
+
     box.querySelectorAll('[data-wp]').forEach(b => b.onclick = () => openWeek(Number(b.dataset.wp)));
     box.querySelectorAll('[data-new]').forEach(b => b.onclick = async () => {
       const { data, error } = await db.from('weekly_plans').insert({ school_id: S.id, group_id: Number(b.dataset.new), week_start: wk, created_by: user.id }).select('id').single();
@@ -430,7 +432,7 @@ async function startPlanner() {
       say(action === 'approve' && a === 'return' ? '💬 Feedback sent.' : { submit: '📤 Submitted for review.', approve: '✅ Approved.', return: '↩ Returned with your feedback.', reopen: '✏️ Open for editing again.' }[action]); openWeek(pid);
     });
     const del = document.getElementById('wk-del'); if (del) del.onclick = async () => { if (!confirm('Delete this weekly plan? This can’t be undone.')) return; const { error } = await db.from('weekly_plans').delete().eq('id', pid); if (error) return say(friendly(error)); history.replaceState(null, '', 'planner.html'); weeks(); };
-    document.getElementById('wk-back').onclick = () => { history.replaceState(null, '', 'planner.html'); wk = P.week_start; weeks(); };
+    document.getElementById('wk-back').onclick = () => { onlyMine = canEdit; history.replaceState(null, '', 'planner.html?mode=weeks' + (canEdit ? '' : '&all=1')); wk = P.week_start; weeks(); };
     document.getElementById('wk-refresh').onclick = () => openWeek(pid);
     const cp = document.getElementById('wk-copy');
     if (cp) cp.onclick = async () => {

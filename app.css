@@ -2107,3 +2107,7 @@ html.tn-school-staff .tn-riddle, html.tn-school-staff :has(> .tn-qz) { display: 
 .side nav.nav2 .nav2-head { margin: 16px 14px 4px; font-size: .7rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.45); }
 .side nav.nav2 .nav2-flat { margin: 0 0 2px; padding-left: 14px; border-left: 0; } .side nav.nav2 .nav2-flat li a { padding: 8px 12px; }
 .side nav.nav2 > .nav2-top + .nav2-head { margin-top: 18px; }
+/* observations: my own feedback looks different from observing others */
+.ob-mine-banner { display: flex; gap: 16px; align-items: center; padding: 20px 24px; border-radius: 22px; background: linear-gradient(120deg, #FFF4D6, #FFE9DD); border: 2px solid #F6D99A; margin-bottom: 14px; }
+.ob-mine-banner h1 { margin: 0; color: #8A4B00; font-size: 1.6rem; } .ob-mine-banner p { margin: 4px 0 0; color: #5A4632; } .ob-mine-banner a { color: #8A4B00; font-weight: 800; }
+.ob-mine-ic { font-size: 2.4rem; } .ob-mine-mode .ob-card { border-color: #F6D99A; }
