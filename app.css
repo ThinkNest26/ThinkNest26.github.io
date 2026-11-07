@@ -2101,3 +2101,5 @@ html.tn-school .find-class, html.tn-school [data-path-find] { display: none !imp
 .th-plan { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid #F1F2F8; } .th-plan:last-child { border-bottom: 0; }
 .th-bar { height: 8px; min-width: 120px; } .th-empty { text-align: center; display: grid; justify-items: center; gap: 8px; padding: 36px !important; } .th-empty-ic { font-size: 3rem; } .th-empty p { max-width: 460px; color: #4A4E5E; margin: 0; }
 @media (max-width: 900px) { .th-two { grid-template-columns: 1fr; } .th-reg, .th-plan { grid-template-columns: 1fr; } }
+/* school teachers and leaders: no question of the day or riddle (students still see them) */
+html.tn-school-staff .tn-riddle, html.tn-school-staff :has(> .tn-qz) { display: none !important; }

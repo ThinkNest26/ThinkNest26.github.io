@@ -174,6 +174,7 @@
     document.documentElement.style.setProperty('--school', sc.color_primary || '#3E4B94');
     document.documentElement.style.setProperty('--school2', sc.color_accent || '#F27A6F');
     document.documentElement.classList.add('tn-school');
+    if (view === 'school_teacher' || view === 'school_leader') document.documentElement.classList.add('tn-school-staff');
     const logo = document.querySelector('.side .side-logo'); if (!logo || logo.dataset.school) return;
     logo.dataset.school = '1'; logo.href = SCHOOL_HOME[view] || 'index.html'; logo.classList.add('sc-side');
     const ini = String(sc.name || '').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
