@@ -2112,3 +2112,4 @@ html.tn-school-staff .tn-riddle, html.tn-school-staff :has(> .tn-qz) { display: 
 .ob-mine-banner h1 { margin: 0; color: #8A4B00; font-size: 1.6rem; } .ob-mine-banner p { margin: 4px 0 0; color: #5A4632; } .ob-mine-banner a { color: #8A4B00; font-weight: 800; }
 .ob-mine-ic { font-size: 2.4rem; } .ob-mine-mode .ob-card { border-color: #F6D99A; }
 .sc-added { margin-top: 12px; line-height: 1.6; } .sc-added .btn { border: 0; cursor: pointer; font: inherit; font-weight: 800; } .sc-added code { font-size: 1rem; background: #fff; padding: 2px 8px; border-radius: 6px; }
+.tl-school { margin: 10px auto 0; max-width: 520px; text-align: center; } .tl-school a { color: #3E4B94; }

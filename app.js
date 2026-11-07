@@ -117,13 +117,15 @@ async function startLoginPage() {
     if (/school-login\.html$/.test(location.pathname)) {
       const [{ data: p }, { data: lead }, { data: req }] = await Promise.all([
         db.from('profiles').select('role').eq('id', d.user.id).maybeSingle(),
-        db.from('school_members').select('role').eq('user_id', d.user.id).in('role', ['principal', 'vice_principal', 'assistant_principal', 'coordinator', 'head_of_department', 'inclusion_lead', 'admin_staff']).limit(1),
+        db.from('school_members').select('role').eq('user_id', d.user.id).not('role', 'in', '(student,parent)').limit(1),
         db.from('school_requests').select('id').eq('user_id', d.user.id).limit(1)]);
       const ok = (p && ['school_leader', 'admin'].includes(p.role)) || (lead && lead.length) || (req && req.length);
       if (!ok) {
         await db.auth.signOut();
-        const r = (p && p.role) || 'student', page = { student: 'Student', parent: 'Parent', teacher: 'Teacher' }[r] || 'Student';
-        return showError(err, `This is a ${r} account, not a school leader account. Please go back and choose Log in → ${page}. (If your browser filled in a saved login, check the email.)`);
+        const r = (p && p.role) || 'student';
+        return showError(err, r === 'teacher'
+          ? 'This account isn’t part of a school. If you teach online with Think Nest, go back and choose Log in → Online Teacher. If your school added you, check you’re using your school email.'
+          : `This is a ${r} account, not a school staff account. Please go back and choose Log in → ${r === 'parent' ? 'Parent' : 'Student'}. (If your browser filled in a saved login, check the email.)`);
       }
     }
     location.href = await homeFor(d.user.id);

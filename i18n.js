@@ -1819,7 +1819,14 @@
 "School email": "البريد الإلكتروني المدرسي",
 "🖨️ Print login card": "🖨️ اطبع بطاقة الدخول",
 "Manage school": "إدارة المدرسة",
-"People and staff": "الأشخاص والموظفون"
+"People and staff": "الأشخاص والموظفون",
+"Online Teacher": "معلم عبر الإنترنت",
+"School Staff": "موظفو المدرسة",
+"Welcome to your school!": "مرحبًا بك في مدرستك!",
+"Teachers, leaders and staff: log in with your school email": "المعلمون والقادة والموظفون: سجّلوا الدخول ببريدكم المدرسي",
+"‹ I don’t work in a school": "‹ لا أعمل في مدرسة",
+"New school on Think Nest?": "مدرسة جديدة على ثينك نست؟",
+"Welcome, Online Teacher!": "مرحبًا بك، أيها المعلم عبر الإنترنت!"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times
