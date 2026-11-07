@@ -1,7 +1,7 @@
 // ===== Think Nest for Schools =====
 const SC_E = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const SC_ROLES = [['principal', 'Principal / school admin'], ['vice_principal', 'Vice principal'], ['assistant_principal', 'Assistant principal'], ['coordinator', 'Coordinator'],
-  ['head_of_department', 'Head of department'], ['inclusion_lead', 'Inclusion lead'], ['admin_staff', 'Admin staff'], ['teacher', 'Teacher'], ['student', 'Student']];
+  ['head_of_department', 'Head of department'], ['inclusion_lead', 'Inclusion lead'], ['inclusion_team', 'Inclusion team'], ['admin_staff', 'Admin staff'], ['teacher', 'Teacher'], ['student', 'Student']];
 const SC_LEADERS = ['principal', 'vice_principal', 'assistant_principal', 'coordinator', 'head_of_department', 'inclusion_lead', 'admin_staff'];
 const SC_MANAGERS = ['principal', 'vice_principal', 'assistant_principal', 'admin_staff'];
 const SC_ALL_GRADES = ['Pre-K', 'KG1', 'KG2', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'];
@@ -613,7 +613,7 @@ async function startSchool() {
         ${staffPool2.length ? `<div class="sc-login-pick"><label class="remember"><input type="checkbox" id="sl-all"> <b>Select all</b></label>${staffPool2.map(p => `<label class="sc-chip"><input type="checkbox" value="${p.user_id}" data-sl><span>${SC_E(p.full_name)} · ${SC_E(scRole(p.role))}</span></label>`).join('')}</div>
           <div class="ca-bar"><span class="meta" id="sl-n"></span><button type="button" class="btn btn-red" id="sl-go">🔑 Generate starting passwords</button></div><div id="sl-out"></div>` : '<p class="meta">Add staff first (above, or with 📥 Import).</p>'}</section>` : ''}
       <section class="panel"><h2>👥 People in ${SC_E(S.name)}</h2>
-        ${group('🧭 Leadership team', P.filter(p => SC_LEADERS.includes(p.role) && p.role !== 'principal'))}${group('👩‍🏫 Teachers', P.filter(p => p.role === 'teacher'))}${group('🎒 Students', P.filter(p => p.role === 'student'))}
+        ${group('🧭 Leadership team', P.filter(p => SC_LEADERS.includes(p.role) && p.role !== 'principal'))}${group('🧩 Inclusion team', P.filter(p => p.role === 'inclusion_team'))}${group('👩‍🏫 Teachers', P.filter(p => p.role === 'teacher'))}${group('🎒 Students', P.filter(p => p.role === 'student'))}
         ${P.length ? '' : '<p class="meta">No one yet.</p>'}</section>`;
     const f = document.getElementById('sc-add');
     if (f) {

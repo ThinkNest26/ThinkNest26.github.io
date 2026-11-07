@@ -52,6 +52,7 @@ async function startWellbeing() {
   const { data: scs } = await db.rpc('my_schools');
   const S = (scs || []).find(s => !['student', 'parent'].includes(s.my_role));
   if (!S) { box.innerHTML = '<div class="empty-box"><p>Wellbeing check-ins are part of Think Nest for Schools, for staff of a school.</p></div>'; return; }
+  if (!['principal', 'vice_principal', 'assistant_principal', 'coordinator', 'inclusion_lead', 'inclusion_team'].includes(S.my_role) && profile.role !== 'admin') { box.innerHTML = '<div class="empty-box"><p>🔒 Wellbeing check-ins are for the school’s inclusion team and leaders.</p></div>'; return; }
   document.documentElement.style.setProperty('--school', S.color_primary || '#3E4B94'); document.documentElement.style.setProperty('--school2', S.color_accent || '#F27A6F');
   let gid = null;
   async function draw() {
@@ -71,7 +72,7 @@ async function startWellbeing() {
       : '<p class="meta">The trend appears once students start checking in.</p>';
     const total = Object.values(T).reduce((a, b) => a + b, 0);
     box.innerHTML = `<div class="page-head"><h1 class="title">💛 Wellbeing</h1>${C.length > 1 ? `<label class="wb-pick">Class <select id="wb-g"><option value="">All my students</option>${C.map(c => `<option value="${c.id}" ${gid === c.id ? 'selected' : ''}>${WB_E(c.name)}</option>`).join('')}</select></label>` : ''}</div>
-      <p class="note">🔒 Private: only each student’s class teachers, the inclusion lead and senior leaders see check-ins.</p>
+      <p class="note">🔒 Private: only the inclusion lead, the inclusion team and senior leaders see check-ins.</p>
       <section class="panel"><h2>Today <small class="meta">${d.today_count} of ${d.students} students checked in</small></h2>
         <div class="wb-today">${WB_MOODS.map(([v, f, l]) => `<div class="wb-t m${v}"><span>${f}</span><b>${T[v] || 0}</b><small>${l}</small></div>`).join('')}</div>
         ${total ? `<div class="wb-bar">${WB_MOODS.map(([v]) => T[v] ? `<i class="m${v}" style="flex:${T[v]}"></i>` : '').join('')}</div>` : ''}</section>

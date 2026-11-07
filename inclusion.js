@@ -15,8 +15,9 @@ async function startInclusion() {
   const S = (scs || []).find(s => !['student', 'parent'].includes(s.my_role));
   if (!S) { box.innerHTML = '<div class="empty-box"><p>Inclusion tracking is part of Think Nest for Schools, for staff of a school.</p></div>'; return; }
   document.documentElement.style.setProperty('--school', S.color_primary || '#3E4B94'); document.documentElement.style.setProperty('--school2', S.color_accent || '#F27A6F');
-  const canManage = ['principal', 'vice_principal', 'assistant_principal', 'inclusion_lead'].includes(S.my_role) || profile.role === 'admin';
+  const canManage = ['principal', 'vice_principal', 'assistant_principal', 'inclusion_lead', 'inclusion_team'].includes(S.my_role) || profile.role === 'admin';
   const canOverview = canManage || S.my_role === 'coordinator';
+  if (!canOverview) { box.innerHTML = '<div class="empty-box"><p>🔒 Inclusion is for the school’s inclusion team and leaders.</p></div>'; return; }
   let STU = [], NEEDS = [];
   const load = async () => {
     const [{ data: st, error }, { data: nd }] = await Promise.all([db.rpc('inclusion_students', { sid: S.id }), db.from('student_needs').select('*').eq('school_id', S.id).eq('active', true)]);
@@ -25,7 +26,7 @@ async function startInclusion() {
   try { await load(); } catch (e) { box.innerHTML = `<p class="empty">${IN_E(/inclusion_students|function/.test(e.message || '') ? 'Run database update 65 to use inclusion tracking.' : friendly(e))}</p>`; return; }
   const tabs = (canOverview ? [['overview', '📊 Overview']] : []).concat([['students', canManage || canOverview ? '🧩 Students' : '👩‍🏫 My students with additional needs']]);
   box.innerHTML = `<div class="page-head"><h1 class="title">🧩 Inclusion</h1></div>
-    <p class="note">🔒 <b>Private.</b> Only senior leaders, the inclusion lead, coordinators and each student’s own class teachers can see this page’s information.</p>
+    <p class="note">🔒 <b>Private.</b> Only senior leaders, coordinators, the inclusion lead and the inclusion team can see this page’s information.</p>
     <div class="tabs sc-tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="false" data-it="${k}">${l}</button>`).join('')}</div><section id="in-pane"></section>`;
   const pane = () => document.getElementById('in-pane');
   const show = (k, arg) => { document.querySelectorAll('[data-it]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.it === k))); ({ overview, students, profile: student })[k](arg); };

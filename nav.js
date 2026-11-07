@@ -51,7 +51,7 @@
     { ic: '🏫', label: 'My Classes', dyn: 'classes', items: [['classes.html', 'All my classes'], ['classes.html?new=1', '➕ New class']] },
     { ic: '📊', label: 'My data', items: [['school.html#dashboard', '📊 Dashboard'], ['school.html#attendance', '📋 Attendance'], ['school.html#coverage', '🗺️ Coverage']] },
     { ic: '📘', label: 'Teaching', items: [['planner.html', '🗂️ Unit and weekly plans'], ['teacher-courses.html', '📘 Lessons and quizzes']] },
-    { ic: '🧩', label: 'My students', items: [['inclusion.html', '🧩 Inclusion'], ['wellbeing.html', '💛 Wellbeing']] },
+    { ic: '🧩', label: 'Inclusion and wellbeing', items: [['inclusion.html', '🧩 Inclusion'], ['wellbeing.html', '💛 Wellbeing']], roles: 'inclusion_team' },
     { ic: '👀', label: 'My observations', href: 'observe.html' },
     { ic: '💬', label: 'Messages & community', items: [['messages.html', 'Messages'], ['school-community.html', '🏫 School community'], ['staff-room.html', '👩‍🏫 Staff room']] }
   ];

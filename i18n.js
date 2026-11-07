@@ -1792,7 +1792,9 @@
 "Create your first class": "أنشئ فصلك الأول",
 "📘 Lessons and quizzes": "📘 الدروس والاختبارات",
 "New observation feedback": "ملاحظات زيارة صفية جديدة",
-"➕ Start": "➕ ابدأ"
+"➕ Start": "➕ ابدأ",
+"Inclusion team": "فريق الدمج",
+"🧩 Inclusion team": "🧩 فريق الدمج"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times
