@@ -2142,3 +2142,13 @@ html.tn-school-staff .tn-riddle, html.tn-school-staff :has(> .tn-qz) { display: 
 .tn-pv-bar { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 9998; display: flex; gap: 14px; align-items: center; background: #2B1F4E; color: #fff; padding: 10px 12px 10px 18px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.3); max-width: calc(100% - 24px); font-size: .9rem; }
 .tn-pv-bar button { background: #fff; color: #2B1F4E; border: 0; border-radius: 10px; padding: 8px 14px; font: inherit; font-weight: 800; cursor: pointer; white-space: nowrap; }
 html.tn-pv .side { box-shadow: inset -4px 0 0 #8E5BD8; }
+/* preview button in the top bar */
+.tn-pv-wrap { position: relative; }
+.tn-pv-btn { font: inherit; font-weight: 800; border: 2px solid #E1D6F5; background: #fff; color: #5B3BA6; border-radius: 999px; padding: 8px 14px; cursor: pointer; white-space: nowrap; }
+.tn-pv-btn.on { background: #5B3BA6; color: #fff; border-color: #5B3BA6; }
+.tn-pv-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 9999; width: 290px; background: #fff; border: 1px solid #E4E6F1; border-radius: 16px; box-shadow: 0 16px 40px rgba(30,35,82,.2); padding: 14px; display: grid; gap: 8px; }
+.tn-pv-menu small { color: #6E7485; } .tn-pv-menu label { display: grid; gap: 4px; font-weight: 700; font-size: .88rem; }
+.tn-pv-menu select { font: inherit; padding: 8px 10px; border: 2px solid #E4E6F1; border-radius: 10px; }
+.tn-pv-go { font: inherit; font-weight: 800; border: 0; border-radius: 12px; padding: 10px; background: #5B3BA6; color: #fff; cursor: pointer; } .tn-pv-out { font: inherit; font-weight: 700; border: 0; background: none; color: #B3261E; cursor: pointer; padding: 4px; }
+[dir="rtl"] .tn-pv-menu { right: auto; left: 0; }
+@media (max-width: 700px) { .tn-pv-btn { padding: 7px 10px; font-size: .85rem; } }

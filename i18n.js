@@ -1864,7 +1864,8 @@
 "+ Add a week": "+ أضف أسبوعًا",
 "👁️ Preview as a role": "👁️ المعاينة بدور آخر",
 "👁️ Start preview": "👁️ ابدأ المعاينة",
-"Exit preview": "إنهاء المعاينة"
+"Exit preview": "إنهاء المعاينة",
+"👁️ Preview this page": "👁️ عاين هذه الصفحة"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

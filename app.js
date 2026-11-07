@@ -1,19 +1,66 @@
-// ===== Preview as a role (Think Nest for Schools): screens follow the chosen role; the database still uses your real access =====
+// ===== Preview as a role (Think Nest for Schools): from the top bar of every page, full access leaders see any role's screens =====
+// The screens follow the chosen role; the database still uses your real access.
 (function () {
+  if (typeof db === 'undefined' || !db.rpc) return;
   let pv = null; try { pv = JSON.parse(sessionStorage.getItem('tn_preview') || 'null'); } catch (_) {}
-  if (!pv || typeof db === 'undefined' || !db.rpc) return;
   const orig = db.rpc.bind(db);
-  db.rpc = (fn, args, opts) => {
-    const q = orig(fn, args, opts);
-    if (fn !== 'my_schools') return q;
-    return Promise.resolve(q).then(r => { if (r && Array.isArray(r.data)) r.data = r.data.map(s => s.id === pv.sid ? Object.assign({}, s, { my_role: pv.role, scope_grades: pv.grades || [], scope_subjects: pv.subjects || [] }) : s); return r; });
-  };
-  window.TN_PREVIEW = pv;
-  document.addEventListener('DOMContentLoaded', () => {
-    const bar = document.createElement('div'); bar.className = 'tn-pv-bar'; bar.setAttribute('role', 'status');
-    bar.innerHTML = `<span>👁️ <b>Previewing as ${String(pv.label || pv.role).replace(/[<>&]/g, '')}</b> · menus and pages as this role sees them (the data is still yours)</span><button type="button" id="tn-pv-exit">Exit preview</button>`;
-    document.body.appendChild(bar); document.documentElement.classList.add('tn-pv');
-    document.getElementById('tn-pv-exit').onclick = () => { sessionStorage.removeItem('tn_preview'); location.href = 'school.html'; };
+  if (pv) {
+    db.rpc = (fn, args, opts) => {
+      const q = orig(fn, args, opts);
+      if (fn !== 'my_schools') return q;
+      return Promise.resolve(q).then(r => { if (r && Array.isArray(r.data)) r.data = r.data.map(s => s.id === pv.sid ? Object.assign({}, s, { my_role: pv.role, scope_grades: pv.grades || [], scope_subjects: pv.subjects || [] }) : s); return r; });
+    };
+    window.TN_PREVIEW = pv;
+  }
+  const FULL = ['principal', 'vice_principal', 'assistant_principal', 'it', 'inclusion_lead'];
+  const ROLES = [['teacher', '👩‍🏫', 'Teacher'], ['coordinator', '🎓', 'Grade level leader'], ['head_of_department', '📚', 'Subject coordinator'], ['inclusion_team', '🤝', 'Inclusion team (LSA)'],
+    ['admin_staff', '🗂️', 'School admin'], ['inclusion_lead', '🧩', 'Inclusion lead'], ['it', '💻', 'IT'], ['assistant_principal', '🌍', 'PYP coordinator']];
+  const E = s => String(s == null ? '' : s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+  const exit = () => { sessionStorage.removeItem('tn_preview'); location.reload(); };
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (pv) {
+      const bar = document.createElement('div'); bar.className = 'tn-pv-bar'; bar.setAttribute('role', 'status');
+      bar.innerHTML = `<span>👁️ <b>Previewing as ${E(pv.label || pv.role)}</b> · screens as this role sees them (the data is still yours)</span><button type="button" id="tn-pv-exit">Exit preview</button>`;
+      document.body.appendChild(bar); document.documentElement.classList.add('tn-pv');
+      document.getElementById('tn-pv-exit').onclick = exit;
+    }
+    // the 👁️ button: only for a school's full access leaders (their real role)
+    let sess = null; try { sess = (await db.auth.getSession()).data.session; } catch (_) {}
+    if (!sess) return;
+    const { data: scs } = await orig('my_schools');
+    const S = (scs || []).find(s => FULL.includes(s.my_role)); if (!S) return;
+    let spot = null; for (let k = 0; k < 30 && !(spot = document.querySelector('.bar-right')); k++) await new Promise(r => setTimeout(r, 120));
+    if (!spot || document.getElementById('tn-pv-btn')) return;
+    const cur = pv && ROLES.find(x => x[0] === pv.role);
+    const wrap = document.createElement('div'); wrap.className = 'tn-pv-wrap';
+    wrap.innerHTML = `<button type="button" class="tn-pv-btn ${pv ? 'on' : ''}" id="tn-pv-btn" aria-expanded="false" aria-haspopup="true" title="Preview Think Nest as another role">👁️ ${pv ? E(cur ? cur[2] : 'Preview') : 'Preview'}</button>
+      <div class="tn-pv-menu" id="tn-pv-menu" hidden><b>👁️ Preview as a role</b><small>See any page as this role sees it. Only you see the preview.</small>
+        <label>Role <select id="tn-pv-role">${ROLES.map(([k, ic, l]) => `<option value="${k}" ${pv && pv.role === k ? 'selected' : ''}>${ic} ${l}</option>`).join('')}</select></label>
+        <label id="tn-pv-gl" hidden>Grade <select id="tn-pv-grade">${(S.grades || []).map(g => `<option ${pv && (pv.grades || [])[0] === g ? 'selected' : ''}>${E(g)}</option>`).join('')}</select></label>
+        <label id="tn-pv-sl" hidden>Subject <select id="tn-pv-subj"><option>Maths</option></select></label>
+        <button type="button" class="tn-pv-go" id="tn-pv-go">👁️ Preview this page</button>${pv ? '<button type="button" class="tn-pv-out" id="tn-pv-out">Exit preview</button>' : ''}</div>`;
+    const lang = document.getElementById('tn-lang');
+    if (lang && lang.parentNode === spot) spot.insertBefore(wrap, lang); else spot.prepend(wrap);
+    const btn = wrap.querySelector('#tn-pv-btn'), menu = wrap.querySelector('#tn-pv-menu'), role = wrap.querySelector('#tn-pv-role');
+    let subjLoaded = false;
+    const sync = async () => {
+      wrap.querySelector('#tn-pv-gl').hidden = role.value !== 'coordinator'; wrap.querySelector('#tn-pv-sl').hidden = role.value !== 'head_of_department';
+      if (role.value === 'head_of_department' && !subjLoaded) {
+        subjLoaded = true; const { data } = await db.from('schools').select('curriculum_map').eq('id', S.id).maybeSingle();
+        const map = (data && data.curriculum_map) || {}, subs = Object.keys(map).filter(k => map[k] !== 'none');
+        wrap.querySelector('#tn-pv-subj').innerHTML = (subs.length ? subs : ['English', 'Maths', 'Science']).map(x => `<option ${pv && (pv.subjects || [])[0] === x ? 'selected' : ''}>${E(x)}</option>`).join('');
+      }
+    };
+    role.onchange = sync; sync();
+    btn.onclick = e => { e.stopPropagation(); menu.hidden = !menu.hidden; btn.setAttribute('aria-expanded', String(!menu.hidden)); };
+    document.addEventListener('click', e => { if (!wrap.contains(e.target)) { menu.hidden = true; btn.setAttribute('aria-expanded', 'false'); } });
+    wrap.querySelector('#tn-pv-go').onclick = () => {
+      const r = role.value, l = ROLES.find(x => x[0] === r)[2], g = wrap.querySelector('#tn-pv-grade').value, sj = wrap.querySelector('#tn-pv-subj').value;
+      sessionStorage.setItem('tn_preview', JSON.stringify({ sid: S.id, role: r, grades: r === 'coordinator' ? [g] : [], subjects: r === 'head_of_department' ? [sj] : [],
+        label: r === 'coordinator' ? `${l} (${g})` : r === 'head_of_department' ? `${l} (${sj})` : l }));
+      location.reload();
+    };
+    const out = wrap.querySelector('#tn-pv-out'); if (out) out.onclick = exit;
   });
 })();
 // ===== Shared helpers =====

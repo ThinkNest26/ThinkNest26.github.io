@@ -119,7 +119,6 @@ async function startSchool() {
   async function overview() {
     pane().innerHTML = '<p class="empty">Loading…</p>';
     const [{ data: ppl }, { data: cls }] = await Promise.all([db.rpc('school_people', { sid }), db.rpc('school_classes', { sid })]);
-    setTimeout(() => previewPanel(), 0);
     const staff = (ppl || []).filter(p => !['student', 'parent'].includes(p.role));
     const P = ppl || [], n = r => P.filter(p => r.includes(p.role)).length;
     const steps = [[!!S.logo_url, 'Add your school logo and colours', 'settings'], [P.filter(p => SC_LEADERS.includes(p.role)).length > 1, 'Add your leadership team', 'people'],
