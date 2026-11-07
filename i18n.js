@@ -1841,7 +1841,9 @@
 "Log in with your school email": "سجّل الدخول ببريدك المدرسي",
 "Principals, deputies, coordinators and grade level leaders": "المديرون والنواب والمنسقون وقادة المراحل",
 "School admin and teachers": "إداريو المدرسة والمعلمون",
-"Log in here": "سجّل الدخول هنا"
+"Log in here": "سجّل الدخول هنا",
+"IT": "تقنية المعلومات",
+"School admin, IT and teachers": "إداريو المدرسة وتقنية المعلومات والمعلمون"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

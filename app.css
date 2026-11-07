@@ -2124,3 +2124,4 @@ html.tn-school-staff .tn-riddle, html.tn-school-staff :has(> .tn-qz) { display: 
 .sch-bird { width: 110px !important; height: auto; }
 @media (max-width: 1000px) { .roles-pick.roles-pick-5 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } }
 @media (max-width: 560px) { .roles-pick.roles-pick-5, .roles-pick.roles-pick-2 { grid-template-columns: 1fr 1fr !important; } }
+.roles-pick.roles-pick-3 { grid-template-columns: repeat(3, minmax(0, 240px)) !important; justify-content: center; } @media (max-width: 560px) { .roles-pick.roles-pick-3 { grid-template-columns: 1fr 1fr !important; } }
