@@ -1412,7 +1412,7 @@
 "Assistant principal": "مساعد المدير",
 "Coordinator": "منسّق",
 "Head of department": "رئيس قسم",
-"Inclusion lead": "مسؤول الدمج",
+"Inclusion lead": "قائد الدمج",
 "Admin staff": "فريق الإدارة",
 "Whole school": "المدرسة كلها",
 "🎨 Logo and colours": "🎨 الشعار والألوان",
@@ -1847,7 +1847,9 @@
 "Principals, deputy principals and PYP coordinators": "المديرون ونوابهم ومنسقو برنامج السنوات الابتدائية",
 "Coordinators, grade level leaders, teachers, admin and IT": "المنسقون وقادة المراحل والمعلمون والإداريون وتقنية المعلومات",
 "Principals, deputies, PYP coordinators, school admin and IT": "المديرون والنواب ومنسقو البرنامج والإداريون وتقنية المعلومات",
-"Subject coordinators, grade level leaders and teachers": "منسقو المواد وقادة المراحل والمعلمون"
+"Subject coordinators, grade level leaders and teachers": "منسقو المواد وقادة المراحل والمعلمون",
+"Principal, inclusion lead, PYP coordinator, school admin and IT": "المدير وقائد الدمج ومنسق البرنامج والإداري وتقنية المعلومات",
+"School admin / IT": "إداري المدرسة / تقنية المعلومات"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

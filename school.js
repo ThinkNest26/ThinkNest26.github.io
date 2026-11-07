@@ -1,7 +1,11 @@
 // ===== Think Nest for Schools =====
 const SC_E = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const SC_ROLES = [['principal', 'Principal / school admin'], ['vice_principal', 'Vice principal'], ['assistant_principal', 'Assistant principal'], ['coordinator', 'Coordinator'],
-  ['head_of_department', 'Head of department'], ['inclusion_lead', 'Inclusion lead'], ['inclusion_team', 'Inclusion team'], ['admin_staff', 'Admin staff'], ['teacher', 'Teacher'], ['student', 'Student']];
+const SC_ROLES = [['principal', 'Principal / school admin'], ['vice_principal', 'Deputy principal'], ['assistant_principal', 'Assistant principal'], ['coordinator', 'Grade level leader'],
+  ['head_of_department', 'Subject coordinator'], ['inclusion_lead', 'Inclusion lead'], ['inclusion_team', 'Inclusion team'], ['admin_staff', 'School admin / IT'], ['teacher', 'Teacher'], ['student', 'Student']];
+// other names a school may use (in spreadsheets too); a PYP coordinator leads the whole school, like an assistant principal
+const SC_ROLE_ALIAS = { 'vice principal': 'vice_principal', 'deputy': 'vice_principal', 'deputy principal': 'vice_principal', 'coordinator': 'coordinator', 'grade level leader': 'coordinator', 'grade leader': 'coordinator',
+  'head of department': 'head_of_department', 'hod': 'head_of_department', 'subject coordinator': 'head_of_department', 'subject leader': 'head_of_department', 'admin staff': 'admin_staff', 'school admin': 'admin_staff',
+  'it': 'admin_staff', 'school admin / it': 'admin_staff', 'admin': 'admin_staff', 'pyp coordinator': 'assistant_principal', 'pyp': 'assistant_principal', 'inclusion team': 'inclusion_team', 'inclusion lead': 'inclusion_lead', 'teacher': 'teacher', 'assistant principal': 'assistant_principal' };
 const SC_LEADERS = ['principal', 'vice_principal', 'assistant_principal', 'coordinator', 'head_of_department', 'inclusion_lead', 'admin_staff'];
 const SC_MANAGERS = ['principal', 'vice_principal', 'assistant_principal', 'admin_staff'];
 const SC_ALL_GRADES = ['Pre-K', 'KG1', 'KG2', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'];
@@ -604,7 +608,7 @@ async function startSchool() {
         <form id="sc-add" class="sc-add-grid">
           <label>Full name <input type="text" name="fullname" maxlength="80" placeholder="e.g. Sarah Thompson"></label>
           <label>School email <input type="email" name="email" required placeholder="name@school.ae"></label>
-          <label>Role <select name="role">${SC_ROLES.filter(r => r[0] !== 'student' && (r[0] !== 'principal' || S.my_role === 'principal' || profile.role === 'admin')).map(([k, l]) => `<option value="${k}" ${k === 'teacher' ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+          <label>Role <select name="role">${SC_ROLES.filter(r => r[0] !== 'student' && (r[0] !== 'principal' || S.my_role === 'principal' || profile.role === 'admin')).flatMap(r => r[0] === 'assistant_principal' ? [r, ['pyp', 'PYP coordinator']] : [r]).map(([k, l]) => `<option value="${k}" ${k === 'teacher' ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
           <label>Job title (optional) <input type="text" name="title" maxlength="80" placeholder="e.g. PYP Coordinator"></label>
           <fieldset class="sc-scope" hidden><legend>Limit to grades (optional)</legend>${grades.map(g => `<label><input type="checkbox" name="g" value="${SC_E(g)}"> ${SC_E(g)}</label>`).join('')}</fieldset>
           <fieldset class="sc-scope" hidden><legend>Limit to subjects (optional)</legend>${SC_SUBJECTS.map(g => `<label><input type="checkbox" name="s" value="${g}"> ${g}</label>`).join('')}</fieldset>
@@ -624,7 +628,8 @@ async function startSchool() {
         e.preventDefault();
         if (!f.email.checkValidity() || !f.email.value.trim()) return say('Enter a valid email address.');
         const scoped = ['coordinator', 'head_of_department'].includes(f.role.value);
-        const row = { row: 1, name: f.fullname.value.trim() || f.email.value.trim().split('@')[0], email: f.email.value.trim().toLowerCase(), role: f.role.value, title: f.title.value.trim() || null,
+        const isPyp = f.role.value === 'pyp';
+        const row = { row: 1, name: f.fullname.value.trim() || f.email.value.trim().split('@')[0], email: f.email.value.trim().toLowerCase(), role: isPyp ? 'assistant_principal' : f.role.value, title: f.title.value.trim() || (isPyp ? 'PYP Coordinator' : null),
           grades: scoped ? [...f.querySelectorAll('input[name=g]:checked')].map(x => x.value) : [], subjects: scoped ? [...f.querySelectorAll('input[name=s]:checked')].map(x => x.value) : [] };
         const b = f.querySelector('button'); b.disabled = true; b.textContent = 'Adding…';
         const { data, error: er } = await db.functions.invoke(CA_FN_SCHOOL, { body: { action: 'school_import', school_id: sid, kind: 'staff', rows: [row] } });
@@ -898,12 +903,14 @@ function scCheckStaff(rows) {
     const r = { row: o.row, name: scCol(o, 'full name', 'name'), email: scCol(o, 'email', 'work email').toLowerCase(), title: scCol(o, 'job title', 'title'),
       grades: scList(scCol(o, 'grades', 'grade')), subjects: scList(scCol(o, 'subjects', 'subject')), problems: [] };
     const roleTxt = scCol(o, 'role').toLowerCase();
-    const role = SC_ROLES.find(([k, l]) => l.toLowerCase() === roleTxt || k === roleTxt.replace(/\s+/g, '_'));
+    const key = SC_ROLE_ALIAS[roleTxt] || (SC_ROLES.find(([k, l]) => l.toLowerCase() === roleTxt || k === roleTxt.replace(/\s+/g, '_')) || [])[0];
+    const role = key ? SC_ROLES.find(([k]) => k === key) : null;
     r.role = role ? role[0] : '';
+    if (/^pyp/.test(roleTxt) && !r.title) r.title = 'PYP Coordinator';
     if (r.name.length < 2) r.problems.push('No name');
     if (!scEmailOk(r.email)) r.problems.push('Email is missing or not valid');
     else if (seen.has(r.email)) r.problems.push('Same email appears twice'); else seen.add(r.email);
-    if (!role || ['student', 'parent'].includes(r.role)) r.problems.push('Role should be Teacher, Coordinator, Head of department, Inclusion lead, Admin staff, or Vice/Assistant principal');
+    if (!role || ['student', 'parent'].includes(r.role)) r.problems.push('Role should be Teacher, Subject coordinator, Grade level leader, PYP coordinator, Inclusion lead, Inclusion team, School admin / IT, or Deputy/Assistant principal');
     const badG = r.grades.filter(g => !scGrade(g)); if (badG.length) r.problems.push('Unknown grade: ' + badG.join(', '));
     r.grades = r.grades.map(scGrade).filter(Boolean);
     return r;
