@@ -1762,7 +1762,9 @@
 "Change subject…": "غيّر المادة…",
 "📋 Copy last week": "📋 انسخ الأسبوع الماضي",
 "💬 Feedback": "💬 ملاحظات",
-"Details": "التفاصيل"
+"Details": "التفاصيل",
+"Schools": "المدارس",
+"One private, branded space to lead your whole school.": "مساحة خاصة تحمل هوية مدرستك لقيادة المدرسة كلها."
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times
