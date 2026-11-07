@@ -85,6 +85,7 @@ async function startSchool() {
   };
   hero();
   const show = k => {
+    const cvh = document.getElementById('cv-mine-holder'); if (cvh && k !== 'coverage') cvh.remove();
     document.querySelectorAll('[data-sct]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.sct === k)));
     history.replaceState(null, '', '#' + k);
     ({ overview, dashboard, attendance, coverage, reports, announce, evidence, people, settings, import: importTab })[k]();
@@ -386,24 +387,23 @@ async function startSchool() {
   const CUR_NAMES = { british: 'British', american: 'American', ib: 'IB', moe: 'UAE MOE', none: '–' };
   async function coverage(pick) {
     pane().innerHTML = '<p class="empty">Checking every objective… this can take a few seconds.</p>';
-    // subject coordinators: choose the subject(s) they coordinate first
-    let cvLate = null;
+    // subject coordinators: "My subject" sits just above the coverage area, so redrawing coverage never removes it
     if (S.my_role === 'head_of_department') {
       const { data: cm } = await db.from('schools').select('curriculum_map').eq('id', sid).maybeSingle();
       const map = (cm && cm.curriculum_map) || {}, all = Object.keys(map).filter(k => map[k] !== 'none'), mine = S.scope_subjects || [];
-      const chooser = `<section class="panel cv-mine"><div class="in-head"><h2>📚 My subject</h2><span class="meta">Choose the subject(s) you coordinate. Your coverage, subject plans and observations follow this choice.</span></div>
+      let holder = document.getElementById('cv-mine-holder');
+      if (!holder) { holder = document.createElement('div'); holder.id = 'cv-mine-holder'; pane().before(holder); }
+      holder.innerHTML = `<section class="panel cv-mine"><div class="in-head"><h2>${mine.length ? '📚 My subject' : '📚 Which subject do you coordinate?'}</h2><span class="meta">Choose the subject(s) you coordinate. Your coverage, subject plans and observations follow this choice.</span></div>
         <div class="pl-chips">${all.map(x => `<label class="sc-chip"><input type="checkbox" value="${SC_E(x)}" data-cvs ${mine.includes(x) ? 'checked' : ''}><span>${SC_E(x)}</span></label>`).join('') || '<span class="meta">The school hasn’t set its curriculum subjects yet.</span>'}</div>
         <div class="ca-bar"><button type="button" class="btn btn-red" id="cv-save">Save my subject</button></div></section>`;
-      if (!mine.length) { pane().innerHTML = chooser.replace('📚 My subject', '📚 Which subject do you coordinate?'); }
-      const wire = () => { const b = document.getElementById('cv-save'); if (b) b.onclick = async () => {
-        const subs = [...pane().querySelectorAll('[data-cvs]:checked')].map(x => x.value); if (!subs.length) return say('Choose at least one subject.');
+      holder.querySelector('#cv-save').onclick = async () => {
+        const subs = [...holder.querySelectorAll('[data-cvs]:checked')].map(x => x.value); if (!subs.length) return say('Choose at least one subject.');
         const { error: er } = await db.rpc('set_my_subjects', { sid, subs }); if (er) return say(/set_my_subjects|function/.test(er.message || '') ? 'This needs database update 77.' : friendly(er));
-        S.scope_subjects = subs; say('📚 Saved. Coverage now shows ' + subs.join(', ') + '.'); coverage(); }; };
-      if (!mine.length) { wire(); return; }
-      cvLate = () => { if (!document.querySelector('.cv-mine') && pane()) { pane().insertAdjacentHTML('afterbegin', chooser); wire(); } };
+        S.scope_subjects = subs; say('📚 Saved. Coverage now shows ' + subs.join(', ') + '.'); coverage();
+      };
+      if (!mine.length) { pane().innerHTML = '<p class="meta">Choose your subject above to see its coverage across every grade.</p>'; return; }
     }
     const { data: ov, error } = await db.rpc('school_coverage_overview', { sid });
-    if (cvLate) setTimeout(cvLate, 0);   // runs after the grid below has been drawn
     if (error) { pane().innerHTML = `<p class="empty">${SC_E(/coverage|function/.test(error.message || '') ? 'Run database update 62 to see curriculum coverage.' : friendly(error))}</p>`; return; }
     const O = ov || [], grades = [...new Set(O.map(x => x.grade))], subjects = [...new Set(O.map(x => x.subject))];
     const cell = (g, sj) => O.find(x => x.grade === g && x.subject === sj);
