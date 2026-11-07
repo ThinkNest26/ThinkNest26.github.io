@@ -117,9 +117,14 @@ async function startLoginPage() {
     if (/school-login\.html$/.test(location.pathname)) {
       const [{ data: p }, { data: lead }, { data: req }] = await Promise.all([
         db.from('profiles').select('role').eq('id', d.user.id).maybeSingle(),
-        db.from('school_members').select('role').eq('user_id', d.user.id).not('role', 'in', '(student,parent)').limit(1),
+        db.from('school_members').select('role').eq('user_id', d.user.id).not('role', 'in', '(student,parent)'),
         db.from('school_requests').select('id').eq('user_id', d.user.id).limit(1)]);
-      const ok = (p && ['school_leader', 'admin'].includes(p.role)) || (lead && lead.length) || (req && req.length);
+      const asLeader = new URLSearchParams(location.search).get('as') === 'leader';
+      const LEAD = ['principal', 'vice_principal', 'assistant_principal', 'coordinator', 'head_of_department', 'inclusion_lead', 'admin_staff'];
+      const roles = (lead || []).map(x => x.role), isLeader = roles.some(r => LEAD.includes(r)) || (p && p.role === 'admin') || (req && req.length);
+      if (asLeader && !isLeader && roles.length) { await db.auth.signOut(); return showError(err, 'This is a school staff account. Please go back and choose Schools → School Staff.'); }
+      if (!asLeader && isLeader && !roles.some(r => !LEAD.includes(r)) && roles.length) { /* leaders may also use the staff door */ }
+      const ok = (p && ['school_leader', 'admin'].includes(p.role)) || roles.length || (req && req.length);
       if (!ok) {
         await db.auth.signOut();
         const r = (p && p.role) || 'student';

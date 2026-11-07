@@ -661,7 +661,7 @@ async function startSchool() {
           <div class="in-scroll"><table class="ac-table"><thead><tr><th>Name</th><th>Email</th><th>Starting password</th></tr></thead><tbody>${R.map(r => `<tr><td>${SC_E(r.name)}</td><td>${SC_E(r.email || '')}</td><td>${r.password ? `<code>${SC_E(r.password)}</code>` : `<span class="sc-low">${SC_E(r.error || '')}</span>`}</td></tr>`).join('')}</tbody></table></div>
           <div class="ca-bar"><button type="button" class="btn btn-red" id="sl-print">🖨️ Print login cards</button><button type="button" class="btn btn-white outline" id="sl-csv">⬇ Download CSV</button></div>`;
         document.getElementById('sl-print').onclick = () => scStaffCards(ok, S);
-        document.getElementById('sl-csv').onclick = () => { const t = [['Name', 'Email', 'Starting password', 'Log in at']].concat(ok.map(r => [r.name, r.email, r.password, 'thinknestonline.com → Log in → School Staff'])).map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+        document.getElementById('sl-csv').onclick = () => { const t = [['Name', 'Email', 'Starting password', 'Log in at']].concat(ok.map(r => [r.name, r.email, r.password, 'thinknestonline.com → Log in → Schools'])).map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
           const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + t], { type: 'text/csv' })); a.download = 'staff-logins.csv'; document.body.appendChild(a); a.click(); a.remove(); };
       };
     }
@@ -940,7 +940,7 @@ function scStaffCards(list, S) {
     .c{border:2px dashed #9AA0B5;border-radius:14px;padding:14px;break-inside:avoid}.s{color:${S.color_primary};font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.05em}.n{font-size:18px;font-weight:800;margin:4px 0 8px}
     .r{font-size:14px;margin:3px 0}.r b{display:inline-block;width:130px;color:#555}code{font-size:15px;background:#F1F2F8;padding:2px 6px;border-radius:6px}.h{font-size:12px;color:#555;margin-top:8px}</style></head><body><div class="g">
     ${list.map(r => `<div class="c"><div class="s">${SC_E(S.name)} · Think Nest</div><div class="n">${SC_E(r.name)}</div>
-      <div class="r"><b>Website</b>thinknestonline.com → Log in → School Staff</div><div class="r"><b>Email</b>${SC_E(r.email)}</div><div class="r"><b>Starting password</b><code>${SC_E(r.password)}</code></div>
+      <div class="r"><b>Website</b>thinknestonline.com → Log in → Schools</div><div class="r"><b>Email</b>${SC_E(r.email)}</div><div class="r"><b>Starting password</b><code>${SC_E(r.password)}</code></div>
       <div class="h">You’ll choose your own password the first time you log in.</div></div>`).join('')}</div></body></html>`);
   w.document.close(); setTimeout(() => w.print(), 400);
 }

@@ -35,7 +35,7 @@
 "Log in": "تسجيل الدخول",
 "Arabic": "اللغة العربية",
 "Parent": "وليّ الأمر",
-"‹ Back": "رجوع",
+"‹ Back": "‹ رجوع",
 "Select": "اختر",
 "Online": "عبر الإنترنت",
 "School": "المدرسة",
@@ -1826,7 +1826,12 @@
 "Teachers, leaders and staff: log in with your school email": "المعلمون والقادة والموظفون: سجّلوا الدخول ببريدكم المدرسي",
 "‹ I don’t work in a school": "‹ لا أعمل في مدرسة",
 "New school on Think Nest?": "مدرسة جديدة على ثينك نست؟",
-"Welcome, Online Teacher!": "مرحبًا بك، أيها المعلم عبر الإنترنت!"
+"Welcome, Online Teacher!": "مرحبًا بك، أيها المعلم عبر الإنترنت!",
+"Welcome, school!": "مرحبًا بالمدرسة!",
+"Who are you in your school?": "ما دورك في مدرستك؟",
+"School Leaders": "قادة المدرسة",
+"Principals, coordinators, heads of department, admin and IT": "المديرون والمنسقون ورؤساء الأقسام والإداريون وتقنية المعلومات",
+"Teachers and the inclusion team": "المعلمون وفريق الدمج"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times
