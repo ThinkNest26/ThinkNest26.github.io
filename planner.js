@@ -293,7 +293,8 @@ async function startPlanner() {
     history.replaceState(null, '', '?week=' + pid);
     if (!CLS) { const { data } = await db.rpc('planning_classes', { sid: S.id }); CLS = data || []; }
     const C = CLS.find(c => c.id === P.group_id) || { name: 'Class', grade: '' }, D = upgrade(JSON.parse(JSON.stringify(P.data || {})));
-    const canEdit = !!CLS.find(c => c.id === P.group_id), canReview = coversGrade(C.grade), ro = canEdit ? '' : 'disabled';
+    const canEdit = !!CLS.find(c => c.id === P.group_id), ro = canEdit ? '' : 'disabled';
+    let canReview = false; { const { data: ap, error: ae } = await db.rpc('can_approve_weekly', { gid: P.group_id }); canReview = ae ? coversGrade(C.grade) : !!ap; }
     const { data: units } = await db.from('unit_plans').select('id, title').eq('school_id', S.id).eq('grade', C.grade).order('starts_on', { ascending: true });
     const picked = new Set(P.objective_ids || []), objs = {}, closedLes = new Set(), showAction = new Set();
     let active = 0, pickOpen = false;

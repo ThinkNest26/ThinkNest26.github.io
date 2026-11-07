@@ -37,7 +37,7 @@ async function startObserve() {
   const S = (scs || []).find(s => !['student', 'parent'].includes(s.my_role));
   if (!S) { box.innerHTML = '<div class="empty-box"><p>Lesson observations are part of Think Nest for Schools, for teachers and leaders of a school.</p></div>'; return; }
   document.documentElement.style.setProperty('--school', S.color_primary || '#3E4B94'); document.documentElement.style.setProperty('--school2', S.color_accent || '#F27A6F');
-  const isLead = ['principal', 'vice_principal', 'assistant_principal', 'coordinator', 'head_of_department'].includes(S.my_role) || profile.role === 'admin';
+  const isLead = ['principal', 'vice_principal', 'assistant_principal', 'coordinator', 'head_of_department', 'inclusion_lead'].includes(S.my_role) || profile.role === 'admin';
   const canRubric = ['principal', 'vice_principal', 'assistant_principal', 'coordinator'].includes(S.my_role) || profile.role === 'admin';
   const { data: srow } = await db.from('schools').select('obs_rubric').eq('id', S.id).maybeSingle();
   let R = Object.assign({}, OB_MOE, (srow && srow.obs_rubric) || {});

@@ -62,7 +62,14 @@ async function startSchool() {
     document.documentElement.style.setProperty('--school2', S.color_accent || '#F27A6F');
   };
   paint();
-  const tabs = teacherMode ? [['dashboard', '📊 Dashboard'], ['attendance', '📋 Attendance'], ['coverage', '🗺️ Coverage']] : [['overview', '🏠 Overview'], ['dashboard', '📊 Dashboard'], ['attendance', '📋 Attendance'], ['coverage', '🗺️ Coverage'], ['reports', '📝 Reports'], ['announce', '📣 Announcements']].concat(['principal', 'vice_principal', 'assistant_principal', 'coordinator'].includes(S.my_role) || profile.role === 'admin' ? [['evidence', '📂 Evidence']] : [], [['people', '👥 People']]).concat(canManage ? [['import', '📥 Import']] : [], [['settings', '⚙️ School settings']]);
+  const ROLE_TABS = {
+    principal: null, vice_principal: null, assistant_principal: null,      // everything
+    coordinator: ['overview', 'dashboard', 'attendance', 'coverage', 'reports', 'announce', 'evidence', 'people'],
+    head_of_department: ['overview', 'dashboard', 'coverage', 'announce', 'people'],
+    inclusion_lead: ['overview', 'attendance', 'announce', 'people'],
+    admin_staff: ['overview', 'attendance', 'announce', 'people', 'import', 'settings'] };
+  const allowTab = k => profile.role === 'admin' || !ROLE_TABS[S.my_role] || ROLE_TABS[S.my_role].includes(k);
+  const tabs = (teacherMode ? [['dashboard', '📊 Dashboard'], ['attendance', '📋 Attendance'], ['coverage', '🗺️ Coverage']] : [['overview', '🏠 Overview'], ['dashboard', '📊 Dashboard'], ['attendance', '📋 Attendance'], ['coverage', '🗺️ Coverage'], ['reports', '📝 Reports'], ['announce', '📣 Announcements']].concat(['principal', 'vice_principal', 'assistant_principal', 'coordinator'].includes(S.my_role) || profile.role === 'admin' ? [['evidence', '📂 Evidence']] : [], [['people', '👥 People']]).concat(canManage ? [['import', '📥 Import']] : [], [['settings', '⚙️ School settings']])).filter(([k]) => teacherMode || allowTab(k));
   box.innerHTML = `<section class="sc-hero" id="sc-hero"></section>
     ${mine.length > 1 ? `<label class="sc-switch">School <select id="sc-pick">${mine.map(s => `<option value="${s.id}" ${s.id === sid ? 'selected' : ''}>${SC_E(s.name)}</option>`).join('')}</select></label>` : ''}
     <div class="tabs sc-tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="false" data-sct="${k}">${l}</button>`).join('')}</div>

@@ -1779,7 +1779,11 @@
 "💬 Post comment": "💬 انشر التعليق",
 "🔑 New passwords for the whole class": "🔑 كلمات مرور جديدة للفصل كله",
 "⬇ Download for parents (CSV)": "⬇ نزّل لأولياء الأمور (CSV)",
-"🔎 Search a name": "🔎 ابحث عن اسم"
+"🔎 Search a name": "🔎 ابحث عن اسم",
+"Plans": "الخطط",
+"Inclusion and wellbeing": "الدمج والرفاه",
+"My teaching": "تدريسي",
+"Weekly plans are approved by the coordinator for this grade": "يعتمد منسّق الصف الخطط الأسبوعية"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

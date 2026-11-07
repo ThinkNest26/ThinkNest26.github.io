@@ -28,22 +28,21 @@
     ]
   };
   MENUS.school_leader = [
-    { ic: '🏫', label: 'My school', href: 'school.html' },
-    { ic: '📊', label: 'Dashboard', href: 'school.html#dashboard' },
-    { ic: '📋', label: 'Attendance', href: 'school.html#attendance' },
-    { ic: '🗺️', label: 'Coverage', href: 'school.html#coverage' },
-    { ic: '🗂️', label: 'Unit planner', href: 'planner.html' },
-    { ic: '👀', label: 'Observations', href: 'observe.html' },
-    { ic: '🧩', label: 'Inclusion', href: 'inclusion.html' },
-    { ic: '💛', label: 'Wellbeing', href: 'wellbeing.html' },
-    { ic: '📝', label: 'Reports', href: 'school.html#reports' },
-    { ic: '📣', label: 'Announcements', href: 'school.html#announce', an: 1 },
-    { ic: '📂', label: 'Evidence', href: 'school.html#evidence' },
-    { ic: '👥', label: 'People', href: 'school.html#people' },
-    { ic: '📥', label: 'Import', href: 'school.html#import' },
-    { ic: '⚙️', label: 'School settings', href: 'school.html#settings' },
-    { ic: '🏫', label: 'Classes', dyn: 'classes', items: [['classes.html', 'All classes'], ['classes.html?new=1', '➕ New class']] },
-    { ic: '💬', label: 'Messages & community', items: [['messages.html', 'Messages'], ['school-community.html', '🏫 School community'], ['staff-room.html', '👩‍🏫 Staff room']] }
+    { ic: '🏫', label: 'My school', href: 'school.html', roles: '*' },
+    { ic: '📊', label: 'Dashboard', href: 'school.html#dashboard', roles: 'principal vice_principal assistant_principal coordinator head_of_department' },
+    { ic: '📋', label: 'Attendance', href: 'school.html#attendance', roles: 'principal vice_principal assistant_principal coordinator inclusion_lead admin_staff' },
+    { ic: '🗺️', label: 'Coverage', href: 'school.html#coverage', roles: 'principal vice_principal assistant_principal coordinator head_of_department' },
+    { ic: '📝', label: 'Reports', href: 'school.html#reports', roles: 'principal vice_principal assistant_principal coordinator' },
+    { ic: '📣', label: 'Announcements', href: 'school.html#announce', an: 1, roles: '*' },
+    { ic: '📂', label: 'Evidence', href: 'school.html#evidence', roles: 'principal vice_principal assistant_principal coordinator' },
+    { ic: '🗂️', label: 'Plans', href: 'planner.html', roles: 'principal vice_principal assistant_principal coordinator head_of_department' },
+    { ic: '👀', label: 'Observations', href: 'observe.html', roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead' },
+    { ic: '🧩', label: 'Inclusion and wellbeing', items: [['inclusion.html', '🧩 Inclusion'], ['wellbeing.html', '💛 Wellbeing']], roles: 'principal vice_principal assistant_principal coordinator inclusion_lead' },
+    { ic: '👥', label: 'People', href: 'school.html#people', roles: '*' },
+    { ic: '📥', label: 'Import', href: 'school.html#import', roles: 'principal vice_principal assistant_principal admin_staff' },
+    { ic: '⚙️', label: 'School settings', href: 'school.html#settings', roles: 'principal vice_principal assistant_principal admin_staff' },
+    { ic: '👩‍🏫', label: 'My teaching', dyn: 'classes', items: [['classes.html', 'All my classes'], ['classes.html?new=1', '➕ New class'], ['planner.html', '🗂️ Unit and weekly plans'], ['teacher-courses.html', 'My courses'], ['teacher-calendar.html', 'Live classes']], roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead' },
+    { ic: '💬', label: 'Messages & community', items: [['messages.html', 'Messages'], ['school-community.html', '🏫 School community'], ['staff-room.html', '👩‍🏫 Staff room']], roles: '*' }
   ];
   // Think Nest for Schools: everyone in a school sees only their school
   MENUS.school_teacher = [
@@ -113,7 +112,8 @@
       window.TN_ROLE = view;
       schoolBrand(sc, view);
     }
-    const menu = MENUS[view] || MENUS.student;
+    const roleOk = sec => !sec.roles || sec.roles === '*' || role === 'admin' || (sc && sec.roles.split(' ').includes(sc.my_role));
+    const menu = (MENUS[view] || MENUS.student).filter(roleOk);
     let here = ALIAS[page] || page;
     if (page === 'school.html' && /^#(people|settings|import|dashboard|reports|announce|coverage|evidence|attendance)$/.test(location.hash)) here = 'school.html' + location.hash;
     if (page === 'group.html' && document.querySelector('.class-flag')) here = 'classes.html';
