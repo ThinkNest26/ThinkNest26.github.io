@@ -11,6 +11,7 @@
       return Promise.resolve(q).then(r => { if (r && Array.isArray(r.data)) r.data = r.data.map(s => s.id === pv.sid ? Object.assign({}, s, { my_role: pv.role, scope_grades: pv.grades || [], scope_subjects: pv.subjects || [] }) : s); return r; });
     };
     window.TN_PREVIEW = pv;
+    pv.name = 'Sample ' + String(pv.label || 'Teacher').replace(/\s*\(.*\)$/, '').replace(/^School /, '');
   }
   const FULL = ['principal', 'vice_principal', 'assistant_principal', 'it', 'inclusion_lead'];
   const ROLES = [['teacher', '👩‍🏫', 'Teacher'], ['coordinator', '🎓', 'Grade level leader'], ['head_of_department', '📚', 'Subject coordinator'], ['inclusion_team', '🤝', 'Inclusion team (LSA)'],
@@ -23,6 +24,9 @@
       bar.innerHTML = `<span>👁️ <b>Previewing as ${E(pv.label || pv.role)}</b> · screens as this role sees them (the data is still yours)</span><button type="button" id="tn-pv-exit">Exit preview</button>`;
       document.body.appendChild(bar); document.documentElement.classList.add('tn-pv');
       document.getElementById('tn-pv-exit').onclick = exit;
+      const ini = pv.name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+      const setIni = () => { const pic = document.getElementById('me-initials-small') || document.querySelector('.bar-right .initials'); if (pic && pic.textContent !== ini) pic.textContent = ini; };
+      setIni(); setTimeout(setIni, 800); setTimeout(setIni, 2000);
     }
     // the 👁️ button: only for a school's full access leaders (their real role)
     let sess = null; try { sess = (await db.auth.getSession()).data.session; } catch (_) {}

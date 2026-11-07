@@ -26,12 +26,13 @@ async function startTeacherHome() {
   let cards = [];
   if (cycle && ids.length) { const { data } = await safe(db.from('report_cards').select('group_id, status').eq('cycle_id', cycle.id).in('group_id', ids)); cards = data || []; }
   const unreadAnn = (ann || []).filter(a => !a.is_read), newObs = (obs || []).filter(o => !o.read_at), checkIns = ((wb && wb.attention) || []);
-  const first = String(profile.full_name || '').split(' ')[0] || 'there';
+  const shownName = window.TN_PREVIEW ? window.TN_PREVIEW.name : profile.full_name;
+  const first = window.TN_PREVIEW ? '' : String(profile.full_name || '').split(' ')[0] || 'there';
   const hour = new Date().getHours(), hello = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const regDone = mine.filter(c => attOf(c.id).taken).length;
   const fmt = d => new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
 
-  box.innerHTML = `<section class="th-hero"><div><p class="th-hello">${hello}, ${TH_E(first)} 👋</p><h1>${TH_E(profile.full_name || '')}</h1><p>Teacher at <b>${TH_E(S.name)}</b> · ${TH_E(new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }))}</p></div>
+  box.innerHTML = `<section class="th-hero"><div><p class="th-hello">${hello}${first ? ', ' + TH_E(first) : ''} 👋</p><h1>${TH_E(shownName || '')}</h1><p>${TH_E(window.TN_PREVIEW ? String(window.TN_PREVIEW.label || 'Teacher').replace(/\s*\(.*\)$/, '') : 'Teacher')} at <b>${TH_E(S.name)}</b> · ${TH_E(new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }))}</p></div>
       <div class="th-quick"><a class="th-q" href="classes.html?new=1">➕ New class</a><a class="th-q" href="planner.html" data-weeks>📅 Weekly plans</a><a class="th-q" href="school.html#dashboard">📊 My data</a></div></section>
     ${(unreadAnn.length || newObs.length || checkIns.length || cycle) ? `<section class="th-alerts">
       ${unreadAnn.length ? `<a class="th-al" href="announcements.html#a${unreadAnn[0].id}"><span>📣</span><div><b>${unreadAnn.length} new announcement${unreadAnn.length === 1 ? '' : 's'}</b><small>${TH_E(unreadAnn[0].title)}</small></div></a>` : ''}
