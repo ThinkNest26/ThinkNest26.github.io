@@ -8,10 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=136">
-  <link rel="stylesheet" href="app.css?v=136">
-  <link rel="stylesheet" href="rtl.css?v=136">
-  <script src="i18n.js?v=136"></script>
+  <link rel="stylesheet" href="style.css?v=137">
+  <link rel="stylesheet" href="app.css?v=137">
+  <link rel="stylesheet" href="rtl.css?v=137">
+  <script src="i18n.js?v=137"></script>
 </head>
 <body class="auth">
   <header class="app-top">
@@ -25,8 +25,8 @@
       <h1>Welcome, school!</h1>
       <p class="auth-sub">Who are you in your school?</p>
       <div class="roles-pick roles-two" id="sch-pick" role="radiogroup" aria-label="Who are you in your school?">
-        <button class="pick" role="radio" aria-checked="false" data-go="schools.html?g=leader"><img src="images/tn-icon-school.png" alt=""><span>School Leaders</span><small class="pick-sub">Principals, deputy principals and PYP coordinators</small></button>
-        <button class="pick" role="radio" aria-checked="false" data-go="schools.html?g=staff"><img src="images/tn-icon-teacher.png" alt=""><span>School Staff</span><small class="pick-sub">Coordinators, grade level leaders, teachers, admin and IT</small></button>
+        <button class="pick" role="radio" aria-checked="false" data-go="schools.html?g=leader"><img src="images/tn-icon-school.png" alt=""><span>School Leaders</span><small class="pick-sub">Principals, deputies, PYP coordinators, school admin and IT</small></button>
+        <button class="pick" role="radio" aria-checked="false" data-go="schools.html?g=staff"><img src="images/tn-icon-teacher.png" alt=""><span>School Staff</span><small class="pick-sub">Subject coordinators, grade level leaders and teachers</small></button>
       </div>
       <button class="btn btn-red auth-btn" id="next" disabled>Next</button>
       <p class="sch-other" id="sch-other" hidden>Another role, such as the inclusion team? <a href="school-login.html">Log in here</a></p>
@@ -37,8 +37,8 @@
     (function () {
       const g = new URLSearchParams(location.search).get('g');
       const ROLES = {
-        leader: [['principal', '🏫', 'School principal'], ['deputy', '🤝', 'Deputy principal'], ['pyp', '🌍', 'PYP coordinator']],
-        staff: [['subject', '📚', 'Subject coordinator'], ['grade', '🎓', 'Grade level leader'], ['teacher', '👩‍🏫', 'Teacher'], ['admin', '🗂️', 'School admin'], ['it', '💻', 'IT']] };
+        leader: [['principal', '🏫', 'School principal'], ['deputy', '🤝', 'Deputy principal'], ['pyp', '🌍', 'PYP coordinator'], ['admin', '🗂️', 'School admin'], ['it', '💻', 'IT']],
+        staff: [['subject', '📚', 'Subject coordinator'], ['grade', '🎓', 'Grade level leader'], ['teacher', '👩‍🏫', 'Teacher']] };
       if (!ROLES[g]) return;
       document.querySelector('.auth-card h1').textContent = g === 'leader' ? 'School Leaders' : 'School Staff';
       document.querySelector('.auth-card .auth-sub').textContent = 'Choose your role';
@@ -49,6 +49,6 @@
       document.getElementById('sch-other').hidden = false;
     })();
   </script>
-  <script src="app.js?v=136"></script>
+  <script src="app.js?v=137"></script>
 </body>
 </html>

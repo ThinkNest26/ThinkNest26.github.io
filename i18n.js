@@ -1845,7 +1845,9 @@
 "IT": "تقنية المعلومات",
 "School admin, IT and teachers": "إداريو المدرسة وتقنية المعلومات والمعلمون",
 "Principals, deputy principals and PYP coordinators": "المديرون ونوابهم ومنسقو برنامج السنوات الابتدائية",
-"Coordinators, grade level leaders, teachers, admin and IT": "المنسقون وقادة المراحل والمعلمون والإداريون وتقنية المعلومات"
+"Coordinators, grade level leaders, teachers, admin and IT": "المنسقون وقادة المراحل والمعلمون والإداريون وتقنية المعلومات",
+"Principals, deputies, PYP coordinators, school admin and IT": "المديرون والنواب ومنسقو البرنامج والإداريون وتقنية المعلومات",
+"Subject coordinators, grade level leaders and teachers": "منسقو المواد وقادة المراحل والمعلمون"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times
