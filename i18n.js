@@ -1815,7 +1815,9 @@
 "✅ Weekly plans to review": "✅ خطط أسبوعية للمراجعة",
 "📅 My weekly plans": "📅 خططي الأسبوعية",
 "✅ Plans to review →": "✅ خطط للمراجعة ←",
-"📅 My weekly plans →": "📅 خططي الأسبوعية ←"
+"📅 My weekly plans →": "📅 خططي الأسبوعية ←",
+"School email": "البريد الإلكتروني المدرسي",
+"🖨️ Print login card": "🖨️ اطبع بطاقة الدخول"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

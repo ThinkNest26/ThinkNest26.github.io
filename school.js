@@ -600,14 +600,15 @@ async function startSchool() {
       ${isAdmin ? `<form class="sc-admin-add" id="sc-admin-add"><label>Make a staff member an admin <select name="who"><option value="">Choose a staff member…</option>${staffPool.map(p => `<option value="${SC_E(p.email)}">${SC_E(p.full_name)} · ${SC_E(scRole(p.role))}</option>`).join('')}</select></label>
         <span class="meta">or</span><label>Email <input type="email" name="email" placeholder="name@school.ae"></label><button class="btn btn-red">🛡️ Add admin</button></form>` : ''}</section>`;
     pane().innerHTML = adminPanel + `${canManage ? `<section class="panel sc-add"><h2>➕ Add a person</h2>
-        <p class="meta">Add someone who already has a Think Nest account, using their email. (Bulk import for whole staff and student lists is coming next.)</p>
+        <p class="meta">Add a teacher, middle leader or other staff member. If they’re new to Think Nest, their account is created with a starting password you can print. For a whole staff list, use 📥 Import.</p>
         <form id="sc-add" class="sc-add-grid">
-          <label>Email <input type="email" name="email" required placeholder="name@school.ae"></label>
+          <label>Full name <input type="text" name="fullname" maxlength="80" placeholder="e.g. Sarah Thompson"></label>
+          <label>School email <input type="email" name="email" required placeholder="name@school.ae"></label>
           <label>Role <select name="role">${SC_ROLES.filter(r => r[0] !== 'student' && (r[0] !== 'principal' || S.my_role === 'principal' || profile.role === 'admin')).map(([k, l]) => `<option value="${k}" ${k === 'teacher' ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
           <label>Job title (optional) <input type="text" name="title" maxlength="80" placeholder="e.g. PYP Coordinator"></label>
           <fieldset class="sc-scope" hidden><legend>Limit to grades (optional)</legend>${grades.map(g => `<label><input type="checkbox" name="g" value="${SC_E(g)}"> ${SC_E(g)}</label>`).join('')}</fieldset>
           <fieldset class="sc-scope" hidden><legend>Limit to subjects (optional)</legend>${SC_SUBJECTS.map(g => `<label><input type="checkbox" name="s" value="${g}"> ${g}</label>`).join('')}</fieldset>
-          <button class="btn btn-red">Add to school</button></form></section>` : ''}
+          <button class="btn btn-red">Add to school</button></form><div id="sc-add-out"></div></section>` : ''}
       ${canManage ? `<section class="panel sc-logins"><h2>🔑 Staff logins</h2>
         <p class="meta">Choose staff, then generate starting passwords. Each person logs in with their <b>school email</b> and the starting password, and chooses their own password the first time.</p>
         ${staffPool2.length ? `<div class="sc-login-pick"><label class="remember"><input type="checkbox" id="sl-all"> <b>Select all</b></label>${staffPool2.map(p => `<label class="sc-chip"><input type="checkbox" value="${p.user_id}" data-sl><span>${SC_E(p.full_name)} · ${SC_E(scRole(p.role))}</span></label>`).join('')}</div>
@@ -621,14 +622,25 @@ async function startSchool() {
       f.role.onchange = scope; scope();
       f.onsubmit = async e => {
         e.preventDefault();
-        if (!f.email.checkValidity()) return say('Enter a valid email address.');
-        const b = f.querySelector('button'); b.disabled = true;
+        if (!f.email.checkValidity() || !f.email.value.trim()) return say('Enter a valid email address.');
         const scoped = ['coordinator', 'head_of_department'].includes(f.role.value);
-        const { data: nm, error: er } = await db.rpc('school_add_member', { sid, member_email: f.email.value.trim(), mrole: f.role.value, mtitle: f.title.value.trim(),
-          grades: scoped ? [...f.querySelectorAll('input[name=g]:checked')].map(x => x.value) : [], subjects: scoped ? [...f.querySelectorAll('input[name=s]:checked')].map(x => x.value) : [] });
-        b.disabled = false;
-        if (er) return say(friendly(er));
-        say(`✅ ${nm} added as ${scRole(f.role.value)}.`); people();
+        const row = { row: 1, name: f.fullname.value.trim() || f.email.value.trim().split('@')[0], email: f.email.value.trim().toLowerCase(), role: f.role.value, title: f.title.value.trim() || null,
+          grades: scoped ? [...f.querySelectorAll('input[name=g]:checked')].map(x => x.value) : [], subjects: scoped ? [...f.querySelectorAll('input[name=s]:checked')].map(x => x.value) : [] };
+        const b = f.querySelector('button'); b.disabled = true; b.textContent = 'Adding…';
+        const { data, error: er } = await db.functions.invoke(CA_FN_SCHOOL, { body: { action: 'school_import', school_id: sid, kind: 'staff', rows: [row] } });
+        b.disabled = false; b.textContent = 'Add to school';
+        let msg = er && er.message; if (er) { try { const j2 = await er.context.json(); msg = j2.error || msg; } catch (_) {} return say(msg); }
+        if (data && data.error) return say(data.error);
+        const r = (data.results || [])[0] || {};
+        if (r.error) return say(r.error);
+        await people();
+        const out = document.getElementById('sc-add-out');
+        if (r.status === 'created') {
+          out.innerHTML = `<div class="note sc-added">✅ <b>${SC_E(r.name)}</b> was added as ${SC_E(scRole(r.role))}, and their account was created.<br>Email: <b>${SC_E(r.email)}</b> · Starting password: <code>${SC_E(r.password)}</code>
+            <div class="ca-bar"><span class="meta">🔐 Shown only now. They’ll choose their own password the first time they log in.</span><button type="button" class="btn btn-red" id="sc-add-card">🖨️ Print login card</button></div></div>`;
+          document.getElementById('sc-add-card').onclick = () => scStaffCards([r], S);
+        } else out.innerHTML = `<div class="note sc-added">✅ <b>${SC_E(r.name || row.name)}</b> already had a Think Nest account, and is now in ${SC_E(S.name)} as ${SC_E(scRole(r.role))}. They log in with their usual password. (To give them a new one, use 🔑 Staff logins.)</div>`;
+        out.scrollIntoView({ behavior: 'smooth', block: 'center' });
       };
     }
     const slGo = document.getElementById('sl-go');
