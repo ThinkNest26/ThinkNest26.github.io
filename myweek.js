@@ -8,7 +8,7 @@ async function startMyWeek() {
   const { user } = await initTeacher();
   const box = document.getElementById('mw');
   const { data: scs } = await db.rpc('my_schools');
-  const S = (scs || []).find(s => !['student', 'parent', 'teacher'].includes(s.my_role));
+  const S = (scs || []).find(s => !['student', 'parent', 'teacher', 'inclusion_team'].includes(s.my_role));
   if (!S) { box.innerHTML = '<div class="empty-box"><p>🗓️ My weekly calendar is for school leaders.</p></div>'; return; }
   document.documentElement.style.setProperty('--school', S.color_primary || '#3E4B94'); document.documentElement.style.setProperty('--school2', S.color_accent || '#F27A6F');
   let mon = mwMonday(sessionStorage.getItem('tn_mw') ? new Date(sessionStorage.getItem('tn_mw') + 'T12:00:00') : new Date());

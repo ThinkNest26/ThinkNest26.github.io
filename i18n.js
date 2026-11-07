@@ -1870,7 +1870,10 @@
 "My weekly calendar": "تقويمي الأسبوعي",
 "🗓️ My weekly calendar": "🗓️ تقويمي الأسبوعي",
 "➕ Add to my calendar": "➕ أضف إلى تقويمي",
-"📋 Waiting for your review": "📋 بانتظار مراجعتك"
+"📋 Waiting for your review": "📋 بانتظار مراجعتك",
+"Unit plans: all grades": "خطط الوحدات: جميع الصفوف",
+"Weekly lesson plans: all grades": "الخطط الأسبوعية: جميع الصفوف",
+"📅 Weekly lesson plans: all grades": "📅 الخطط الأسبوعية: جميع الصفوف"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

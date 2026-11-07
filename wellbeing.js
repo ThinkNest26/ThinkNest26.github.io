@@ -52,7 +52,7 @@ async function startWellbeing() {
   const { data: scs } = await db.rpc('my_schools');
   const S = (scs || []).find(s => !['student', 'parent'].includes(s.my_role));
   if (!S) { box.innerHTML = '<div class="empty-box"><p>Wellbeing check-ins are part of Think Nest for Schools, for staff of a school.</p></div>'; return; }
-  if (!['principal', 'vice_principal', 'assistant_principal', 'coordinator', 'inclusion_lead', 'inclusion_team'].includes(S.my_role) && profile.role !== 'admin') { box.innerHTML = '<div class="empty-box"><p>🔒 Wellbeing check-ins are for the school’s inclusion team and leaders.</p></div>'; return; }
+  if (!['principal', 'vice_principal', 'it', 'inclusion_lead', 'inclusion_team'].includes(S.my_role) && profile.role !== 'admin') { box.innerHTML = '<div class="empty-box"><p>🔒 Wellbeing check-ins are for the school’s inclusion team and leaders.</p></div>'; return; }
   document.documentElement.style.setProperty('--school', S.color_primary || '#3E4B94'); document.documentElement.style.setProperty('--school2', S.color_accent || '#F27A6F');
   let gid = null;
   async function draw() {

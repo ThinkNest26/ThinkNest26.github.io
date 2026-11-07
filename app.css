@@ -2177,3 +2177,5 @@ html.tn-pv .side { box-shadow: inset -4px 0 0 #8E5BD8; }
 .mw-dlg .btn { border: 0; cursor: pointer; font: inherit; font-weight: 800; } .mw-dlg .outline { border: 1px solid #3E4B94; color: #3E4B94; } .mw-dlg .ca-bar span { flex: 1; }
 @media (max-width: 1100px) { .mw-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .mw-grid { grid-template-columns: 1fr; } }
+.wk-gchips { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 12px; } .wk-rv { font-style: normal; background: #F5B400; color: #fff; border-radius: 10px; padding: 0 7px; font-size: .75rem; margin-left: 4px; }
+.wk-gsec { margin-bottom: 14px !important; } .wk-gsec h2 { margin: 0; font-size: 1.1rem; color: var(--school); }

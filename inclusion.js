@@ -15,8 +15,8 @@ async function startInclusion() {
   const S = (scs || []).find(s => !['student', 'parent'].includes(s.my_role));
   if (!S) { box.innerHTML = '<div class="empty-box"><p>Inclusion tracking is part of Think Nest for Schools, for staff of a school.</p></div>'; return; }
   document.documentElement.style.setProperty('--school', S.color_primary || '#3E4B94'); document.documentElement.style.setProperty('--school2', S.color_accent || '#F27A6F');
-  const canManage = ['principal', 'vice_principal', 'assistant_principal', 'inclusion_lead', 'inclusion_team'].includes(S.my_role) || profile.role === 'admin';
-  const canOverview = canManage || S.my_role === 'coordinator';
+  const canManage = ['principal', 'vice_principal', 'it', 'inclusion_lead', 'inclusion_team'].includes(S.my_role) || profile.role === 'admin';
+  const canOverview = canManage;
   if (!canOverview) { box.innerHTML = '<div class="empty-box"><p>🔒 Inclusion is for the school’s inclusion team and leaders.</p></div>'; return; }
   let STU = [], NEEDS = [];
   const load = async () => {
@@ -24,16 +24,55 @@ async function startInclusion() {
     if (error) throw error; STU = st || []; NEEDS = nd || [];
   };
   try { await load(); } catch (e) { box.innerHTML = `<p class="empty">${IN_E(/inclusion_students|function/.test(e.message || '') ? 'Run database update 65 to use inclusion tracking.' : friendly(e))}</p>`; return; }
-  const tabs = (canOverview ? [['overview', '📊 Overview']] : []).concat([['students', canManage || canOverview ? '🧩 Students' : '👩‍🏫 My students with additional needs']]);
+  const canTeam = ['principal', 'vice_principal', 'it', 'inclusion_lead'].includes(S.my_role) || profile.role === 'admin';
+  const tabs = (canOverview ? [['overview', '📊 Overview']] : []).concat([['students', canManage || canOverview ? '🧩 Students' : '👩‍🏫 My students with additional needs']]).concat(canTeam ? [['team', '🤝 Inclusion team']] : []);
   box.innerHTML = `<div class="page-head"><h1 class="title">🧩 Inclusion</h1></div>
-    <p class="note">🔒 <b>Private.</b> Only senior leaders, coordinators, the inclusion lead and the inclusion team can see this page’s information.</p>
+    <p class="note">🔒 <b>Private.</b> Only senior leaders, the inclusion lead and the inclusion team can see this page’s information.</p>
     <div class="tabs sc-tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="false" data-it="${k}">${l}</button>`).join('')}</div><section id="in-pane"></section>`;
   const pane = () => document.getElementById('in-pane');
-  const show = (k, arg) => { document.querySelectorAll('[data-it]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.it === k))); ({ overview, students, profile: student })[k](arg); };
+  const show = (k, arg) => { document.querySelectorAll('[data-it]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.it === k))); ({ overview, students, profile: student, team })[k](arg); };
   document.querySelector('.sc-tabs').addEventListener('click', e => { const b = e.target.closest('[data-it]'); if (b) show(b.dataset.it); });
   const tags = sid => NEEDS.filter(n => n.student_id === sid).map(n => `<span class="in-tag-k k-${n.kind}" title="${IN_E(n.category || '')}">${IN_KIND[n.kind][0]} ${IN_E(n.category || IN_KIND[n.kind][1])}</span>`).join('');
   const nameOf = id => (STU.find(s => s.id === id) || {}).full_name || 'Student';
   const diff = (a, b) => a == null || b == null ? '' : `<small class="${a - b < -4 ? 'in-dn' : a - b > 4 ? 'in-up' : 'meta'}">${a - b > 0 ? '+' : ''}${Math.round(a - b)} vs others</small>`;
+
+  // ----- the inclusion team (LSAs): the inclusion lead adds and removes them
+  async function team() {
+    pane().innerHTML = '<p class="empty">Loading…</p>';
+    const { data: P } = await db.rpc('school_people', { sid: S.id });
+    const lead = (P || []).filter(p => p.role === 'inclusion_lead'), T = (P || []).filter(p => p.role === 'inclusion_team');
+    const card = (p, rm) => `<div class="sc-admin" data-uid="${p.user_id}"><span class="initials">${IN_E((p.full_name || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</span>
+      <div><b>${IN_E(p.full_name || '')}</b><small class="meta">${IN_E(p.title || (p.role === 'inclusion_lead' ? 'Inclusion lead' : 'Learning Support Assistant'))} · ${IN_E(p.email || '')}</small></div>
+      ${rm ? `<button type="button" class="link-btn danger" data-rmlsa data-name="${IN_E(p.full_name || '')}">Remove</button>` : ''}</div>`;
+    pane().innerHTML = `<section class="panel"><h2>🤝 Inclusion team</h2><p class="meta">The inclusion lead and learning support assistants (LSAs). Team members can see and update students’ support plans, IEPs, notes and wellbeing follow-ups.</p>
+        <div class="sc-admin-list">${lead.map(p => card(p, false)).join('')}${T.map(p => card(p, canTeam)).join('') || (lead.length ? '' : '<p class="meta">No inclusion team yet.</p>')}</div></section>
+      ${canTeam ? `<section class="panel"><h2>➕ Add an LSA</h2><p class="meta">If they’re new to Think Nest, their account is created with a starting password you can print. They log in through <b>Schools → School Staff → Inclusion team</b>.</p>
+        <form id="lsa-add" class="sc-add-grid"><label>Full name <input type="text" name="n" required maxlength="80"></label><label>School email <input type="email" name="e" required placeholder="name@school.ae"></label>
+          <label>Job title <input type="text" name="t" maxlength="80" value="Learning Support Assistant"></label><button class="btn btn-red">Add to the team</button></form><div id="lsa-out"></div></section>` : ''}`;
+    const f = document.getElementById('lsa-add');
+    if (f) f.onsubmit = async e => {
+      e.preventDefault(); const b = f.querySelector('button'); b.disabled = true; b.textContent = 'Adding…';
+      const { data, error } = await db.functions.invoke('quick-worker', { body: { action: 'school_import', school_id: S.id, kind: 'staff', rows: [{ row: 1, name: f.n.value.trim(), email: f.e.value.trim().toLowerCase(), role: 'inclusion_team', title: f.t.value.trim() || 'Learning Support Assistant', grades: [], subjects: [] }] } });
+      b.disabled = false; b.textContent = 'Add to the team';
+      let msg = error && error.message; if (error) { try { const j = await error.context.json(); msg = j.error || msg; } catch (_) {} return say(msg); }
+      const r = ((data || {}).results || [])[0] || {}; if (r.error) return say(r.error);
+      await team();
+      const out = document.getElementById('lsa-out');
+      out.innerHTML = r.status === 'created' ? `<div class="note sc-added">✅ <b>${IN_E(r.name)}</b> is in the inclusion team, and their account was created.<br>Email: <b>${IN_E(r.email)}</b> · Starting password: <code>${IN_E(r.password)}</code>
+          <div class="ca-bar"><span class="meta">🔐 Shown only now. They’ll choose their own password the first time they log in.</span><button type="button" class="btn btn-red" id="lsa-card">🖨️ Print login card</button></div></div>`
+        : `<div class="note sc-added">✅ <b>${IN_E(r.name || '')}</b> already had a Think Nest account, and is now in the inclusion team.</div>`;
+      const pc = document.getElementById('lsa-card');
+      if (pc) pc.onclick = () => { const w = window.open('', '_blank'); if (!w) return say('Please allow pop-ups to print.');
+        w.document.write(`<html><head><meta charset="utf-8"><title>Login card</title><style>body{font-family:Arial,sans-serif;margin:20px}.c{border:2px dashed #9AA0B5;border-radius:14px;padding:16px;max-width:420px}.s{color:${S.color_primary};font-weight:800;font-size:12px;text-transform:uppercase}.n{font-size:19px;font-weight:800;margin:6px 0 10px}.r{margin:4px 0}.r b{display:inline-block;width:130px;color:#555}code{font-size:15px;background:#F1F2F8;padding:2px 6px;border-radius:6px}.h{font-size:12px;color:#555;margin-top:8px}</style></head>
+          <body><div class="c"><div class="s">${IN_E(S.name)} · Think Nest</div><div class="n">${IN_E(r.name)}</div><div class="r"><b>Website</b>thinknestonline.com → Log in → Schools</div><div class="r"><b>Email</b>${IN_E(r.email)}</div><div class="r"><b>Starting password</b><code>${IN_E(r.password)}</code></div>
+          <div class="h">You’ll choose your own password the first time you log in.</div></div></body></html>`); w.document.close(); setTimeout(() => w.print(), 400); };
+    };
+    pane().querySelectorAll('[data-rmlsa]').forEach(b => b.onclick = async () => {
+      if (!confirm(`Remove ${b.dataset.name} from the inclusion team and from ${S.name}? Their account stays, but they lose access to the school.`)) return;
+      const { error } = await db.rpc('school_remove_member', { sid: S.id, uid: b.closest('[data-uid]').dataset.uid });
+      if (error) return say(friendly(error)); say('Removed.'); team();
+    });
+  }
 
   // ----- overview (leaders)
   async function overview() {
