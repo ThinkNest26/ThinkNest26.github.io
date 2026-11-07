@@ -410,7 +410,8 @@ async function startSchool() {
     }
     const { data: ov, error } = await db.rpc('school_coverage_overview', { sid });
     if (error) { pane().innerHTML = `<p class="empty">${SC_E(/coverage|function/.test(error.message || '') ? 'Run database update 62 to see curriculum coverage.' : friendly(error))}</p>`; return; }
-    const O = ov || [], grades = [...new Set(O.map(x => x.grade))], subjects = [...new Set(O.map(x => x.subject))];
+    const mySubs = S.my_role === 'head_of_department' ? (S.scope_subjects || []).map(x => String(x).toLowerCase()) : [];
+    const O = (ov || []).filter(x => !mySubs.length || mySubs.includes(String(x.subject).toLowerCase())), grades = [...new Set(O.map(x => x.grade))], subjects = [...new Set(O.map(x => x.subject))];
     const cell = (g, sj) => O.find(x => x.grade === g && x.subject === sj);
     const pctT = x => x && x.total ? Math.round(100 * x.taught / x.total) : 0, pctA = x => x && x.total ? Math.round(100 * x.assessed / x.total) : 0;
     const tot = O.reduce((a, x) => ({ total: a.total + x.total, taught: a.taught + x.taught, assessed: a.assessed + x.assessed }), { total: 0, taught: 0, assessed: 0 });
