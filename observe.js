@@ -37,10 +37,10 @@ async function startObserve() {
   const S = (scs || []).find(s => !['student', 'parent'].includes(s.my_role));
   if (!S) { box.innerHTML = '<div class="empty-box"><p>Lesson observations are part of Think Nest for Schools, for teachers and leaders of a school.</p></div>'; return; }
   document.documentElement.style.setProperty('--school', S.color_primary || '#3E4B94'); document.documentElement.style.setProperty('--school2', S.color_accent || '#F27A6F');
-  const isLead = ['principal', 'vice_principal', 'assistant_principal', 'coordinator', 'head_of_department', 'inclusion_lead'].includes(S.my_role) || profile.role === 'admin';
-  const canRubric = ['principal', 'vice_principal', 'assistant_principal', 'coordinator'].includes(S.my_role) || profile.role === 'admin';
+  const isLead = ['principal', 'vice_principal', 'assistant_principal', 'it', 'inclusion_lead'].includes(S.my_role) || profile.role === 'admin';
+  const canRubric = false;   // the UAE MOE framework is used everywhere (not editable)
   const { data: srow } = await db.from('schools').select('obs_rubric').eq('id', S.id).maybeSingle();
-  let R = Object.assign({}, OB_MOE, (srow && srow.obs_rubric) || {});
+  let R = Object.assign({}, OB_MOE);   // always the UAE MOE School Inspection Framework (1.3, 3.1, 3.2; six levels)
   const { data: staffRows } = await db.rpc('obs_staff', { sid: S.id });
   const STAFF = staffRows || [], nameOf = id => (STAFF.find(p => p.user_id === id) || {}).full_name || '–';
   const cTitle = c => (c.code ? c.code + ' ' : '') + c.label;
@@ -57,7 +57,7 @@ async function startObserve() {
   box.innerHTML = mineMode
     ? `<section class="ob-mine-banner"><span class="ob-mine-ic" aria-hidden="true">📥</span><div><h1>My observation feedback</h1><p>Lessons where <b>you</b> were observed. Read your feedback and reply with your comments.${isLead ? ' To observe others, use <a href="observe.html">👀 Observe lessons</a>.' : ''}</p></div></section>`
     : `<div class="page-head"><h1 class="title">👀 Observe lessons</h1></div>
-    <p class="hint">Observe lessons with your school’s rubric, share feedback with teachers, and see trends. Your own feedback is kept separately in <a href="observe.html?mode=mine">📥 My observation feedback</a>.</p>`;
+    <p class="hint">Observe lessons with the UAE MOE School Inspection Framework (1.3 Learning skills, 3.1 Teaching, 3.2 Assessment), share feedback with teachers, and see trends. Your own feedback is kept separately in <a href="observe.html?mode=mine">📥 My observation feedback</a>.</p>`;
   box.innerHTML += `
     ${tabs.length > 1 ? `<div class="tabs sc-tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="false" data-ot="${k}">${l}</button>`).join('')}</div>` : '<span hidden><button data-ot="mine"></button></span>'}<section id="ob-pane"></section>`;
   const pane = () => document.getElementById('ob-pane');
