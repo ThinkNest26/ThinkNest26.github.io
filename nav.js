@@ -29,6 +29,10 @@
   };
   MENUS.school_leader = [
     { ic: '🏠', label: 'Home', href: 'school.html', roles: '*' },
+    { head: 'Manage school', roles: 'principal vice_principal assistant_principal admin_staff' },
+    { ic: '👥', label: 'People and staff', href: 'school.html#people', roles: 'principal vice_principal assistant_principal admin_staff' },
+    { ic: '📥', label: 'Import', href: 'school.html#import', roles: 'principal vice_principal assistant_principal admin_staff' },
+    { ic: '⚙️', label: 'School settings', href: 'school.html#settings', roles: 'principal vice_principal assistant_principal admin_staff' },
     { head: 'My classes', roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead' },
     { flat: true, dyn: 'classes', items: [['classes.html?new=1', '➕ New class']], roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead' },
     { head: 'My teaching', roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead' },
@@ -49,9 +53,7 @@
     { ic: '💛', label: 'Wellbeing', href: 'wellbeing.html', roles: 'principal vice_principal assistant_principal coordinator inclusion_lead' },
     { head: 'School', roles: '*' },
     { ic: '📣', label: 'Announcements', href: 'school.html#announce', an: 1, roles: '*' },
-    { ic: '👥', label: 'People', href: 'school.html#people', roles: '*' },
-    { ic: '📥', label: 'Import', href: 'school.html#import', roles: 'principal vice_principal assistant_principal admin_staff' },
-    { ic: '⚙️', label: 'School settings', href: 'school.html#settings', roles: 'principal vice_principal assistant_principal admin_staff' },
+    { ic: '👥', label: 'People', href: 'school.html#people', roles: 'coordinator head_of_department inclusion_lead' },
     { ic: '👩‍🏫', label: 'Staff room', href: 'staff-room.html', roles: '*' },
     { ic: '🏫', label: 'School community', href: 'school-community.html', roles: '*' },
     { ic: '💬', label: 'Messages', href: 'messages.html', roles: '*' }

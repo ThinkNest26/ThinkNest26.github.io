@@ -1817,7 +1817,9 @@
 "✅ Plans to review →": "✅ خطط للمراجعة ←",
 "📅 My weekly plans →": "📅 خططي الأسبوعية ←",
 "School email": "البريد الإلكتروني المدرسي",
-"🖨️ Print login card": "🖨️ اطبع بطاقة الدخول"
+"🖨️ Print login card": "🖨️ اطبع بطاقة الدخول",
+"Manage school": "إدارة المدرسة",
+"People and staff": "الأشخاص والموظفون"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times
