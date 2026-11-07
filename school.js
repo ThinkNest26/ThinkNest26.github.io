@@ -398,6 +398,11 @@ async function startSchool() {
         <div class="ca-bar"><button type="button" class="btn btn-red" id="cv-save">Save my subject</button></div></section>`;
       holder.querySelector('#cv-save').onclick = async () => {
         const subs = [...holder.querySelectorAll('[data-cvs]:checked')].map(x => x.value); if (!subs.length) return say('Choose at least one subject.');
+        if (window.TN_PREVIEW) {   // previewing: change the preview, not an account
+          const pv = Object.assign({}, window.TN_PREVIEW, { subjects: subs, label: 'Subject coordinator (' + subs.join(', ') + ')' }); delete pv.name;
+          sessionStorage.setItem('tn_preview', JSON.stringify(pv)); window.TN_PREVIEW = Object.assign(window.TN_PREVIEW, { subjects: subs, label: pv.label });
+          S.scope_subjects = subs; say('📚 Preview updated: ' + subs.join(', ') + '.'); location.reload(); return;
+        }
         const { error: er } = await db.rpc('set_my_subjects', { sid, subs }); if (er) return say(/set_my_subjects|function/.test(er.message || '') ? 'This needs database update 77.' : friendly(er));
         S.scope_subjects = subs; say('📚 Saved. Coverage now shows ' + subs.join(', ') + '.'); coverage();
       };
