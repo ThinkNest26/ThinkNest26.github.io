@@ -29,31 +29,35 @@
   };
   MENUS.school_leader = [
     { ic: '🏠', label: 'Home', href: 'school.html', roles: '*' },
-    { head: 'Manage school', roles: 'principal vice_principal assistant_principal admin_staff' },
-    { ic: '👥', label: 'People and staff', href: 'school.html#people', roles: 'principal vice_principal assistant_principal admin_staff' },
-    { ic: '📥', label: 'Import', href: 'school.html#import', roles: 'principal vice_principal assistant_principal admin_staff' },
-    { ic: '⚙️', label: 'School settings', href: 'school.html#settings', roles: 'principal vice_principal assistant_principal admin_staff' },
-    { head: 'My classes', roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead' },
-    { flat: true, dyn: 'classes', items: [['classes.html?new=1', '➕ New class']], roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead' },
-    { head: 'My teaching', roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead' },
-    { ic: '🌅', label: 'My school day', href: 'school-teacher.html', roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead' },
-    { ic: '📅', label: 'My weekly plans', href: 'planner.html?mode=weeks', roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead' },
-    { ic: '🗂️', label: 'Unit plans', href: 'planner.html?mode=units', roles: 'principal vice_principal assistant_principal coordinator head_of_department' },
-    { ic: '📘', label: 'Lessons and quizzes', href: 'teacher-courses.html', roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead' },
-    { ic: '📥', label: 'My observation feedback', href: 'observe.html?mode=mine', roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead' },
-    { head: 'Leadership', roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead admin_staff' },
-    { ic: '📊', label: 'Dashboard', href: 'school.html#dashboard', roles: 'principal vice_principal assistant_principal coordinator head_of_department' },
-    { ic: '📋', label: 'Attendance', href: 'school.html#attendance', roles: 'principal vice_principal assistant_principal coordinator inclusion_lead admin_staff' },
-    { ic: '🗺️', label: 'Coverage', href: 'school.html#coverage', roles: 'principal vice_principal assistant_principal coordinator head_of_department' },
-    { ic: '👀', label: 'Observe lessons', href: 'observe.html', roles: 'principal vice_principal assistant_principal coordinator head_of_department inclusion_lead' },
-    { ic: '✅', label: 'Plans to review', href: 'planner.html?mode=weeks&all=1', roles: 'principal vice_principal assistant_principal coordinator' },
-    { ic: '📝', label: 'Reports', href: 'school.html#reports', roles: 'principal vice_principal assistant_principal coordinator' },
-    { ic: '📂', label: 'Evidence', href: 'school.html#evidence', roles: 'principal vice_principal assistant_principal coordinator' },
-    { ic: '🧩', label: 'Inclusion', href: 'inclusion.html', roles: 'principal vice_principal assistant_principal coordinator inclusion_lead' },
-    { ic: '💛', label: 'Wellbeing', href: 'wellbeing.html', roles: 'principal vice_principal assistant_principal coordinator inclusion_lead' },
+    { head: 'Manage school', roles: 'principal vice_principal assistant_principal it inclusion_lead' },
+    { ic: '👥', label: 'People and staff', href: 'school.html#people', roles: 'principal vice_principal assistant_principal it inclusion_lead' },
+    { ic: '📥', label: 'Import', href: 'school.html#import', roles: 'principal vice_principal assistant_principal it inclusion_lead' },
+    { ic: '⚙️', label: 'School settings', href: 'school.html#settings', roles: 'principal vice_principal assistant_principal it inclusion_lead' },
+    { head: 'My classes', roles: 'principal vice_principal assistant_principal it inclusion_lead coordinator head_of_department' },
+    { flat: true, dyn: 'classes', items: [['classes.html?new=1', '➕ New class']], roles: 'principal vice_principal assistant_principal it inclusion_lead coordinator head_of_department' },
+    { head: 'My teaching', roles: 'vice_principal assistant_principal it inclusion_lead coordinator head_of_department' },
+    { head: 'My week', roles: 'principal' },
+    { ic: '🗓️', label: 'My weekly calendar', href: 'my-week.html', roles: 'principal' },
+    { ic: '🌅', label: 'My school day', href: 'school-teacher.html', roles: 'vice_principal assistant_principal it inclusion_lead coordinator head_of_department' },
+    { ic: '📅', label: 'My weekly plans', href: 'planner.html?mode=weeks', roles: 'vice_principal assistant_principal it inclusion_lead coordinator head_of_department' },
+    { ic: '🗂️', label: 'Unit plans', href: 'planner.html?mode=units', roles: 'vice_principal assistant_principal it inclusion_lead coordinator head_of_department' },
+    { ic: '📘', label: 'Lessons and quizzes', href: 'teacher-courses.html', roles: 'vice_principal assistant_principal it inclusion_lead coordinator head_of_department' },
+    { ic: '📥', label: 'My observation feedback', href: 'observe.html?mode=mine', roles: 'vice_principal assistant_principal it inclusion_lead coordinator head_of_department' },
+    { head: 'Leadership', roles: 'principal vice_principal assistant_principal it inclusion_lead coordinator head_of_department admin_staff' },
+    { ic: '👀', label: 'Observe lessons', href: 'observe.html', roles: 'principal' },
+    { ic: '📊', label: 'Dashboard', href: 'school.html#dashboard', roles: 'principal vice_principal assistant_principal it inclusion_lead coordinator' },
+    { ic: '📋', label: 'Attendance', href: 'school.html#attendance', roles: 'principal vice_principal assistant_principal it inclusion_lead coordinator admin_staff' },
+    { ic: '🗺️', label: 'Coverage', href: 'school.html#coverage', roles: 'vice_principal assistant_principal it inclusion_lead coordinator head_of_department' },
+    { ic: '📑', label: 'Subject plans', href: 'planner.html?mode=subject', roles: 'principal vice_principal assistant_principal it inclusion_lead head_of_department coordinator' },
+    { ic: '✅', label: 'Plans to review', href: 'planner.html?mode=weeks&all=1', roles: 'principal vice_principal assistant_principal it inclusion_lead coordinator' },
+    { ic: '📝', label: 'Reports', href: 'school.html#reports', roles: 'principal vice_principal assistant_principal it inclusion_lead coordinator' },
+    { ic: '👀', label: 'Observe lessons', href: 'observe.html', roles: 'vice_principal assistant_principal it inclusion_lead' },
+    { ic: '📂', label: 'Evidence', href: 'school.html#evidence', roles: 'principal vice_principal assistant_principal it inclusion_lead' },
+    { ic: '🧩', label: 'Inclusion', href: 'inclusion.html', roles: 'principal vice_principal assistant_principal it inclusion_lead' },
+    { ic: '💛', label: 'Wellbeing', href: 'wellbeing.html', roles: 'principal vice_principal assistant_principal it inclusion_lead' },
     { head: 'School', roles: '*' },
     { ic: '📣', label: 'Announcements', href: 'school.html#announce', an: 1, roles: '*' },
-    { ic: '👥', label: 'People', href: 'school.html#people', roles: 'coordinator head_of_department inclusion_lead' },
+    { ic: '🎓', label: 'Grade team', href: 'grade-team.html', roles: 'principal vice_principal assistant_principal it inclusion_lead coordinator' },
     { ic: '👩‍🏫', label: 'Staff room', href: 'staff-room.html', roles: '*' },
     { ic: '🏫', label: 'School community', href: 'school-community.html', roles: '*' },
     { ic: '💬', label: 'Messages', href: 'messages.html', roles: '*' }
@@ -67,6 +71,7 @@
     { ic: '📅', label: 'Weekly plans', href: 'planner.html?mode=weeks' },
     { ic: '🗂️', label: 'Unit plans', href: 'planner.html?mode=units' },
     { ic: '📘', label: 'Lessons and quizzes', href: 'teacher-courses.html' },
+    { ic: '📑', label: 'Subject plans', href: 'planner.html?mode=subject' },
     { head: 'My data' },
     { ic: '📋', label: 'Attendance', href: 'school.html#attendance' },
     { ic: '📊', label: 'Class progress', href: 'school.html#dashboard' },
@@ -77,6 +82,7 @@
     { ic: '💛', label: 'Wellbeing', href: 'wellbeing.html', roles: 'inclusion_team' },
     { head: 'School' },
     { ic: '📣', label: 'Announcements', href: 'announcements.html', an: 1 },
+    { ic: '🎓', label: 'Grade team', href: 'grade-team.html' },
     { ic: '👩‍🏫', label: 'Staff room', href: 'staff-room.html' },
     { ic: '🏫', label: 'School community', href: 'school-community.html' },
     { ic: '💬', label: 'Messages', href: 'messages.html' }
@@ -112,7 +118,7 @@
         window.TN_ALSO_PARENT = !!(data && data.also_parent);
         try {
           const { data: sc } = await db.rpc('my_schools');
-          const LEAD = ['principal', 'vice_principal', 'assistant_principal', 'coordinator', 'head_of_department', 'inclusion_lead', 'admin_staff'];
+          const LEAD = ['principal', 'vice_principal', 'assistant_principal', 'it', 'coordinator', 'head_of_department', 'inclusion_lead', 'admin_staff'];
           window.TN_SCHOOL = (sc || []).find(s => LEAD.includes(s.my_role)) || (sc || [])[0] || null;
           try { sessionStorage.setItem('tn_school_ctx', JSON.stringify(window.TN_SCHOOL)); } catch (_) {}
         } catch (_) { window.TN_SCHOOL = null; }
@@ -132,7 +138,7 @@
     let view = inParent ? 'parent' : role;
     const sc = window.TN_SCHOOL;
     if (sc && role !== 'admin') {
-      view = ['principal', 'vice_principal', 'assistant_principal', 'coordinator', 'head_of_department', 'inclusion_lead', 'admin_staff'].includes(sc.my_role) ? 'school_leader'
+      view = ['principal', 'vice_principal', 'assistant_principal', 'it', 'coordinator', 'head_of_department', 'inclusion_lead', 'admin_staff'].includes(sc.my_role) ? 'school_leader'
         : (sc.my_role === 'parent' || role === 'parent') ? 'school_parent' : (sc.my_role === 'student' || role === 'student') ? 'school_student' : 'school_teacher';
       window.TN_ROLE = view;
       schoolBrand(sc, view);

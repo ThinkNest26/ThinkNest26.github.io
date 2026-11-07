@@ -67,7 +67,8 @@ async function startSchool() {
   };
   paint();
   const ROLE_TABS = {
-    principal: null, vice_principal: null, assistant_principal: null, it: null, inclusion_lead: null,      // full access: everything
+    principal: ['overview', 'dashboard', 'attendance', 'reports', 'announce', 'evidence', 'people', 'import', 'settings'],
+    vice_principal: null, assistant_principal: null, it: null, inclusion_lead: null,      // full access: everything
     coordinator: ['dashboard', 'attendance', 'coverage', 'reports', 'announce'],                           // grade level leader: their grades
     head_of_department: ['coverage', 'announce'],                                                          // subject coordinator: their subject
     admin_staff: ['attendance', 'announce'] };                                                             // school admin: nothing academic

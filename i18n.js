@@ -1865,7 +1865,12 @@
 "👁️ Preview as a role": "👁️ المعاينة بدور آخر",
 "👁️ Start preview": "👁️ ابدأ المعاينة",
 "Exit preview": "إنهاء المعاينة",
-"👁️ Preview this page": "👁️ عاين هذه الصفحة"
+"👁️ Preview this page": "👁️ عاين هذه الصفحة",
+"My week": "أسبوعي",
+"My weekly calendar": "تقويمي الأسبوعي",
+"🗓️ My weekly calendar": "🗓️ تقويمي الأسبوعي",
+"➕ Add to my calendar": "➕ أضف إلى تقويمي",
+"📋 Waiting for your review": "📋 بانتظار مراجعتك"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

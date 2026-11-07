@@ -2159,3 +2159,21 @@ html.tn-pv .side { box-shadow: inset -4px 0 0 #8E5BD8; }
 .pvp-extra { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; } .pvp-extra label { display: grid; gap: 4px; font-weight: 700; font-size: .85rem; color: #4A4E5E; }
 .pvp-extra select { font: inherit; padding: 8px 10px; border: 2px solid #E4E6F1; border-radius: 10px; }
 @media (max-width: 640px) { .pvp-roles { grid-template-columns: 1fr 1fr; } }
+/* my weekly calendar */
+.mw-page #mw { display: grid; gap: 14px; }
+.mw-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; } .mw-bar > b { font-size: 1.1rem; min-width: 200px; text-align: center; } .mw-bar .btn { margin-left: auto; border: 0; cursor: pointer; font: inherit; font-weight: 800; }
+.mw-todo { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; background: #FFF8EC; border: 1px solid #F6E3BF; border-radius: 14px; padding: 10px 14px; } .mw-todo a { font-weight: 800; color: #8A4B00; text-decoration: none; background: #fff; border-radius: 10px; padding: 6px 10px; }
+.mw-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+.mw-day { background: #fff; border: 1px solid #E4E6F1; border-radius: 16px; padding: 10px; display: grid; grid-template-rows: auto 1fr auto; min-height: 260px; gap: 8px; }
+.mw-day.today { border: 2px solid var(--school); box-shadow: 0 6px 18px rgba(30,35,82,.08); } .mw-day.wkend { background: #FAFAFD; }
+.mw-day header { display: grid; } .mw-day header b { color: var(--school); } .mw-day header span { font-size: .82rem; color: #6E7485; }
+.mw-list { display: grid; gap: 6px; align-content: start; } .mw-none { color: #C2C6D6; text-align: center; }
+.mw-item { display: flex; gap: 6px; align-items: flex-start; text-align: left; font: inherit; font-size: .84rem; border: 0; border-left: 4px solid var(--school2); background: #F7F8FD; border-radius: 10px; padding: 6px 8px; cursor: pointer; text-decoration: none; color: #1D2026; width: 100%; }
+.mw-item div { display: grid; } .mw-item small { color: #6E7485; font-size: .74rem; } .mw-item.k-obs { border-left-color: #2FA08A; } .mw-item.k-deadline { border-left-color: #E05A47; } .mw-item.k-event { border-left-color: #8E5BD8; }
+.mw-plus { border: 1.5px dashed #D9DCEB; background: none; border-radius: 10px; color: #9AA0B5; font-size: 1.1rem; cursor: pointer; padding: 2px; } .mw-plus:hover { color: var(--school); border-color: var(--school); }
+.mw-dlg { border: 0; border-radius: 20px; padding: 0; max-width: 460px; width: calc(100% - 24px); } .mw-dlg::backdrop { background: rgba(20,24,52,.45); }
+.mw-dlg form { display: grid; gap: 10px; padding: 22px; } .mw-dlg h2 { margin: 0; } .mw-dlg label { display: grid; gap: 4px; font-weight: 700; font-size: .9rem; }
+.mw-dlg input, .mw-dlg select, .mw-dlg textarea { font: inherit; font-weight: 400; padding: 9px 11px; border: 2px solid #E4E6F1; border-radius: 10px; } .mw-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mw-dlg .btn { border: 0; cursor: pointer; font: inherit; font-weight: 800; } .mw-dlg .outline { border: 1px solid #3E4B94; color: #3E4B94; } .mw-dlg .ca-bar span { flex: 1; }
+@media (max-width: 1100px) { .mw-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .mw-grid { grid-template-columns: 1fr; } }
