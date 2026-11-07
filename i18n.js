@@ -1843,7 +1843,9 @@
 "School admin and teachers": "إداريو المدرسة والمعلمون",
 "Log in here": "سجّل الدخول هنا",
 "IT": "تقنية المعلومات",
-"School admin, IT and teachers": "إداريو المدرسة وتقنية المعلومات والمعلمون"
+"School admin, IT and teachers": "إداريو المدرسة وتقنية المعلومات والمعلمون",
+"Principals, deputy principals and PYP coordinators": "المديرون ونوابهم ومنسقو برنامج السنوات الابتدائية",
+"Coordinators, grade level leaders, teachers, admin and IT": "المنسقون وقادة المراحل والمعلمون والإداريون وتقنية المعلومات"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times
