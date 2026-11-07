@@ -105,7 +105,7 @@
 "Your account": "حسابك",
 "Phone number": "رقم الهاتف",
 "Send request": "إرسال الطلب",
-"New password": "كلمة المرور الجديدة",
+"New password": "كلمة مرور جديدة",
 "Thank you! 📬": "شكرًا لك! 📬",
 "Send message": "إرسال الرسالة",
 "I’M OFF DUTY!": "انتهى دوامي!",
@@ -1257,7 +1257,7 @@
 "💡 Suggested next steps": "💡 خطوات مقترحة",
 "🎯 Objectives: where are the gaps?": "🎯 الأهداف: أين الفجوات؟",
 "👩‍🎓 Students": "👩‍🎓 الطلاب",
-"⬇ Download CSV": "⬇ تنزيل CSV",
+"⬇ Download CSV": "⬇ نزّل ملف CSV",
 "Average": "المتوسط",
 "Completed": "منجز",
 "Status": "الحالة",
@@ -1764,7 +1764,22 @@
 "💬 Feedback": "💬 ملاحظات",
 "Details": "التفاصيل",
 "Schools": "المدارس",
-"One private, branded space to lead your whole school.": "مساحة خاصة تحمل هوية مدرستك لقيادة المدرسة كلها."
+"One private, branded space to lead your whole school.": "مساحة خاصة تحمل هوية مدرستك لقيادة المدرسة كلها.",
+"Choose your own password": "اختر كلمة المرور الخاصة بك",
+"Save my password": "احفظ كلمة المرور",
+"🔑 Staff logins": "🔑 بيانات دخول الموظفين",
+"🔑 Generate starting passwords": "🔑 أنشئ كلمات مرور أولية",
+"🏫 Put students into classes by grade and section": "🏫 ضع الطلاب في فصول حسب الصف والشعبة",
+"📋 School list only: teachers create classes and choose their students": "📋 قائمة المدرسة فقط: ينشئ المعلمون الفصول ويختارون طلابهم",
+"My data": "بياناتي",
+"My students": "طلابي",
+"My observations": "زياراتي الصفية",
+"📥 My observations": "📥 زياراتي الصفية",
+"🗂️ Unit and weekly plans": "🗂️ خطط الوحدات والخطط الأسبوعية",
+"💬 Post comment": "💬 انشر التعليق",
+"🔑 New passwords for the whole class": "🔑 كلمات مرور جديدة للفصل كله",
+"⬇ Download for parents (CSV)": "⬇ نزّل لأولياء الأمور (CSV)",
+"🔎 Search a name": "🔎 ابحث عن اسم"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

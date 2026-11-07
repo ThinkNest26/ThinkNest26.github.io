@@ -49,8 +49,11 @@
   MENUS.school_teacher = [
     { ic: '🏠', label: 'Home', href: 'teacher-dashboard.html' },
     { ic: '📣', label: 'Announcements', href: 'announcements.html', an: 1 },
-    { ic: '🏫', label: 'My Classes', dyn: 'classes', items: [['classes.html', 'All my classes'], ['teacher-attendance.html', 'Attendance overview'], ['inclusion.html', '🧩 Inclusion'], ['wellbeing.html', '💛 Wellbeing']] },
-    { ic: '📘', label: 'Lessons', items: [['planner.html', '🗂️ Unit planner'], ['observe.html', '👀 Observations'], ['teacher-courses.html', 'My courses'], ['teacher-calendar.html', 'Live classes'], ['teacher-insights.html', '📊 Insights'], ['teacher-certificates.html', '🏅 Certificates']] },
+    { ic: '🏫', label: 'My Classes', dyn: 'classes', items: [['classes.html', 'All my classes'], ['classes.html?new=1', '➕ New class']] },
+    { ic: '📊', label: 'My data', items: [['school.html#dashboard', '📊 Dashboard'], ['school.html#attendance', '📋 Attendance'], ['school.html#coverage', '🗺️ Coverage']] },
+    { ic: '📘', label: 'Teaching', items: [['planner.html', '🗂️ Unit and weekly plans'], ['teacher-courses.html', 'My courses'], ['teacher-calendar.html', 'Live classes'], ['teacher-certificates.html', '🏅 Certificates']] },
+    { ic: '🧩', label: 'My students', items: [['inclusion.html', '🧩 Inclusion'], ['wellbeing.html', '💛 Wellbeing']] },
+    { ic: '👀', label: 'My observations', href: 'observe.html' },
     { ic: '💬', label: 'Messages & community', items: [['messages.html', 'Messages'], ['school-community.html', '🏫 School community'], ['staff-room.html', '👩‍🏫 Staff room']] },
     { ic: '🧰', label: 'Resources', items: [['revision.html', 'Revision Hub'], ['curriculum.html', 'Curriculum guide']] }
   ];
@@ -277,6 +280,29 @@
   }
 
   try { const c = JSON.parse(sessionStorage.getItem('tn_school_ctx') || 'null'); if (c && c.color_primary) { document.documentElement.style.setProperty('--school', c.color_primary); document.documentElement.style.setProperty('--school2', c.color_accent || '#F27A6F'); } } catch (_) {}
+  async function firstPassword() {
+    let u = null; try { const { data } = await db.auth.getSession(); u = data.session && data.session.user; } catch (_) { return; }
+    if (!u || !(u.user_metadata || {}).must_change_password || document.getElementById('tn-pw1')) return;
+    document.body.insertAdjacentHTML('beforeend', `<div class="tn-pw1" id="tn-pw1" role="dialog" aria-modal="true" aria-labelledby="tn-pw1-h"><form class="tn-pw1-card" id="tn-pw1-f">
+      <div class="tn-pw1-ic" aria-hidden="true">🔑</div><h2 id="tn-pw1-h">Choose your own password</h2>
+      <p>Welcome to Think Nest! You logged in with a starting password from your school. Please choose your own password now. Only you will know it.</p>
+      <label>New password <input type="password" name="p1" minlength="8" required autocomplete="new-password" placeholder="At least 8 characters"></label>
+      <label>Type it again <input type="password" name="p2" minlength="8" required autocomplete="new-password"></label>
+      <p class="tn-pw1-err" role="alert" hidden></p><button class="btn btn-red">Save my password</button></form></div>`);
+    const f = document.getElementById('tn-pw1-f'), err = f.querySelector('.tn-pw1-err');
+    setTimeout(() => f.p1.focus(), 50);
+    f.onsubmit = async e => {
+      e.preventDefault(); err.hidden = true;
+      if (f.p1.value.length < 8) { err.textContent = 'Please use at least 8 characters.'; err.hidden = false; return; }
+      if (f.p1.value !== f.p2.value) { err.textContent = 'The two passwords don’t match.'; err.hidden = false; return; }
+      const b = f.querySelector('button'); b.disabled = true;
+      const { error } = await db.auth.updateUser({ password: f.p1.value, data: { must_change_password: false } });
+      b.disabled = false;
+      if (error) { err.textContent = (typeof friendly === 'function' ? friendly(error) : error.message); err.hidden = false; return; }
+      document.getElementById('tn-pw1').remove(); if (typeof say === 'function') say('🔑 Your new password is saved.');
+    };
+  }
+  document.addEventListener('DOMContentLoaded', () => setTimeout(firstPassword, 600));
   window.buildNav = build;
   window.TN_MENUS = MENUS;
   window.TN_ROLE = null;

@@ -42,7 +42,10 @@ async function startSchool() {
   const { user, profile } = await initTeacher();
   const box = document.getElementById('school');
   const { data: schools, error } = await db.rpc('my_schools');
-  const mine = (schools || []).filter(s => SC_LEADERS.includes(s.my_role) || profile.role === 'admin');
+  const leaderOf = (schools || []).filter(s => SC_LEADERS.includes(s.my_role) || profile.role === 'admin');
+  const staffOf = (schools || []).filter(s => !['student', 'parent'].includes(s.my_role));
+  const teacherMode = !leaderOf.length && staffOf.length > 0;
+  const mine = leaderOf.length ? leaderOf : staffOf;
   if (error || !mine.length) {
     const { data: req } = await db.from('school_requests').select('school_name, status').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1);
     box.innerHTML = req && req.length && req[0].status === 'pending'
@@ -59,7 +62,7 @@ async function startSchool() {
     document.documentElement.style.setProperty('--school2', S.color_accent || '#F27A6F');
   };
   paint();
-  const tabs = [['overview', '🏠 Overview'], ['dashboard', '📊 Dashboard'], ['attendance', '📋 Attendance'], ['coverage', '🗺️ Coverage'], ['reports', '📝 Reports'], ['announce', '📣 Announcements']].concat(['principal', 'vice_principal', 'assistant_principal', 'coordinator'].includes(S.my_role) || profile.role === 'admin' ? [['evidence', '📂 Evidence']] : [], [['people', '👥 People']]).concat(canManage ? [['import', '📥 Import']] : [], [['settings', '⚙️ School settings']]);
+  const tabs = teacherMode ? [['dashboard', '📊 Dashboard'], ['attendance', '📋 Attendance'], ['coverage', '🗺️ Coverage']] : [['overview', '🏠 Overview'], ['dashboard', '📊 Dashboard'], ['attendance', '📋 Attendance'], ['coverage', '🗺️ Coverage'], ['reports', '📝 Reports'], ['announce', '📣 Announcements']].concat(['principal', 'vice_principal', 'assistant_principal', 'coordinator'].includes(S.my_role) || profile.role === 'admin' ? [['evidence', '📂 Evidence']] : [], [['people', '👥 People']]).concat(canManage ? [['import', '📥 Import']] : [], [['settings', '⚙️ School settings']]);
   box.innerHTML = `<section class="sc-hero" id="sc-hero"></section>
     ${mine.length > 1 ? `<label class="sc-switch">School <select id="sc-pick">${mine.map(s => `<option value="${s.id}" ${s.id === sid ? 'selected' : ''}>${SC_E(s.name)}</option>`).join('')}</select></label>` : ''}
     <div class="tabs sc-tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="false" data-sct="${k}">${l}</button>`).join('')}</div>
@@ -67,7 +70,7 @@ async function startSchool() {
   const pick = document.getElementById('sc-pick'); if (pick) pick.onchange = () => { sessionStorage.setItem('tn_school', pick.value); location.reload(); };
   const hero = () => {
     document.getElementById('sc-hero').innerHTML = `<div class="sc-logo">${S.logo_url ? `<img src="${SC_E(S.logo_url)}" alt="${SC_E(S.name)} logo">` : `<span>${SC_E(S.name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</span>`}</div>
-      <div><p class="sc-kicker">Think Nest for Schools</p><h1>${SC_E(S.name)}</h1><p class="sc-meta">${SC_E(S.academic_year)} · You are <b>${SC_E(scRole(S.my_role) || 'Admin')}</b></p></div>`;
+      <div><p class="sc-kicker">Think Nest for Schools</p><h1>${SC_E(S.name)}</h1><p class="sc-meta">${SC_E(S.academic_year)} · You are <b>${SC_E(scRole(S.my_role) || 'Admin')}</b>${teacherMode ? ' · Showing your classes' : ''}</p></div>`;
   };
   hero();
   const show = k => {
@@ -140,7 +143,7 @@ async function startSchool() {
     };
     const flags = w => [w.avg != null && w.avg < 60 ? `<span class="sc-flag gap">Scores ${w.avg}%</span>` : '', w.att != null && w.att < 80 ? `<span class="sc-flag att">Attendance ${w.att}%</span>` : '',
       w.done != null && w.done < 50 ? `<span class="sc-flag miss">Work done ${w.done}%</span>` : ''].join('');
-    pane().innerHTML = `${scope.length ? `<p class="note">🔎 Showing your area: <b>${SC_E(scope.join(', '))}</b></p>` : ''}
+    pane().innerHTML = `${teacherMode ? '<p class="note">👩‍🏫 Showing <b>your classes</b> only.</p>' : scope.length ? `<p class="note">🔎 Showing your area: <b>${SC_E(scope.join(', '))}</b></p>` : ''}
       <section class="in-cards sc-cards sc-cards6">
         <div class="in-card"><span>🎯</span><b>${pc(T.avg)}</b><small>Average score</small></div>
         <div class="in-card"><span>📚</span><b>${pc(T.done)}</b><small>Work completed</small></div>
@@ -359,7 +362,7 @@ async function startSchool() {
         <div class="in-card"><span>🟡</span><b>${tot.total ? Math.round(100 * tot.taught / tot.total) : 0}%</b><small>Taught</small></div>
         <div class="in-card"><span>🟢</span><b>${tot.total ? Math.round(100 * tot.assessed / tot.total) : 0}%</b><small>Assessed</small></div>
         <div class="in-card"><span>⚪</span><b>${tot.total - tot.taught}</b><small>Not covered yet</small></div></section>
-      <section class="panel"><div class="in-head"><h2>🗺️ Coverage by grade and subject</h2><button type="button" class="link-btn" id="cv-set">⚙️ Curriculum for each subject</button></div>
+      <section class="panel"><div class="in-head"><h2>🗺️ Coverage by grade and subject</h2>${teacherMode ? '<span class="meta">Your grades, from your own courses</span>' : '<button type="button" class="link-btn" id="cv-set">⚙️ Curriculum for each subject</button>'}</div>
         ${O.length ? `<div class="in-scroll"><table class="sc-cov"><thead><tr><th>Grade</th>${subjects.map(sj => `<th>${SC_E(sj)}</th>`).join('')}</tr></thead><tbody>
           ${grades.map(g => `<tr><th>${SC_E(g)}</th>${subjects.map(sj => { const x = cell(g, sj); if (!x) return '<td></td>';
             if (!x.total) return `<td><button type="button" class="sc-cv empty" data-g="${SC_E(g)}" data-s="${SC_E(sj)}"><small>No objectives yet</small></button></td>`;
@@ -369,7 +372,7 @@ async function startSchool() {
           <p class="sc-legend"><span><i style="background:#2FA08A"></i>Assessed</span><span><i style="background:#E8B22E"></i>Taught</span><span><i style="background:#6C8BE0"></i>Planned</span><span><i style="background:#E4E6F1"></i>Not covered yet</span></p>`
           : '<p class="meta">Choose your grades in School settings, and the curriculum for each subject, to see coverage.</p>'}
       </section><section id="cv-detail"></section>`;
-    document.getElementById('cv-set').onclick = () => { show('settings'); setTimeout(() => { const el = document.getElementById('sc-curmap'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300); };
+    const cvSet = document.getElementById('cv-set'); if (cvSet) cvSet.onclick = () => { show('settings'); setTimeout(() => { const el = document.getElementById('sc-curmap'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300); };
     pane().querySelectorAll('.sc-cv').forEach(b => b.onclick = () => covDetail(b.dataset.g, b.dataset.s));
     if (pick) covDetail(pick[0], pick[1]);
   }
@@ -534,7 +537,7 @@ async function startSchool() {
     const dLabel = new Date(atDay + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
     const ST = { absent: ['gap', '❌ Absent'], late: ['att', '⏰ Late'], excused: ['miss', '📝 Excused'], present: ['ok', '✅ Present'] };
     pane().innerHTML = `<div class="at-head"><label>Day <input type="date" id="at-day" value="${atDay}" max="${new Date().toISOString().slice(0, 10)}"></label><b>${dLabel}</b>
-        ${notYet.length ? `<button type="button" class="pill pill-soft" id="at-remind">🔔 Remind ${notYet.length} teacher${notYet.length === 1 ? '' : 's'}</button>` : ''}</div>
+        ${notYet.length && !teacherMode ? `<button type="button" class="pill pill-soft" id="at-remind">🔔 Remind ${notYet.length} teacher${notYet.length === 1 ? '' : 's'}</button>` : ''}</div>
       <section class="in-cards sc-cards sc-cards6">
         <div class="in-card ${notYet.length ? 'warn' : ''}"><span>📋</span><b>${taken.length}/${C.length}</b><small>Registers taken</small></div>
         <div class="in-card"><span>🎯</span><b>${rate == null ? '–' : rate + '%'}</b><small>Attendance</small></div>
@@ -580,6 +583,7 @@ async function startSchool() {
       <td>${canManage && p.user_id !== user.id ? '<button type="button" class="link-btn" data-rm>Remove</button>' : ''}</td></tr>`;
     const group = (title, list) => list.length ? `<h3 class="sc-h3">${title} <span class="count">${list.length}</span></h3><div class="in-scroll"><table class="ac-table"><thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Scope</th><th></th></tr></thead><tbody>${list.map(row).join('')}</tbody></table></div>` : '';
     const isAdmin = S.my_role === 'principal' || profile.role === 'admin';
+    const staffPool2 = P.filter(p => !['student', 'parent'].includes(p.role) && p.user_id !== user.id && (isAdmin || p.role !== 'principal'));
     const admins = P.filter(p => p.role === 'principal'), staffPool = P.filter(p => !['principal', 'student', 'parent'].includes(p.role) && p.email);
     const adminPanel = `<section class="panel sc-admins"><div class="in-head"><h2>🛡️ School admins <span class="count">${admins.length}</span></h2></div>
       <p class="meta">Admins have full access to everything in ${SC_E(S.name)}: settings, people, data and every report. ${isAdmin ? 'You can add as many as you need.' : 'Only an admin can add or remove admins.'}</p>
@@ -597,6 +601,10 @@ async function startSchool() {
           <fieldset class="sc-scope" hidden><legend>Limit to grades (optional)</legend>${grades.map(g => `<label><input type="checkbox" name="g" value="${SC_E(g)}"> ${SC_E(g)}</label>`).join('')}</fieldset>
           <fieldset class="sc-scope" hidden><legend>Limit to subjects (optional)</legend>${SC_SUBJECTS.map(g => `<label><input type="checkbox" name="s" value="${g}"> ${g}</label>`).join('')}</fieldset>
           <button class="btn btn-red">Add to school</button></form></section>` : ''}
+      ${canManage ? `<section class="panel sc-logins"><h2>🔑 Staff logins</h2>
+        <p class="meta">Choose staff, then generate starting passwords. Each person logs in with their <b>school email</b> and the starting password, and chooses their own password the first time.</p>
+        ${staffPool2.length ? `<div class="sc-login-pick"><label class="remember"><input type="checkbox" id="sl-all"> <b>Select all</b></label>${staffPool2.map(p => `<label class="sc-chip"><input type="checkbox" value="${p.user_id}" data-sl><span>${SC_E(p.full_name)} · ${SC_E(scRole(p.role))}</span></label>`).join('')}</div>
+          <div class="ca-bar"><span class="meta" id="sl-n"></span><button type="button" class="btn btn-red" id="sl-go">🔑 Generate starting passwords</button></div><div id="sl-out"></div>` : '<p class="meta">Add staff first (above, or with 📥 Import).</p>'}</section>` : ''}
       <section class="panel"><h2>👥 People in ${SC_E(S.name)}</h2>
         ${group('🧭 Leadership team', P.filter(p => SC_LEADERS.includes(p.role) && p.role !== 'principal'))}${group('👩‍🏫 Teachers', P.filter(p => p.role === 'teacher'))}${group('🎒 Students', P.filter(p => p.role === 'student'))}
         ${P.length ? '' : '<p class="meta">No one yet.</p>'}</section>`;
@@ -614,6 +622,28 @@ async function startSchool() {
         b.disabled = false;
         if (er) return say(friendly(er));
         say(`✅ ${nm} added as ${scRole(f.role.value)}.`); people();
+      };
+    }
+    const slGo = document.getElementById('sl-go');
+    if (slGo) {
+      const boxes = () => [...pane().querySelectorAll('[data-sl]')], cnt = () => { const n = boxes().filter(b => b.checked).length; document.getElementById('sl-n').textContent = n ? n + ' chosen' : ''; };
+      document.getElementById('sl-all').onchange = e => { boxes().forEach(b => b.checked = e.target.checked); cnt(); };
+      pane().querySelector('.sc-login-pick').addEventListener('change', cnt);
+      slGo.onclick = async () => {
+        const ids = boxes().filter(b => b.checked).map(b => b.value); if (!ids.length) return say('Choose at least one person.');
+        if (!confirm(`Give ${ids.length} ${ids.length === 1 ? 'person' : 'people'} a new starting password? Their current password will stop working, and they’ll choose their own the next time they log in.`)) return;
+        slGo.disabled = true; slGo.textContent = 'Generating…';
+        const { data, error: er } = await db.functions.invoke(CA_FN_SCHOOL, { body: { action: 'staff_passwords', school_id: sid, user_ids: ids } });
+        slGo.disabled = false; slGo.textContent = '🔑 Generate starting passwords';
+        let msg = er && er.message; if (er) { try { const j = await er.context.json(); msg = j.error || msg; } catch (_) {} return say(msg); }
+        if (data && data.error) return say(data.error);
+        const R = (data.results || []), ok = R.filter(r => r.password);
+        document.getElementById('sl-out').innerHTML = `<p class="note">🔐 <b>Passwords are shown only now.</b> Print the login cards or download the list before leaving this page.</p>
+          <div class="in-scroll"><table class="ac-table"><thead><tr><th>Name</th><th>Email</th><th>Starting password</th></tr></thead><tbody>${R.map(r => `<tr><td>${SC_E(r.name)}</td><td>${SC_E(r.email || '')}</td><td>${r.password ? `<code>${SC_E(r.password)}</code>` : `<span class="sc-low">${SC_E(r.error || '')}</span>`}</td></tr>`).join('')}</tbody></table></div>
+          <div class="ca-bar"><button type="button" class="btn btn-red" id="sl-print">🖨️ Print login cards</button><button type="button" class="btn btn-white outline" id="sl-csv">⬇ Download CSV</button></div>`;
+        document.getElementById('sl-print').onclick = () => scStaffCards(ok, S);
+        document.getElementById('sl-csv').onclick = () => { const t = [['Name', 'Email', 'Starting password', 'Log in at']].concat(ok.map(r => [r.name, r.email, r.password, 'thinknestonline.com → Log in → Teacher'])).map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+          const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + t], { type: 'text/csv' })); a.download = 'staff-logins.csv'; document.body.appendChild(a); a.click(); a.remove(); };
       };
     }
     const af = document.getElementById('sc-admin-add');
@@ -701,6 +731,7 @@ async function startSchool() {
 
   // ----- Import (staff, or students with parents)
   let scExisting = new Set();
+  let scInto = true;
   function importTab() {
     db.rpc('school_people', { sid }).then(({ data }) => { scExisting = new Set((data || []).filter(p => p.role === 'student').map(p => (String(p.full_name || '') + '|' + String(p.grade || '')).toLowerCase())); });
     pane().innerHTML = `<section class="sc-imp-cards">
@@ -709,11 +740,15 @@ async function startSchool() {
           <div class="sc-imp-btns"><button type="button" class="pill pill-soft" data-tpl="staff">⬇ Template</button>
             <label class="btn btn-red sc-imp-up">📤 Choose file<input type="file" data-kind="staff" accept=".xlsx,.xls,.csv,.txt" hidden></label></div></article>
         <article class="panel sc-imp"><span class="sc-imp-ic">🎒</span><h2>Import students and parents</h2>
-          <p class="meta">Columns: <b>Full name, Grade, Section, Parent name, Parent email</b>. Classes are created for each grade and section.</p>
+          <p class="meta">Columns: <b>Full name, Grade, Section, Parent name, Parent email</b>.</p>
+          <fieldset class="sc-into"><legend>Classes</legend>
+            <label><input type="radio" name="sc-into" value="1" ${scInto ? 'checked' : ''}> 🏫 Put students into classes by grade and section</label>
+            <label><input type="radio" name="sc-into" value="0" ${scInto ? '' : 'checked'}> 📋 School list only: teachers create classes and choose their students</label></fieldset>
           <div class="sc-imp-btns"><button type="button" class="pill pill-soft" data-tpl="students">⬇ Template</button>
             <label class="btn btn-red sc-imp-up">📤 Choose file<input type="file" data-kind="students" accept=".xlsx,.xls,.csv,.txt" hidden></label></div></article>
       </section>
       <section id="sc-imp-out"></section>`;
+    pane().querySelectorAll('input[name="sc-into"]').forEach(r => r.onchange = () => { scInto = r.value === '1'; });
     pane().querySelectorAll('[data-tpl]').forEach(b => b.onclick = () => scTemplate(b.dataset.tpl));
     pane().querySelectorAll('input[type=file][data-kind]').forEach(inp => inp.onchange = async () => {
       const file = inp.files[0]; inp.value = ''; if (!file) return;
@@ -734,7 +769,7 @@ async function startSchool() {
       <p class="meta">File: <b>${SC_E(fname)}</b>${names.length > 1 ? ` · Sheet <select id="sc-sheet">${names.map(n => `<option ${n === best ? 'selected' : ''}>${SC_E(n)}</option>`).join('')}</select>` : ''}</p>
       <div class="sc-prev-sum">
         <span class="good">✅ ${ok.length} ${kind === 'staff' ? 'staff' : 'student' + (ok.length === 1 ? '' : 's')} ready</span>
-        ${kind === 'students' ? `<span>🏫 ${classes.length} class${classes.length === 1 ? '' : 'es'}: ${SC_E(classes.join(', ') || '–')}</span><span>👪 ${parents.length} parent${parents.length === 1 ? '' : 's'}</span>` : ''}
+        ${kind === 'students' ? (scInto ? `<span>🏫 ${classes.length} class${classes.length === 1 ? '' : 'es'}: ${SC_E(classes.join(', ') || '–')}</span>` : '<span>📋 School list only (no classes)</span>') + `<span>👪 ${parents.length} parent${parents.length === 1 ? '' : 's'}</span>` : ''}
         ${bad.length ? `<span class="bad">⚠️ ${bad.length} row${bad.length === 1 ? '' : 's'} with problems (they will be skipped)</span>` : ''}</div>
       ${bad.length ? `<div class="in-scroll"><table class="ac-table sc-bad"><thead><tr><th>Row</th><th>Name</th><th>Problem</th></tr></thead><tbody>${bad.map(r => `<tr><td>${r.row}</td><td>${SC_E(r.name || '–')}</td><td>${SC_E(r.problems.join('; '))}</td></tr>`).join('')}</tbody></table></div>` : ''}
       <details class="sc-ok-list"><summary>See the ${ok.length} row${ok.length === 1 ? '' : 's'} that will be imported</summary><div class="in-scroll"><table class="ac-table"><tbody>
@@ -753,7 +788,7 @@ async function startSchool() {
     for (let i = 0; i < rows.length; i += size) {
       const part = rows.slice(i, i + size);
       try {
-        const { data, error } = await db.functions.invoke(CA_FN_SCHOOL, { body: { action: 'school_import', school_id: sid, kind, rows: part } });
+        const { data, error } = await db.functions.invoke(CA_FN_SCHOOL, { body: { action: 'school_import', school_id: sid, kind, rows: part, into_classes: kind === 'students' ? scInto : undefined } });
         if (error) { let m = error.message; try { const j = await error.context.json(); m = j.error || m; } catch (_) {} throw new Error(m); }
         if (data && data.error) throw new Error(data.error);
         all.push(...(data.results || []));
@@ -793,7 +828,7 @@ async function startSchool() {
   }
 
   const start = (location.hash || '').slice(1);
-  show(tabs.some(t => t[0] === start) ? start : 'overview');
+  show(tabs.some(t => t[0] === start) ? start : tabs[0][0]);
   window.addEventListener('hashchange', () => {
     const k = (location.hash || '').slice(1);
     if (tabs.some(t => t[0] === k) && !document.querySelector(`[data-sct="${k}"][aria-selected="true"]`)) { show(k); window.scrollTo({ top: 0, behavior: 'smooth' }); }
@@ -876,6 +911,19 @@ function scTemplate(kind) {
   const t = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + t], { type: 'text/csv' })); a.download = kind === 'staff' ? 'staff-template.csv' : 'students-template.csv';
   document.body.appendChild(a); a.click(); a.remove();
+}
+
+// ---------- staff login cards ----------
+function scStaffCards(list, S) {
+  if (!list.length) return say('No passwords to print.');
+  const w = window.open('', '_blank'); if (!w) return say('Please allow pop-ups to print.');
+  w.document.write(`<html><head><meta charset="utf-8"><title>Staff login cards</title><style>body{font-family:Arial,sans-serif;margin:16px}.g{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .c{border:2px dashed #9AA0B5;border-radius:14px;padding:14px;break-inside:avoid}.s{color:${S.color_primary};font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.05em}.n{font-size:18px;font-weight:800;margin:4px 0 8px}
+    .r{font-size:14px;margin:3px 0}.r b{display:inline-block;width:130px;color:#555}code{font-size:15px;background:#F1F2F8;padding:2px 6px;border-radius:6px}.h{font-size:12px;color:#555;margin-top:8px}</style></head><body><div class="g">
+    ${list.map(r => `<div class="c"><div class="s">${SC_E(S.name)} · Think Nest</div><div class="n">${SC_E(r.name)}</div>
+      <div class="r"><b>Website</b>thinknestonline.com → Log in → Teacher</div><div class="r"><b>Email</b>${SC_E(r.email)}</div><div class="r"><b>Starting password</b><code>${SC_E(r.password)}</code></div>
+      <div class="h">You’ll choose your own password the first time you log in.</div></div>`).join('')}</div></body></html>`);
+  w.document.close(); setTimeout(() => w.print(), 400);
 }
 
 // ---------- Think Nest admin: school registrations and schools ----------

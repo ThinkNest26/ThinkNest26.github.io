@@ -40,7 +40,7 @@ function caPrint(list, place) {
 async function caInit() {
   const gid = Number(new URLSearchParams(location.search).get('id')); if (!gid) return;
   const { data: { session } } = await db.auth.getSession(); if (!session) return;
-  const [{ data: g }, { data: me }] = await Promise.all([db.from('study_groups').select('id, name, kind, owner_id, course_id').eq('id', gid).maybeSingle(), db.from('profiles').select('role').eq('id', session.user.id).maybeSingle()]);
+  const [{ data: g }, { data: me }] = await Promise.all([db.from('study_groups').select('id, name, kind, owner_id, course_id, school_id, grade').eq('id', gid).maybeSingle(), db.from('profiles').select('role').eq('id', session.user.id).maybeSingle()]);
   if (!g || g.kind !== 'class' || !(g.owner_id === session.user.id || (me && me.role === 'admin'))) return;
   // the button + panel
   const wait = () => document.querySelector('#ghead .ghead-actions');
@@ -129,7 +129,62 @@ async function caInit() {
     }
     if (a === 'more') { panel._done = null; rows = []; return step1(); }
   });
-  const open = () => { step1(); panel.hidden = false; panel.scrollIntoView({ behavior: 'smooth', block: 'start' }); setTimeout(() => { const t = panel.querySelector('#ca-names'); if (t) t.focus(); }, 300); };
+
+  // ===== school classes: choose students from the school list, then class login cards =====
+  const csv = (name, rows) => { const t = rows.map(r => r.map(v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + t], { type: 'text/csv' })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); };
+  const loginResults = (box, R, note) => {
+    const ok = R.filter(r => r.password);
+    box.innerHTML = `${note || ''}<p class="note">🔐 <b>Passwords are shown only now.</b> Print the login cards or download the list to share with parents.</p>
+      <div class="in-scroll"><table class="ac-table"><thead><tr><th>Student</th><th>Username</th><th>Password</th></tr></thead><tbody>${R.map(r => `<tr><td>${caE(r.name)}</td><td><code>${caE(r.username || '')}</code></td><td>${r.password ? `<code>${caE(r.password)}</code>` : `<span class="meta">${caE(r.error || '')}</span>`}</td></tr>`).join('')}</tbody></table></div>
+      <div class="ca-bar"><button type="button" class="btn btn-red" data-cl="print">🖨️ Print login cards</button><button type="button" class="btn btn-white outline" data-cl="csv">⬇ Download for parents (CSV)</button></div>`;
+    box.querySelector('[data-cl="print"]').onclick = () => caPrint(ok, g.name);
+    box.querySelector('[data-cl="csv"]').onclick = () => csv(`${g.name.replace(/[^\w]+/g, '-')}-logins.csv`, [['Student', 'Username', 'Password', 'Log in at']].concat(ok.map(r => [r.name, r.username, r.password, 'thinknestonline.com → Log in → Student'])));
+  };
+  const classPasswords = async (box, ids) => {
+    box.innerHTML = '<p class="empty">Generating passwords…</p>';
+    try { const r = await caCall({ action: 'class_passwords', group_id: gid, student_ids: ids || [] }); loginResults(box, r.results || []); }
+    catch (err) { box.innerHTML = `<p class="note">⚠️ ${caE(err.message)}</p>`; }
+  };
+  async function schoolPick() {
+    panel.innerHTML = '<p class="empty">Loading your school’s students…</p>';
+    const { data, error } = await db.rpc('class_roster', { gid });
+    if (error) { panel.innerHTML = `<div class="ca-top"><h2>➕ Add students</h2><button type="button" class="link-btn" data-ca="close">✕</button></div><p class="note">${caE(/class_roster|function/.test(error.message || '') ? 'Your school needs database update 70 for this. Please tell your school admin.' : error.message)}</p>`; return; }
+    const L = data || [], grades = [...new Set(L.map(x => x.grade).filter(Boolean))];
+    let gf = g.grade && grades.includes(g.grade) ? g.grade : '', q = '', chosen = new Set();
+    const draw = () => {
+      const shown = L.filter(x => (!gf || x.grade === gf) && (!q || x.full_name.toLowerCase().includes(q.toLowerCase())));
+      const free = shown.filter(x => !x.in_class);
+      panel.innerHTML = `<div class="ca-top"><h2>➕ Add students to ${caE(g.name)}</h2><button type="button" class="link-btn" data-ca="close" aria-label="Close">✕</button></div>
+        <p class="meta">Choose your students from the school’s list. ${L.filter(x => x.in_class).length} already in this class.</p>
+        ${L.length ? `<div class="ca-filters"><input type="search" id="ca-q" placeholder="🔎 Search a name" value="${caE(q)}">
+          <select id="ca-g"><option value="">All grades</option>${grades.map(x => `<option ${gf === x ? 'selected' : ''}>${caE(x)}</option>`).join('')}</select>
+          <button type="button" class="link-btn" id="ca-all">${free.length && free.every(x => chosen.has(x.id)) ? 'Clear these' : `Select all ${free.length}`}</button></div>
+        <div class="ca-roster">${shown.map(x => `<label class="ca-st ${x.in_class ? 'in' : ''}"><input type="checkbox" value="${x.id}" ${x.in_class || chosen.has(x.id) ? 'checked' : ''} ${x.in_class ? 'disabled' : ''}>
+            <span><b>${caE(x.full_name)}</b><small>${caE([x.grade, x.section].filter(Boolean).join(' '))}${x.in_class ? ' · ✓ In this class' : x.other_classes ? ' · Also in ' + caE(x.other_classes) : ''}</small></span></label>`).join('') || '<p class="meta">No students match.</p>'}</div>
+        <div class="ca-bar"><span class="meta">${chosen.size} chosen</span><button type="button" class="btn btn-red" id="ca-addsel" ${chosen.size ? '' : 'disabled'}>Add ${chosen.size || ''} student${chosen.size === 1 ? '' : 's'} to the class</button></div>`
+        : '<p class="note">There are no students on your school’s list yet. Your school admin adds them with 📥 Import.</p>'}`;
+      const qi = panel.querySelector('#ca-q'); if (qi) qi.oninput = () => { q = qi.value; const p = qi.selectionStart; draw(); const n = panel.querySelector('#ca-q'); n.focus(); n.setSelectionRange(p, p); };
+      const gs = panel.querySelector('#ca-g'); if (gs) gs.onchange = () => { gf = gs.value; draw(); };
+      const all = panel.querySelector('#ca-all'); if (all) all.onclick = () => { const every = free.every(x => chosen.has(x.id)); free.forEach(x => every ? chosen.delete(x.id) : chosen.add(x.id)); draw(); };
+      panel.querySelectorAll('.ca-roster input:not([disabled])').forEach(cb => cb.onchange = () => { cb.checked ? chosen.add(cb.value) : chosen.delete(cb.value); draw(); });
+      const go = panel.querySelector('#ca-addsel');
+      if (go) go.onclick = async () => {
+        go.disabled = true; const ids = [...chosen];
+        const { data: n, error: er } = await db.rpc('add_students_to_class', { gid, ids });
+        if (er) { go.disabled = false; return say(er.message); }
+        panel.innerHTML = `<div class="ca-top"><h2>✅ ${n} student${n === 1 ? '' : 's'} added to ${caE(g.name)}</h2><button type="button" class="link-btn" data-ca="close" aria-label="Close">✕</button></div>
+          <p>Next, give them their logins, so parents can help them log in at home.</p>
+          <div class="ca-bar"><button type="button" class="btn btn-red" id="ca-pw-new">🔑 Generate logins for these ${n} students</button><button type="button" class="link-btn" id="ca-more">➕ Add more students</button></div><div id="ca-pw-out"></div>`;
+        panel.querySelector('#ca-pw-new').onclick = () => classPasswords(panel.querySelector('#ca-pw-out'), ids);
+        panel.querySelector('#ca-more').onclick = () => schoolPick();
+        if (typeof caLogins === 'function') caLogins();
+      };
+    };
+    draw();
+  }
+
+  const open = () => { if (g.school_id) schoolPick(); else step1(); panel.hidden = false; panel.scrollIntoView({ behavior: 'smooth', block: 'start' }); setTimeout(() => { const t = panel.querySelector('#ca-names'); if (t) t.focus(); }, 300); };
   document.getElementById('ca-open').addEventListener('click', open);
   if (/[?&]add=1/.test(location.search)) open();
 
@@ -171,6 +226,19 @@ async function caInit() {
   const memTab = document.getElementById('t-mem');
   const logins = document.createElement('div'); logins.className = 'panel ca-logins'; logins.id = 'ca-logins'; memTab.prepend(logins);
   async function caLogins() {
+    if (g.school_id) {
+      const { data: ros } = await db.rpc('class_roster', { gid });
+      const L = (ros || []).filter(x => x.in_class);
+      logins.innerHTML = `<div class="ca-top"><h3>🔑 Student logins</h3>${L.length ? '<button type="button" class="btn btn-red" id="ca-pw-all">🔑 New passwords for the whole class</button>' : ''}</div>
+        <p class="meta">Give the whole class new passwords, then print login cards or download the list to share with parents. Their usernames stay the same.</p>
+        ${L.length ? `<div class="in-scroll"><table class="ac-table"><thead><tr><th>Student</th><th>Username</th><th></th></tr></thead><tbody>
+          ${L.map(s2 => `<tr data-sid="${s2.id}"><td>${caE(s2.full_name)}</td><td>${s2.username ? `<code>${caE(s2.username)}</code>` : '<span class="meta">Own email</span>'}</td><td>${s2.username ? '<button type="button" class="pill pill-soft" data-reset>🔄 New password</button><span class="ac-newpw"></span>' : ''}</td></tr>`).join('')}</tbody></table></div>`
+          : '<p class="meta">No students in this class yet. Click ➕ Add students to choose them from the school list.</p>'}
+        <div id="ca-pw-out2"></div>`;
+      const all = document.getElementById('ca-pw-all');
+      if (all) all.onclick = () => { if (!confirm('Give every student in this class a new password? Their old passwords will stop working, so share the new login cards with parents.')) return; classPasswords(document.getElementById('ca-pw-out2')); };
+      return;
+    }
     const [{ data: mine }, { data: mem }] = await Promise.all([db.rpc('my_created_students'), db.rpc('group_member_list', { gid })]);
     const ids = new Set((mem || []).map(m => m.user_id)), list = (mine || []).filter(s => ids.has(s.id));
     logins.innerHTML = `<h3>🔑 Student logins</h3>` + (list.length ? `<div class="in-scroll"><table class="ac-table"><thead><tr><th>Student</th><th>Username</th><th></th></tr></thead><tbody>

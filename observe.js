@@ -49,9 +49,9 @@ async function startObserve() {
   const lvLabel = n => n ? ((R.scale.find(x => x.n === Number(n)) || {}).label || n) : 'Not seen';
   const lvClass = n => { n = Number(n); if (!n) return 'none'; const r = n / R.scale.length; return r >= 0.99 ? 'top' : r >= 0.8 ? 'hi' : r >= 0.65 ? 'ok' : r >= 0.45 ? 'mid' : r > 0.2 ? 'lo' : 'vlo'; };
   const tabs = isLead ? [['new', '➕ New observation'], ['list', '📋 Observations'], ['trends', '📈 Trends'], ['mine', '📥 My feedback']].concat(canRubric ? [['rubric', '⚙️ Rubric']] : [])
-    : [['mine', '📥 My feedback'], ['new', '🤝 Peer observation'], ['list', '✍️ Observations I wrote']];
+    : [['mine', '📥 My observations']];
   box.innerHTML = `<div class="page-head"><h1 class="title">👀 Lesson observations</h1></div>
-    <p class="hint">${isLead ? 'Observe lessons with your school’s rubric, share feedback with teachers, and see trends across the school.' : 'Read feedback from your observations, add your reflections, and observe colleagues.'}</p>
+    <p class="hint">${isLead ? 'Observe lessons with your school’s rubric, share feedback with teachers, and see trends across the school.' : 'Your lesson observation reports appear here once your observer shares them. Read the feedback and reply with your comments.'}</p>
     <div class="tabs sc-tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="false" data-ot="${k}">${l}</button>`).join('')}</div><section id="ob-pane"></section>`;
   const pane = () => document.getElementById('ob-pane');
   const show = (k, arg) => { document.querySelectorAll('[data-ot]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.ot === k))); ({ new: form, list, trends, mine, rubric })[k](arg); };
@@ -141,21 +141,30 @@ async function startObserve() {
       <div class="ob-v-head"><div><span class="ob-card-k">${OB_KIND[o.kind] || ''}</span><h2>${OB_E(nameOf(o.teacher_id))}</h2>
         <p class="meta">${obDate(o.observed_on)}${o.class_name ? ' · ' + OB_E(o.class_name) : ''}${o.subject ? ' · ' + OB_E(o.subject) : ''} · Observed by ${OB_E(nameOf(o.observer_id))}</p>${o.focus ? `<p><b>Focus:</b> ${OB_E(o.focus)}</p>` : ''}</div>
         <div class="ob-v-acts"><button type="button" class="pill pill-soft" id="ob-word">⬇ Word</button>${isObs && o.status === 'draft' ? '<button type="button" class="pill pill-soft" id="ob-edit">✏️ Edit</button><button type="button" class="btn btn-red" id="ob-share">📤 Share</button>' : ''}
-          ${isObs || isLead ? '<button type="button" class="link-btn danger" id="ob-del">Delete</button>' : ''}</div></div>
+          ${isLead ? '<button type="button" class="link-btn danger" id="ob-del">Delete</button>' : ''}</div></div>
       ${o.status === 'draft' ? '<p class="note">✏️ Draft: the teacher can’t see this yet.</p>' : ''}
       <div class="ob-v-crits">${grouped(crit, c => `<div class="ob-v-c"><div><b>${OB_E(cTitle(c))}</b>${(o.notes || {})[c.key] ? `<p>${OB_E(o.notes[c.key]).replace(/\n/g, '<br>')}</p>` : ''}</div>
         <span class="ob-chip lv-${lvClass(o.ratings[c.key])}">${OB_E(lvLabel(o.ratings[c.key]))}</span></div>`) || '<p class="meta">No criteria rated.</p>'}</div>
       ${o.strengths ? `<h3 class="sc-h3">💪 Strengths</h3><p class="ob-text">${OB_E(o.strengths).replace(/\n/g, '<br>')}</p>` : ''}
       ${o.next_steps ? `<h3 class="sc-h3">🎯 Next steps</h3><p class="ob-text">${OB_E(o.next_steps).replace(/\n/g, '<br>')}</p>` : ''}
-      <h3 class="sc-h3">✍️ Teacher’s reflection</h3>
-      ${isMine ? `<textarea id="ob-ref" rows="4" maxlength="3000" placeholder="What went well? What will you try next? Is there support you’d like?">${OB_E(o.reflection || '')}</textarea>
-        <div class="ca-bar"><span class="meta">${o.read_at ? '✓ You read this on ' + obDate(o.read_at) : ''}</span><button type="button" class="btn btn-red" id="ob-reflect">${o.read_at ? '💾 Save reflection' : '✓ I’ve read this'}</button></div>`
-        : `<p class="ob-text">${o.reflection ? OB_E(o.reflection).replace(/\n/g, '<br>') : `<span class="meta">${o.read_at ? 'Read on ' + obDate(o.read_at) + ', no reflection yet.' : o.status === 'shared' ? 'Not read yet.' : ''}</span>`}</p>`}</section>`;
+      <h3 class="sc-h3">💬 Comments</h3>
+      ${o.reflection ? `<div class="ob-cm"><b>${OB_E(nameOf(o.teacher_id))}</b> <small class="meta">reflection</small><p>${OB_E(o.reflection).replace(/\n/g, '<br>')}</p></div>` : ''}
+      <div id="ob-cms"><p class="meta">Loading…</p></div>
+      ${isMine || isObs || isLead ? `<form id="ob-cf" class="ob-cf"><textarea name="t" rows="3" maxlength="2000" placeholder="${isMine ? 'Your comments on this feedback: what you’ll try next, a question, or support you’d like…' : 'Reply to the teacher…'}"></textarea>
+        <div class="ca-bar"><span class="meta">${isMine ? (o.read_at ? '✓ You read this on ' + obDate(o.read_at) : '') : (o.status === 'shared' ? (o.read_at ? '✓ Read by the teacher on ' + obDate(o.read_at) : 'Not read yet') : '')}</span>
+        <span>${isMine && !o.read_at ? '<button type="button" class="btn btn-white outline" id="ob-read">✓ Mark as read</button> ' : ''}<button class="btn btn-red">💬 Post comment</button></span></div></form>` : ''}</section>`;
     document.getElementById('ob-back').onclick = () => show(isMine ? 'mine' : 'list');
     const ed = document.getElementById('ob-edit'); if (ed) ed.onclick = () => form(o);
     const sh = document.getElementById('ob-share'); if (sh) sh.onclick = async () => { if (!confirm(`Share this feedback with ${nameOf(o.teacher_id)}?`)) return; const { error } = await db.rpc('share_observation', { oid: id }); if (error) return say(friendly(error)); say('📤 Shared.'); view(id); };
     const dl = document.getElementById('ob-del'); if (dl) dl.onclick = async () => { if (!confirm('Delete this observation? This can’t be undone.')) return; const { error } = await db.from('observations').delete().eq('id', id); if (error) return say(friendly(error)); say('Deleted.'); show(isLead ? 'list' : 'mine'); };
-    const rf = document.getElementById('ob-reflect'); if (rf) rf.onclick = async () => { const { error } = await db.rpc('obs_reflect', { oid: id, txt: document.getElementById('ob-ref').value }); if (error) return say(friendly(error)); say('✓ Thank you. Your observer has been told.'); view(id); };
+    db.from('observation_comments').select('*').eq('observation_id', id).order('created_at').then(({ data: cm, error: ce }) => {
+      const el = document.getElementById('ob-cms'); if (!el) return;
+      el.innerHTML = ce ? '' : (cm || []).map(c => `<div class="ob-cm ${c.author_id === user.id ? 'me' : ''}"><b>${OB_E(c.author_name || '')}</b> <small class="meta">${new Date(c.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</small><p>${OB_E(c.body).replace(/\n/g, '<br>')}</p></div>`).join('') || '<p class="meta">No comments yet.</p>';
+    });
+    const cf = document.getElementById('ob-cf');
+    if (cf) cf.onsubmit = async e => { e.preventDefault(); const t = cf.t.value.trim(); if (!t) return say('Write a comment first.');
+      const { error } = await db.rpc('obs_comment', { oid: id, txt: t }); if (error) return say(/obs_comment|function/.test(error.message || '') ? 'Your school needs database update 70 for comments.' : friendly(error)); say('💬 Comment posted.'); view(id); };
+    const rd = document.getElementById('ob-read'); if (rd) rd.onclick = async () => { const { error } = await db.rpc('obs_reflect', { oid: id, txt: o.reflection || '' }); if (error) return say(friendly(error)); say('✓ Thank you. Your observer has been told.'); view(id); };
     document.getElementById('ob-word').onclick = () => {
       const html = `<html><head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;margin:32px;color:#1D2026}h1{color:${S.color_primary};margin:0}h2{color:${S.color_primary};font-size:13pt;border-bottom:2px solid ${S.color_accent};padding-bottom:3px;margin-top:18px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:6px;vertical-align:top;text-align:left}.meta{color:#555}</style></head><body>
         <p class="meta">${OB_E(S.name)} · ${OB_E((OB_KIND[o.kind] || '').replace(/^\S+\s/, ''))}</p><h1>Lesson observation: ${OB_E(nameOf(o.teacher_id))}</h1>
