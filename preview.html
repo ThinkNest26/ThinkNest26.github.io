@@ -8,10 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=143">
-  <link rel="stylesheet" href="app.css?v=143">
-  <link rel="stylesheet" href="rtl.css?v=143">
-  <script src="i18n.js?v=143"></script>
+  <link rel="stylesheet" href="style.css?v=144">
+  <link rel="stylesheet" href="app.css?v=144">
+  <link rel="stylesheet" href="rtl.css?v=144">
+  <script src="i18n.js?v=144"></script>
 </head>
 <body class="auth">
   <header class="app-top">
@@ -28,8 +28,8 @@
   </main>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=143"></script>
-  <script src="app.js?v=143"></script>
+  <script src="supabase-config.js?v=144"></script>
+  <script src="app.js?v=144"></script>
   <script>
     (async function () {
       const sub = document.getElementById('pvp-sub'), box = document.getElementById('pvp-box');
@@ -38,9 +38,14 @@
       if (!key) { sub.textContent = 'This preview link isn’t valid.'; return; }
       const { data, error } = await db.functions.invoke('quick-worker', { body: { action: 'preview_login', key } });
       let msg = error && error.message; if (error) { try { const j = await error.context.json(); msg = j.error || msg; } catch (_) {} }
-      if (error || !data || data.error) { sub.textContent = (data && data.error) || msg || 'The preview couldn’t start.'; return; }
-      const { error: se } = await db.auth.verifyOtp({ token_hash: data.token_hash, type: 'magiclink' });
-      if (se) { sub.textContent = se.message; return; }
+      if (error || !data || data.error) { sub.textContent = 'The preview couldn’t start (step 1: ' + ((data && data.error) || msg || 'no answer') + ').'; return; }
+      // step 2: log in with the session (or the one-time token) the server prepared
+      let se = null;
+      if (data.access_token) ({ error: se } = await db.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token }));
+      else if (data.token_hash) ({ error: se } = await db.auth.verifyOtp({ token_hash: data.token_hash, type: 'magiclink' }));
+      else se = { message: 'no login was prepared' };
+      const { data: chk } = await db.auth.getSession();
+      if (se || !chk || !chk.session) { sub.textContent = 'The preview couldn’t log in (step 2: ' + ((se && se.message) || 'no session') + '). Please send a screenshot of this message.'; return; }
       sessionStorage.removeItem('tn_preview');
       const { data: scs } = await db.rpc('my_schools'); const S = (scs || []).find(s => s.id === data.school_id) || (scs || [])[0];
       const { data: sr } = await db.from('schools').select('curriculum_map').eq('id', S.id).maybeSingle();
