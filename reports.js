@@ -175,6 +175,7 @@ async function rcClassInit() {
   document.getElementById('tab-rc').addEventListener('click', () => {
     document.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-selected', String(x.dataset.tab === 't-rc')));
     document.querySelectorAll('.tab-panel').forEach(p => { p.hidden = p.id !== 't-rc'; });
+  if (location.hash === '#t-rc') setTimeout(() => document.getElementById('tab-rc').click(), 300);
     draw();
   });
 }

@@ -2083,3 +2083,21 @@ html.tn-school .find-class, html.tn-school [data-path-find] { display: none !imp
 .ob-cm { border-left: 4px solid #D9DCEB; background: #FAFAFD; border-radius: 0 12px 12px 0; padding: 8px 12px; margin-bottom: 8px; } .ob-cm.me { border-left-color: var(--school); }
 .ob-cm p { margin: 4px 0 0; line-height: 1.5; } .ob-cf { display: grid; gap: 8px; } .ob-cf textarea { font: inherit; padding: 10px 12px; border: 2px solid #E4E6F1; border-radius: 12px; }
 .ob-cf .btn { border: 0; cursor: pointer; font: inherit; font-weight: 800; } .ob-cf .outline { border: 1px solid #3E4B94; color: #3E4B94; }
+/* ===== School teacher home ===== */
+.th-page #th { display: grid; gap: 16px; }
+.th-hero { display: flex; justify-content: space-between; gap: 16px; align-items: center; flex-wrap: wrap; padding: 22px 26px; border-radius: 24px; color: #fff; background: linear-gradient(120deg, var(--school), color-mix(in srgb, var(--school) 70%, var(--school2))); }
+.th-hero h1 { color: #fff; margin: 2px 0; font-size: 1.8rem; } .th-hero p { margin: 0; opacity: .92; } .th-hello { font-weight: 700; }
+.th-quick { display: flex; gap: 8px; flex-wrap: wrap; } .th-q { background: rgba(255,255,255,.95); color: var(--school); font-weight: 800; text-decoration: none; border-radius: 14px; padding: 10px 14px; }
+.th-alerts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.th-al { display: flex; gap: 10px; align-items: center; background: #fff; border: 1px solid #E4E6F1; border-radius: 16px; padding: 12px 14px; text-decoration: none; color: inherit; box-shadow: 0 4px 14px rgba(30,35,82,.05); }
+.th-al > span { font-size: 1.6rem; } .th-al div { display: grid; } .th-al b { color: #1D2026; } .th-al small { color: #6E7485; } .th-al.warm { background: #FFF8EC; border-color: #F6E3BF; }
+.th-sec { margin: 0 !important; display: grid; gap: 10px; } .th-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; } .th-head h2 { margin: 0; font-size: 1.15rem; }
+.th-regs { display: grid; gap: 8px; } .th-reg { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: center; border: 1px solid #ECEEF6; border-left: 5px solid var(--school2); border-radius: 14px; padding: 10px 14px; }
+.th-reg.done { border-left-color: #2FA08A; } .th-reg span { font-size: .9rem; color: #4A4E5E; } .th-reg .btn, .th-empty .btn { border: 0; cursor: pointer; font: inherit; font-weight: 800; } .th-reg .outline { border: 1px solid #3E4B94; color: #3E4B94; }
+.th-two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.th-classes { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.th-cls { border: 1px solid #ECEEF6; border-radius: 14px; padding: 12px 14px; display: grid; gap: 4px; background: #FCFCFE; } .th-cls-name { font-weight: 800; font-size: 1.05rem; color: var(--school); text-decoration: none; }
+.th-cls small { color: #6E7485; } .th-cls-links { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; } .th-cls-links a { font-size: .82rem; font-weight: 700; color: #4A4E5E; text-decoration: none; } .th-cls-links a:hover { color: var(--school); }
+.th-plan { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid #F1F2F8; } .th-plan:last-child { border-bottom: 0; }
+.th-bar { height: 8px; min-width: 120px; } .th-empty { text-align: center; display: grid; justify-items: center; gap: 8px; padding: 36px !important; } .th-empty-ic { font-size: 3rem; } .th-empty p { max-width: 460px; color: #4A4E5E; margin: 0; }
+@media (max-width: 900px) { .th-two { grid-template-columns: 1fr; } .th-reg, .th-plan { grid-template-columns: 1fr; } }

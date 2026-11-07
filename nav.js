@@ -46,15 +46,14 @@
   ];
   // Think Nest for Schools: everyone in a school sees only their school
   MENUS.school_teacher = [
-    { ic: '🏠', label: 'Home', href: 'teacher-dashboard.html' },
+    { ic: '🏠', label: 'Home', href: 'school-teacher.html' },
     { ic: '📣', label: 'Announcements', href: 'announcements.html', an: 1 },
     { ic: '🏫', label: 'My Classes', dyn: 'classes', items: [['classes.html', 'All my classes'], ['classes.html?new=1', '➕ New class']] },
     { ic: '📊', label: 'My data', items: [['school.html#dashboard', '📊 Dashboard'], ['school.html#attendance', '📋 Attendance'], ['school.html#coverage', '🗺️ Coverage']] },
-    { ic: '📘', label: 'Teaching', items: [['planner.html', '🗂️ Unit and weekly plans'], ['teacher-courses.html', 'My courses'], ['teacher-calendar.html', 'Live classes'], ['teacher-certificates.html', '🏅 Certificates']] },
+    { ic: '📘', label: 'Teaching', items: [['planner.html', '🗂️ Unit and weekly plans'], ['teacher-courses.html', '📘 Lessons and quizzes']] },
     { ic: '🧩', label: 'My students', items: [['inclusion.html', '🧩 Inclusion'], ['wellbeing.html', '💛 Wellbeing']] },
     { ic: '👀', label: 'My observations', href: 'observe.html' },
-    { ic: '💬', label: 'Messages & community', items: [['messages.html', 'Messages'], ['school-community.html', '🏫 School community'], ['staff-room.html', '👩‍🏫 Staff room']] },
-    { ic: '🧰', label: 'Resources', items: [['revision.html', 'Revision Hub'], ['curriculum.html', 'Curriculum guide']] }
+    { ic: '💬', label: 'Messages & community', items: [['messages.html', 'Messages'], ['school-community.html', '🏫 School community'], ['staff-room.html', '👩‍🏫 Staff room']] }
   ];
   MENUS.school_student = [
     { ic: '🏠', label: 'Home', href: 'student-dashboard.html' },
@@ -170,7 +169,7 @@
   }
 
   // The school's own logo, name and colours
-  const SCHOOL_HOME = { school_leader: 'school.html', school_teacher: 'teacher-dashboard.html', school_student: 'student-dashboard.html', school_parent: 'parent-dashboard.html' };
+  const SCHOOL_HOME = { school_leader: 'school.html', school_teacher: 'school-teacher.html', school_student: 'student-dashboard.html', school_parent: 'parent-dashboard.html' };
   function schoolBrand(sc, view) {
     document.documentElement.style.setProperty('--school', sc.color_primary || '#3E4B94');
     document.documentElement.style.setProperty('--school2', sc.color_accent || '#F27A6F');
@@ -194,7 +193,7 @@
       <span><b>${L.length === 1 ? 'New announcement' : L.length + ' new announcements'}</b><span>${navEsc(a.title)}</span></span><span class="an-banner-go">Read →</span></a>`);
   }
   // public pages a school member should not use: send them back to their school
-  const PUBLIC_ONLY = { 'community.html': 'school-community.html', 'all-courses.html': 1, 'mentors.html': 1, 'teacher-cafe.html': 'staff-room.html', 'parent-cafe.html': 1,
+  const PUBLIC_ONLY = { 'teacher-dashboard.html': 1, 'teacher-calendar.html': 1, 'teacher-certificates.html': 1, 'community.html': 'school-community.html', 'all-courses.html': 1, 'mentors.html': 1, 'teacher-cafe.html': 'staff-room.html', 'parent-cafe.html': 1,
     'teacher-connect.html': 1, 'parent-connect.html': 1, 'teacher-hub.html': 1, 'parent-hub.html': 1, 'hub.html': 1, 'teacher-requests.html': 1, 'path.html': 1 };
   function keepInSchool(role) {
     const sc = window.TN_SCHOOL; if (!sc || role === 'admin') return false;

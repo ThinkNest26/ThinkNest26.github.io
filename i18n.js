@@ -1783,7 +1783,16 @@
 "Plans": "الخطط",
 "Inclusion and wellbeing": "الدمج والرفاه",
 "My teaching": "تدريسي",
-"Weekly plans are approved by the coordinator for this grade": "يعتمد منسّق الصف الخطط الأسبوعية"
+"Weekly plans are approved by the coordinator for this grade": "يعتمد منسّق الصف الخطط الأسبوعية",
+"📋 Today’s registers": "📋 سجلات الحضور اليوم",
+"📅 This week’s plans": "📅 خطط هذا الأسبوع",
+"Take register": "سجّل الحضور",
+"Write reports": "اكتب التقارير",
+"All weeks →": "جميع الأسابيع ←",
+"Create your first class": "أنشئ فصلك الأول",
+"📘 Lessons and quizzes": "📘 الدروس والاختبارات",
+"New observation feedback": "ملاحظات زيارة صفية جديدة",
+"➕ Start": "➕ ابدأ"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times
