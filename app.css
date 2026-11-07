@@ -2116,3 +2116,11 @@ html.tn-school-staff .tn-riddle, html.tn-school-staff :has(> .tn-qz) { display: 
 .roles-pick.roles-two { grid-template-columns: repeat(2, minmax(0, 260px)) !important; justify-content: center; max-width: 600px; }
 .pick .pick-sub { display: block; font-size: .82rem; font-weight: 600; color: #6E7485; margin-top: 4px; line-height: 1.35; padding: 0 8px; }
 @media (max-width: 560px) { .roles-pick.roles-two { grid-template-columns: 1fr 1fr !important; } }
+/* schools: choose your role */
+.roles-pick.roles-pick-5 { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; max-width: 1100px; }
+.roles-pick.roles-pick-2 { grid-template-columns: repeat(2, minmax(0, 260px)) !important; justify-content: center; }
+.pick .pick-emoji { font-size: 3.6rem; line-height: 1; display: block; margin: 18px 0 10px; }
+.sch-other { text-align: center; margin: 14px 0 0; color: #6E7485; } .sch-other a { color: #3E4B94; font-weight: 800; }
+.sch-bird { width: 110px !important; height: auto; }
+@media (max-width: 1000px) { .roles-pick.roles-pick-5 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } }
+@media (max-width: 560px) { .roles-pick.roles-pick-5, .roles-pick.roles-pick-2 { grid-template-columns: 1fr 1fr !important; } }

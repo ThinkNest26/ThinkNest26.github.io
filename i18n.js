@@ -1831,7 +1831,17 @@
 "Who are you in your school?": "ما دورك في مدرستك؟",
 "School Leaders": "قادة المدرسة",
 "Principals, coordinators, heads of department, admin and IT": "المديرون والمنسقون ورؤساء الأقسام والإداريون وتقنية المعلومات",
-"Teachers and the inclusion team": "المعلمون وفريق الدمج"
+"Teachers and the inclusion team": "المعلمون وفريق الدمج",
+"School principal": "مدير المدرسة",
+"Deputy principal": "نائب المدير",
+"Subject coordinator": "منسّق المادة",
+"Grade level leader": "قائد المرحلة الصفية",
+"PYP coordinator": "منسّق برنامج السنوات الابتدائية",
+"School admin": "إداري المدرسة",
+"Log in with your school email": "سجّل الدخول ببريدك المدرسي",
+"Principals, deputies, coordinators and grade level leaders": "المديرون والنواب والمنسقون وقادة المراحل",
+"School admin and teachers": "إداريو المدرسة والمعلمون",
+"Log in here": "سجّل الدخول هنا"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times
