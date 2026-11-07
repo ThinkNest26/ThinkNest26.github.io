@@ -1879,7 +1879,8 @@
 "Save my subject": "احفظ مادتي",
 "⏳ Taking a while? If you’re using a": "⏳ يستغرق وقتًا؟ إذا كنت تستخدم",
 "Private window": "نافذة خاصة",
-", please try a normal window or another browser.": "، جرّب نافذة عادية أو متصفحًا آخر."
+", please try a normal window or another browser.": "، جرّب نافذة عادية أو متصفحًا آخر.",
+"🔄 Try the check again": "🔄 أعد التحقق"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

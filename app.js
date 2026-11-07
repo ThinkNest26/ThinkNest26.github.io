@@ -113,7 +113,7 @@ function showError(el, msg) { el.textContent = msg; el.hidden = !msg; }
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 function friendly(err) {
   const m = (err && err.message || '').toLowerCase();
-  if (m.includes('captcha')) return 'Please wait for the “Verify you are human” box to show a tick, then try again.';
+  if (m.includes('captcha')) return 'The “Verify you are human” check didn’t finish, so we couldn’t log you in. Click “🔄 Try the check again”, or try another browser. A privacy or ad-blocking extension can stop this check.';
   if (m.includes('invalid login')) return 'That email and password don’t match. Check them and try again, or click “Forgot password?” to choose a new one.';
   if (m.includes('email not confirmed')) return 'Please confirm your email first. Open the email we sent you and click the link (check spam too).';
   if (m.includes('already registered') || m.includes('already been registered')) return 'An account with this email already exists. Try logging in instead.';
