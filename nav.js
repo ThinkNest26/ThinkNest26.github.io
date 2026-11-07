@@ -55,7 +55,7 @@
     { ic: '📑', label: 'Subject plans', href: 'planner.html?mode=subject', roles: 'principal vice_principal assistant_principal it inclusion_lead head_of_department coordinator' },
     { ic: '✅', label: 'Plans to review', href: 'planner.html?mode=weeks&all=1', roles: 'principal vice_principal it inclusion_lead coordinator' },
     { ic: '📝', label: 'Reports', href: 'school.html#reports', roles: 'principal vice_principal assistant_principal it inclusion_lead coordinator' },
-    { ic: '👀', label: 'Observe lessons', href: 'observe.html', roles: 'vice_principal it inclusion_lead' },
+    { ic: '👀', label: 'Observe lessons', href: 'observe.html', roles: 'vice_principal it inclusion_lead head_of_department' },
     { ic: '📂', label: 'Evidence', href: 'school.html#evidence', roles: 'principal vice_principal assistant_principal it inclusion_lead' },
     { ic: '🧩', label: 'Inclusion', href: 'inclusion.html', roles: 'principal vice_principal it inclusion_lead' },
     { ic: '💛', label: 'Wellbeing', href: 'wellbeing.html', roles: 'principal vice_principal it inclusion_lead' },

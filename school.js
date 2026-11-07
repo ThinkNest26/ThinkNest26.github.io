@@ -386,6 +386,21 @@ async function startSchool() {
   const CUR_NAMES = { british: 'British', american: 'American', ib: 'IB', moe: 'UAE MOE', none: '–' };
   async function coverage(pick) {
     pane().innerHTML = '<p class="empty">Checking every objective… this can take a few seconds.</p>';
+    // subject coordinators: choose the subject(s) they coordinate first
+    if (S.my_role === 'head_of_department') {
+      const { data: cm } = await db.from('schools').select('curriculum_map').eq('id', sid).maybeSingle();
+      const map = (cm && cm.curriculum_map) || {}, all = Object.keys(map).filter(k => map[k] !== 'none'), mine = S.scope_subjects || [];
+      const chooser = `<section class="panel cv-mine"><div class="in-head"><h2>📚 My subject</h2><span class="meta">Choose the subject(s) you coordinate. Your coverage, subject plans and observations follow this choice.</span></div>
+        <div class="pl-chips">${all.map(x => `<label class="sc-chip"><input type="checkbox" value="${SC_E(x)}" data-cvs ${mine.includes(x) ? 'checked' : ''}><span>${SC_E(x)}</span></label>`).join('') || '<span class="meta">The school hasn’t set its curriculum subjects yet.</span>'}</div>
+        <div class="ca-bar"><button type="button" class="btn btn-red" id="cv-save">Save my subject</button></div></section>`;
+      if (!mine.length) { pane().innerHTML = chooser.replace('📚 My subject', '📚 Which subject do you coordinate?'); }
+      const wire = () => { const b = document.getElementById('cv-save'); if (b) b.onclick = async () => {
+        const subs = [...pane().querySelectorAll('[data-cvs]:checked')].map(x => x.value); if (!subs.length) return say('Choose at least one subject.');
+        const { error: er } = await db.rpc('set_my_subjects', { sid, subs }); if (er) return say(/set_my_subjects|function/.test(er.message || '') ? 'This needs database update 77.' : friendly(er));
+        S.scope_subjects = subs; say('📚 Saved. Coverage now shows ' + subs.join(', ') + '.'); coverage(); }; };
+      if (!mine.length) { wire(); return; }
+      setTimeout(() => { if (!document.querySelector('.cv-mine')) { pane().insertAdjacentHTML('afterbegin', chooser); wire(); } }, 0);
+    }
     const { data: ov, error } = await db.rpc('school_coverage_overview', { sid });
     if (error) { pane().innerHTML = `<p class="empty">${SC_E(/coverage|function/.test(error.message || '') ? 'Run database update 62 to see curriculum coverage.' : friendly(error))}</p>`; return; }
     const O = ov || [], grades = [...new Set(O.map(x => x.grade))], subjects = [...new Set(O.map(x => x.subject))];
@@ -397,7 +412,7 @@ async function startSchool() {
         <div class="in-card"><span>🟡</span><b>${tot.total ? Math.round(100 * tot.taught / tot.total) : 0}%</b><small>Taught</small></div>
         <div class="in-card"><span>🟢</span><b>${tot.total ? Math.round(100 * tot.assessed / tot.total) : 0}%</b><small>Assessed</small></div>
         <div class="in-card"><span>⚪</span><b>${tot.total - tot.taught}</b><small>Not covered yet</small></div></section>
-      <section class="panel"><div class="in-head"><h2>🗺️ Coverage by grade and subject</h2>${teacherMode ? '<span class="meta">Your grades, from your own courses</span>' : '<button type="button" class="link-btn" id="cv-set">⚙️ Curriculum for each subject</button>'}</div>
+      <section class="panel"><div class="in-head"><h2>🗺️ Coverage by grade and subject</h2>${teacherMode ? '<span class="meta">Your grades, from your own courses</span>' : canManage ? '<button type="button" class="link-btn" id="cv-set">⚙️ Curriculum for each subject</button>' : S.my_role === 'head_of_department' ? '<span class="meta">Your subject, in every grade</span>' : ''}</div>
         ${O.length ? `<div class="in-scroll"><table class="sc-cov"><thead><tr><th>Grade</th>${subjects.map(sj => `<th>${SC_E(sj)}</th>`).join('')}</tr></thead><tbody>
           ${grades.map(g => `<tr><th>${SC_E(g)}</th>${subjects.map(sj => { const x = cell(g, sj); if (!x) return '<td></td>';
             if (!x.total) return `<td><button type="button" class="sc-cv empty" data-g="${SC_E(g)}" data-s="${SC_E(sj)}"><small>No objectives yet</small></button></td>`;

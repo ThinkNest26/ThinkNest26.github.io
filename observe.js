@@ -37,7 +37,8 @@ async function startObserve() {
   const S = (scs || []).find(s => !['student', 'parent'].includes(s.my_role));
   if (!S) { box.innerHTML = '<div class="empty-box"><p>Lesson observations are part of Think Nest for Schools, for teachers and leaders of a school.</p></div>'; return; }
   document.documentElement.style.setProperty('--school', S.color_primary || '#3E4B94'); document.documentElement.style.setProperty('--school2', S.color_accent || '#F27A6F');
-  const isLead = ['principal', 'vice_principal', 'assistant_principal', 'it', 'inclusion_lead'].includes(S.my_role) || profile.role === 'admin';
+  const isFull = ['principal', 'vice_principal', 'assistant_principal', 'it', 'inclusion_lead'].includes(S.my_role) || profile.role === 'admin';
+  const isLead = isFull || S.my_role === 'head_of_department';
   const canRubric = false;   // the UAE MOE framework is used everywhere (not editable)
   const { data: srow } = await db.from('schools').select('obs_rubric').eq('id', S.id).maybeSingle();
   let R = Object.assign({}, OB_MOE);   // always the UAE MOE School Inspection Framework (1.3, 3.1, 3.2; six levels)
@@ -52,7 +53,7 @@ async function startObserve() {
   let mineMode = !isLead || new URLSearchParams(location.search).get('mode') === 'mine';
   if (qo && isLead && !mineMode) { const { data: oo } = await db.from('observations').select('teacher_id').eq('id', Number(qo)).maybeSingle(); if (oo && oo.teacher_id === user.id) mineMode = true; }
   const tabs = mineMode ? [['mine', '📥 My observation feedback']]
-    : [['new', '➕ New observation'], ['list', '📋 Observations I’ve done'], ['trends', '📈 Trends']].concat(canRubric ? [['rubric', '⚙️ Rubric']] : []);
+    : [['new', '➕ New observation'], ['list', '📋 Observations I’ve done']].concat(isFull ? [['trends', '📈 Trends']] : [], canRubric ? [['rubric', '⚙️ Rubric']] : []);
   if (mineMode) document.querySelector('main').classList.add('ob-mine-mode');
   box.innerHTML = mineMode
     ? `<section class="ob-mine-banner"><span class="ob-mine-ic" aria-hidden="true">📥</span><div><h1>My observation feedback</h1><p>Lessons where <b>you</b> were observed. Read your feedback and reply with your comments.${isLead ? ' To observe others, use <a href="observe.html">👀 Observe lessons</a>.' : ''}</p></div></section>`
