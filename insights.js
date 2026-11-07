@@ -9,9 +9,10 @@ const inNames = list => { const n = list.map(inFirst); return n.length <= 3 ? n.
 async function startInsights() {
   const { user } = await initTeacher();
   const pick = document.getElementById('in-pick'), out = document.getElementById('in-out');
+  for (let w = 0; w < 25 && window.TN_SCHOOL === undefined; w++) await new Promise(r => setTimeout(r, 150));   // wait until the school is known
   const [{ data: courses }, { data: classes }] = await Promise.all([
     db.from('courses').select('id, title').eq('teacher_id', user.id).order('title'),
-    db.from('study_groups').select('id, name, course_id').eq('owner_id', user.id).eq('kind', 'class').order('name')
+    (window.TN_SCHOOL ? db.from('study_groups').select('id, name, course_id').eq('owner_id', user.id).eq('kind', 'class').eq('school_id', window.TN_SCHOOL.id) : db.from('study_groups').select('id, name, course_id').eq('owner_id', user.id).eq('kind', 'class')).order('name')
   ]);
   if (!(courses || []).length && !(classes || []).length) {
     out.innerHTML = '<div class="empty-box"><p>Create a course and add students first. Insights appear once students start completing work.</p><a class="btn btn-red" href="teacher-courses.html">My Courses</a></div>';

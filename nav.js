@@ -156,7 +156,7 @@
       if (cls) {
         let list = [];
         if (view === 'student' || view === 'school_student') { const { data } = await db.rpc('my_groups'); list = (data || []).filter(g => g.kind === 'class' && g.my_status === 'active').map(g => ({ id: g.id, name: g.name })); }
-        else { const { data } = await db.from('study_groups').select('id, name').eq('owner_id', uid).eq('kind', 'class').order('name'); list = data || []; }
+        else { let q = db.from('study_groups').select('id, name').eq('owner_id', uid).eq('kind', 'class'); if (window.TN_SCHOOL) q = q.eq('school_id', window.TN_SCHOOL.id); const { data } = await q.order('name'); list = data || []; }
         cls.outerHTML = list.slice(0, 8).map(g => { const on = page === 'group.html' && String(g.id) === qid; return `<li><a href="group.html?id=${g.id}" class="nav2-item ${on ? 'active' : ''}" ${on ? 'aria-current="page"' : ''}>🏫 ${navEsc(g.name)}</a></li>`; }).join('')
           || (/student/.test(view) ? '<li><span class="nav2-none">No classes yet</span></li>' : '');
       }

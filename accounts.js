@@ -17,7 +17,7 @@ async function startStudentAccounts() {
   const $ = id => document.getElementById(id);
   const [{ data: courses }, { data: classes }] = await Promise.all([
     db.from('courses').select('id, title').eq('teacher_id', user.id).order('title'),
-    db.from('study_groups').select('id, name').eq('owner_id', user.id).eq('kind', 'class').order('name')
+    (window.TN_SCHOOL ? db.from('study_groups').select('id, name').eq('owner_id', user.id).eq('kind', 'class').eq('school_id', window.TN_SCHOOL.id) : db.from('study_groups').select('id, name').eq('owner_id', user.id).eq('kind', 'class')).order('name')
   ]);
   $('ac-where').innerHTML = `<option value="">Choose a class or course…</option>
     ${(classes || []).length ? `<optgroup label="My classes">${classes.map(c => `<option value="g${c.id}">🏫 ${acEsc(c.name)}</option>`).join('')}</optgroup>` : ''}
