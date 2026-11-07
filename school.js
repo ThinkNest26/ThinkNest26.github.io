@@ -92,6 +92,8 @@ async function startSchool() {
   };
   document.querySelector('.sc-tabs').addEventListener('click', e => { const b = e.target.closest('[data-sct]'); if (b) show(b.dataset.sct); });
   const pane = () => document.getElementById('sc-pane');
+  const myGrades = S.my_role === 'coordinator' ? (S.scope_grades || []) : [];
+  const inMyGrades = g => !myGrades.length || myGrades.includes(g);
 
   // ----- Overview
   // ----- 👁️ Preview as a role: see the menus and pages of each role, without test accounts
@@ -150,6 +152,7 @@ async function startSchool() {
   async function dashboard() {
     pane().innerHTML = '<p class="empty">Gathering the whole-school data…</p>';
     const { data: d, error } = await db.rpc('school_dashboard', { sid });
+    if (d && myGrades.length && Array.isArray(d.classes)) d.classes = d.classes.filter(c => inMyGrades(c.grade));
     if (error) { pane().innerHTML = `<p class="empty">${SC_E(/school_dashboard|function/.test(error.message || '') ? 'Run database update 59 to see the dashboard.' : friendly(error))}</p>`; return; }
     const T = d.totals || {}, C = d.classes || [], O = d.objectives || [], Wt = d.watch || [], Wk = d.weeks || [];
     const pc = v => v == null ? '–' : v + '%';
@@ -265,7 +268,7 @@ async function startSchool() {
     const box = document.getElementById('rc-cycle'); box.innerHTML = '<p class="empty">Loading…</p>';
     const { data, error } = await db.rpc('report_cycle_status', { cid: cy.id });
     if (error) { box.innerHTML = `<p class="empty">${SC_E(friendly(error))}</p>`; return; }
-    const R = data || [], sum = k => R.reduce((a, r) => a + Number(r[k] || 0), 0);
+    const R = (data || []).filter(r => inMyGrades(r.grade)), sum = k => R.reduce((a, r) => a + Number(r[k] || 0), 0);   // grade level leaders: their grade only
     const students = sum('students'), sub = sum('submitted'), app = sum('approved'), pub = sum('published'), ret = sum('returned'), dr = sum('draft');
     const releasable = cy.needs_approval ? app : sum('draft');
     box.innerHTML = `<section class="panel"><div class="in-head"><h2>${SC_E(cy.title)}</h2>
@@ -411,7 +414,7 @@ async function startSchool() {
     const { data: ov, error } = await db.rpc('school_coverage_overview', { sid });
     if (error) { pane().innerHTML = `<p class="empty">${SC_E(/coverage|function/.test(error.message || '') ? 'Run database update 62 to see curriculum coverage.' : friendly(error))}</p>`; return; }
     const mySubs = S.my_role === 'head_of_department' ? (S.scope_subjects || []).map(x => String(x).toLowerCase()) : [];
-    const O = (ov || []).filter(x => !mySubs.length || mySubs.includes(String(x.subject).toLowerCase())), grades = [...new Set(O.map(x => x.grade))], subjects = [...new Set(O.map(x => x.subject))];
+    const O = (ov || []).filter(x => (!mySubs.length || mySubs.includes(String(x.subject).toLowerCase())) && inMyGrades(x.grade)), grades = [...new Set(O.map(x => x.grade))], subjects = [...new Set(O.map(x => x.subject))];
     const cell = (g, sj) => O.find(x => x.grade === g && x.subject === sj);
     const pctT = x => x && x.total ? Math.round(100 * x.taught / x.total) : 0, pctA = x => x && x.total ? Math.round(100 * x.assessed / x.total) : 0;
     const tot = O.reduce((a, x) => ({ total: a.total + x.total, taught: a.taught + x.taught, assessed: a.assessed + x.assessed }), { total: 0, taught: 0, assessed: 0 });
@@ -420,7 +423,7 @@ async function startSchool() {
         <div class="in-card"><span>🟡</span><b>${tot.total ? Math.round(100 * tot.taught / tot.total) : 0}%</b><small>Taught</small></div>
         <div class="in-card"><span>🟢</span><b>${tot.total ? Math.round(100 * tot.assessed / tot.total) : 0}%</b><small>Assessed</small></div>
         <div class="in-card"><span>⚪</span><b>${tot.total - tot.taught}</b><small>Not covered yet</small></div></section>
-      <section class="panel"><div class="in-head"><h2>🗺️ Coverage by grade and subject</h2>${teacherMode ? '<span class="meta">Your grades, from your own courses</span>' : canManage ? '<button type="button" class="link-btn" id="cv-set">⚙️ Curriculum for each subject</button>' : S.my_role === 'head_of_department' ? '<span class="meta">Your subject, in every grade</span>' : ''}</div>
+      <section class="panel"><div class="in-head"><h2>🗺️ Coverage by grade and subject</h2>${teacherMode ? '<span class="meta">Your grades, from your own courses</span>' : canManage ? '<button type="button" class="link-btn" id="cv-set">⚙️ Curriculum for each subject</button>' : S.my_role === 'head_of_department' ? '<span class="meta">Your subject, in every grade</span>' : myGrades.length ? `<span class="meta">Your grade level: ${SC_E(myGrades.join(', '))}</span>` : ''}</div>
         ${O.length ? `<div class="in-scroll"><table class="sc-cov"><thead><tr><th>Grade</th>${subjects.map(sj => `<th>${SC_E(sj)}</th>`).join('')}</tr></thead><tbody>
           ${grades.map(g => `<tr><th>${SC_E(g)}</th>${subjects.map(sj => { const x = cell(g, sj); if (!x) return '<td></td>';
             if (!x.total) return `<td><button type="button" class="sc-cv empty" data-g="${SC_E(g)}" data-s="${SC_E(sj)}"><small>No objectives yet</small></button></td>`;
@@ -587,6 +590,7 @@ async function startSchool() {
   async function attendance() {
     pane().innerHTML = '<p class="empty">Loading…</p>';
     const { data: d, error } = await db.rpc('school_attendance', { sid, aday: atDay });
+    if (d && myGrades.length && Array.isArray(d.classes)) d.classes = d.classes.filter(c => inMyGrades(c.grade));
     if (error) { pane().innerHTML = `<p class="empty">${SC_E(/school_attendance|function/.test(error.message || '') ? 'Run database update 67 to see whole-school attendance.' : friendly(error))}</p>`; return; }
     const C = d.classes || [], A = d.away || [], P = d.persistent || [];
     const taken = C.filter(c => c.taken), notYet = C.filter(c => !c.taken && c.students);

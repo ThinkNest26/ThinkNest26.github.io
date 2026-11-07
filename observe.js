@@ -38,12 +38,15 @@ async function startObserve() {
   if (!S) { box.innerHTML = '<div class="empty-box"><p>Lesson observations are part of Think Nest for Schools, for teachers and leaders of a school.</p></div>'; return; }
   document.documentElement.style.setProperty('--school', S.color_primary || '#3E4B94'); document.documentElement.style.setProperty('--school2', S.color_accent || '#F27A6F');
   const isFull = ['principal', 'vice_principal', 'assistant_principal', 'it', 'inclusion_lead'].includes(S.my_role) || profile.role === 'admin';
-  const isLead = isFull || S.my_role === 'head_of_department';
+  const isLead = isFull || ['head_of_department', 'coordinator'].includes(S.my_role);
   const canRubric = false;   // the UAE MOE framework is used everywhere (not editable)
   const { data: srow } = await db.from('schools').select('obs_rubric').eq('id', S.id).maybeSingle();
   let R = Object.assign({}, OB_MOE);   // always the UAE MOE School Inspection Framework (1.3, 3.1, 3.2; six levels)
   const { data: staffRows } = await db.rpc('obs_staff', { sid: S.id });
   const STAFF = staffRows || [], nameOf = id => (STAFF.find(p => p.user_id === id) || {}).full_name || '–';
+  // who this person may observe: everyone for full-access leaders; a grade level leader, their grade's teachers
+  let CAN = STAFF.filter(p => p.user_id !== user.id);
+  if (isLead && !isFull) { const { data: ob, error: oe } = await db.rpc('observable_staff', { sid: S.id }); if (!oe && ob) CAN = ob; }
   const cTitle = c => (c.code ? c.code + ' ' : '') + c.label;
   const grouped = (list, fn) => { let last = null; return list.map(c => { const h = c.group && c.group !== last ? `<h3 class="ob-group">${OB_E(c.group)}</h3>` : ''; last = c.group || last; return h + fn(c); }).join(''); };
   const SCALE_DESC = () => R.scale.slice().sort((a, b) => b.n - a.n);
@@ -69,7 +72,7 @@ async function startObserve() {
   function form(o) {
     o = o || {}; const rt = o.ratings || {}, nt = o.notes || {};
     pane().innerHTML = `<form class="panel ob-form" id="ob-form"><h2>${o.id ? '✏️ Edit observation' : isLead ? '➕ New observation' : '🤝 Peer observation'}</h2>
-      <div class="ob-grid"><label>Teacher observed <select name="teacher" required><option value="">Choose…</option>${STAFF.filter(p => p.user_id !== user.id).map(p => `<option value="${p.user_id}" ${o.teacher_id === p.user_id ? 'selected' : ''}>${OB_E(p.full_name)}</option>`).join('')}</select></label>
+      <div class="ob-grid"><label>Teacher observed <select name="teacher" required><option value="">Choose…</option>${CAN.map(p => `<option value="${p.user_id}" ${o.teacher_id === p.user_id ? 'selected' : ''}>${OB_E(p.full_name)}</option>`).join('')}</select></label>
         <label>Type <select name="kind">${Object.entries(OB_KIND).filter(([k]) => isLead || k === 'peer').map(([k, l]) => `<option value="${k}" ${(o.kind || (isLead ? 'formal' : 'peer')) === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
         <label>Date <input type="date" name="date" value="${o.observed_on || new Date().toISOString().slice(0, 10)}"></label>
         <label>Class <input type="text" name="cls" maxlength="60" value="${OB_E(o.class_name || '')}" placeholder="e.g. Grade 4 B"></label>
