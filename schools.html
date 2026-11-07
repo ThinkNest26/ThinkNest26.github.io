@@ -8,10 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=138">
-  <link rel="stylesheet" href="app.css?v=138">
-  <link rel="stylesheet" href="rtl.css?v=138">
-  <script src="i18n.js?v=138"></script>
+  <link rel="stylesheet" href="style.css?v=140">
+  <link rel="stylesheet" href="app.css?v=140">
+  <link rel="stylesheet" href="rtl.css?v=140">
+  <script src="i18n.js?v=140"></script>
 </head>
 <body class="auth">
   <header class="app-top">
@@ -26,10 +26,10 @@
       <p class="auth-sub">Who are you in your school?</p>
       <div class="roles-pick roles-two" id="sch-pick" role="radiogroup" aria-label="Who are you in your school?">
         <button class="pick" role="radio" aria-checked="false" data-go="schools.html?g=leader"><img src="images/tn-icon-school.png" alt=""><span>School Leaders</span><small class="pick-sub">Principal, inclusion lead, PYP coordinator, school admin and IT</small></button>
-        <button class="pick" role="radio" aria-checked="false" data-go="schools.html?g=staff"><img src="images/tn-icon-teacher.png" alt=""><span>School Staff</span><small class="pick-sub">Subject coordinators, grade level leaders and teachers</small></button>
+        <button class="pick" role="radio" aria-checked="false" data-go="schools.html?g=staff"><img src="images/tn-icon-teacher.png" alt=""><span>School Staff</span><small class="pick-sub">Subject coordinators, grade level leaders, teachers and the inclusion team</small></button>
       </div>
       <button class="btn btn-red auth-btn" id="next" disabled>Next</button>
-      <p class="sch-other" id="sch-other" hidden>Another role, such as the inclusion team? <a href="school-login.html">Log in here</a></p>
+      <p class="sch-other" id="sch-other" hidden>Another role? <a href="school-login.html">Log in here</a></p>
     </div>
   </main>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -38,7 +38,7 @@
       const g = new URLSearchParams(location.search).get('g');
       const ROLES = {
         leader: [['principal', '🏫', 'School principal'], ['inclusion', '🧩', 'Inclusion lead'], ['pyp', '🌍', 'PYP coordinator'], ['admin', '🗂️', 'School admin'], ['it', '💻', 'IT']],
-        staff: [['subject', '📚', 'Subject coordinator'], ['grade', '🎓', 'Grade level leader'], ['teacher', '👩‍🏫', 'Teacher']] };
+        staff: [['subject', '📚', 'Subject coordinator'], ['grade', '🎓', 'Grade level leader'], ['teacher', '👩‍🏫', 'Teacher'], ['lsa', '🤝', 'Inclusion team (LSA)']] };
       if (!ROLES[g]) return;
       document.querySelector('.auth-card h1').textContent = g === 'leader' ? 'School Leaders' : 'School Staff';
       document.querySelector('.auth-card .auth-sub').textContent = 'Choose your role';
@@ -49,6 +49,6 @@
       document.getElementById('sch-other').hidden = false;
     })();
   </script>
-  <script src="app.js?v=138"></script>
+  <script src="app.js?v=140"></script>
 </body>
 </html>

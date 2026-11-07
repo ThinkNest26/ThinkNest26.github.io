@@ -2125,3 +2125,20 @@ html.tn-school-staff .tn-riddle, html.tn-school-staff :has(> .tn-qz) { display: 
 @media (max-width: 1000px) { .roles-pick.roles-pick-5 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } }
 @media (max-width: 560px) { .roles-pick.roles-pick-5, .roles-pick.roles-pick-2 { grid-template-columns: 1fr 1fr !important; } }
 .roles-pick.roles-pick-3 { grid-template-columns: repeat(3, minmax(0, 240px)) !important; justify-content: center; } @media (max-width: 560px) { .roles-pick.roles-pick-3 { grid-template-columns: 1fr 1fr !important; } }
+.gt-pick { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; } .gt-pick .chip { text-decoration: none; }
+/* subject plans */
+.sp-subs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; } .sp-sec { display: grid; gap: 10px; margin-bottom: 14px !important; } .sp-sec h2, .sp-sec h3 { margin: 0; }
+.sp-acts { display: flex; gap: 8px; align-items: center; }
+.sp-grid { width: 100%; border-collapse: separate; border-spacing: 6px; } .sp-grid th { text-align: left; color: var(--school); font-size: .9rem; white-space: nowrap; } .sp-grid thead th { background: color-mix(in srgb, var(--school) 9%, #fff); border-radius: 10px; padding: 8px; }
+.sp-grid td { vertical-align: top; min-width: 160px; } .sp-grid textarea, .sp-sec > textarea, .sp-weeks textarea, .sp-title { font: inherit; width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1.5px solid #E4E6F1; border-radius: 10px; resize: vertical; }
+.sp-txt { background: #FAFAFD; border: 1px solid #ECEEF6; border-radius: 10px; padding: 8px 10px; min-height: 40px; font-size: .9rem; }
+.sp-open, .sp-new { width: 100%; text-align: left; font: inherit; border-radius: 12px; padding: 10px 12px; cursor: pointer; display: grid; gap: 2px; }
+.sp-open { background: color-mix(in srgb, var(--school) 8%, #fff); border: 1px solid color-mix(in srgb, var(--school) 25%, #fff); } .sp-open small { color: var(--school); font-weight: 800; }
+.sp-new { background: #fff; border: 2px dashed #D9DCEB; color: #6E7485; font-weight: 800; text-align: center; }
+.sp-weeks { width: 100%; border-collapse: collapse; } .sp-weeks th, .sp-weeks td { border-bottom: 1px solid #F1F2F8; padding: 6px; vertical-align: top; text-align: left; } .sp-weeks tbody th { color: var(--school); width: 50px; }
+/* preview as a role */
+.pv-panel { display: grid; gap: 8px; border-top: 5px solid #8E5BD8; margin-bottom: 16px; } .pv-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
+.pv-row label { display: grid; gap: 4px; font-weight: 700; } .pv-row select { font: inherit; padding: 9px 12px; border: 2px solid #E4E6F1; border-radius: 12px; } .pv-row .btn { border: 0; cursor: pointer; font: inherit; font-weight: 800; }
+.tn-pv-bar { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 9998; display: flex; gap: 14px; align-items: center; background: #2B1F4E; color: #fff; padding: 10px 12px 10px 18px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.3); max-width: calc(100% - 24px); font-size: .9rem; }
+.tn-pv-bar button { background: #fff; color: #2B1F4E; border: 0; border-radius: 10px; padding: 8px 14px; font: inherit; font-weight: 800; cursor: pointer; white-space: nowrap; }
+html.tn-pv .side { box-shadow: inset -4px 0 0 #8E5BD8; }

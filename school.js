@@ -1,13 +1,13 @@
 // ===== Think Nest for Schools =====
 const SC_E = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const SC_ROLES = [['principal', 'Principal / school admin'], ['vice_principal', 'Deputy principal'], ['assistant_principal', 'Assistant principal'], ['coordinator', 'Grade level leader'],
-  ['head_of_department', 'Subject coordinator'], ['inclusion_lead', 'Inclusion lead'], ['inclusion_team', 'Inclusion team'], ['admin_staff', 'School admin / IT'], ['teacher', 'Teacher'], ['student', 'Student']];
+const SC_ROLES = [['principal', 'Principal'], ['vice_principal', 'Deputy principal'], ['assistant_principal', 'Assistant principal'], ['it', 'IT'], ['coordinator', 'Grade level leader'],
+  ['head_of_department', 'Subject coordinator'], ['inclusion_lead', 'Inclusion lead'], ['inclusion_team', 'Inclusion team (LSA)'], ['admin_staff', 'School admin'], ['teacher', 'Teacher'], ['student', 'Student']];
 // other names a school may use (in spreadsheets too); a PYP coordinator leads the whole school, like an assistant principal
 const SC_ROLE_ALIAS = { 'vice principal': 'vice_principal', 'deputy': 'vice_principal', 'deputy principal': 'vice_principal', 'coordinator': 'coordinator', 'grade level leader': 'coordinator', 'grade leader': 'coordinator',
   'head of department': 'head_of_department', 'hod': 'head_of_department', 'subject coordinator': 'head_of_department', 'subject leader': 'head_of_department', 'admin staff': 'admin_staff', 'school admin': 'admin_staff',
-  'it': 'admin_staff', 'school admin / it': 'admin_staff', 'admin': 'admin_staff', 'pyp coordinator': 'assistant_principal', 'pyp': 'assistant_principal', 'inclusion team': 'inclusion_team', 'inclusion lead': 'inclusion_lead', 'teacher': 'teacher', 'assistant principal': 'assistant_principal' };
-const SC_LEADERS = ['principal', 'vice_principal', 'assistant_principal', 'coordinator', 'head_of_department', 'inclusion_lead', 'admin_staff'];
-const SC_MANAGERS = ['principal', 'vice_principal', 'assistant_principal', 'admin_staff'];
+  'it': 'it', 'i.t.': 'it', 'school admin / it': 'admin_staff', 'admin': 'admin_staff', 'lsa': 'inclusion_team', 'inclusion team (lsa)': 'inclusion_team', 'learning support assistant': 'inclusion_team', 'pyp coordinator': 'assistant_principal', 'pyp': 'assistant_principal', 'inclusion team': 'inclusion_team', 'inclusion lead': 'inclusion_lead', 'teacher': 'teacher', 'assistant principal': 'assistant_principal' };
+const SC_LEADERS = ['principal', 'vice_principal', 'assistant_principal', 'it', 'coordinator', 'head_of_department', 'inclusion_lead', 'admin_staff'];
+const SC_MANAGERS = ['principal', 'vice_principal', 'assistant_principal', 'it', 'inclusion_lead'];
 const SC_ALL_GRADES = ['Pre-K', 'KG1', 'KG2', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'];
 const SC_SUBJECTS = ['English', 'Maths', 'Science', 'Arabic', 'Islamic Education', 'Social Studies', 'Moral Education', 'Art', 'Music', 'PE', 'ICT', 'French'];
 const scRole = k => (SC_ROLES.find(r => r[0] === k) || [k, k])[1];
@@ -67,13 +67,12 @@ async function startSchool() {
   };
   paint();
   const ROLE_TABS = {
-    principal: null, vice_principal: null, assistant_principal: null,      // everything
-    coordinator: ['overview', 'dashboard', 'attendance', 'coverage', 'reports', 'announce', 'evidence', 'people'],
-    head_of_department: ['overview', 'dashboard', 'coverage', 'announce', 'people'],
-    inclusion_lead: ['overview', 'attendance', 'announce', 'people'],
-    admin_staff: ['overview', 'attendance', 'announce', 'people', 'import', 'settings'] };
+    principal: null, vice_principal: null, assistant_principal: null, it: null, inclusion_lead: null,      // full access: everything
+    coordinator: ['dashboard', 'attendance', 'coverage', 'reports', 'announce'],                           // grade level leader: their grades
+    head_of_department: ['coverage', 'announce'],                                                          // subject coordinator: their subject
+    admin_staff: ['attendance', 'announce'] };                                                             // school admin: nothing academic
   const allowTab = k => profile.role === 'admin' || !ROLE_TABS[S.my_role] || ROLE_TABS[S.my_role].includes(k);
-  const tabs = (teacherMode ? [['dashboard', '📊 Dashboard'], ['attendance', '📋 Attendance'], ['coverage', '🗺️ Coverage']] : [['overview', '🏠 Overview'], ['dashboard', '📊 Dashboard'], ['attendance', '📋 Attendance'], ['coverage', '🗺️ Coverage'], ['reports', '📝 Reports'], ['announce', '📣 Announcements']].concat(['principal', 'vice_principal', 'assistant_principal', 'coordinator'].includes(S.my_role) || profile.role === 'admin' ? [['evidence', '📂 Evidence']] : [], [['people', '👥 People']]).concat(canManage ? [['import', '📥 Import']] : [], [['settings', '⚙️ School settings']])).filter(([k]) => teacherMode || allowTab(k));
+  const tabs = (teacherMode ? [['dashboard', '📊 Dashboard'], ['attendance', '📋 Attendance'], ['coverage', '🗺️ Coverage']] : [['overview', '🏠 Overview'], ['dashboard', '📊 Dashboard'], ['attendance', '📋 Attendance'], ['coverage', '🗺️ Coverage'], ['reports', '📝 Reports'], ['announce', '📣 Announcements']].concat(['principal', 'vice_principal', 'assistant_principal', 'it', 'inclusion_lead'].includes(S.my_role) || profile.role === 'admin' ? [['evidence', '📂 Evidence']] : [], [['people', '👥 People']]).concat(canManage ? [['import', '📥 Import']] : [], [['settings', '⚙️ School settings']])).filter(([k]) => teacherMode || allowTab(k));
   box.innerHTML = `<section class="sc-hero" id="sc-hero"></section>
     ${mine.length > 1 ? `<label class="sc-switch">School <select id="sc-pick">${mine.map(s => `<option value="${s.id}" ${s.id === sid ? 'selected' : ''}>${SC_E(s.name)}</option>`).join('')}</select></label>` : ''}
     <div class="tabs sc-tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="false" data-sct="${k}">${l}</button>`).join('')}</div>
@@ -93,9 +92,34 @@ async function startSchool() {
   const pane = () => document.getElementById('sc-pane');
 
   // ----- Overview
+  // ----- 👁️ Preview as a role: see the menus and pages of each role, without test accounts
+  async function previewPanel() {
+    if (window.TN_PREVIEW || !(canManage || profile.role === 'admin') || document.getElementById('pv-panel')) return;
+    const { data: cm } = await db.from('schools').select('curriculum_map').eq('id', sid).maybeSingle();
+    if (document.getElementById('pv-panel') || !document.getElementById('sc-pane')) return;
+    const PV = [['teacher', '👩‍🏫 Teacher'], ['coordinator', '🎓 Grade level leader'], ['head_of_department', '📚 Subject coordinator'], ['inclusion_team', '🤝 Inclusion team (LSA)'],
+      ['admin_staff', '🗂️ School admin'], ['inclusion_lead', '🧩 Inclusion lead'], ['it', '💻 IT'], ['assistant_principal', '🌍 PYP coordinator']];
+    const map = (cm && cm.curriculum_map) || {}, subs = Object.keys(map).filter(k => map[k] !== 'none').length ? Object.keys(map).filter(k => map[k] !== 'none') : ['English', 'Maths', 'Science'];
+    pane().insertAdjacentHTML('afterbegin', `<section class="panel pv-panel" id="pv-panel"><h2>👁️ Preview as a role</h2>
+      <p class="meta">See Think Nest through each role’s eyes (their sidebar, home page and tabs) without creating test accounts. Only you see the preview, and you can exit it at any time.</p>
+      <div class="pv-row"><label>Role <select id="pv-role">${PV.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
+        <label id="pv-g" hidden>Grade <select id="pv-grade">${(S.grades || []).map(g => `<option>${SC_E(g)}</option>`).join('')}</select></label>
+        <label id="pv-s" hidden>Subject <select id="pv-subj">${subs.map(x => `<option>${SC_E(x)}</option>`).join('')}</select></label>
+        <button type="button" class="btn btn-red" id="pv-go">👁️ Start preview</button></div></section>`);
+    const r = document.getElementById('pv-role'), sync = () => { document.getElementById('pv-g').hidden = r.value !== 'coordinator'; document.getElementById('pv-s').hidden = r.value !== 'head_of_department'; };
+    r.onchange = sync; sync();
+    document.getElementById('pv-go').onclick = () => {
+      const role = r.value, label = PV.find(x => x[0] === role)[1].replace(/^\S+\s/, ''), g = document.getElementById('pv-grade').value, sj = document.getElementById('pv-subj').value;
+      sessionStorage.setItem('tn_preview', JSON.stringify({ sid, role, grades: role === 'coordinator' ? [g] : [], subjects: role === 'head_of_department' ? [sj] : [],
+        label: role === 'coordinator' ? `${label} (${g})` : role === 'head_of_department' ? `${label} (${sj})` : label }));
+      location.href = ['teacher', 'inclusion_team'].includes(role) ? 'school-teacher.html' : 'school.html';
+    };
+  }
+
   async function overview() {
     pane().innerHTML = '<p class="empty">Loading…</p>';
     const [{ data: ppl }, { data: cls }] = await Promise.all([db.rpc('school_people', { sid }), db.rpc('school_classes', { sid })]);
+    setTimeout(() => previewPanel(), 0);
     const staff = (ppl || []).filter(p => !['student', 'parent'].includes(p.role));
     const P = ppl || [], n = r => P.filter(p => r.includes(p.role)).length;
     const steps = [[!!S.logo_url, 'Add your school logo and colours', 'settings'], [P.filter(p => SC_LEADERS.includes(p.role)).length > 1, 'Add your leadership team', 'people'],
@@ -608,7 +632,7 @@ async function startSchool() {
         <form id="sc-add" class="sc-add-grid">
           <label>Full name <input type="text" name="fullname" maxlength="80" placeholder="e.g. Sarah Thompson"></label>
           <label>School email <input type="email" name="email" required placeholder="name@school.ae"></label>
-          <label>Role <select name="role">${SC_ROLES.filter(r => r[0] !== 'student' && (r[0] !== 'principal' || S.my_role === 'principal' || profile.role === 'admin')).flatMap(r => r[0] === 'assistant_principal' ? [r, ['pyp', 'PYP coordinator']] : [r]).map(([k, l]) => `<option value="${k}" ${k === 'teacher' ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+          <label>Role <select name="role">${SC_ROLES.filter(r => r[0] !== 'student' && (r[0] !== 'principal' || S.my_role === 'principal' || profile.role === 'admin')).filter(r => r[0] !== 'vice_principal' && r[0] !== 'assistant_principal').flatMap(r => r[0] === 'it' ? [['pyp', 'PYP coordinator'], r] : [r]).map(([k, l]) => `<option value="${k}" ${k === 'teacher' ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
           <label>Job title (optional) <input type="text" name="title" maxlength="80" placeholder="e.g. PYP Coordinator"></label>
           <fieldset class="sc-scope" hidden><legend>Limit to grades (optional)</legend>${grades.map(g => `<label><input type="checkbox" name="g" value="${SC_E(g)}"> ${SC_E(g)}</label>`).join('')}</fieldset>
           <fieldset class="sc-scope" hidden><legend>Limit to subjects (optional)</legend>${SC_SUBJECTS.map(g => `<label><input type="checkbox" name="s" value="${g}"> ${g}</label>`).join('')}</fieldset>
@@ -910,7 +934,7 @@ function scCheckStaff(rows) {
     if (r.name.length < 2) r.problems.push('No name');
     if (!scEmailOk(r.email)) r.problems.push('Email is missing or not valid');
     else if (seen.has(r.email)) r.problems.push('Same email appears twice'); else seen.add(r.email);
-    if (!role || ['student', 'parent'].includes(r.role)) r.problems.push('Role should be Teacher, Subject coordinator, Grade level leader, PYP coordinator, Inclusion lead, Inclusion team, School admin / IT, or Deputy/Assistant principal');
+    if (!role || ['student', 'parent'].includes(r.role)) r.problems.push('Role should be Teacher, Subject coordinator, Grade level leader, PYP coordinator, Inclusion lead, Inclusion team (LSA), School admin, or IT');
     const badG = r.grades.filter(g => !scGrade(g)); if (badG.length) r.problems.push('Unknown grade: ' + badG.join(', '));
     r.grades = r.grades.map(scGrade).filter(Boolean);
     return r;

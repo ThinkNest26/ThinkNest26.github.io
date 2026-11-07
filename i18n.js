@@ -1849,7 +1849,22 @@
 "Principals, deputies, PYP coordinators, school admin and IT": "المديرون والنواب ومنسقو البرنامج والإداريون وتقنية المعلومات",
 "Subject coordinators, grade level leaders and teachers": "منسقو المواد وقادة المراحل والمعلمون",
 "Principal, inclusion lead, PYP coordinator, school admin and IT": "المدير وقائد الدمج ومنسق البرنامج والإداري وتقنية المعلومات",
-"School admin / IT": "إداري المدرسة / تقنية المعلومات"
+"School admin / IT": "إداري المدرسة / تقنية المعلومات",
+"Grade team": "فريق الصف",
+"Subject plans": "خطط المواد",
+"Inclusion team (LSA)": "فريق الدمج (مساعدو التعلم)",
+"🤝 Inclusion team": "🤝 فريق الدمج",
+"➕ Add an LSA": "➕ أضف مساعد تعلم",
+"Add to the team": "أضف إلى الفريق",
+"Subject coordinators, grade level leaders, teachers and the inclusion team": "منسقو المواد وقادة المراحل والمعلمون وفريق الدمج",
+"📑 Subject plans": "📑 خطط المواد",
+"Mid-term plans": "خطط منتصف الفصل",
+"🗓️ Mid-term plans": "🗓️ خطط منتصف الفصل",
+"📆 Week by week": "📆 أسبوعًا بأسبوع",
+"+ Add a week": "+ أضف أسبوعًا",
+"👁️ Preview as a role": "👁️ المعاينة بدور آخر",
+"👁️ Start preview": "👁️ ابدأ المعاينة",
+"Exit preview": "إنهاء المعاينة"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

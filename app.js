@@ -1,3 +1,21 @@
+// ===== Preview as a role (Think Nest for Schools): screens follow the chosen role; the database still uses your real access =====
+(function () {
+  let pv = null; try { pv = JSON.parse(sessionStorage.getItem('tn_preview') || 'null'); } catch (_) {}
+  if (!pv || typeof db === 'undefined' || !db.rpc) return;
+  const orig = db.rpc.bind(db);
+  db.rpc = (fn, args, opts) => {
+    const q = orig(fn, args, opts);
+    if (fn !== 'my_schools') return q;
+    return Promise.resolve(q).then(r => { if (r && Array.isArray(r.data)) r.data = r.data.map(s => s.id === pv.sid ? Object.assign({}, s, { my_role: pv.role, scope_grades: pv.grades || [], scope_subjects: pv.subjects || [] }) : s); return r; });
+  };
+  window.TN_PREVIEW = pv;
+  document.addEventListener('DOMContentLoaded', () => {
+    const bar = document.createElement('div'); bar.className = 'tn-pv-bar'; bar.setAttribute('role', 'status');
+    bar.innerHTML = `<span>👁️ <b>Previewing as ${String(pv.label || pv.role).replace(/[<>&]/g, '')}</b> · menus and pages as this role sees them (the data is still yours)</span><button type="button" id="tn-pv-exit">Exit preview</button>`;
+    document.body.appendChild(bar); document.documentElement.classList.add('tn-pv');
+    document.getElementById('tn-pv-exit').onclick = () => { sessionStorage.removeItem('tn_preview'); location.href = 'school.html'; };
+  });
+})();
 // ===== Shared helpers =====
 const toast = document.getElementById('toast');
 let toastTimer;
@@ -120,7 +138,7 @@ async function startLoginPage() {
         db.from('school_members').select('role').eq('user_id', d.user.id).not('role', 'in', '(student,parent)'),
         db.from('school_requests').select('id').eq('user_id', d.user.id).limit(1)]);
       const asLeader = new URLSearchParams(location.search).get('as') === 'leader';
-      const LEAD = ['principal', 'vice_principal', 'assistant_principal', 'coordinator', 'head_of_department', 'inclusion_lead', 'admin_staff'];
+      const LEAD = ['principal', 'vice_principal', 'assistant_principal', 'it', 'coordinator', 'head_of_department', 'inclusion_lead', 'admin_staff'];
       const roles = (lead || []).map(x => x.role), isLeader = roles.some(r => LEAD.includes(r)) || (p && p.role === 'admin') || (req && req.length);
       if (asLeader && !isLeader && roles.length) { await db.auth.signOut(); return showError(err, 'This is a school staff account. Please go back and choose Schools → School Staff.'); }
       if (!asLeader && isLeader && !roles.some(r => !LEAD.includes(r)) && roles.length) { /* leaders may also use the staff door */ }
