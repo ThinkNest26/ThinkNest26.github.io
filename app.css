@@ -2152,3 +2152,10 @@ html.tn-pv .side { box-shadow: inset -4px 0 0 #8E5BD8; }
 .tn-pv-go { font: inherit; font-weight: 800; border: 0; border-radius: 12px; padding: 10px; background: #5B3BA6; color: #fff; cursor: pointer; } .tn-pv-out { font: inherit; font-weight: 700; border: 0; background: none; color: #B3261E; cursor: pointer; padding: 4px; }
 [dir="rtl"] .tn-pv-menu { right: auto; left: 0; }
 @media (max-width: 700px) { .tn-pv-btn { padding: 7px 10px; font-size: .85rem; } }
+/* preview page */
+.pvp-card { max-width: 900px; } .pvp-roles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 18px 0 14px; }
+.pvp-role { display: grid; justify-items: center; gap: 6px; padding: 16px 10px; border: 2px solid #E4E6F1; border-radius: 16px; background: #fff; font: inherit; cursor: pointer; }
+.pvp-role:hover { border-color: #5B3BA6; background: #F7F3FD; } .pvp-role span { font-size: 2.2rem; } .pvp-role b { color: #1D2026; }
+.pvp-extra { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; } .pvp-extra label { display: grid; gap: 4px; font-weight: 700; font-size: .85rem; color: #4A4E5E; }
+.pvp-extra select { font: inherit; padding: 8px 10px; border: 2px solid #E4E6F1; border-radius: 10px; }
+@media (max-width: 640px) { .pvp-roles { grid-template-columns: 1fr 1fr; } }

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Preview – Think Nest</title>
+  <link rel="icon" href="images/tn-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=142">
+  <link rel="stylesheet" href="app.css?v=142">
+  <link rel="stylesheet" href="rtl.css?v=142">
+  <script src="i18n.js?v=142"></script>
+</head>
+<body class="auth">
+  <header class="app-top">
+    <a href="index.html"><img src="images/tn-logo-dark.png" alt="Think Nest home" class="app-top-logo"></a>
+    <a href="index.html" class="app-exit">Exit</a>
+  </header>
+  <main class="auth-bg">
+    <div class="auth-card pvp-card">
+      <img src="images/tn-icon-school.png" alt="" class="bird sch-bird">
+      <h1>👁️ ThinkNest preview</h1>
+      <p class="auth-sub" id="pvp-sub">Starting the preview…</p>
+      <div id="pvp-box"></div>
+    </div>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js?v=142"></script>
+  <script src="app.js?v=142"></script>
+  <script>
+    (async function () {
+      const sub = document.getElementById('pvp-sub'), box = document.getElementById('pvp-box');
+      const key = new URLSearchParams(location.search).get('key');
+      const E = s => String(s == null ? '' : s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+      if (!key) { sub.textContent = 'This preview link isn’t valid.'; return; }
+      const { data, error } = await db.functions.invoke('quick-worker', { body: { action: 'preview_login', key } });
+      let msg = error && error.message; if (error) { try { const j = await error.context.json(); msg = j.error || msg; } catch (_) {} }
+      if (error || !data || data.error) { sub.textContent = (data && data.error) || msg || 'The preview couldn’t start.'; return; }
+      const { error: se } = await db.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });
+      if (se) { sub.textContent = se.message; return; }
+      sessionStorage.removeItem('tn_preview');
+      const { data: scs } = await db.rpc('my_schools'); const S = (scs || []).find(s => s.id === data.school_id) || (scs || [])[0];
+      const { data: sr } = await db.from('schools').select('curriculum_map').eq('id', S.id).maybeSingle();
+      const map = (sr && sr.curriculum_map) || {}, subs = Object.keys(map).filter(k => map[k] !== 'none');
+      const ROLES = [['principal', '🏫', 'School principal'], ['assistant_principal', '🌍', 'PYP coordinator'], ['it', '💻', 'IT'], ['inclusion_lead', '🧩', 'Inclusion lead'],
+        ['coordinator', '🎓', 'Grade level leader'], ['head_of_department', '📚', 'Subject coordinator'], ['admin_staff', '🗂️', 'School admin'], ['inclusion_team', '🤝', 'Inclusion team (LSA)'], ['teacher', '👩‍🏫', 'Teacher']];
+      sub.innerHTML = `You’re in <b>${E(S.name)}</b> as a preview principal. Choose a role to see ThinkNest through their eyes. You can switch role at any time with the <b>👁️</b> button at the top.`;
+      box.innerHTML = `<div class="pvp-roles">${ROLES.map(([k, ic, l]) => `<button type="button" class="pvp-role" data-r="${k}"><span>${ic}</span><b>${l}</b></button>`).join('')}</div>
+        <div class="pvp-extra"><label>Grade (for a grade level leader) <select id="pvp-g">${(S.grades || []).map(g => `<option>${E(g)}</option>`).join('')}</select></label>
+          <label>Subject (for a subject coordinator) <select id="pvp-s">${(subs.length ? subs : ['English', 'Maths', 'Science']).map(x => `<option>${E(x)}</option>`).join('')}</select></label></div>`;
+      box.onclick = e => {
+        const b = e.target.closest('[data-r]'); if (!b) return;
+        const r = b.dataset.r, l = ROLES.find(x => x[0] === r)[2], g = document.getElementById('pvp-g').value, sj = document.getElementById('pvp-s').value;
+        if (r === 'principal') sessionStorage.removeItem('tn_preview');
+        else sessionStorage.setItem('tn_preview', JSON.stringify({ sid: S.id, role: r, grades: r === 'coordinator' ? [g] : [], subjects: r === 'head_of_department' ? [sj] : [],
+          label: r === 'coordinator' ? `${l} (${g})` : r === 'head_of_department' ? `${l} (${sj})` : l }));
+        location.href = ['teacher', 'inclusion_team'].includes(r) ? 'school-teacher.html' : 'school.html';
+      };
+    })();
+  </script>
+</body>
+</html>
