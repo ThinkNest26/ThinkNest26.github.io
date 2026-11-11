@@ -289,8 +289,10 @@ async function startGroup() {
     if (teacherRun) {
       const { data: studs } = await db.rpc('my_students');
       const inGroup = new Set(members.map(m => m.user_id)), seen = new Set();
-      document.getElementById('invite-box').innerHTML = '<h3>Add students' + (isClass ? ' to this class' : '') + '</h3><div class="approve-list">' + ((studs || []).filter(s => !seen.has(s.id) && seen.add(s.id)).map(s => `<div class="pending-row"><span class="initials">${esc(gIni(s.full_name))}</span><div><b>${esc(s.full_name)}</b><span class="meta">${esc([s.grade, s.course_title].filter(Boolean).join(' · '))}</span></div>
-          ${inGroup.has(s.id) ? '<span class="tag">In class</span>' : `<button class="pill pill-live" data-addcls="${s.id}">Add</button>`}</div>`).join('') || '<p class="empty">Students appear here once they join one of your courses.</p>') + '</div>';
+      document.getElementById('invite-box').innerHTML = '<h3>Add students' + (isClass ? ' to this class' : '') + '</h3>' + (isClass ? '<p class="meta">New students who don’t have a Think Nest account yet? <button type="button" class="pill pill-live" data-newstud>➕ Create new student accounts</button></p><p class="meta">Or add students who already have an account:</p>' : '') + '<div class="approve-list">' + ((studs || []).filter(s => !seen.has(s.id) && seen.add(s.id)).map(s => `<div class="pending-row"><span class="initials">${esc(gIni(s.full_name))}</span><div><b>${esc(s.full_name)}</b><span class="meta">${esc([s.grade, s.course_title].filter(Boolean).join(' · '))}</span></div>
+          ${inGroup.has(s.id) ? '<span class="tag">In class</span>' : `<button class="pill pill-live" data-addcls="${s.id}">Add</button>`}</div>`).join('') || '<p class="empty">No existing students yet. Use ➕ Create new student accounts above.</p>') + '</div>';
+      const nb = document.querySelector('#invite-box [data-newstud]');
+      if (nb) nb.onclick = () => { const o = document.getElementById('ca-open'); if (o) { o.click(); window.scrollTo({ top: 0, behavior: 'smooth' }); } else say('Please wait a moment and try again.'); };
       return;
     }
     const { data } = await db.rpc('my_friends');
@@ -374,9 +376,12 @@ function openTeacherGroupDialog(mode) {
     document.getElementById('class-studs').innerHTML = (studs || []).filter(s => !seen.has(s.id) && seen.add(s.id)).map(s => `<label class="remember"><input type="checkbox" name="stud" value="${s.id}" data-course="${s.course_id}"> ${esc(s.full_name || 'Student')} <span class="meta">${esc(s.grade || '')}</span></label>`).join('') || '<p class="meta">Students appear here once they join one of your courses.</p>';
   })();
   cf.course.onchange = () => {
-    const c = cf.course.value; if (!c) return;
+    const c = cf.course.value;
+    // changing the course (or choosing "I'll pick") clears the students ticked automatically before
+    cf.querySelectorAll('input[name=stud][data-auto]').forEach(x => { x.checked = false; delete x.dataset.auto; });
+    if (!c) { cf.querySelectorAll('input[name=stud]').forEach(x => x.closest('label').hidden = false); return; }
     if (isCls && !cf.name.value.trim()) cf.name.value = cf.course.options[cf.course.selectedIndex].text + ' class';
-    if (isCls) cf.querySelectorAll('input[name=stud]').forEach(x => { if (x.dataset.course === c) x.checked = true; });
+    if (isCls) cf.querySelectorAll('input[name=stud]').forEach(x => { if (x.dataset.course === c && !x.checked) { x.checked = true; x.dataset.auto = '1'; } });
     else cf.querySelectorAll('input[name=stud]').forEach(x => x.closest('label').hidden = x.dataset.course !== c);
   };
   cd.querySelector('[data-close]').onclick = () => cd.close();

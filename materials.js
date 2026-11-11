@@ -50,7 +50,9 @@ function ensureItemDialog() {
 }
 
 async function openItemBuilder(lesson, course, onSaved) {
-  const dlg = ensureItemDialog(), body = dlg.querySelector('#item-body'), title = dlg.querySelector('#item-title');
+  const dlg = ensureItemDialog(), title = dlg.querySelector('#item-title');
+  // a fresh box each time, so old click handlers can't save the same item twice
+  const oldBody = dlg.querySelector('#item-body'), body = oldBody.cloneNode(false); oldBody.replaceWith(body);
   let st = null;   // the item being built
   function menu() {
     title.textContent = 'Add to “' + lesson.title + '”';

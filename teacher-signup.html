@@ -8,10 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=156">
-  <link rel="stylesheet" href="app.css?v=156">
-  <link rel="stylesheet" href="rtl.css?v=156">
-  <script src="i18n.js?v=156"></script>
+  <link rel="stylesheet" href="style.css?v=158">
+  <link rel="stylesheet" href="app.css?v=158">
+  <link rel="stylesheet" href="rtl.css?v=158">
+  <script src="i18n.js?v=158"></script>
 </head>
 <body class="auth">
   <header class="app-top">
@@ -47,6 +47,10 @@
           <span class="pw"><input type="password" name="password" id="pw1" minlength="8" autocomplete="new-password" placeholder="At least 8 characters" required>
           <button type="button" class="pw-eye" data-eye="pw1" aria-label="Show password">👁</button></span>
         </label>
+        <label>Confirm password
+          <span class="pw"><input type="password" name="password2" id="pw2" minlength="8" autocomplete="new-password" placeholder="Type it again" required>
+          <button type="button" class="pw-eye" data-eye="pw2" aria-label="Show password">👁</button></span>
+        </label>
         <p class="form-error" id="tsignup-error" role="alert" hidden></p>
         <div class="captcha-box" data-captcha></div>
         <label class="remember agree-box"><input type="checkbox" name="agree_terms" required> <span>I agree to the <a href="terms.html" target="_blank" rel="noopener">Terms of use</a> and have read the <a href="privacy.html" target="_blank" rel="noopener">Privacy notice</a>.</span></label>
@@ -56,10 +60,10 @@
   </main>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=156"></script>
-  <script src="app.js?v=156"></script>
-  <script src="captcha.js?v=156"></script>
-  <script src="teacher.js?v=156"></script>
+  <script src="supabase-config.js?v=158"></script>
+  <script src="app.js?v=158"></script>
+  <script src="captcha.js?v=158"></script>
+  <script src="teacher.js?v=158"></script>
   <script>startTeacherSignup();</script>
 </body>
 </html>

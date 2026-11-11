@@ -30,7 +30,7 @@
           ${list.length ? `<div class="pt2-ws">${list.slice(0, 3).map(w => { const t = topicOf(w); return `<a class="pt2-w" href="hub.html?for=${aud}&topic=${encodeURIComponent(t[0])}"><span class="pt2-wic" aria-hidden="true">${t[1]}</span>
               <span><b>${E(w.title)}</b><small>${E([t[2], w.format, w.weeks ? w.weeks + (w.weeks === 1 ? ' week' : ' weeks') : ''].filter(Boolean).join(' · '))}</small></span><i aria-hidden="true">›</i></a>`; }).join('')}</div>
             ${list.length > 3 ? `<a class="pt2-all" href="hub.html?for=${aud}">See all ${list.length} workshops →</a>` : ''}`
-            : `<div class="pt2-none"><span aria-hidden="true">🌱</span><p>New workshops are coming soon. Got an idea? <a href="contact.html">Suggest a workshop</a></p></div>`}
+            : `<div class="pt2-none"><span aria-hidden="true">🌱</span><p>New workshops are coming soon. Got an idea? <a href="contact.html?topic=suggest">Suggest a workshop</a></p></div>`}
         </section>
         <section class="pt2-box pt2-cafe ${M.cafe.theme}">
           <h4>☕ The ${E(M.cafe.name)}</h4>

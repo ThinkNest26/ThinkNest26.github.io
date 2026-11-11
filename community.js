@@ -168,10 +168,13 @@ async function startCommunity() {
     const { data } = await db.from('posts').select('*, post_likes(user_id), post_comments(id, author_id, author_name, author_role, body, created_at)').eq('space', 'community').eq('status', 'pending').neq('author_id', user.id).order('created_at');
     const list = data || [];
     await picUrls(list);
-    box.hidden = !list.length;
-    box.innerHTML = list.length ? `<h2 class="dash-h">Waiting for approval <span class="count">${list.length}</span></h2><p class="hint">Student posts appear in the community after a teacher approves them.</p>` + list.map(postHtml).join('') : '';
-    if (location.hash === '#pending' && list.length) box.scrollIntoView({ behavior: 'smooth' });
+    const asked = location.hash === '#pending';
+    box.hidden = !list.length && !asked;
+    box.innerHTML = list.length ? `<h2 class="dash-h">Waiting for approval <span class="count">${list.length}</span></h2><p class="hint">Student posts appear in the community after a teacher approves them. Use <b>Approve</b> or <b>Don’t approve</b> on each post.</p>` + list.map(postHtml).join('')
+      : asked ? '<h2 class="dash-h">Waiting for approval</h2><p class="hint">Nothing is waiting now. Another teacher may already have approved it. 🎉</p>' : '';
+    if (asked) box.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
+  window.addEventListener('hashchange', () => { if (location.hash === '#pending') loadPending(); });
   document.getElementById('pending').addEventListener('click', async e => {
     const art = e.target.closest('[data-post]'); if (!art) return;
     const ok = !!e.target.closest('[data-approve]'), no = !!e.target.closest('[data-reject]');
@@ -427,11 +430,13 @@ async function loadContactMessages() {
       <header><b>${esc(m.name)}</b> <span class="tag">${esc(m.who || '')}</span><span class="meta">${new Date(m.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</span></header>
       <p class="meta"><b>${esc(m.topic || '')}</b> · <a href="mailto:${esc(m.email)}?subject=${encodeURIComponent('Re: ' + (m.topic || 'your message to Think Nest'))}">${esc(m.email)}</a></p>
       <p class="msg-body">${esc(m.message)}</p>
-      <div class="person-actions"><a class="pill pill-live" href="mailto:${esc(m.email)}?subject=${encodeURIComponent('Re: ' + (m.topic || 'your message to Think Nest'))}">↩ Reply by email</a>
+      <div class="person-actions"><a class="pill pill-live" href="mailto:${esc(m.email)}?subject=${encodeURIComponent('Re: ' + (m.topic || 'your message to Think Nest'))}">↩ Reply by email</a>${m.attachment ? `<button class="pill pill-soft" data-mcv="${esc(m.attachment)}">📎 Open CV</button>` : ''}
         ${m.handled ? '<button class="pill pill-soft" data-mopen>Mark as not done</button>' : '<button class="pill pill-soft" data-mdone>✓ Mark as done</button>'}<button class="link-btn" data-mdel>Delete</button></div></article>`;
   box.innerHTML = (open.length ? open.map(card).join('') : '<p class="empty">No new messages. 🎉</p>') + (done.length ? `<details class="hubreq-done"><summary>Done (${done.length})</summary>${done.map(card).join('')}</details>` : '');
   box.onclick = async e => {
     const row = e.target.closest('[data-mid]'); if (!row) return; const id = Number(row.dataset.mid);
+    const cv = e.target.closest('[data-mcv]');
+    if (cv) { const { data: s, error: ce } = await db.storage.from('applications').createSignedUrl(cv.dataset.mcv, 600); if (ce) return say(friendly(ce)); window.open(s.signedUrl, '_blank', 'noopener'); return; }
     if (e.target.closest('[data-mdone]')) await db.from('contact_messages').update({ handled: true }).eq('id', id);
     else if (e.target.closest('[data-mopen]')) await db.from('contact_messages').update({ handled: false }).eq('id', id);
     else if (e.target.closest('[data-mdel]')) { if (!confirm('Delete this message?')) return; await db.from('contact_messages').delete().eq('id', id); }

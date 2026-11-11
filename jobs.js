@@ -36,28 +36,49 @@ function showJob() {
     '<h3>Responsibilities</h3><ul>' + job.resp.map(r => '<li>' + r + '</li>').join('') + '</ul>' +
     '<h3>Qualifications</h3><ul>' + job.qual.map(q => '<li>' + q + '</li>').join('') + '</ul>';
   document.getElementById('form-job').value = job.title;
-  document.getElementById('form-subject').value = 'New Think Nest application: ' + job.title;
   document.getElementById('curriculum').value = job.title;
 }
 showJob();
 window.addEventListener('hashchange', showJob);
 
-// After sending, come back to this page and show the thank-you message
-document.getElementById('form-next').value = location.href.split('#')[0].split('?')[0] + '?sent=1';
-if (location.search.includes('sent=1')) {
-  document.getElementById('apply-form').hidden = true;
-  document.getElementById('thanks').hidden = false;
-}
-
 document.getElementById('cv').addEventListener('change', e => {
   document.getElementById('file-name').textContent = e.target.files[0] ? e.target.files[0].name : 'Choose a PDF or Word file';
 });
 
-// Until an email address is added to the form, show a friendly message instead of sending
-const form = document.getElementById('apply-form');
-form.addEventListener('submit', e => {
-  if (form.action.includes('YOUR-EMAIL-HERE')) {
-    e.preventDefault();
-    alert('Thank you for your interest! Online applications open very soon. Please check back shortly.');
+// Send the application: the CV goes to private Supabase storage, the details go to the admin inbox
+const form = document.getElementById('apply-form'), aerr = document.getElementById('apply-error');
+const aSay = m => { aerr.textContent = m; aerr.hidden = !m; if (m) aerr.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+form.addEventListener('submit', async e => {
+  e.preventDefault(); aSay('');
+  if (form._honey && form._honey.value) { form.hidden = true; document.getElementById('thanks').hidden = false; return; }
+  for (const el of form.querySelectorAll('[required]')) {
+    if (el.type === 'file' ? !el.files.length : (!el.value.trim() || !el.checkValidity())) {
+      el.focus();
+      return aSay(el.type === 'email' ? 'Enter a valid email address.' : el.type === 'file' ? 'Choose your CV to upload (PDF or Word).' : 'Please fill in every box.');
+    }
   }
+  const file = document.getElementById('cv').files[0];
+  if (file.size > 5 * 1024 * 1024) return aSay('Your CV is larger than 5 MB. Please save a smaller copy and try again.');
+  const btn = form.querySelector('button[type=submit]'); btn.disabled = true; btn.textContent = 'Sending…';
+  const v = n => (form.elements[n] ? form.elements[n].value.trim() : '');
+  let attachment = null;
+  try {
+    const path = 'cv/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '-' + file.name.replace(/[^\w.\-]+/g, '_');
+    const up = await db.storage.from('applications').upload(path, file);
+    if (!up.error) attachment = path;
+  } catch (_) {}
+  const details = [['Job', v('Job')], ['Phone', v('Phone')], ['Grade levels', v('Grade levels')], ['Education degree', v('Education degree')],
+    ['Teaching method', v('Teaching method')], ['Curriculum', v('Curriculum type')], ['School', v('School name')],
+    ['Experience', v('Teaching experience (years)') + ' years'], ['Bio', v('Bio')]].filter(x => x[1]).map(x => x[0] + ': ' + x[1]).join('\n');
+  const msg = { name: v('Full name'), email: v('email'), who: 'Teacher applicant', topic: 'Job application: ' + v('Job'), message: details + (attachment ? '' : '\n\n(The CV could not be uploaded. Please ask the applicant to email it.)'), attachment };
+  let error;
+  try { ({ error } = await db.from('contact_messages').insert(msg)); } catch (x) { error = x; }
+  btn.disabled = false; btn.textContent = 'Submit your application';
+  if (error) {
+    if (/attachment/.test(error.message || '')) { delete msg.attachment; ({ error } = await db.from('contact_messages').insert(msg)); }
+    if (error) return aSay('Sorry, your application couldn’t be sent just now. Please try again in a minute, or email your CV to thinknest2026@gmail.com.');
+  }
+  form.reset(); document.getElementById('file-name').textContent = 'Choose a PDF or Word file';
+  form.hidden = true; document.getElementById('thanks').hidden = false;
+  document.getElementById('thanks').scrollIntoView({ behavior: 'smooth', block: 'center' });
 });

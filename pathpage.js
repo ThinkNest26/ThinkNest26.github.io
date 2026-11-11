@@ -105,7 +105,7 @@ async function startPathPage() {
   if (!session) {
     next.innerHTML = `<h2>👉 Your next step</h2><p>Create a free account to ${match.length ? 'join a class' : 'join the waiting list'}. We’ll remember this path for you.</p>
       <div class="pp-acts"><a class="btn btn-red" href="signup.html" data-save>I’m a student</a><a class="btn btn-white outline" href="parent-signup.html" data-save>I’m a parent</a></div>
-      <p class="meta">Already have an account? <a href="start.html" data-save>Log in</a></p>`;
+      <p class="meta">Already have an account? Log in as a <a href="login.html" data-save>student</a> or a <a href="parent-login.html" data-save>parent</a>.</p>`;
   } else if (canAct && !match.length) {
     next.innerHTML = `<h2>👉 Your next step</h2><p>Be the first to know when a class opens.</p><button type="button" class="btn btn-red" id="pp-wait">Join the waiting list</button>`;
   } else if (role === 'parent' && !kids.length) {

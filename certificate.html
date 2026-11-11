@@ -8,12 +8,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=156">
-  <link rel="stylesheet" href="app.css?v=156">
+  <link rel="stylesheet" href="style.css?v=158">
+  <link rel="stylesheet" href="app.css?v=158">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@600;700;800&display=swap">
-  <link rel="stylesheet" href="certs.css?v=156">
-  <link rel="stylesheet" href="rtl.css?v=156">
-  <script src="i18n.js?v=156"></script>
+  <link rel="stylesheet" href="certs.css?v=158">
+  <link rel="stylesheet" href="rtl.css?v=158">
+  <script src="i18n.js?v=158"></script>
 </head>
 <body class="auth">
   <header class="app-top">
@@ -21,15 +21,16 @@
     <a href="index.html" class="app-exit">Exit</a>
   </header>
       <main class="cert-page">
-    <div class="cert-bar no-print"><a href="javascript:history.back()" class="link-btn">‹ Back</a><button type="button" class="btn btn-red" onclick="window.print()">⬇ Download PDF / Print</button></div>
+    <div class="cert-bar no-print"><a href="javascript:history.back()" class="link-btn" data-hide-in-tab>‹ Back</a><button type="button" class="btn btn-red" onclick="window.print()">⬇ Download PDF / Print</button></div>
     <p class="cert-tip no-print">Tip: in the print window, choose <b>Save as PDF</b> to download it. Landscape is set automatically.</p>
     <div id="cert-view" class="cert-view"><p class="empty">Loading…</p></div>
   </main>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=156"></script>
-  <script src="app.js?v=156"></script>
-  <script src="certs.js?v=156"></script>
+  <script src="supabase-config.js?v=158"></script>
+  <script src="app.js?v=158"></script>
+  <script src="certs.js?v=158"></script>
   <script>startCertificatePage();</script>
+  <script src="exit.js?v=158"></script>
 </body>
 </html>

@@ -1,6 +1,13 @@
 // ===== Think Nest sidebar: a few main sections with drop-down sub-menus =====
 // Uses db from supabase-config.js
 (function () {
+  // Hide the old built-in menu until the right one is ready (stops the sidebar changing on every click)
+  setTimeout(() => { const n0 = document.querySelector('.side nav'); if (n0) n0.classList.add('nav-ready'); }, 3000);
+  // Help, contact and reference pages open in a new tab, so people don't lose their place
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[href]'); if (!a || a.target) return;
+    if (/^(help|contact|revision|curriculum|terms|privacy)\.html/.test(a.getAttribute('href'))) { a.target = '_blank'; a.rel = 'noopener'; }
+  }, true);
   // Each role has its own menu, built around what they came to do.
   // 'dyn' sections are filled with the person's own classes or children.
   const MENUS = {
@@ -109,7 +116,7 @@
   MENUS.admin = [{ ic: '🛡️', label: 'Admin', items: [['admin.html', 'Admin dashboard'], ['admin-curriculum.html', 'Curriculum editor'], ['admin-founders.html', 'Founders page']] }].concat(MENUS.teacher);
   const SETTINGS = { student: 'settings.html', teacher: 'teacher-settings.html', admin: 'teacher-settings.html', parent: 'parent-settings.html', school_leader: 'teacher-settings.html', school_teacher: 'teacher-settings.html', school_student: 'settings.html', school_parent: 'parent-settings.html' };
   // pages that aren't in the menu, and which menu item they belong to
-  const ALIAS = { 'course.html': 'my-courses.html', 'teacher-course.html': 'teacher-courses.html', 'group.html': 'groups.html', 'child.html': 'parent-dashboard.html' };
+  const ALIAS = { 'course-details.html': 'all-courses.html', 'course.html': 'my-courses.html', 'teacher-course.html': 'teacher-courses.html', 'group.html': 'groups.html', 'child.html': 'parent-dashboard.html' };
   const PARENT_PAGES = ['parent-dashboard.html', 'add-child.html', 'parent-hub.html', 'parent-cafe.html', 'parent-connect.html', 'child.html', 'parent-settings.html', 'parent-calendar.html', 'reports.html'];
 
   async function roleNow() {
@@ -157,7 +164,7 @@
     const qid = new URLSearchParams(location.search).get('id');
     let saved = {};
     try { saved = JSON.parse(localStorage.getItem('tn_nav_open') || '{}'); } catch (_) {}
-    nav.classList.add('nav2');
+    nav.classList.add('nav2', 'nav-ready');
     const switcher = dual && !sc ? `<a class="nav2-switch" href="${inParent ? 'teacher-dashboard.html' : 'parent-dashboard.html'}">${inParent ? '👩‍🏫 Switch to teacher view' : '👪 Switch to parent view'}</a>` : '';
     nav.innerHTML = switcher + menu.map((sec, i) => {
       if (sec.head) return `<div class="nav2-head">${sec.head}</div>`;

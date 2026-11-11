@@ -36,8 +36,8 @@ async function startHub() {
       <div class="hub-cats">${H.cats.map(([k, ic, n, d]) => ['cafe', 'circles'].includes(k) ? `<a class="hub-cat hub-cat-cafe" href="${aud === 'teachers' ? 'teacher-cafe.html' : 'parent-cafe.html'}" style="--c:${H.color}"><span>${ic}</span><b>${n}</b><small>${d} · Open the café →</small></a>` : `<button type="button" class="hub-cat ${pick === k ? 'on' : ''}" data-hc="${k}" style="--c:${H.color}"><span>${ic}</span><b>${n}</b><small>${d}</small></button>`).join('')}</div>
       <h2 class="hub-h">${pick ? hubCat(aud, pick)[1] + ' ' + hubCat(aud, pick)[2] : 'What’s on'} ${pick ? '<button type="button" class="link-btn" data-hc="">Show all</button>' : ''}</h2>
       ${shown.length ? `<div class="hub-courses">${shown.map(c => hubCourseCard(c, aud)).join('')}</div>`
-        : `<div class="hub-empty"><p>${pick ? 'Nothing in this topic yet.' : 'New workshops are being added.'} Join the ${H.name} to hear first, or tell us what you’d love to learn.</p><a class="btn btn-red" href="contact.html">Suggest a workshop</a></div>`}
-      <section class="hub-host"><div><h2>Have a skill to share?</h2><p>Run a workshop for the ${H.name}: wellbeing, cooking, coding, crafts, careers, anything people would love to learn.</p></div><a class="btn btn-red" href="contact.html">Become a host</a></section>
+        : `<div class="hub-empty"><p>${pick ? 'Nothing in this topic yet.' : 'New workshops are being added.'} Join the ${H.name} to hear first, or tell us what you’d love to learn.</p><a class="btn btn-red" href="contact.html?topic=suggest">Suggest a workshop</a></div>`}
+      <section class="hub-host"><div><h2>Have a skill to share?</h2><p>Run a workshop for the ${H.name}: wellbeing, cooking, coding, crafts, careers, anything people would love to learn.</p></div><a class="btn btn-red" href="contact.html?topic=host">Become a host</a></section>
       <p class="hub-switch">Looking for something else? <a href="hub.html?for=${other}">Visit ${HUBS[other].name}, the ${HUBS[other].kicker} →</a></p>`;
   }
   document.addEventListener('click', e => { const b = e.target.closest('[data-hc]'); if (!b) return; pick = b.dataset.hc; draw(); });
@@ -76,8 +76,8 @@ async function startHubInApp(aud) {
       <h2 class="hub-h">Explore topics</h2>
       <div class="hub-cats">${H.cats.map(([k, ic, n, d]) => ['cafe', 'circles'].includes(k) ? `<a class="hub-cat hub-cat-cafe" href="${aud === 'teachers' ? 'teacher-cafe.html' : 'parent-cafe.html'}" style="--c:${H.color}"><span>${ic}</span><b>${n}</b><small>${d} · Open the café →</small></a>` : `<button type="button" class="hub-cat ${pick === k ? 'on' : ''}" data-hc="${k}" style="--c:${H.color}"><span>${ic}</span><b>${n}</b><small>${d}</small></button>`).join('')}</div>
       <h2 class="hub-h">${pick ? hubCat(aud, pick)[1] + ' ' + hubCat(aud, pick)[2] : 'What’s on'} ${pick ? '<button type="button" class="link-btn" data-hc="">Show all</button>' : ''}</h2>
-      ${shown.length ? `<div class="hub-courses">${shown.map(card).join('')}</div>` : `<div class="hub-empty"><p>${pick ? 'Nothing in this topic yet.' : 'New workshops are being added.'} Tell us what you’d love to learn!</p><a class="btn btn-red" href="contact.html">Suggest a workshop</a></div>`}
-      <section class="hub-host"><div><h2>Have a skill to share?</h2><p>Run a workshop for the ${H.name}: wellbeing, cooking, careers, crafts, anything people would love to learn.</p></div><a class="btn btn-red" href="contact.html">Become a host</a></section>`;
+      ${shown.length ? `<div class="hub-courses">${shown.map(card).join('')}</div>` : `<div class="hub-empty"><p>${pick ? 'Nothing in this topic yet.' : 'New workshops are being added.'} Tell us what you’d love to learn!</p><a class="btn btn-red" href="contact.html?topic=suggest">Suggest a workshop</a></div>`}
+      <section class="hub-host"><div><h2>Have a skill to share?</h2><p>Run a workshop for the ${H.name}: wellbeing, cooking, careers, crafts, anything people would love to learn.</p></div><a class="btn btn-red" href="contact.html?topic=host">Become a host</a></section>`;
   }
   box.addEventListener('click', async e => {
     const c = e.target.closest('[data-hc]'); if (c) { pick = c.dataset.hc; return draw(); }

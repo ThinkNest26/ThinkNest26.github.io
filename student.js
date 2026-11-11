@@ -46,6 +46,7 @@ async function startMyCourses() {
   const { user } = await initShell();
   const { data, error } = await db.from('enrollments').select('*, courses(*)').eq('user_id', user.id).order('created_at');
   if (error) return say(friendly(error));
+  if (typeof liveProgress === 'function') await liveProgress(user.id, data);
   const list = document.getElementById('list');
   list.innerHTML = data.length ? data.map((e, k) => courseCard(e.courses, e, k)).join('')
     : '<div class="empty-box"><p>You haven’t registered for any courses yet.</p><a class="btn btn-red" href="all-courses.html">Browse all courses</a></div>';
@@ -61,6 +62,7 @@ async function startAllCourses() {
   ]);
   if (cs.error) return say(friendly(cs.error));
   const mine = en.data || [];
+  if (typeof liveProgress === 'function') await liveProgress(user.id, mine);
   const list = document.getElementById('list');
   const q = document.getElementById('q');
   q.value = new URLSearchParams(location.search).get('q') || '';
@@ -115,12 +117,18 @@ async function startCourse() {
         ${enrol ? `<label class="tick"><input type="checkbox" data-lesson="${l.id}" ${doneIds.has(l.id) ? 'checked' : ''}> Done</label>` : ''}
       </div>${l.material_kind ? `<div class="lesson-material panel" id="lm-${l.id}" hidden></div>` : ''}`).join('');
   }
+  // keep the percentage honest when the teacher adds new lessons
+  if (enrol && lessons.length) {
+    const live = Math.round(lessons.filter(l => doneIds.has(l.id)).length / lessons.length * 100);
+    if (live !== enrol.progress && (doneIds.size || live > enrol.progress)) { const up = await db.from('enrollments').update({ progress: live }).eq('id', enrol.id).select().single(); enrol = up.error ? Object.assign({}, enrol, { progress: live }) : up.data; }
+  }
   drawHero(); drawLessons();
   if (enrol && typeof studentAttendance === 'function') studentAttendance(id, 'my-att');
   if (typeof initStudentLessons === 'function') {
     await initStudentLessons(lessons, id, () => !!enrol, async lid => {
       if (doneIds.has(lid)) return;
       doneIds.add(lid);
+      try { await db.from('lesson_progress').insert({ user_id: user.id, lesson_id: lid }); } catch (_) {}
       const cb = document.querySelector(`[data-lesson="${lid}"]`); if (cb) cb.checked = true;
       const progress = Math.round(lessons.filter(l => doneIds.has(l.id)).length / lessons.length * 100);
       const up = await db.from('enrollments').update({ progress }).eq('id', enrol.id).select().single();
@@ -133,6 +141,7 @@ async function startCourse() {
     await initStudentItems(lessons, () => !!enrol, async lid => {
       if (doneIds.has(lid)) return;
       doneIds.add(lid);
+      try { await db.from('lesson_progress').insert({ user_id: user.id, lesson_id: lid }); } catch (_) {}
       const cb = document.querySelector(`[data-lesson="${lid}"]`); if (cb) cb.checked = true;
       const progress = Math.round(lessons.filter(l => doneIds.has(l.id)).length / lessons.length * 100);
       const up = await db.from('enrollments').update({ progress }).eq('id', enrol.id).select().single();

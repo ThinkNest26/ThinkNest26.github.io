@@ -2182,3 +2182,6 @@ html.tn-pv .side { box-shadow: inset -4px 0 0 #8E5BD8; }
 .cv-mine { display: grid; gap: 10px; margin-bottom: 14px; border-top: 5px solid var(--school2); } .cv-mine .btn { border: 0; cursor: pointer; font: inherit; font-weight: 800; }
 .tn-cap-help { margin: 8px auto 0; max-width: 420px; text-align: center; font-size: .88rem; color: #6E5A2E; background: #FFF6E0; border-radius: 10px; padding: 8px 12px; }
 .tn-cap-retry { font: inherit; font-weight: 800; border: 0; background: #fff; color: #3E4B94; border-radius: 10px; padding: 5px 10px; margin: 4px 0; cursor: pointer; }
+.msg-body { white-space: pre-line; }
+/* the sidebar shows only once the right menu for this person is built */
+body.app .side nav:not(.nav-ready) { visibility: hidden; }

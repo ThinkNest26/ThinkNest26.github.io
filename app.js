@@ -100,7 +100,7 @@ document.querySelectorAll('[data-eye]').forEach(eye => eye.addEventListener('cli
 
 // Supabase returns a user with no identities when the email is already registered
 function alreadyRegistered(data) { return !!(data && data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0); }
-const ALREADY_MSG = 'An account with this email already exists. Please log in, or use “Forgot password?” if you can’t remember the password.';
+const ALREADY_MSG = 'An account with this email already exists. Please log in, or use “Forgot password?” if you can’t remember the password. Already a teacher and also a parent (or the other way round)? You don’t need a second account: log in, open Account settings and switch on “I’m also a parent” or “Apply to teach”.';
 // Every account must be approved by the Think Nest admin before it can be used
 function gateApproval(p) {
   if (p && p.role !== 'admin' && p.account_status && p.account_status !== 'approved' && !/pending\.html$/.test(location.pathname)) {
@@ -131,7 +131,8 @@ picks.forEach(p => p.addEventListener('click', () => {
   picks.forEach(x => x.setAttribute('aria-checked', 'false'));
   p.setAttribute('aria-checked', 'true');
   chosen = p;
-  nextBtn.disabled = false;
+  // one tap is enough: go straight to the right log in page
+  if (p.dataset.go) location.href = p.dataset.go; else if (nextBtn) nextBtn.disabled = false;
 }));
 if (nextBtn) nextBtn.addEventListener('click', () => {
   if (!chosen) return;
@@ -265,12 +266,13 @@ function startSignupPage() {
       window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener');
     });
   }
-  next.addEventListener('click', () => { if (ageCheck()) return; if (valid(steps[i])) show(i + 1); });
+  next.addEventListener('click', () => { if (ageCheck()) return; const f2 = form.password2; if (f2 && steps[i].contains(f2) && form.password.value !== f2.value) { f2.focus(); return showError(document.getElementById('signup-error') || err, 'The two passwords don’t match.'); } if (valid(steps[i])) show(i + 1); });
   back.addEventListener('click', () => show(i - 1));
   form.addEventListener('submit', async e => {
     e.preventDefault();
     if (!valid(steps[i])) return;
     const f = form;
+    if (f.password2 && f.password.value !== f.password2.value) { show(steps.findIndex(s => s.contains(f.password2))); f.password2.focus(); return showError(document.getElementById('signup-error') || err, 'The two passwords don’t match.'); }
     if (f.agree_terms && !f.agree_terms.checked) { f.agree_terms.focus(); return showError(document.getElementById('signup-error') || err, 'Please tick the box to agree to the Terms of use.'); }
     if (f.age && Number(f.age.value) < 13 && !new URLSearchParams(location.search).has('parent_email')) { show(0); ageCheck(); return; }
     if (typeof captchaMissing === 'function' && captchaMissing()) { return showError(document.getElementById('signup-error'), CAPTCHA_MSG); }
@@ -354,6 +356,7 @@ async function startDashboard() {
 
   // Stats
   const myEnr = enr.data || [];
+  await liveProgress(uid, myEnr);
   document.getElementById('st-enrolled').textContent = myEnr.length;
   document.getElementById('st-active').textContent = myEnr.filter(e => e.progress < 100).length;
   document.getElementById('st-done').textContent = myEnr.filter(e => e.progress >= 100).length;
@@ -486,4 +489,42 @@ async function tnBlocked(body, place, gid) {
   say(ar ? '🙅 لم تتم المشاركة لأنها تحتوي على كلمات غير مسموح بها في ثينك نست. استخدم كلمات لطيفة من فضلك. تم إبلاغ معلّمك.'
          : '🙅 This wasn’t shared because it contains words that aren’t allowed on Think Nest. Please use kind words. Your teacher has been told.');
   return true;
+}
+
+// ----- Remember where a sign-up started (e.g. Beyond the Bell), so "Back" returns there -----
+(function () {
+  try {
+    const page = location.pathname.split('/').pop();
+    if (/^(teacher-signup|parent-signup|signup)\.html$/.test(page) && document.referrer) {
+      const r = new URL(document.referrer);
+      if (r.origin === location.origin && /(hub|teacher-hub|parent-hub|index|path|wellbeing)\.html|\/$/.test(r.pathname)) sessionStorage.setItem('tn_return', r.pathname.split('/').pop() + r.search + r.hash);
+    }
+    if (/^(teacher-pending|pending)\.html$/.test(page)) {
+      const back = sessionStorage.getItem('tn_return');
+      document.addEventListener('DOMContentLoaded', () => {
+        if (!back) return;
+        const a = document.querySelector('.step-buttons a[href="index.html"]'); if (!a) return;
+        a.href = back; a.textContent = /hub/.test(back) ? '‹ Back to the workshops' : '‹ Back to where you were';
+      });
+    }
+  } catch (_) {}
+})();
+
+// ----- Course progress worked out from the lessons a student has finished (so new lessons lower the %) -----
+async function liveProgress(uid, enrolls) {
+  try {
+    const ids = [...new Set((enrolls || []).map(e => e.course_id))]; if (!ids.length) return enrolls;
+    const [ls, lp] = await Promise.all([db.from('lessons').select('id, course_id').in('course_id', ids), db.from('lesson_progress').select('lesson_id').eq('user_id', uid)]);
+    if (ls.error || lp.error) return enrolls;
+    const done = new Set((lp.data || []).map(x => x.lesson_id)), by = {};
+    (ls.data || []).forEach(l => (by[l.course_id] = by[l.course_id] || []).push(l.id));
+    enrolls.forEach(e => {
+      const L = by[e.course_id] || []; if (!L.length) return;
+      const p = Math.round(L.filter(x => done.has(x)).length / L.length * 100);
+      // only lower a stored 100% when there are unfinished lessons; never wipe progress made before lessons were tracked
+      if (p < e.progress && L.some(x => !done.has(x)) && done.size) { e.progress = p; db.from('enrollments').update({ progress: p }).eq('id', e.id).then(() => {}); }
+      else if (p > e.progress) { e.progress = p; db.from('enrollments').update({ progress: p }).eq('id', e.id).then(() => {}); }
+    });
+  } catch (_) {}
+  return enrolls;
 }

@@ -8,11 +8,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=156">
-  <link rel="stylesheet" href="app.css?v=156">
-  <link rel="stylesheet" href="paths.css?v=156">
-  <link rel="stylesheet" href="rtl.css?v=156">
-  <script src="i18n.js?v=156"></script>
+  <link rel="stylesheet" href="style.css?v=158">
+  <link rel="stylesheet" href="app.css?v=158">
+  <link rel="stylesheet" href="paths.css?v=158">
+  <link rel="stylesheet" href="rtl.css?v=158">
+  <script src="i18n.js?v=158"></script>
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -32,7 +32,7 @@
     </header>
     <main class="dash">
       <section class="panel profile">
-        <span class="initials big" id="me-initials" aria-hidden="true"></span>
+        <a href="parent-settings.html" class="initials big" id="me-initials" title="My settings" aria-label="My settings" style="text-decoration:none"></a>
         <div><h1 class="t-name" id="me-name">Welcome!</h1><p id="me-sub">Parent</p></div>
       </section>
       <h2 class="dash-h">My children</h2>
@@ -54,7 +54,7 @@
         <div class="footer-middle">
           <ul class="footer-links">
             <li><a href="index.html#about">About Us</a></li>
-            <li><a href="index.html#courses">Courses</a></li>
+            <li><a href="index.html#courses">Plot Twist</a></li>
             <li><a href="index.html#paths">Think Paths</a></li>
           </ul>
         </div>
@@ -65,17 +65,17 @@
   <div class="side-shade" id="side-shade"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=156"></script>
-  <script src="app.js?v=156"></script>
-  <script src="nav.js?v=156"></script>
-  <script src="notify.js?v=156" defer></script>
-  <script src="curriculum.js?v=156"></script>
-  <script src="paths.js?v=156"></script>
-  <script src="family.js?v=156"></script>
-  <script src="parent.js?v=156"></script>
+  <script src="supabase-config.js?v=158"></script>
+  <script src="app.js?v=158"></script>
+  <script src="nav.js?v=158"></script>
+  <script src="notify.js?v=158" defer></script>
+  <script src="curriculum.js?v=158"></script>
+  <script src="paths.js?v=158"></script>
+  <script src="family.js?v=158"></script>
+  <script src="parent.js?v=158"></script>
   <script>startParentDashboard(); setTimeout(() => familyWaiting('fam-box'), 300);</script>
   <script>document.addEventListener("DOMContentLoaded", () => {}); setTimeout(() => { initPaths(); document.querySelectorAll("[data-path-find]").forEach(b => b.addEventListener("click", () => openPathChooser(null))); resumePendingPath(); }, 600);</script>
-  <script src="hubs.js?v=156"></script>
+  <script src="hubs.js?v=158"></script>
   <script>hubBanner('parents', 'hub-banner-box');</script>
 </body>
 </html>

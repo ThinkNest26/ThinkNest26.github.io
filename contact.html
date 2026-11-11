@@ -8,10 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=156">
-  <link rel="stylesheet" href="app.css?v=156">
-  <link rel="stylesheet" href="rtl.css?v=156">
-  <script src="i18n.js?v=156"></script>
+  <link rel="stylesheet" href="style.css?v=158">
+  <link rel="stylesheet" href="app.css?v=158">
+  <link rel="stylesheet" href="rtl.css?v=158">
+  <script src="i18n.js?v=158"></script>
 </head>
 <body class="auth">
   <header class="app-top">
@@ -51,13 +51,29 @@
   </main>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=156"></script>
-  <script src="app.js?v=156"></script>
-  <script src="captcha.js?v=156"></script>
+  <script src="supabase-config.js?v=158"></script>
+  <script src="app.js?v=158"></script>
+  <script src="captcha.js?v=158"></script>
   <script>
     const cf = document.getElementById('contact-form'), cerr = document.getElementById('contact-error');
     const showSent = name => { cf.hidden = true; const n = document.getElementById('sent-note'); n.hidden = false; if (name) { const b = n.querySelector('b'); if (b) b.textContent = 'Thank you, ' + name.split(' ')[0] + '!'; } n.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
     if (location.search.includes('sent=1')) showSent();
+    // Logged in? Fill in name, email and role so nobody has to type them again
+    (async () => {
+      try {
+        const { data: { session } } = await db.auth.getSession(); if (!session) return;
+        if (!cf.email.value) cf.email.value = session.user.email || '';
+        const { data: p } = await db.from('profiles').select('full_name, role').eq('id', session.user.id).maybeSingle();
+        if (p && p.full_name && !cf.Name.value) cf.Name.value = p.full_name;
+        const who = { student: 'Student', teacher: 'Teacher', admin: 'Teacher', parent: 'Parent or guardian', school_leader: 'School' }[p && p.role];
+        if (who && !cf['I am a'].value) cf['I am a'].value = who;
+      } catch (_) {}
+      const t = new URLSearchParams(location.search).get('topic');
+      if (t === 'host' || t === 'suggest') {
+        cf.Topic.value = 'Working with Think Nest';
+        if (!cf.Message.value) cf.Message.value = t === 'host' ? 'I’d like to host a workshop about: ' : 'I’d like to suggest a workshop about: ';
+      }
+    })();
     cf.addEventListener('submit', async e => {
       e.preventDefault(); showError(cerr, '');
       if (cf._honey && cf._honey.value) return showSent();            // a robot filled the hidden box
@@ -75,5 +91,6 @@
       showError(cerr, 'Sorry, your message couldn’t be sent just now. Please try again in a minute, or email us at thinknest2026@gmail.com.');
     });
   </script>
+  <script src="exit.js?v=158"></script>
 </body>
 </html>

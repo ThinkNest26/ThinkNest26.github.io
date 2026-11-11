@@ -51,6 +51,7 @@ function startTeacherSignup() {
     for (const el of f.querySelectorAll('input[required], select[required]')) {
       if (!el.checkValidity()) { el.focus(); return showError(err, el.type === 'password' ? 'Choose a password with at least 8 characters.' : el.type === 'email' ? 'Enter a valid email address.' : 'Please fill in every required box.'); }
     }
+    if (f.password2 && f.password.value !== f.password2.value) { f.password2.focus(); return showError(err, 'The two passwords don’t match.'); }
     const school = f.school_pick.value === 'A school' ? f.school.value.trim() : f.school_pick.value;
     const btn = f.querySelector('button[type=submit]'); btn.disabled = true; btn.textContent = 'Sending…';
     if (f.agree_terms && !f.agree_terms.checked) { btn.disabled = false; btn.textContent = 'Send request'; return showError(err, 'Please tick the box to agree to the Terms of use.'); }

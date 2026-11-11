@@ -44,7 +44,7 @@ async function caInit() {
   if (!g || g.kind !== 'class' || !(g.owner_id === session.user.id || (me && me.role === 'admin'))) return;
   // the button + panel
   const wait = () => document.querySelector('#ghead .ghead-actions');
-  for (let i = 0; i < 30 && !wait(); i++) await new Promise(r => setTimeout(r, 150));
+  for (let i = 0; i < 120 && !wait(); i++) await new Promise(r => setTimeout(r, 150)); // slow connections: wait up to 18 seconds for the class header
   const head = wait();
   if (head && !document.getElementById('ca-open')) head.insertAdjacentHTML('afterbegin', '<button type="button" class="pill pill-live big ca-open" id="ca-open">➕ Add students</button>');
   if (head && !document.getElementById('ca-del')) {

@@ -33,7 +33,7 @@
   async function loadList() {
     const { data } = await db.from('notifications').select('*').eq('user_id', uid).order('created_at', { ascending: false }).limit(30);
     const list = document.getElementById('notif-list');
-    list.innerHTML = (data || []).length ? data.map(n => `<a class="notif ${n.read ? '' : 'unread'}" href="${esc(n.link || '#')}" data-nid="${n.id}">
+    list.innerHTML = (data || []).length ? data.map(n => `<a class="notif ${n.read ? '' : 'unread'}" href="${esc((n.kind === 'approval' || /waiting for approval/i.test(n.title || '')) && /^community\.html$/.test(n.link || '') ? 'community.html#pending' : (n.link || '#'))}" data-nid="${n.id}">
         <span class="notif-ic" aria-hidden="true">${icon(n.kind)}</span><span class="notif-text">${esc(n.title)}<span class="meta">${ago(n.created_at)}</span></span></a>`).join('')
       : '<p class="empty">You’re all caught up. 🎉</p>';
   }
