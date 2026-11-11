@@ -82,8 +82,8 @@ function addCourseInfoFields(f, err) {
   const html = `<details class="ci-more" open style="margin:6px 0 4px">
     <summary style="font-weight:700;cursor:pointer;padding:6px 0">Details for parents (needed before you can publish)</summary>
     <div style="display:grid;gap:12px;padding-top:8px">
-      <label>Sample lesson or introduction video (optional)<input name="intro_video_url" type="url" placeholder="Paste a YouTube or Vimeo link"></label>
-      <p class="meta" style="margin:-6px 0 0">Tip: upload to YouTube as “Unlisted” so only people with the link can see it.</p>
+      <label>Demo lesson video, about 3 minutes (optional)<input name="intro_video_url" type="url" placeholder="Paste a YouTube, Vimeo or Google Drive link"></label>
+      <p class="meta" style="margin:-6px 0 0">Tip: upload to YouTube as “Unlisted”. Your own introduction video goes in 👤 My teacher profile and shows on all your courses.</p>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
         <label>Start date<input name="start_date" type="date"></label>
         <label>End date<input name="end_date" type="date"></label>
@@ -134,6 +134,7 @@ function courseVideoEmbed(url) {
   if (yt) return 'https://www.youtube-nocookie.com/embed/' + yt[1] + '?rel=0';
   const vm = s.match(/vimeo\.com\/(?:video\/)?(\d+)/);
   if (vm) return 'https://player.vimeo.com/video/' + vm[1];
+  const gd = s.match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([\w-]{20,})/); if (gd) return 'https://drive.google.com/file/d/' + gd[1] + '/preview';
   return null;
 }
 
@@ -391,7 +392,8 @@ async function startTeacherCourse() {
     const rows = data || [], waiting = rows.filter(r => r.status === 'teacher'), parent = rows.filter(r => r.status === 'parent'), done = rows.filter(r => !['teacher', 'parent'].includes(r.status)).slice(0, 30);
     const n = document.getElementById('reqs-n'); if (n) { n.hidden = !waiting.length; n.textContent = waiting.length; }
     const info = r => { const d = r.details || {}; return `<div class="person-info"><h4>${esc(d.student_name || 'Student')}${d.registered_by_parent ? ' <span class="tag">👪 By parent</span>' : ''}</h4>
-        <span class="meta">${esc([d.student_age ? 'Age ' + d.student_age : '', d.student_grade, d.student_language ? 'Main language: ' + d.student_language : ''].filter(Boolean).join(' · '))}</span>
+        <span class="meta">${esc([d.student_age ? 'Age ' + d.student_age : '', d.student_grade, d.student_curriculum, d.student_country].filter(Boolean).join(' · '))}</span>
+        ${d.student_language ? `<span class="meta">Main language: ${esc(d.student_language)}</span>` : ''}
         ${r.time_slot ? `<span class="meta">🕒 ${esc(r.time_slot)}</span>` : ''}
         <span class="meta">Parent: ${esc([d.parent_name, d.parent_email, d.parent_phone].filter(Boolean).join(', ') || 'not given')}</span>
         ${d.notes ? `<span class="meta">Note: ${esc(d.notes)}</span>` : ''}<span class="meta">Asked ${new Date(r.created_at).toLocaleDateString('en-GB')}</span></div>`; };
@@ -417,16 +419,19 @@ async function startTeacherCourse() {
 
   // lessons
   let lessons = [];
+  let groupDates = {};
   async function loadLessons() {
     const { data } = await db.from('lessons').select('*').eq('course_id', id).order('position');
     lessons = data || [];
+    groupDates = {};
+    try { const { data: gd } = await db.from('lesson_group_dates').select('lesson_id, group_id, publish_at').in('lesson_id', lessons.map(l => l.id)); (gd || []).forEach(r => (groupDates[r.lesson_id] = groupDates[r.lesson_id] || []).push(r)); } catch (_) {}
     document.getElementById('lessons').innerHTML = lessons.length ? lessons.map((l, k) => `<div class="lesson">
-        <b>${String(k + 1).padStart(2, '0')}</b><span class="lesson-title" id="lesson-${l.id}">${esc(l.title)}${lessonState(l) === 'draft' ? ' <span class="tag">📝 Draft</span>' : lessonState(l) === 'later' ? ` <span class="tag">🕒 Publishes ${new Date(l.publish_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</span>` : ''}${lessonObjHtml(l.objective_text)}</span>
+        <b>${String(k + 1).padStart(2, '0')}</b><span class="lesson-title" id="lesson-${l.id}">${esc(l.title)}${(groupDates[l.id] || []).length ? ` <span class="tag">👥 Dates for each group</span>` : lessonState(l) === 'draft' ? ' <span class="tag">📝 Draft</span>' : lessonState(l) === 'later' ? ` <span class="tag">🕒 Publishes ${new Date(l.publish_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</span>` : ''}${lessonObjHtml(l.objective_text)}</span>
         ${l.video_url ? '<span class="tag">Video</span>' : ''}${l.resource_url ? '<span class="tag">Link</span>' : ''}${l.material_kind ? `<span class="tag tag-kind">${{ worksheet: '📝 Worksheet', test: '✅ Test', activities: '🧩 Activities' }[l.material_kind]}</span>` : ''}
         ${l.material_kind && l.material_kind !== 'activities' ? `<button class="pill pill-live" data-results="${l.id}">Results</button>` : ''}
         <button class="pill pill-soft" data-up="${l.id}" ${k === 0 ? 'disabled' : ''} aria-label="Move up">↑</button>
         <button class="pill pill-soft" data-down="${l.id}" ${k === lessons.length - 1 ? 'disabled' : ''} aria-label="Move down">↓</button>
-        ${lessonState(l) !== 'live' ? `<button class="pill pill-live" data-pub-lesson="${l.id}">Publish now</button>` : ''}<button class="pill pill-soft" data-edit-lesson="${l.id}">Edit</button>
+        ${lessonState(l) !== 'live' && !(groupDates[l.id] || []).length ? `<button class="pill pill-live" data-pub-lesson="${l.id}">Publish now</button>` : ''}<button class="pill pill-soft" data-edit-lesson="${l.id}">Edit</button>
         <button class="pill pill-soft" data-del-lesson="${l.id}">Delete</button></div>`).join('')
       : '<p class="empty">No lessons yet. Add the first one below.</p>';
     if (typeof loadTeacherItems === 'function') loadTeacherItems(lessons, c);
@@ -456,7 +461,9 @@ async function startTeacherCourse() {
   if (lf.when) lf.when.addEventListener('change', () => { lf.querySelector('.lesson-at').hidden = lf.when.value !== 'later'; });
 
   // edit a lesson: title, objectives and when students can see it
-  function editLesson(l) {
+  async function editLesson(l) {
+    let groups = []; try { const { data: cg } = await db.rpc('course_groups', { cid: id }); groups = cg || []; } catch (_) {}
+    const gd0 = groupDates[l.id] || [];
     let d = document.getElementById('lesson-edit');
     if (!d) { d = document.createElement('dialog'); d.id = 'lesson-edit'; d.className = 'dlg'; document.body.appendChild(d); }
     const st = lessonState(l);
@@ -464,24 +471,35 @@ async function startTeacherCourse() {
       <h2 style="margin:0">✏️ Edit lesson</h2>
       <label>Lesson title <input name="title" required value="${esc(l.title)}"></label>
       <label>Learning objectives (one per line) <textarea name="objs" rows="4">${esc(l.objective_text || '')}</textarea></label>
-      <div class="two"><label>When can students see it?<select name="when"><option value="now" ${st === 'live' ? 'selected' : ''}>Published</option><option value="draft" ${st === 'draft' ? 'selected' : ''}>Draft (only you can see it)</option><option value="later" ${st === 'later' ? 'selected' : ''}>Publish on a date…</option></select></label>
-      <label class="le-at" ${st === 'later' ? '' : 'hidden'}>Publish on <input type="datetime-local" name="publish_at" value="${st === 'later' ? toLocalInput(l.publish_at) : ''}"></label></div>
+      <div class="two"><label>When can students see it?<select name="when"><option value="now" ${st === 'live' && !gd0.length ? 'selected' : ''}>Published</option><option value="draft" ${st === 'draft' && !gd0.length ? 'selected' : ''}>Draft (only you can see it)</option><option value="later" ${st === 'later' && !gd0.length ? 'selected' : ''}>Publish on a date…</option>${groups.length > 1 ? `<option value="groups" ${gd0.length ? 'selected' : ''}>A different date for each group…</option>` : ''}</select></label>
+      <label class="le-at" ${st === 'later' && !gd0.length ? '' : 'hidden'}>Publish on <input type="datetime-local" name="publish_at" value="${st === 'later' ? toLocalInput(l.publish_at) : ''}"></label></div>
+      <fieldset class="le-groups" ${gd0.length ? '' : 'hidden'} style="border:0;padding:0;margin:0;display:grid;gap:8px"><legend style="font-weight:700;margin-bottom:6px">Publish for each group</legend>
+        ${groups.map(g => { const r = gd0.find(x => x.group_id === g.id); return `<label>${esc(g.slot || 'All students')} <input type="datetime-local" data-gdate="${g.id}" value="${r ? toLocalInput(r.publish_at) : ''}"></label>`; }).join('')}
+        <p class="meta">Leave a group empty to keep the lesson hidden from that group. Each group is told when its date comes.</p></fieldset>
       <p class="meta">To change the quizzes, worksheets and other things in this lesson, use <b>Edit</b> next to each one under the lesson.</p>
       <div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-le-close>Cancel</button><button class="btn btn-red auth-btn">Save changes</button></div></form>`;
     const f = d.querySelector('form');
-    f.when.onchange = () => { d.querySelector('.le-at').hidden = f.when.value !== 'later'; };
+    f.when.onchange = () => { d.querySelector('.le-at').hidden = f.when.value !== 'later'; d.querySelector('.le-groups').hidden = f.when.value !== 'groups'; };
     d.querySelector('[data-le-close]').onclick = () => d.close();
     f.onsubmit = async e => {
       e.preventDefault();
       if (!f.title.value.trim()) return say('Give the lesson a title.');
-      const keep = f.when.value === 'now' && st === 'live';
-      const w = keep ? { ok: true, v: l.publish_at } : whenFromForm(f.when.value, f.publish_at.value);
+      const perGroup = f.when.value === 'groups';
+      const keep = f.when.value === 'now' && st === 'live' && !gd0.length;
+      const w = perGroup ? { ok: true, v: new Date().toISOString() } : keep ? { ok: true, v: l.publish_at } : whenFromForm(f.when.value, f.publish_at.value);
       if (!w.ok) return say(w.msg);
+      const dates = perGroup ? [...d.querySelectorAll('[data-gdate]')].filter(x => x.value).map(x => ({ group_id: Number(x.dataset.gdate), at: new Date(x.value).toISOString() })) : [];
+      if (perGroup && !dates.length) return say('Choose a date for at least one group.');
       const objs = f.objs.value.split('\n').map(s => s.trim()).filter(Boolean).join('\n') || null;
       const up = { title: f.title.value.trim(), objective_text: objs };
       if ('publish_at' in l) up.publish_at = w.v;
+      if (perGroup) up.announced = true;   // each group is told on its own date instead
       const { error } = await db.from('lessons').update(up).eq('id', l.id);
       if (error) return say(friendly(error));
+      if (perGroup || gd0.length) {
+        const { error: ge } = await db.rpc('set_lesson_group_dates', { lid: l.id, dates });
+        if (ge) return say(/set_lesson_group_dates/.test(ge.message || '') ? 'Please run the latest database update (gap fixes 2) first.' : friendly(ge));
+      }
       d.close(); say('Lesson saved.'); loadLessons();
     };
     d.showModal();
@@ -759,12 +777,18 @@ async function startTeacherSettings() {
   const { user, profile: p } = await initTeacher();
   const f = document.getElementById('tprofile-form');
   Object.keys(T_OPTS).forEach(k => fillSelect(f[k], T_OPTS[k], p[k] || ''));
-  ['full_name', 'subject', 'phone', 'school', 'experience_years', 'bio'].forEach(k => { f[k].value = p[k] ?? ''; });
+  ['full_name', 'subject', 'phone', 'school', 'experience_years', 'bio', 'intro_video_url'].forEach(k => { if (f[k]) f[k].value = p[k] ?? ''; });
   f.addEventListener('submit', async e => {
     e.preventDefault();
     const row = {}; ['full_name', 'subject', 'phone', 'school', 'bio', 'grade_levels', 'education_degree', 'teaching_method', 'curriculum'].forEach(k => row[k] = f[k].value.trim() || null);
     row.experience_years = f.experience_years.value ? Number(f.experience_years.value) : null;
-    const { error } = await db.from('profiles').update(row).eq('id', user.id);
+    if (f.intro_video_url) {
+      const iv = f.intro_video_url.value.trim();
+      if (iv && typeof courseVideoEmbed === 'function' && !courseVideoEmbed(iv)) return say('The introduction video link doesn’t work. Paste a YouTube, Vimeo or Google Drive link.');
+      row.intro_video_url = iv || null;
+    }
+    let { error } = await db.from('profiles').update(row).eq('id', user.id);
+    if (error && /intro_video_url/.test(error.message || '')) { delete row.intro_video_url; ({ error } = await db.from('profiles').update(row).eq('id', user.id)); }
     say(error ? friendly(error) : 'Your profile is saved.');
   });
 

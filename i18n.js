@@ -1937,7 +1937,12 @@
 "📋 Write a summary": "📋 اكتب ملخّصًا",
 "💬 Thread": "💬 المحادثة",
 "Recent sessions (last 30 days)": "الجلسات الأخيرة (آخر 30 يومًا)",
-"🧑‍🏫 Mentor sessions": "🧑‍🏫 جلسات الإرشاد"
+"🧑‍🏫 Mentor sessions": "🧑‍🏫 جلسات الإرشاد",
+"🏅 Completed workshops and certificates": "🏅 الورش المكتملة والشهادات",
+"Introduction video (optional)": "فيديو تعريفي (اختياري)",
+"Curriculum at school": "المنهج في المدرسة",
+"A different date for each group…": "تاريخ مختلف لكل مجموعة…",
+"👥 Dates for each group": "👥 تواريخ لكل مجموعة"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

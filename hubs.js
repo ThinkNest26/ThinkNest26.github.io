@@ -53,9 +53,12 @@ async function startHubInApp(aud) {
   const box = document.getElementById('hub-app');
   const [{ data: cs }, { data: en }] = await Promise.all([
     db.from('courses').select('id, title, description, teacher_name, weeks, audience, format, category').eq('audience', aud).order('id', { ascending: false }),
-    db.from('enrollments').select('course_id').eq('user_id', uid)
+    db.from('enrollments').select('course_id, progress').eq('user_id', uid)
   ]);
   const courses = cs || [], joined = new Set((en || []).map(e => e.course_id));
+  const doneIds = new Set((en || []).filter(e => e.progress >= 100).map(e => e.course_id));
+  let myCerts = [];
+  try { const { data: ct } = await db.from('certificates').select('*').eq('user_id', uid).in('course_id', courses.map(c => c.id)); myCerts = ct || []; } catch (_) {}
   const { data: mem } = await db.from('hub_members').select('status').eq('user_id', uid).eq('hub', aud).maybeSingle();
   const isAdmin = ((ctx.profile || ctx.me || {}).role) === 'admin';
   let status = isAdmin ? 'approved' : (mem && mem.status) || 'none';
@@ -70,9 +73,12 @@ async function startHubInApp(aud) {
     : status === 'pending' ? `<div class="hub-status pending">⏳ Your request to join is waiting for approval. We’ll let you know as soon as you’re in!</div>`
     : `<div class="hub-status">${status === 'declined' ? 'Your last request wasn’t approved. You can ask again, or contact us. ' : 'Join to take part in workshops and the ' + cafeName + ' Café. It’s free! '}<button type="button" class="btn btn-white" data-hreq>Join now</button></div>`;
   function draw() {
-    const mine = courses.filter(c => joined.has(c.id)), shown = courses.filter(c => !pick || c.category === pick);
+    const mine = courses.filter(c => joined.has(c.id) && !doneIds.has(c.id)), finished = courses.filter(c => doneIds.has(c.id)), shown = courses.filter(c => !pick || c.category === pick);
     box.innerHTML = `<section class="hub-hero" style="background:${H.grad}">${hubPic(H, 'big')}<div><span class="hub-kicker">${H.kicker}</span><h1>${H.name}</h1><p class="hub-tagline">${H.tagline}</p><p>${H.about}</p>${memberBox()}</div></section>
       ${mine.length ? `<h2 class="hub-h">My workshops</h2><div class="hub-courses">${mine.map(card).join('')}</div>` : ''}
+      ${finished.length || myCerts.length ? `<h2 class="hub-h">🏅 Completed workshops and certificates</h2><div class="hub-done">
+        ${finished.map(c => { const ce = myCerts.find(x => x.course_id === c.id); return `<div class="pending-row"><span>✅</span><div><b>${hubEsc(c.title)}</b><span class="meta">Completed${c.teacher_name ? ' · with ' + hubEsc(c.teacher_name) : ''}</span></div>${ce && ce.code ? `<a class="pill pill-live" href="certificate.html?code=${encodeURIComponent(ce.code)}" target="_blank" rel="noopener">🏅 Certificate</a>` : ''}</div>`; }).join('')}
+        ${myCerts.filter(ce => !doneIds.has(ce.course_id)).map(ce => `<div class="pending-row"><span>🏅</span><div><b>${hubEsc(ce.title || 'Certificate')}</b><span class="meta">${hubEsc((courses.find(c => c.id === ce.course_id) || {}).title || '')}</span></div>${ce.code ? `<a class="pill pill-live" href="certificate.html?code=${encodeURIComponent(ce.code)}" target="_blank" rel="noopener">Open</a>` : ''}</div>`).join('')}</div>` : ''}
       <h2 class="hub-h">Explore topics</h2>
       <div class="hub-cats">${H.cats.map(([k, ic, n, d]) => ['cafe', 'circles'].includes(k) ? `<a class="hub-cat hub-cat-cafe" href="${aud === 'teachers' ? 'teacher-cafe.html' : 'parent-cafe.html'}" style="--c:${H.color}"><span>${ic}</span><b>${n}</b><small>${d} · Open the café →</small></a>` : `<button type="button" class="hub-cat ${pick === k ? 'on' : ''}" data-hc="${k}" style="--c:${H.color}"><span>${ic}</span><b>${n}</b><small>${d}</small></button>`).join('')}</div>
       <h2 class="hub-h">${pick ? hubCat(aud, pick)[1] + ' ' + hubCat(aud, pick)[2] : 'What’s on'} ${pick ? '<button type="button" class="link-btn" data-hc="">Show all</button>' : ''}</h2>

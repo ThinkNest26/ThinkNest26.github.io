@@ -115,7 +115,7 @@
   MENUS.admin = [{ ic: '🛡️', label: 'Admin', items: [['admin.html', 'Admin dashboard'], ['admin-curriculum.html', 'Curriculum editor'], ['admin-founders.html', 'Founders page']] }].concat(MENUS.teacher);
   const SETTINGS = { student: 'settings.html', teacher: 'teacher-settings.html', admin: 'teacher-settings.html', parent: 'parent-settings.html', school_leader: 'teacher-settings.html', school_teacher: 'teacher-settings.html', school_student: 'settings.html', school_parent: 'parent-settings.html' };
   // pages that aren't in the menu, and which menu item they belong to
-  const ALIAS = { 'course-details.html': 'all-courses.html', 'course.html': 'my-courses.html', 'teacher-course.html': 'teacher-courses.html', 'group.html': 'groups.html', 'child.html': 'parent-dashboard.html' };
+  const ALIAS = { 'course-details.html': 'all-courses.html', 'teacher-profile.html': 'all-courses.html', 'course.html': 'my-courses.html', 'teacher-course.html': 'teacher-courses.html', 'group.html': 'groups.html', 'child.html': 'parent-dashboard.html' };
   const PARENT_PAGES = ['parent-dashboard.html', 'add-child.html', 'parent-hub.html', 'parent-cafe.html', 'parent-connect.html', 'child.html', 'parent-settings.html', 'parent-calendar.html', 'reports.html'];
 
   async function roleNow() {
@@ -198,7 +198,7 @@
     if (sc && role !== 'admin') schoolAnnouncements(view, page);
     profileMenu(view);
     // reminders backup: if the database can't run them on a timer, any open Think Nest page sends them (at most every 10 minutes)
-    try { const last = Number(localStorage.getItem('tn_rem') || 0); if (Date.now() - last > 10 * 60e3) { localStorage.setItem('tn_rem', String(Date.now())); db.rpc('send_reminders').then(() => {}, () => {}); } } catch (_) {}
+    try { const last = Number(localStorage.getItem('tn_rem') || 0); if (Date.now() - last > 10 * 60e3) { localStorage.setItem('tn_rem', String(Date.now())); db.rpc('send_reminders_and_lessons').then(r => { if (r && r.error) db.rpc('send_reminders'); }, () => {}); } } catch (_) {}
     if (view === 'student' || view === 'school_student') newLessonBadge();
   }
 

@@ -9,6 +9,7 @@ function cdVideoEmbed(url) {
   if (yt) return 'https://www.youtube-nocookie.com/embed/' + yt[1] + '?rel=0';
   const vm = s.match(/vimeo\.com\/(?:video\/)?(\d+)/);
   if (vm) return 'https://player.vimeo.com/video/' + vm[1];
+  const gd = s.match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([\w-]{20,})/); if (gd) return 'https://drive.google.com/file/d/' + gd[1] + '/preview';
   return null;
 }
 const cdDate = d => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
@@ -91,7 +92,7 @@ async function startCourseDetails() {
       <img src="${courseImg(course, 0)}" alt="">
       <div>
         <h1>${esc(course.title)}</h1>
-        ${course.teacher_name ? `<p class="by">Taught by ${esc(course.teacher_name)}</p>` : ''}
+        ${course.teacher_name ? `<p class="by">Taught by <a href="teacher-profile.html?id=${esc(course.teacher_id || '')}" style="color:inherit">${esc(course.teacher_name)}</a></p>` : ''}
         <dl class="cd-facts">
           ${fact('Subject', course.subject)}
           ${fact('Curriculum', CD_CUR[course.curriculum] || course.curriculum)}
@@ -159,6 +160,7 @@ async function startCourseDetails() {
         <div class="cd-t-head"><span class="cd-avatar" aria-hidden="true">${esc(initials)}</span>
           <div><b>${esc(teacher.full_name || 'Teacher')}</b>${teacher.subject ? `<span class="meta">Teaches ${esc(teacher.subject)}</span>` : ''}</div></div>
         ${teacher.bio ? `<p class="cd-text">${esc(teacher.bio)}</p>` : ''}
+        ${cdVideoEmbed(teacher.intro_video_url) ? `<div class="cd-video" style="margin-top:12px"><iframe src="${esc(cdVideoEmbed(teacher.intro_video_url))}" title="Meet ${esc(teacher.full_name || 'the teacher')}" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>` : ''}
         <dl class="cd-facts cd-facts-col">
           ${fact('Qualification', teacher.education_degree)}
           ${fact('Experience', teacher.experience_years ? teacher.experience_years + ' years' : '')}
@@ -166,6 +168,7 @@ async function startCourseDetails() {
           ${fact('Grades', teacher.grade_levels)}
           ${fact('Teaches', teacher.teaching_method)}
         </dl>
+        ${course.teacher_id ? `<p style="margin:14px 0 0"><a class="pill pill-soft" href="teacher-profile.html?id=${esc(course.teacher_id)}">See ${esc((teacher.full_name || 'the teacher').split(' ')[0])}’s profile and all their courses →</a></p>` : ''}
       </aside>
     </div>
 
@@ -192,6 +195,8 @@ async function startCourseDetails() {
     f.reset(); showError(err, '');
     if (!multi && slots.length) { const r0 = f.querySelector('input[name=time_slot]:not([disabled])'); if (r0) r0.checked = true; }
     f.student_name.value = profile.full_name || '';
+    if (profile.country) f.student_country.value = profile.country;
+    if (profile.curriculum) { const o = [...f.student_curriculum.options].find(x => x.value === profile.curriculum); if (o) f.student_curriculum.value = profile.curriculum; }
     { const g0 = profile.grade || course.grade || ''; f.student_grade.value = /british/i.test(profile.curriculum || '') || course.curriculum === 'british' ? (typeof tnYearLabel === 'function' ? tnYearLabel(g0) : g0) : g0; }
     dlg.showModal();
   }
@@ -222,12 +227,15 @@ async function startCourseDetails() {
       user_id: user.id, course_id: id,
       student_name: v('student_name'), student_grade: v('student_grade') || null,
       student_age: v('student_age') ? Number(v('student_age')) : null, student_language: v('student_language') || null,
+      student_country: v('student_country'), student_curriculum: v('student_curriculum'),
       parent_name: v('parent_name'), parent_email: v('parent_email'), parent_phone: v('parent_phone') || null,
       emergency_name: v('emergency_name') || null, emergency_phone: v('emergency_phone') || null,
       heard_from: v('heard_from') || null, notes: v('notes') || null, privacy_agreed: f.privacy.checked
     };
     if (!row.student_name) return showError(err, 'Write the student’s full name.');
     if (!row.student_age || row.student_age < 2 || row.student_age > 19) return showError(err, 'Write the student’s age in years.');
+    if (!row.student_country) return showError(err, 'Write which country the student lives in.');
+    if (!row.student_curriculum) return showError(err, 'Choose the curriculum the student follows at school.');
     if (!row.parent_name) return showError(err, 'Write the parent or guardian’s name.');
     if (!/^\S+@\S+\.\S+$/.test(row.parent_email)) return showError(err, 'Write a parent email address, like name@example.com.');
     if (!row.parent_phone) return showError(err, 'Write a parent phone number, so the teacher can reach you.');

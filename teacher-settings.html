@@ -8,10 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=167">
-  <link rel="stylesheet" href="app.css?v=167">
-  <link rel="stylesheet" href="rtl.css?v=167">
-  <script src="i18n.js?v=167"></script>
+  <link rel="stylesheet" href="style.css?v=168">
+  <link rel="stylesheet" href="app.css?v=168">
+  <link rel="stylesheet" href="rtl.css?v=168">
+  <script src="i18n.js?v=168"></script>
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -45,6 +45,8 @@
           <div class="two"><label>Teaching method <select name="teaching_method"></select></label><label>Curriculum type <select name="curriculum"></select></label></div>
           <div class="two"><label>School <input type="text" name="school" placeholder="School name, Freelance or Other"></label><label>Teaching experience (years) <input type="number" name="experience_years" min="0" max="60"></label></div>
           <label>Bio <textarea name="bio" rows="4" placeholder="Write about yourself"></textarea></label>
+          <label>Introduction video (optional) <input type="url" name="intro_video_url" placeholder="YouTube, Vimeo or Google Drive link"></label>
+          <p class="meta">A short video (1–2 minutes) where you introduce yourself to parents and students. It shows on your teacher profile and on every course you teach. Tip: on YouTube choose <b>Unlisted</b>.</p>
           <button class="btn btn-red auth-btn">Update</button>
         </form>
         <form class="panel auth-form wide" id="mentor-form">
@@ -83,13 +85,13 @@
   <div class="side-shade" id="side-shade"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=167"></script>
-  <script src="app.js?v=167"></script>
-  <script src="nav.js?v=167"></script>
-  <script src="notify.js?v=167" defer></script>
-  <script src="teacher.js?v=167"></script>
-  <script src="roles.js?v=167"></script>
+  <script src="supabase-config.js?v=168"></script>
+  <script src="app.js?v=168"></script>
+  <script src="nav.js?v=168"></script>
+  <script src="notify.js?v=168" defer></script>
+  <script src="teacher.js?v=168"></script>
+  <script src="roles.js?v=168"></script>
   <script>startTeacherSettings(); dualRolePanel('teacher');</script>
-  <script src="emailpref.js?v=167"></script>
+  <script src="emailpref.js?v=168"></script>
 </body>
 </html>
