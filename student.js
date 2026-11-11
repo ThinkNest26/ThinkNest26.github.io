@@ -30,14 +30,14 @@ function courseCard(c, e, k) {
       <p class="desc">${esc(c.description || '')}</p>
       ${e ? `<div class="bar"><i style="width:${e.progress}%"></i></div>
              <div class="row"><a class="pill pill-live" href="course.html?id=${c.id}">Continue</a><span class="done">${e.progress}% completed</span></div>`
-          : `<div class="row"><a class="pill pill-soft" href="course.html?id=${c.id}">View</a><button class="pill pill-live" data-join="${c.id}">Join course</button></div>`}
+          : `<div class="row"><a class="pill pill-soft" href="course-details.html?id=${c.id}">View course details</a><a class="pill pill-live" href="course-details.html?id=${c.id}&register=1">Register</a></div>`}
     </div></article>`;
 }
 
 async function joinCourse(uid, courseId) {
   const { data, error } = await db.from('enrollments').insert({ user_id: uid, course_id: courseId }).select().single();
   if (error && !String(error.message).includes('duplicate')) { say(friendly(error)); return null; }
-  say('You’ve joined the course!');
+  say('You’re registered for the course!');
   return data;
 }
 
@@ -48,7 +48,7 @@ async function startMyCourses() {
   if (error) return say(friendly(error));
   const list = document.getElementById('list');
   list.innerHTML = data.length ? data.map((e, k) => courseCard(e.courses, e, k)).join('')
-    : '<div class="empty-box"><p>You haven’t joined any courses yet.</p><a class="btn btn-red" href="all-courses.html">Browse all courses</a></div>';
+    : '<div class="empty-box"><p>You haven’t registered for any courses yet.</p><a class="btn btn-red" href="all-courses.html">Browse all courses</a></div>';
 }
 
 // ---------- All courses ----------
@@ -72,13 +72,6 @@ async function startAllCourses() {
   }
   render();
   q.addEventListener('input', render);
-  list.addEventListener('click', async e => {
-    const b = e.target.closest('[data-join]'); if (!b) return;
-    b.disabled = true; b.textContent = 'Joining…';
-    const row = await joinCourse(user.id, Number(b.dataset.join));
-    if (row) mine.push(row);
-    render();
-  });
 }
 
 // ---------- One course: lessons and progress ----------
@@ -106,7 +99,7 @@ async function startCourse() {
       <h1>${esc(course.title)}</h1><p>${esc(course.description || '')}</p>
       ${course.teacher_name ? `<p class="by">By ${esc(course.teacher_name)}</p>` : ''}
       ${enrol ? `<div class="bar"><i style="width:${enrol.progress}%"></i></div><p class="done">${enrol.progress}% completed</p>`
-              : `<button class="btn btn-red" id="join">Join course</button>`}</div>`;
+              : `<a class="btn btn-red" href="course-details.html?id=${id}&register=1">Register</a> <a class="pill pill-soft" href="course-details.html?id=${id}">View course details</a>`}</div>`;
     const j = document.getElementById('join');
     if (j) j.addEventListener('click', async () => { j.disabled = true; const r = await joinCourse(user.id, id); if (r) { enrol = r; drawHero(); drawLessons(); } else j.disabled = false; });
   }
@@ -342,7 +335,7 @@ async function startRecordings() {
   const en = await db.from('enrollments').select('course_id').eq('user_id', user.id);
   const ids = (en.data || []).map(e => e.course_id);
   const list = document.getElementById('list');
-  if (!ids.length) { list.innerHTML = '<div class="empty-box"><p>Join a course to see its recordings here.</p><a class="btn btn-red" href="all-courses.html">Browse courses</a></div>'; return; }
+  if (!ids.length) { list.innerHTML = '<div class="empty-box"><p>Register for a course to see its recordings here.</p><a class="btn btn-red" href="all-courses.html">Browse courses</a></div>'; return; }
   const { data, error } = await db.from('recordings').select('*, courses(title)').in('course_id', ids).order('recorded_at', { ascending: false });
   if (error) return say(friendly(error));
   list.innerHTML = data.length ? data.map(recCard).join('') : '<p class="empty">No recordings yet for your courses.</p>';

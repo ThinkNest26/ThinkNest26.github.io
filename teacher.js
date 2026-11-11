@@ -263,11 +263,11 @@ async function startTeacherCourse() {
     const has = new Set((certs.data || []).map(x => x.user_id));
     const rows = en.data || [];
     document.getElementById('students').innerHTML = rows.length ? rows.map(r => `<tr>
-        <td>${esc(r.profiles ? r.profiles.full_name : 'Student')}</td><td>${esc(r.profiles ? r.profiles.grade || '' : '')}</td>
+        <td><b>${esc(r.student_name || (r.profiles ? r.profiles.full_name : '') || 'Student')}</b>${r.parent_name || r.parent_email || r.parent_phone ? `<span class="meta" style="display:block">Parent: ${esc([r.parent_name, r.parent_email, r.parent_phone].filter(Boolean).join(', '))}</span>` : ''}${r.notes ? `<span class="meta" style="display:block">Note: ${esc(r.notes)}</span>` : ''}</td><td>${esc(r.student_grade || (r.profiles ? r.profiles.grade || '' : ''))}</td>
         <td>${new Date(r.created_at).toLocaleDateString('en-GB')}</td>
         <td><div class="bar small"><i style="width:${r.progress}%"></i></div> ${r.progress}%</td>
         <td><a class="pill pill-live" href="teacher-certificates.html?course=${id}&student=${r.user_id}">🏅 Award</a></td></tr>`).join('')
-      : '<tr><td colspan="5" class="empty">No students have joined this course yet.</td></tr>';
+      : '<tr><td colspan="5" class="empty">No students have registered for this course yet.</td></tr>';
   }
   loadStudents();
   const cdlg = document.getElementById('cert-dialog'), cf = document.getElementById('cert-form'), cerr = document.getElementById('cert-error');
