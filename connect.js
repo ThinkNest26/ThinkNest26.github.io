@@ -71,7 +71,7 @@ async function startConnect(sp) {
     const { data: ms } = await db.from('cafe_meetups').select('*').eq('hub', sp).gte('starts_at', new Date(Date.now() - 3 * 3600e3).toISOString()).order('starts_at');
     const ids = (ms || []).map(m => m.id);
     const { data: rs } = ids.length ? await db.from('meetup_rsvps').select('*').in('meetup_id', ids) : { data: [] };
-    body.innerHTML = `<div class="cx-head"><h2>Upcoming group meetups</h2><button type="button" class="btn btn-red" id="cx-new">+ Host a group meetup</button></div>
+    body.innerHTML = `<div class="cx-head"><h2>Upcoming group meetups</h2><button type="button" class="btn btn-red" id="cx-new">+ Host a group meetup</button></div><p class="meta">⏰ When you say you’re going, you’ll get a reminder about an hour before, in your notifications and by email.</p>
       <form class="panel auth-form cx-form" id="cx-form" hidden>
         <label>What’s the meetup? <input name="title" maxlength="120" required placeholder="For example, Friday coffee and planning swap"></label>
         <div class="two"><label>Date and time <input type="datetime-local" name="when" required></label><label>Places (at least 3) <input type="number" name="cap" min="3" max="200" value="6"></label></div>

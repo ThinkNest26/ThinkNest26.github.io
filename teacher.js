@@ -523,7 +523,7 @@ async function startTeacherCourse() {
     const { data } = await db.from('recordings').select('*').eq('course_id', id).order('recorded_at', { ascending: false });
     document.getElementById('recs').innerHTML = (data || []).length ? data.map(r => `<article class="panel rec-row">
         <h4>${esc(r.title)}</h4><span class="meta">${r.recorded_at ? new Date(r.recorded_at).toLocaleDateString('en-GB') : ''}</span>
-        <div class="row"><a class="pill pill-soft" href="${esc(r.youtube_url)}" target="_blank" rel="noopener">Watch</a><button class="pill pill-soft" data-del-rec="${r.id}">Delete</button></div></article>`).join('')
+        <div class="row">${r.video_path ? `<button class="pill pill-soft" data-play-rec="${esc(r.video_path)}">▶ Watch</button>` : `<a class="pill pill-soft" href="${esc(r.youtube_url)}" target="_blank" rel="noopener">Watch</a>`}<button class="pill pill-soft" data-del-rec="${r.id}" data-path="${esc(r.video_path || '')}">Delete</button></div></article>`).join('')
       : '<p class="empty">No recordings yet.</p>';
   }
   loadRecs();
@@ -531,14 +531,31 @@ async function startTeacherCourse() {
   rf.recorded_at.value = new Date().toISOString().slice(0, 10);
   rf.addEventListener('submit', async e => {
     e.preventDefault();
-    const { error } = await db.from('recordings').insert({ course_id: id, title: rf.title.value.trim(), youtube_url: rf.youtube_url.value.trim(), recorded_at: rf.recorded_at.value || null });
+    const file = rf.video_file && rf.video_file.files[0], url = rf.youtube_url.value.trim();
+    if (!rf.title.value.trim()) return say('Give the recording a title.');
+    if (!file && !url) return say('Paste a video link, or choose a video file to upload.');
+    if (file && file.size > 50 * 1024 * 1024) return say('This video is larger than 50 MB. Please upload it to YouTube (Unlisted) or Google Drive and paste the link instead.');
+    const btn = rf.querySelector('button.btn-red'); const bt = btn ? btn.textContent : ''; if (btn) { btn.disabled = true; btn.textContent = file ? 'Uploading… (keep this page open)' : 'Saving…'; }
+    let video_path = null;
+    if (file) {
+      video_path = `${id}/${Date.now()}-${file.name.replace(/[^\w.\-]+/g, '_')}`;
+      const up = await db.storage.from('recordings').upload(video_path, file, { contentType: file.type || 'video/mp4' });
+      if (up.error) { if (btn) { btn.disabled = false; btn.textContent = bt; } return say(/bucket/i.test(up.error.message || '') ? 'Please run the latest database update (Batch 3 Part C) first.' : friendly(up.error)); }
+    }
+    const row = { course_id: id, title: rf.title.value.trim(), youtube_url: url || '', recorded_at: rf.recorded_at.value || null };
+    if (video_path) row.video_path = video_path;
+    const { error } = await db.from('recordings').insert(row);
+    if (btn) { btn.disabled = false; btn.textContent = bt; }
     if (error) return say(friendly(error));
     rf.reset(); rf.recorded_at.value = new Date().toISOString().slice(0, 10); say('Recording added.'); loadRecs();
   });
   document.getElementById('recs').addEventListener('click', async e => {
+    const pl = e.target.closest('[data-play-rec]');
+    if (pl) { const { data: s, error: se } = await db.storage.from('recordings').createSignedUrl(pl.dataset.playRec, 3600); if (se) return say(friendly(se)); return window.open(s.signedUrl, '_blank', 'noopener'); }
     const b = e.target.closest('[data-del-rec]'); if (!b || !confirm('Delete this recording?')) return;
     const { error } = await db.from('recordings').delete().eq('id', Number(b.dataset.delRec));
     if (error) return say(friendly(error));
+    if (b.dataset.path) db.storage.from('recordings').remove([b.dataset.path]);
     loadRecs();
   });
 }
@@ -658,15 +675,30 @@ async function startTeacherRequests() {
         <div class="person-info"><h4>${esc(nm(b))} has requested a session with you</h4>
           <span class="meta">${esc(when(b.starts_at))}${b.profiles && b.profiles.grade ? ' · ' + esc(b.profiles.grade) : ''}</span>
           ${b.note ? `<span class="meta">“${esc(b.note)}”</span>` : ''}</div>
-        <div class="person-actions"><button class="pill pill-live" data-ans="1" data-id="${b.id}">Accept</button><button class="pill pill-soft danger" data-ans="0" data-id="${b.id}">Reject</button></div></article>`).join('')
+        ${b.suggested_at ? `<span class="meta">🕒 You suggested ${esc(when(b.suggested_at))}. Waiting for the student to answer.</span>` : ''}</div>
+        <div class="person-actions"><button class="pill pill-live" data-ans="1" data-id="${b.id}">Accept</button><button class="pill pill-soft" data-suggest="${b.id}">🕒 Suggest a different time</button><button class="pill pill-soft danger" data-ans="0" data-id="${b.id}">Reject</button></div>
+        <form class="suggest-form" data-sform="${b.id}" hidden><label>New date and time <input type="datetime-local" name="at" required></label><label>Message (optional) <input name="msg" maxlength="200" placeholder="For example: I’m teaching then. Does this time work?"></label><button class="pill pill-live">Send suggestion</button></form></article>`).join('')
       : '<p class="empty">No requests waiting.</p>';
     document.getElementById('accepted').innerHTML = acc.length ? acc.map(b => {
       const [rel, live] = relative(b.starts_at);
-      return `<article class="event ev-book"><div><h4>Session with ${esc(nm(b))}</h4><span class="meta">${esc(b.note || '')}</span><span class="when">${esc(when(b.starts_at))}</span></div>
-        <div class="event-actions"><span class="tag ${live ? 'tag-now' : ''}">${rel}</span>${m.meeting_link ? `<a class="pill pill-live" href="${esc(m.meeting_link)}" target="_blank" rel="noopener">Start</a>` : ''}</div></article>`;
+      const soon = new Date(b.starts_at) - Date.now() < 15 * 60e3;
+      return `<article class="event ev-book"><div><h4>Session with ${esc(nm(b))}</h4><span class="meta">${esc(b.note || '')}</span><span class="when">${esc(when(b.starts_at))}</span>
+        ${m.meeting_link ? `<span class="meta">The student joins with the same link from their calendar. Open it a few minutes early.</span>` : `<span class="meta">⚠️ Add your meeting link (Google Meet or Zoom) in <a href="teacher-settings.html">Account Settings → Mentor sessions</a> so you and the student can join.</span>`}</div>
+        <div class="event-actions">${m.meeting_link ? `<a class="pill ${live || soon ? 'pill-live' : 'pill-soft'}" href="${esc(m.meeting_link)}" target="_blank" rel="noopener">${live || soon ? '▶ Join now' : '🔗 Meeting link'}</a>` : ''}<span class="tag ${live ? 'tag-now' : ''}">${rel}</span></div></article>`;
     }).join('') : '<p class="empty">No accepted sessions coming up.</p>';
   }
   load();
+  document.getElementById('pending').addEventListener('click', e => {
+    const sg = e.target.closest('[data-suggest]'); if (!sg) return;
+    const f = document.querySelector(`[data-sform="${sg.dataset.suggest}"]`); if (f) f.hidden = !f.hidden;
+  });
+  document.getElementById('pending').addEventListener('submit', async e => {
+    const f = e.target.closest('[data-sform]'); if (!f) return; e.preventDefault();
+    const at = new Date(f.at.value); if (isNaN(at) || at < new Date()) return say('Choose a date and time in the future.');
+    const { error } = await db.rpc('suggest_booking_time', { bid: Number(f.dataset.sform), new_at: at.toISOString(), msg: f.msg.value.trim() || null });
+    if (error) return say(/suggest_booking_time/.test(error.message || '') ? 'Please run the latest database update (Batch 3 Part C) first.' : friendly(error));
+    say('Suggestion sent. The student will choose to accept it or not.'); load();
+  });
   document.getElementById('pending').addEventListener('click', async e => {
     const b = e.target.closest('[data-ans]'); if (!b) return;
     b.parentElement.querySelectorAll('button').forEach(x => x.disabled = true);

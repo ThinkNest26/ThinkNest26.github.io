@@ -198,6 +198,8 @@
     fillDynamic(view, page, qid);
     if (sc && role !== 'admin') schoolAnnouncements(view, page);
     profileMenu(view);
+    // reminders backup: if the database can't run them on a timer, any open Think Nest page sends them (at most every 10 minutes)
+    try { const last = Number(localStorage.getItem('tn_rem') || 0); if (Date.now() - last > 10 * 60e3) { localStorage.setItem('tn_rem', String(Date.now())); db.rpc('send_reminders').then(() => {}, () => {}); } } catch (_) {}
     if (view === 'student' || view === 'school_student') newLessonBadge();
   }
 

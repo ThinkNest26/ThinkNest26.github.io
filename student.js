@@ -178,6 +178,7 @@ async function startCourse() {
 
   const rb = document.getElementById('course-recs');
   rb.innerHTML = (recs.data || []).length ? recs.data.map(recCard).join('') : '<p class="empty">No recordings yet.</p>';
+  fillVideos(rb);
 }
 
 // ---------- Calendar ----------
@@ -190,7 +191,7 @@ async function startCalendar() {
   if (ses.error) say(friendly(ses.error));
   const events = [
     ...(ses.data || []).map(s => ({ kind: 'class', at: new Date(s.starts_at), title: s.title, sub: [s.courses && s.courses.title, s.mentors && 'with ' + s.mentors.name].filter(Boolean).join(' · '), link: s.meeting_link })),
-    ...(bk.data || []).map(b => ({ kind: 'book', id: b.id, status: b.status, at: new Date(b.starts_at), title: 'Mentor session with ' + (b.mentors ? b.mentors.name : 'your mentor'), sub: [b.status === 'pending' ? 'Waiting for the mentor to accept' : b.status === 'rejected' ? 'The mentor couldn’t take this session' : '', b.note || ''].filter(Boolean).join(' · '), link: b.status === 'pending' || b.status === 'rejected' ? null : b.mentors && b.mentors.meeting_link }))
+    ...(bk.data || []).map(b => ({ kind: 'book', id: b.id, status: b.status, at: new Date(b.starts_at), title: 'Mentor session with ' + (b.mentors ? b.mentors.name : 'your mentor'), sub: [b.status === 'pending' && b.suggested_at ? '🕒 Your mentor suggested ' + when(b.suggested_at) + '. Answer in Mentors.' : b.status === 'pending' ? 'Waiting for the mentor to accept' : b.status === 'rejected' ? 'The mentor couldn’t take this session' : '', b.note || ''].filter(Boolean).join(' · '), link: b.status === 'pending' || b.status === 'rejected' ? null : b.mentors && b.mentors.meeting_link }))
   ].sort((a, b) => a.at - b.at);
 
   const dayKey = d => d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
@@ -264,6 +265,29 @@ async function startMentors() {
       <button class="btn btn-red btn-small" data-book="${m.id}" data-name="${esc(m.name)}">Book a session</button>
     </article>`).join('') : '<p class="empty">Mentors will appear here soon.</p>';
 
+  // my session requests, including new times a mentor suggested
+  async function myRequests() {
+    const { data: bk } = await db.from('bookings').select('*, mentors(name, meeting_link)').eq('user_id', user.id).in('status', ['pending', 'accepted']).gte('starts_at', new Date(Date.now() - 3600e3).toISOString()).order('starts_at');
+    let host = document.getElementById('my-bookings');
+    if (!host) { host = document.createElement('section'); host.id = 'my-bookings'; list.before(host); }
+    const rows = bk || [];
+    host.innerHTML = rows.length ? `<h2 class="dash-h">My session requests</h2>` + rows.map(b => {
+      const who = b.mentors ? b.mentors.name : 'your mentor', link = b.mentors && b.mentors.meeting_link;
+      const soon = b.status === 'accepted' && new Date(b.starts_at) - Date.now() < 15 * 60e3;
+      return `<article class="panel person" data-bid="${b.id}"><div class="person-info"><h4>Session with ${esc(who)}</h4><span class="meta">${esc(when(b.starts_at))}</span>
+        ${b.status === 'pending' && b.suggested_at ? `<span class="meta">🕒 <b>${esc(who)} suggested ${esc(when(b.suggested_at))}</b>${b.suggest_note ? ': “' + esc(b.suggest_note) + '”' : ''}</span>` : b.status === 'pending' ? '<span class="meta">⏳ Waiting for the mentor to accept</span>' : '<span class="meta">✅ Accepted. It’s in your calendar.</span>'}</div>
+        <div class="person-actions">${b.status === 'pending' && b.suggested_at ? '<button class="pill pill-live" data-take="1">Accept the new time</button><button class="pill pill-soft danger" data-take="0">Cancel the session</button>' : ''}${b.status === 'accepted' && link ? `<a class="pill ${soon ? 'pill-live' : 'pill-soft'}" href="${esc(link)}" target="_blank" rel="noopener">${soon ? '▶ Join now' : '🔗 Meeting link'}</a>` : ''}</div></article>`;
+    }).join('') : '';
+  }
+  myRequests();
+  document.addEventListener('click', async e => {
+    const tb = e.target.closest('[data-take]'); if (!tb) return;
+    const bid = Number(tb.closest('[data-bid]').dataset.bid), ok = tb.dataset.take === '1';
+    if (!ok && !confirm('Cancel this session request?')) return;
+    const { error } = await db.rpc('answer_suggested_time', { bid, ok });
+    if (error) return say(friendly(error));
+    say(ok ? 'Done! The new time is in your calendar.' : 'Session cancelled.'); myRequests();
+  });
   const dlg = document.getElementById('book-dialog'), form = document.getElementById('book-form'), err = document.getElementById('book-error');
   let mentorId = null;
   function open(id, name) {
@@ -351,10 +375,16 @@ function videoEmbed(url) {
   const gd = s.match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([\w-]{20,})/); if (gd) return 'https://drive.google.com/file/d/' + gd[1] + '/preview';
   return null;
 }
+// uploaded videos are private: fetch a short-lived link for each one on the page
+async function fillVideos(root) {
+  const vs = [...(root || document).querySelectorAll('video[data-vpath]:not([src])')];
+  for (const v of vs) { try { const { data } = await db.storage.from('recordings').createSignedUrl(v.dataset.vpath, 4 * 3600); if (data) v.src = data.signedUrl; } catch (_) {} }
+}
 function recCard(r) {
   const src = r.video_path ? null : videoEmbed(r.youtube_url);
   return `<article class="learn rec">
-    ${src ? `<iframe src="${esc(src)}" title="${esc(r.title)}" loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`
+    ${r.video_path ? `<video controls preload="metadata" playsinline data-vpath="${esc(r.video_path)}" style="width:100%;aspect-ratio:16/9;background:#1E2233;border-radius:12px 12px 0 0"></video>`
+         : src ? `<iframe src="${esc(src)}" title="${esc(r.title)}" loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`
          : `<a href="${esc(r.youtube_url)}" target="_blank" rel="noopener" class="rec-link">Watch video</a>`}
     <div class="learn-body"><span class="meta">${esc(r.courses ? r.courses.title : '')}${r.recorded_at ? ' · ' + new Date(r.recorded_at).toLocaleDateString('en-GB') : ''}</span><h4>${esc(r.title)}</h4></div>
   </article>`;
@@ -372,6 +402,7 @@ async function startRecordings() {
   const by = {}; data.forEach(r => { const k = r.course_id; (by[k] = by[k] || { title: r.courses ? r.courses.title : 'Course', items: [] }).items.push(r); });
   list.classList.remove('grid-cards');
   list.innerHTML = Object.entries(by).map(([cid, g]) => `<section class="rec-group"><h2 class="dash-h"><a href="course.html?id=${cid}" style="color:inherit;text-decoration:none">${esc(g.title)}</a> <span class="count">${g.items.length}</span></h2><div class="grid-cards">${g.items.map(recCard).join('')}</div></section>`).join('');
+  fillVideos(list);
 }
 
 // ---------- Certificates ----------

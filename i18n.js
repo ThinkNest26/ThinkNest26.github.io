@@ -1916,7 +1916,14 @@
 "How many times can students hand in?": "كم مرة يمكن للطلاب التسليم؟",
 "As many as they like": "بلا حدود",
 "Once": "مرة واحدة",
-"➕ Add this objective and choose another": "➕ أضف هذا الهدف واختر هدفًا آخر"
+"➕ Add this objective and choose another": "➕ أضف هذا الهدف واختر هدفًا آخر",
+"🕒 Suggest a different time": "🕒 اقترح وقتًا آخر",
+"Send suggestion": "أرسل الاقتراح",
+"▶ Join now": "▶ انضم الآن",
+"🔗 Meeting link": "🔗 رابط الاجتماع",
+"Accept the new time": "قبول الوقت الجديد",
+"Cancel the session": "إلغاء الجلسة",
+"My session requests": "طلبات جلساتي"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

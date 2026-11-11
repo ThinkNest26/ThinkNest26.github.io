@@ -8,10 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=162">
-  <link rel="stylesheet" href="app.css?v=162">
-  <link rel="stylesheet" href="rtl.css?v=162">
-  <script src="i18n.js?v=162"></script>
+  <link rel="stylesheet" href="style.css?v=163">
+  <link rel="stylesheet" href="app.css?v=163">
+  <link rel="stylesheet" href="rtl.css?v=163">
+  <script src="i18n.js?v=163"></script>
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -67,7 +67,9 @@
           <h3>Add a recording</h3>
           <p class="hint">Paste a link to the video. YouTube, Vimeo and Google Drive videos play right on the page. Links to other websites open in a new tab.<br>Tip: on YouTube, choose <b>Unlisted</b> so only people with the link can watch. On Google Drive, set sharing to <b>Anyone with the link</b>.</p>
           <label>Title <input type="text" name="title" required></label>
-          <label>Video link <input type="url" name="youtube_url" required placeholder="https://youtu.be/… or https://drive.google.com/…"></label>
+          <label>Video link <input type="url" name="youtube_url" placeholder="https://youtu.be/… or https://drive.google.com/…"></label>
+          <label>Or upload a video file (MP4, up to 50 MB) <input type="file" name="video_file" accept="video/mp4,video/webm,video/quicktime"></label>
+          <p class="meta">Uploaded videos are private: only you and the students in this course can watch them. For longer videos, use YouTube (Unlisted) or Google Drive.</p>
           <label>Date recorded <input type="date" name="recorded_at"></label>
           <button class="btn btn-red">Add recording</button>
         </form>
@@ -140,17 +142,17 @@
   <div class="side-shade" id="side-shade"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=162"></script>
-  <script src="app.js?v=162"></script>
-  <script src="nav.js?v=162"></script>
-  <script src="notify.js?v=162" defer></script>
-  <script src="objpicker.js?v=162"></script>
-  <script src="lessons.js?v=162"></script>
-  <script src="materials.js?v=162"></script>
-  <script src="hubs.js?v=162"></script>
-  <script src="courseform.js?v=162"></script>
-  <script src="attendance.js?v=162"></script>
-  <script src="teacher.js?v=162"></script>
+  <script src="supabase-config.js?v=163"></script>
+  <script src="app.js?v=163"></script>
+  <script src="nav.js?v=163"></script>
+  <script src="notify.js?v=163" defer></script>
+  <script src="objpicker.js?v=163"></script>
+  <script src="lessons.js?v=163"></script>
+  <script src="materials.js?v=163"></script>
+  <script src="hubs.js?v=163"></script>
+  <script src="courseform.js?v=163"></script>
+  <script src="attendance.js?v=163"></script>
+  <script src="teacher.js?v=163"></script>
   <script>startTeacherCourse();</script>
 </body>
 </html>
