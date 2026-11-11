@@ -1927,7 +1927,12 @@
 "👥 Groups": "👥 المجموعات",
 "‹ Back to the course": "‹ العودة إلى الدورة",
 "📣 Group community": "📣 مجتمع المجموعة",
-"📣 Community": "📣 المجتمع"
+"📣 Community": "📣 المجتمع",
+"All curricula and grades": "جميع المناهج والصفوف",
+"Show all courses": "عرض جميع الدورات",
+"Private messages with other teachers. Students can only chat privately with their student friends. For a class or study group, post in its community feed instead.": "رسائل خاصة مع معلمين آخرين. يمكن للطلاب المحادثة بشكل خاص مع أصدقائهم الطلاب فقط. للفصول ومجموعات الدراسة، انشر في صفحة المجتمع الخاصة بها.",
+"Join now": "انضم الآن",
+"No classmates found with that name.": "لم يتم العثور على زملاء بهذا الاسم."
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

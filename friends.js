@@ -32,14 +32,31 @@ async function startFriends() {
     document.getElementById('blocked').innerHTML = blocked.length ? blocked.map(b => `<div class="pending-row"><span class="initials">${esc(fIni(b.full_name))}</span><div><b>${esc(b.full_name)}</b></div><button class="link-btn" data-unblock="${b.id}">Unblock</button></div>`).join('') : '<p class="empty">You haven’t blocked anyone.</p>';
   }
 
+  // classmates: students who share a course group, class or study group with me
+  let mates = null;
+  async function classmates() {
+    if (mates) return mates;
+    mates = new Set();
+    try {
+      const { data: gs } = await db.rpc('my_groups');
+      const mine = (gs || []).filter(g => g.my_status === 'active');
+      const lists = await Promise.all(mine.map(g => db.rpc('group_member_list', { gid: g.id })));
+      lists.forEach(r => (r.data || []).forEach(m => { if (m.status === 'active') mates.add(m.user_id); }));
+    } catch (_) {}
+    return mates;
+  }
   async function search(q) {
     if (q.trim().length < 2) { results.innerHTML = '<p class="empty">Type at least 2 letters.</p>'; return; }
-    const { data, error } = await db.rpc('search_students', { q });
+    const [{ data: all, error }, cm] = await Promise.all([db.rpc('search_students', { q }), classmates()]);
     if (error) return say(friendly(error));
-    results.innerHTML = data.length ? data.map(p => `<div class="pending-row">
+    // you can only add students who share a course or group with you (friends and requests already made still show)
+    const data = (all || []).filter(p => cm.has(p.id) || ['friend', 'sent', 'incoming'].includes(p.relation));
+    const others = (all || []).length - data.length;
+    results.innerHTML = (data.length ? data.map(p => `<div class="pending-row">
         <span class="initials">${esc(fIni(p.full_name))}</span><div><b>${esc(p.full_name)}</b><span class="meta">${fMeta(p)}</span></div>
         ${p.relation === 'friend' ? '<span class="tag tag-now">Friends</span>' : p.relation === 'sent' ? '<span class="tag tag-wait">Request sent</span>' : p.relation === 'incoming' ? `<button class="pill pill-live" data-add="${p.id}">Accept request</button>` : `<button class="pill pill-live" data-add="${p.id}">Add friend</button>`}
-      </div>`).join('') : '<p class="empty">No students found with that name.</p>';
+      </div>`).join('') : '<p class="empty">No classmates found with that name.</p>')
+      + `<p class="meta">🔒 You can add friends who are in one of your course groups or study groups.${others ? ' Students from other groups aren’t shown.' : ''}</p>`;
   }
   const ff = document.getElementById('find-form');
   ff.addEventListener('submit', e => { e.preventDefault(); search(ff.q.value); });

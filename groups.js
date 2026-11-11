@@ -95,7 +95,7 @@ async function startGroup() {
     document.getElementById('ghead').innerHTML = `<span class="group-ic big ${isClass ? 'cls' : ''}">${esc(gIni(g.name))}</span>${isClass ? '<span class="class-flag">🏫 Class</span>' : ''}
       <div><h1>${esc(g.name)}</h1>${g.description ? `<p>${esc(g.description)}</p>` : ''}
       <div class="avatars">${active.slice(0, 8).map(m => `<span class="initials" title="${esc(m.full_name)}">${esc(gIni(m.full_name))}</span>`).join('')}<span class="meta">${active.length} member${active.length === 1 ? '' : 's'}</span></div></div>
-      <div class="ghead-actions"><a class="pill pill-live big" href="messages.html?group=${gid}">💬 Group chat</a>${teacherRun && isOwner ? '<button type="button" class="pill pill-soft big" id="att-g">📋 Attendance</button>' : ''}${isOwner ? '<button class="pill pill-soft big" id="edit-g">Edit</button>' : ''}</div>`;
+      <div class="ghead-actions">${teacherRun && isOwner ? '<button type="button" class="pill pill-soft big" id="att-g">📋 Attendance</button>' : ''}${isOwner ? '<button class="pill pill-soft big" id="edit-g">Edit</button>' : ''}</div>`;
     const ab = document.getElementById('att-g'); if (ab) ab.onclick = () => openAttendanceDialog({ gid, title: g.name });
     const eb = document.getElementById('edit-g');
     if (eb) eb.addEventListener('click', async () => {
@@ -416,7 +416,7 @@ async function startClasses() {
   box.onclick = e => { const a = e.target.closest('[data-att]'); if (a && typeof openAttendanceDialog === 'function') openAttendanceDialog({ gid: Number(a.dataset.att), title: a.dataset.name }); };
   box.innerHTML = cls.map((g, i) => `<article class="panel class-tile">
       <a class="class-top" href="group.html?id=${g.id}"><span class="group-ic cls">${esc(gIni(g.name))}</span><div><b>${esc(g.name)}</b><span class="meta">${g.members} members · ${g.my_role === 'owner' ? 'your class' : 'with ' + esc(g.owner_name || 'your teacher')}</span>${g.description ? `<span class="meta">${esc(g.description)}</span>` : ''}</div></a>
-      <div class="class-links"><a class="pill pill-live" href="group.html?id=${g.id}">📣 Feed</a><a class="pill pill-soft" href="group.html?id=${g.id}#t-res">📚 Resources</a><a class="pill pill-soft" href="messages.html?group=${g.id}">💬 Chat</a><a class="pill pill-soft" href="group.html?id=${g.id}#t-mem">${g.my_role === 'owner' ? '👥 Students &amp; ⭐ stars' : '👥 Members'}</a>${g.my_role === 'owner' ? `<button type="button" class="pill pill-soft" data-att="${g.id}" data-name="${esc(g.name)}">📋 Attendance</button>` : ''}</div>
+      <div class="class-links"><a class="pill pill-live" href="group.html?id=${g.id}">📣 Feed</a><a class="pill pill-soft" href="group.html?id=${g.id}#t-res">📚 Resources</a><a class="pill pill-soft" href="group.html?id=${g.id}#t-mem">${g.my_role === 'owner' ? '👥 Students &amp; ⭐ stars' : '👥 Members'}</a>${g.my_role === 'owner' ? `<button type="button" class="pill pill-soft" data-att="${g.id}" data-name="${esc(g.name)}">📋 Attendance</button>` : ''}</div>
       ${boards[i] || ''}
     </article>`).join('');
 }

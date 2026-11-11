@@ -68,7 +68,7 @@ async function startHubInApp(aud) {
   const cafe = aud === 'teachers' ? 'teacher-cafe.html' : 'parent-cafe.html', cafeName = aud === 'teachers' ? 'Teacher' : 'Parent';
   const memberBox = () => status === 'approved' ? `<div class="hub-hero-btns"><a class="btn btn-white" href="${cafe}">☕ Go to the ${cafeName} Café</a></div>`
     : status === 'pending' ? `<div class="hub-status pending">⏳ Your request to join is waiting for approval. We’ll let you know as soon as you’re in!</div>`
-    : `<div class="hub-status">${status === 'declined' ? 'Your last request wasn’t approved. You can ask again, or contact us. ' : 'Join to take part in workshops and the ' + cafeName + ' Café. It’s free! '}<button type="button" class="btn btn-white" data-hreq>Request to join</button></div>`;
+    : `<div class="hub-status">${status === 'declined' ? 'Your last request wasn’t approved. You can ask again, or contact us. ' : 'Join to take part in workshops and the ' + cafeName + ' Café. It’s free! '}<button type="button" class="btn btn-white" data-hreq>Join now</button></div>`;
   function draw() {
     const mine = courses.filter(c => joined.has(c.id)), shown = courses.filter(c => !pick || c.category === pick);
     box.innerHTML = `<section class="hub-hero" style="background:${H.grad}">${hubPic(H, 'big')}<div><span class="hub-kicker">${H.kicker}</span><h1>${H.name}</h1><p class="hub-tagline">${H.tagline}</p><p>${H.about}</p>${memberBox()}</div></section>
@@ -83,10 +83,13 @@ async function startHubInApp(aud) {
     const c = e.target.closest('[data-hc]'); if (c) { pick = c.dataset.hc; return draw(); }
     const rq = e.target.closest('[data-hreq]');
     if (rq) {
-      rq.disabled = true; rq.textContent = 'Sending…';
+      rq.disabled = true; rq.textContent = 'Joining…';
       const { data, error } = await db.rpc('request_hub', { h: aud });
-      if (error) { rq.disabled = false; rq.textContent = 'Request to join'; return say(friendly(error)); }
+      if (error) { rq.disabled = false; rq.textContent = 'Join now'; return say(friendly(error)); }
       status = data || 'pending';
+      // approved teachers and parents join straight away (their account was already checked)
+      try { const { data: m2 } = await db.from('hub_members').select('status').eq('user_id', uid).eq('hub', aud).maybeSingle(); if (m2 && m2.status) status = m2.status; } catch (_) {}
+      if (status === 'approved') { say('🎉 You’re in! Welcome to ' + H.name + '.'); return draw(); }
       emailAdmin('New request to join ' + H.name, { Name: me.full_name || '', Email: (ctx.user || {}).email || '', Account: aud === 'teachers' ? 'Teacher' : 'Parent', Hub: H.name + ' (' + H.kicker + ')', 'What to do': 'Log in as admin and open Approvals → Hub requests to approve or decline.' });
       say('Request sent! Think Nest will approve it soon.'); return draw();
     }

@@ -47,7 +47,7 @@ const HELP_EN = {
     ['How do I hand in my work?', 'Open the activity in the lesson. Type your answer, or click <b>Upload</b> to add a photo or file, then click <b>Hand in</b>. You’ll get a 🔔 notification when your teacher marks it.'],
     ['How do I join a live class?', 'Live classes are in <b>My Calendar</b> and on the course page. From 15 minutes before the class starts, click <b>✋ Check in</b> on the course page so your teacher knows you’re there.'],
     ['What are Nest Points and badges?', 'You earn Nest Points for handing in work, perfect scores, finishing lessons, coming to class, and helping others. Collect badges and grow from 🥚 Hatchling to 🏆 Eagle! See <b>My Progress → My rewards</b>.'],
-    ['How do I add a friend?', 'Open <b>Friends & Community → My friends</b>, search for a classmate and send a request. You can chat privately once you’ve both agreed.'],
+    ['How do I add a friend?', 'Open <b>Friends & Community → My friends</b>, search for a classmate (someone in one of your course groups or study groups) and send a request. You can chat privately once you’ve both agreed.'],
     ['How do I download my certificate?', 'Open <b>My Progress → My certificates</b>, click <b>Open &amp; download</b>, then <b>Download PDF / Print</b> and choose <b>Save as PDF</b>.'],
     ['I’m under 13. Can I sign up myself?', 'No. A parent or guardian needs to sign up first and add you. They’ll send you a special invite link to finish joining.']
   ] },
@@ -65,7 +65,7 @@ const HELP_EN = {
     ['How do I add lessons and activities?', 'Open your course, add a lesson, then click <b>+ Add to this lesson</b>. Choose from 10 tools: uploads, forms, quizzes, worksheets, videos, writing tasks, flashcards, activities, interactive links and exit tickets. Many can be created with AI from a learning objective.'],
     ['How do I mark work?', 'Quizzes are marked automatically. For other work, open the activity in your course to see what students handed in, add a score and a comment. Students are notified.'],
     ['How do I take attendance?', 'Use <b>My Classes</b> (open a class → 📋 Attendance), the Attendance box on your dashboard, or the 📋 Attendance tab in a course. Mark each student Present, Late, Absent or Excused, then click <b>Save register</b>. Parents are told if their child is absent or late.'],
-    ['How do I create a class?', 'Open <b>My Classes → ➕ New class</b> and choose a course: all its students are added. Each class has a feed, resources, group chat and leaderboard.'],
+    ['How do I create a class?', 'Each class time in your course is a group. Add your class times in <b>Edit details</b>, then approve students’ registrations: they join their group automatically. Each group has a community feed, resources, attendance, a leaderboard and report cards.'],
     ['How do I award a certificate?', 'Click <b>🏅 Certificates</b> in the sidebar. Choose a type, a course or class, tick the students, add a reason, check the preview and click <b>Award</b>. Students and parents are notified.'],
     ['What is Beyond the Bell?', 'Our Teacher Hub: workshops and meetups for teachers’ own growth and wellbeing, the <b>Teacher Café</b>, and <b>Coffee &amp; Connections</b> (Learning Partners, group meetups and a colleague directory). Request to join from the hub page.'],
     ['I’m also a parent. Do I need two accounts?', 'No. In <b>Account settings</b> (tap your initials, top right), tick <b>I’m also a parent</b>. A 👪 Parent section appears in your sidebar, and a switch lets you move between teacher and parent views.']

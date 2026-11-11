@@ -2192,3 +2192,4 @@ label[hidden] { display: none !important; }
 .cgroup-top { display: flex; gap: 12px; align-items: center; }
 .cgroup-top b { display: block; font-size: 1.05rem; }
 .my-group { margin: 16px 0; display: grid; gap: 10px; }
+.course-scope { margin: -6px 0 18px; }

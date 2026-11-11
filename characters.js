@@ -228,8 +228,7 @@ async function tnClassCommunity() {
   const feed = document.getElementById('t-feed'); if (!feed || document.getElementById('tn-class-banner')) return;
   const safe = String(g.name).replace(/[<>&]/g, '');
   const banner = document.createElement('section'); banner.className = 'tn-class-banner'; banner.id = 'tn-class-banner'; banner.setAttribute('data-no-tr', '');
-  banner.innerHTML = `<span class="tn-cb-ic" aria-hidden="true">🔒</span><div><b>${T(safe + ' community', 'مجتمع ' + safe)}</b><p>${T('A private space just for this class. Only the teacher and students in this class can see it.', 'مساحة خاصة بهذا الفصل فقط. لا يراها إلا المعلّم وطلاب هذا الفصل.')}</p></div>
-    <a class="btn btn-red" href="messages.html?group=${gid}">${T('💬 Open class chat', '💬 افتح محادثة الفصل')}</a>`;
+  banner.innerHTML = `<span class="tn-cb-ic" aria-hidden="true">🔒</span><div><b>${T(safe + ' community', 'مجتمع ' + safe)}</b><p>${T('A private space just for this class. Only the teacher and students in this class can see it.', 'مساحة خاصة بهذا الفصل فقط. لا يراها إلا المعلّم وطلاب هذا الفصل.')}</p></div>`;
   feed.prepend(banner);
   const comp = document.getElementById('gcomposer');
   if (comp && !document.getElementById('tn-class-challenge')) {

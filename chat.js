@@ -16,7 +16,7 @@ async function startChat() {
   const isStudent = me.role === 'student', isAdult = !isStudent;
   if (isAdult) document.getElementById('safety').textContent = me.role === 'parent'
     ? 'You can read your child’s chats here. Only the children in a chat can write in it.'
-    : 'Group chats from your classes and study groups, and private messages with other teachers. Students can only chat privately with their student friends.';
+    : 'Private messages with other teachers. Students can only chat privately with their student friends. For a class or study group, post in its community feed instead.';
   document.getElementById('new-chat').hidden = !isStudent;
 
   let current = null, channel = null, convs = [];
@@ -26,10 +26,11 @@ async function startChat() {
     if (me.role === 'parent') { document.getElementById('convs').innerHTML = '<p class="empty">Open a chat from your child’s profile page.</p>'; return; }
     const { data, error } = await db.rpc('my_conversations');
     if (error) return say(friendly(error));
-    convs = data || [];
+    // group and class chats were the same as each group's own feed, so Messages now holds private chats only
+    convs = (data || []).filter(c => c.kind !== 'group');
     const total = convs.reduce((s, c) => s + Number(c.unread || 0), 0);
     const dot = document.getElementById('nav-unread'); if (dot) dot.hidden = !total;
-    document.getElementById('convs').innerHTML = data.length ? data.map(c => `<button class="conv ${current && current.id === c.id ? 'on' : ''}" data-conv="${c.id}">
+    document.getElementById('convs').innerHTML = convs.length ? convs.map(c => `<button class="conv ${current && current.id === c.id ? 'on' : ''}" data-conv="${c.id}">
         <span class="initials ${c.kind === 'group' ? 'grp' : ''}">${c.kind === 'group' ? '👥' : esc(cIni(c.title))}</span>
         <span class="conv-text"><b>${esc(c.title || 'Chat')}</b><span class="meta">${c.last_body ? esc((c.kind === 'group' && c.last_sender ? c.last_sender.split(' ')[0] + ': ' : '') + c.last_body.slice(0, 50)) : 'No messages yet'}</span></span>
         <span class="conv-side"><span class="meta">${c.last_at ? cTime(c.last_at) : ''}</span>${Number(c.unread) ? `<span class="unread">${c.unread}</span>` : ''}</span></button>`).join('')
@@ -175,10 +176,8 @@ async function startChat() {
   await loadList();
   if (params.get('with')) { const { data, error } = await db.rpc('open_adult_chat', { other: params.get('with') }); if (error) say(friendly(error)); else { await loadList(); open(data); } }
   else if (params.get('friend')) openFriend(params.get('friend'));
-  else if (params.get('group')) {
-    const { data, error } = await db.rpc('open_group_chat', { gid: Number(params.get('group')) });
-    if (error) say(friendly(error)); else open(data);
-  } else if (params.get('c')) open(Number(params.get('c')));
+  else if (params.get('group')) { location.replace('group.html?id=' + Number(params.get('group'))); return; }   // old group-chat links open the group's feed
+  else if (params.get('c')) open(Number(params.get('c')));
   setInterval(() => { if (document.visibilityState === 'visible') loadList(); }, 20000);
 }
 

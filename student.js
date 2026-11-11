@@ -77,12 +77,33 @@ async function startAllCourses() {
   const list = document.getElementById('list');
   const q = document.getElementById('q');
   q.value = new URLSearchParams(location.search).get('q') || '';
+  // students see courses for their own curriculum and grade first, with a switch to see everything
+  const curKey = /british|igcse|england/i.test(profile.curriculum || '') ? 'british' : /american/i.test(profile.curriculum || '') ? 'american' : /\bib\b|baccalaureate/i.test(profile.curriculum || '') ? 'ib' : null;
+  const myGrade = profile.grade || null;
+  const canFit = forWho === 'students' && (curKey || myGrade);
+  let scope = canFit ? 'mine' : 'all';
+  const fits = c => (!curKey || !c.curriculum || c.curriculum === curKey || /^arabic_/.test(c.curriculum)) && (!myGrade || !c.grade || c.grade === myGrade);
+  if (canFit) {
+    const curName = { british: 'British', american: 'American', ib: 'IB' }[curKey];
+    const gl = curKey === 'british' && typeof tnYearLabel === 'function' ? tnYearLabel(myGrade) : myGrade;
+    q.closest('.page-head').insertAdjacentHTML('afterend', `<div class="cur-grades course-scope" role="radiogroup" aria-label="Which courses to show">
+      <button type="button" class="chip on" data-scope="mine" role="radio" aria-checked="true">For me${curName || gl ? ': ' + esc([curName, gl].filter(Boolean).join(' · ')) : ''}</button>
+      <button type="button" class="chip" data-scope="all" role="radio" aria-checked="false">All curricula and grades</button></div>`);
+    document.querySelector('.course-scope').addEventListener('click', e => {
+      const b = e.target.closest('[data-scope]'); if (!b) return; scope = b.dataset.scope;
+      document.querySelectorAll('[data-scope]').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-checked', String(x === b)); }); render();
+    });
+  }
   function render() {
     const term = q.value.trim().toLowerCase();
-    const shown = cs.data.filter(c => (c.audience || 'students') === forWho).filter(c => !term || [c.title, c.description, c.category, c.teacher_name].join(' ').toLowerCase().includes(term));
-    list.innerHTML = shown.length ? shown.map((c, k) => courseCard(c, mine.find(e => e.course_id === c.id), k)).join('')
-      : '<p class="empty">No courses match your search.</p>';
+    const base = cs.data.filter(c => (c.audience || 'students') === forWho).filter(c => !term || [c.title, c.description, c.category, c.teacher_name, c.subject].join(' ').toLowerCase().includes(term));
+    const shown = scope === 'mine' ? base.filter(fits) : base;
+    const hidden = base.length - shown.length;
+    list.innerHTML = (shown.length ? shown.map((c, k) => courseCard(c, mine.find(e => e.course_id === c.id), k)).join('')
+      : `<p class="empty">${scope === 'mine' ? 'No courses for your curriculum and grade yet.' : 'No courses match your search.'}</p>`)
+      + (scope === 'mine' && hidden ? `<p class="hint tc-h">${hidden} more course${hidden === 1 ? '' : 's'} for other curricula or grades. <button type="button" class="link-btn" data-show-all>Show all courses</button></p>` : '');
   }
+  list.addEventListener('click', e => { if (e.target.closest('[data-show-all]')) { const b = document.querySelector('[data-scope="all"]'); if (b) b.click(); } });
   render();
   q.addEventListener('input', render);
 }
