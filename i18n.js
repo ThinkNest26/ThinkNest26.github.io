@@ -1942,7 +1942,18 @@
 "Introduction video (optional)": "فيديو تعريفي (اختياري)",
 "Curriculum at school": "المنهج في المدرسة",
 "A different date for each group…": "تاريخ مختلف لكل مجموعة…",
-"👥 Dates for each group": "👥 تواريخ لكل مجموعة"
+"👥 Dates for each group": "👥 تواريخ لكل مجموعة",
+"🛟 Tell a trusted adult": "🛟 أخبر شخصًا بالغًا تثق به",
+"Tell a trusted adult": "أخبر شخصًا بالغًا تثق به",
+"Send to the safety team": "أرسل إلى فريق السلامة",
+"✅ Verified teacher": "✅ معلّم موثّق",
+"✅ Get verified": "✅ احصل على التوثيق",
+"🔐 Two-step log-in": "🔐 تسجيل الدخول بخطوتين",
+"Turn on two-step log-in": "تفعيل تسجيل الدخول بخطوتين",
+"📦 My data": "📦 بياناتي",
+"⬇ Download my data": "⬇ تنزيل بياناتي",
+"👪 Agree or say no": "👪 الموافقة أو الرفض",
+"🎥 Join the call": "🎥 انضم إلى المكالمة"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

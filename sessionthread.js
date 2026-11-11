@@ -71,10 +71,11 @@ async function openSessionThread(bid, opts = {}) {
 async function childSessions(kidId, host) {
   if (!host) return;
   const since = new Date(Date.now() - 60 * 864e5).toISOString();
-  const { data } = await db.from('bookings').select('id, starts_at, status, note, mentors(name)').eq('user_id', kidId).in('status', ['pending', 'accepted']).gte('starts_at', since).order('starts_at', { ascending: false });
+  let { data, error } = await db.from('bookings').select('id, starts_at, status, note, parent_ok, parent_token, mentors(name, meeting_link)').eq('user_id', kidId).in('status', ['pending', 'accepted']).gte('starts_at', since).order('starts_at', { ascending: false });
+  if (error) ({ data } = await db.from('bookings').select('id, starts_at, status, note, mentors(name, meeting_link)').eq('user_id', kidId).in('status', ['pending', 'accepted']).gte('starts_at', since).order('starts_at', { ascending: false }));
   const rows = data || [];
   host.innerHTML = rows.length ? `<h2 class="dash-h">🧑‍🏫 Mentor sessions</h2>` + rows.map(b => `<article class="panel person"><div class="person-info"><h4>Session with ${esc(b.mentors ? b.mentors.name : 'a mentor')}</h4>
-      <span class="meta">${esc(when(b.starts_at))} · ${b.status === 'pending' ? '⏳ waiting for the mentor' : new Date(b.starts_at) < new Date() ? '✅ done' : '✅ booked'}</span>${b.note ? `<span class="meta">“${esc(b.note)}”</span>` : ''}</div>
-      <div class="person-actions"><button class="pill pill-live" data-thread="${b.id}" data-title="Session with ${esc(b.mentors ? b.mentors.name : 'a mentor')}" data-when="${esc(b.starts_at)}">💬 Session thread</button></div></article>`).join('') : '';
+      <span class="meta">${esc(when(b.starts_at))} · ${b.parent_ok === false ? '👪 waiting for you to agree' : b.status === 'pending' ? '⏳ waiting for the mentor' : new Date(b.starts_at) < new Date() ? '✅ done' : '✅ booked'}</span>${b.note ? `<span class="meta">“${esc(b.note)}”</span>` : ''}</div>
+      <div class="person-actions">${b.parent_ok === false && b.parent_token ? `<a class="pill pill-live" href="parent-booking.html?t=${esc(b.parent_token)}">👪 Agree or say no</a>` : ''}${b.status === 'accepted' && b.mentors && b.mentors.meeting_link && new Date(b.starts_at) > Date.now() - 3600e3 ? `<a class="pill pill-soft" href="${esc(b.mentors.meeting_link)}" target="_blank" rel="noopener">🎥 Join the call</a>` : ''}<button class="pill pill-live" data-thread="${b.id}" data-title="Session with ${esc(b.mentors ? b.mentors.name : 'a mentor')}" data-when="${esc(b.starts_at)}">💬 Session thread</button></div></article>`).join('') : '';
   host.onclick = e => { const t = e.target.closest('[data-thread]'); if (t) openSessionThread(Number(t.dataset.thread), { title: t.dataset.title, when: t.dataset.when, role: 'parent' }); };
 }

@@ -183,6 +183,17 @@ async function startLoginPage() {
     if (typeof captchaReset === 'function') captchaReset();
     btn.disabled = false; btn.textContent = 'Log in';
     if (error) return showError(err, friendly(error));
+    // two-step log-in: ask for the 6-digit code when this account has it switched on
+    try {
+      const { data: aal } = await db.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (aal && aal.nextLevel === 'aal2' && aal.currentLevel !== 'aal2') {
+        const { data: fs } = await db.auth.mfa.listFactors();
+        const f0 = ((fs && fs.totp) || []).find(x => x.status === 'verified');
+        const code = f0 && prompt('🔐 Two-step log-in\n\nType the 6-digit code from your authenticator app:');
+        const ok = code && !(await db.auth.mfa.challengeAndVerify({ factorId: f0.id, code: code.replace(/\s+/g, '') })).error;
+        if (!ok) { await db.auth.signOut(); return showError(err, 'That code didn’t work. Open your authenticator app and try again with the newest 6-digit code.'); }
+      }
+    } catch (_) {}
     // the School Leader log in page is only for school leaders and admins
     if (/school-login\.html$/.test(location.pathname)) {
       const [{ data: p }, { data: lead }, { data: req }] = await Promise.all([
@@ -569,4 +580,47 @@ function tnPrintPart(el, title) {
     </style></head><body><div class="top"><div><h1>${esc2(title)}</h1><span class="meta">Think Nest</span></div><div class="name">Name: ______________________</div></div>${c.innerHTML}
     <script>window.onload=function(){setTimeout(function(){window.print()},300)}<\/script></body></html>`);
   w.document.close();
+}
+
+// ----- Student privacy: other students appear as first name and initial (e.g. "Jana E.") to students -----
+function tnShortName(n) { const p = String(n || '').trim().split(/\s+/); return p.length > 1 ? p[0] + ' ' + p[p.length - 1][0].toUpperCase() + '.' : p[0] || ''; }
+function tnNameFor(name, role) { return window.TN_ME_ROLE === 'student' && role === 'student' ? tnShortName(name) : name; }
+
+// ----- Two-step log-in settings (teachers, admin, and anyone who wants it) -----
+async function mfaPanel(host) {
+  if (!host || !db.auth.mfa) return;
+  const { data: fs, error } = await db.auth.mfa.listFactors();
+  if (error) { host.innerHTML = '<p class="meta">Two-step log-in isn’t available right now.</p>'; return; }
+  const on = ((fs && fs.totp) || []).find(x => x.status === 'verified');
+  if (on) {
+    host.innerHTML = '<p class="cd-done" style="color:#2FA08A;font-weight:800">✅ Two-step log-in is on.</p><button type="button" class="btn btn-white auth-btn outline" id="mfa-off">Turn it off</button>';
+    host.querySelector('#mfa-off').onclick = async () => { if (!confirm('Turn off two-step log-in? Your account will be less protected.')) return; const { error: e } = await db.auth.mfa.unenroll({ factorId: on.id }); if (e) return say(friendly(e)); say('Two-step log-in is off.'); mfaPanel(host); };
+    return;
+  }
+  host.innerHTML = '<button type="button" class="btn btn-red auth-btn" id="mfa-on">Turn on two-step log-in</button>';
+  host.querySelector('#mfa-on').onclick = async () => {
+    for (const x of ((fs && fs.totp) || []).filter(x => x.status !== 'verified')) { try { await db.auth.mfa.unenroll({ factorId: x.id }); } catch (_) {} }
+    const { data: en, error: e } = await db.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Think Nest ' + Date.now() });
+    if (e) return say(/disabled|not enabled/i.test(e.message || '') ? 'Two-step log-in needs to be switched on in Supabase first (Authentication → Multi-factor).' : friendly(e));
+    host.innerHTML = `<ol class="meta" style="line-height:1.7"><li>Open your authenticator app and scan this code (or type the key below).</li><li>Type the 6-digit code it shows.</li></ol>
+      <img src="${en.totp.qr_code}" alt="QR code for your authenticator app" style="width:180px;height:180px;background:#fff;border-radius:12px;padding:6px">
+      <p class="meta">Key: <code>${esc(en.totp.secret)}</code></p>
+      <label>6-digit code <input id="mfa-code" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></label>
+      <button type="button" class="btn btn-red auth-btn" id="mfa-check">Check and turn on</button>`;
+    host.querySelector('#mfa-check').onclick = async () => {
+      const code = host.querySelector('#mfa-code').value.replace(/\s+/g, '');
+      const { error: ve } = await db.auth.mfa.challengeAndVerify({ factorId: en.id, code });
+      if (ve) return say('That code didn’t work. Try the newest code in the app.');
+      say('🔐 Two-step log-in is on. You’ll be asked for a code each time you log in.'); mfaPanel(host);
+    };
+  };
+}
+
+// ----- Download my data (students and parents) -----
+async function tnDownloadMyData() {
+  const { data, error } = await db.rpc('my_data_export');
+  if (error) return say(/my_data_export/.test(error.message || '') ? 'Please ask the Think Nest team to run the latest update.' : friendly(error));
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'think-nest-my-data.json'; document.body.appendChild(a); a.click(); a.remove();
+  say('Your data has been downloaded.');
 }

@@ -730,9 +730,10 @@ async function startTeacherRequests() {
         <span class="initials">${esc((nm(b) || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</span>
         <div class="person-info"><h4>${esc(nm(b))} has requested a session with you</h4>
           <span class="meta">${esc(when(b.starts_at))}${b.profiles && b.profiles.grade ? ' · ' + esc(b.profiles.grade) : ''}</span>
-          ${b.note ? `<span class="meta">“${esc(b.note)}”</span>` : ''}</div>
-        ${b.suggested_at ? `<span class="meta">🕒 You suggested ${esc(when(b.suggested_at))}. Waiting for the student to answer.</span>` : ''}</div>
-        <div class="person-actions"><button class="pill pill-live" data-ans="1" data-id="${b.id}">Accept</button><button class="pill pill-soft" data-suggest="${b.id}">🕒 Suggest a different time</button><button class="pill pill-soft" data-thread="${b.id}" data-title="Session with ${esc(nm(b))}" data-when="${esc(b.starts_at)}">💬 Thread</button><button class="pill pill-soft danger" data-ans="0" data-id="${b.id}">Reject</button></div>
+          ${b.note ? `<span class="meta">“${esc(b.note)}”</span>` : ''}
+        ${b.suggested_at ? `<span class="meta">🕒 You suggested ${esc(when(b.suggested_at))}. Waiting for the student to answer.</span>` : ''}
+        ${b.parent_ok === false ? '<span class="meta">👪 Waiting for the parent to agree. You can accept once they do.</span>' : ''}</div>
+        <div class="person-actions">${b.parent_ok === false ? '' : `<button class="pill pill-live" data-ans="1" data-id="${b.id}">Accept</button>`}<button class="pill pill-soft" data-suggest="${b.id}">🕒 Suggest a different time</button><button class="pill pill-soft" data-thread="${b.id}" data-title="Session with ${esc(nm(b))}" data-when="${esc(b.starts_at)}">💬 Thread</button><button class="pill pill-soft danger" data-ans="0" data-id="${b.id}">Reject</button></div>
         <form class="suggest-form" data-sform="${b.id}" hidden><label>New date and time <input type="datetime-local" name="at" required></label><label>Message (optional) <input name="msg" maxlength="200" placeholder="For example: I’m teaching then. Does this time work?"></label><button class="pill pill-live">Send suggestion</button></form></article>`).join('')
       : '<p class="empty">No requests waiting.</p>';
     document.getElementById('accepted').innerHTML = acc.length ? acc.map(b => {
@@ -795,6 +796,7 @@ async function startTeacherSettings() {
   const mf = document.getElementById('mentor-form');
   let { data: m } = await db.from('mentors').select('*').eq('teacher_id', user.id).maybeSingle();
   mf.on.checked = !!m;
+  if (mf.agree) mf.agree.checked = !!(m && m.agreed_safeguarding_at);
   mf.subject.value = m ? m.subject || '' : (p.subject || '');
   mf.bio.value = m ? m.bio || '' : '';
   mf.meeting_link.value = m ? m.meeting_link || '' : '';
@@ -809,12 +811,17 @@ async function startTeacherSettings() {
       }
       return say('Mentor sessions are switched off.');
     }
-    const row = { name: p.full_name || 'Teacher', subject: mf.subject.value.trim() || null, bio: mf.bio.value.trim() || null, meeting_link: mf.meeting_link.value.trim() || null, teacher_id: user.id };
-    const res = m ? await db.from('mentors').update(row).eq('id', m.id).select().single() : await db.from('mentors').insert(row).select().single();
+    if (mf.agree && !mf.agree.checked) return say('Please read and tick the mentor safeguarding agreement first.');
+    if (!mf.meeting_link.value.trim()) return say('Add the meeting link you’ll use for every session.');
+    const row = { name: p.full_name || 'Teacher', subject: mf.subject.value.trim() || null, bio: mf.bio.value.trim() || null, meeting_link: mf.meeting_link.value.trim() || null, teacher_id: user.id, agreed_safeguarding_at: new Date().toISOString() };
+    let res = m ? await db.from('mentors').update(row).eq('id', m.id).select().single() : await db.from('mentors').insert(row).select().single();
+    if (res.error && /agreed_safeguarding_at/.test(res.error.message || '')) { delete row.agreed_safeguarding_at; res = m ? await db.from('mentors').update(row).eq('id', m.id).select().single() : await db.from('mentors').insert(row).select().single(); }
     if (res.error) return say(friendly(res.error));
     m = res.data; say('Mentor settings saved. Students can now request sessions with you.');
   });
 
+  teacherVerification(user, p);
+  if (typeof mfaPanel === 'function') mfaPanel(document.getElementById('mfa-body'));
   const pf = document.getElementById('pw-form'), err = document.getElementById('pw-error');
   pf.addEventListener('submit', async e => {
     e.preventDefault(); showError(err, '');
@@ -824,4 +831,33 @@ async function startTeacherSettings() {
     if (error) return showError(err, friendly(error));
     pf.reset(); say('Your password has been changed.');
   });
+}
+
+
+// ---------- Teacher verification documents and safeguarding code ----------
+async function teacherVerification(user, p) {
+  const box = document.getElementById('verify-box'); if (!box) return;
+  const list = document.getElementById('vdocs'), code = document.getElementById('sg-code');
+  const names = { id: 'Photo ID', qualification: 'Teaching qualification', conduct: 'Good conduct certificate' };
+  async function draw() {
+    const { data, error } = await db.from('teacher_docs').select('*').eq('user_id', user.id).order('uploaded_at', { ascending: false });
+    if (error) { list.innerHTML = '<p class="meta">Run the latest database update (Batch 6) to upload documents.</p>'; return; }
+    const { data: me } = await db.from('profiles').select('verified_at, safeguarding_agreed_at').eq('id', user.id).maybeSingle();
+    code.checked = !!(me && me.safeguarding_agreed_at);
+    list.innerHTML = (me && me.verified_at ? '<p class="cd-done" style="color:#2FA08A;font-weight:800">✅ You’re a verified teacher.</p>' : '<p class="meta">⏳ Not verified yet.</p>')
+      + ((data || []).length ? '<ul class="meta">' + data.map(d => `<li>📎 ${esc(names[d.kind] || d.kind)}: uploaded ${new Date(d.uploaded_at).toLocaleDateString('en-GB')}</li>`).join('') + '</ul>' : '');
+  }
+  draw();
+  document.getElementById('vsave').onclick = async () => {
+    const files = [...box.querySelectorAll('[data-vdoc]')].filter(i => i.files[0]);
+    for (const i of files) {
+      const f = i.files[0]; if (f.size > 10 * 1024 * 1024) { say('Each file must be smaller than 10 MB.'); return; }
+      const path = `${user.id}/${i.dataset.vdoc}-${Date.now()}-${f.name.replace(/[^\w.\-]+/g, '_')}`;
+      const up = await db.storage.from('teacher-docs').upload(path, f); if (up.error) return say(friendly(up.error));
+      const { error } = await db.from('teacher_docs').insert({ user_id: user.id, kind: i.dataset.vdoc, path }); if (error) return say(friendly(error));
+      i.value = '';
+    }
+    const { error: ce } = await db.rpc('agree_safeguarding_code', { ok: code.checked }); if (ce) return say(friendly(ce));
+    say(files.length ? 'Uploaded. The Think Nest team will check your documents.' : 'Saved.'); draw();
+  };
 }

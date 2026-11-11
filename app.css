@@ -2213,3 +2213,8 @@ label[hidden] { display: none !important; }
 #reg-dialog, #session-thread, #lesson-edit { position: fixed; inset: 0; margin: auto; height: fit-content; }
 #lesson-edit { width: min(600px, 94vw); padding: 0; }
 .slot-pick { display: block; margin-top: 4px; font: inherit; font-size: .85rem; padding: 4px 6px; border-radius: 8px; border: 1px solid #D6D9E2; max-width: 220px; }
+
+.tn-help-btn { position: fixed; inset-inline-end: 18px; bottom: 18px; z-index: 50; border: 0; border-radius: 30px; background: #3E4B94; color: #fff; font: inherit; font-weight: 800; padding: 11px 16px; box-shadow: 0 8px 24px rgba(30,35,82,.3); cursor: pointer; }
+.tn-help-btn:focus-visible { outline: 3px solid #F27A6F; outline-offset: 2px; }
+@media (max-width: 600px) { .tn-help-btn span { display: none; } .tn-help-btn { padding: 12px 14px; font-size: 1.2rem; } }
+dialog.tn-help { position: fixed; inset: 0; margin: auto; height: fit-content; width: min(560px, 94vw); max-height: 92vh; overflow-y: auto; }

@@ -158,7 +158,7 @@ async function startCourseDetails() {
       <aside class="panel cd-sec cd-teacher">
         <h2>Meet the teacher</h2>
         <div class="cd-t-head"><span class="cd-avatar" aria-hidden="true">${esc(initials)}</span>
-          <div><b>${esc(teacher.full_name || 'Teacher')}</b>${teacher.subject ? `<span class="meta">Teaches ${esc(teacher.subject)}</span>` : ''}</div></div>
+          <div><b>${esc(teacher.full_name || 'Teacher')}</b>${teacher.verified ? '<span class="tag tag-now" title="Think Nest checked this teacher’s ID, qualification and good conduct certificate">✅ Verified teacher</span>' : ''}${teacher.subject ? `<span class="meta">Teaches ${esc(teacher.subject)}</span>` : ''}</div></div>
         ${teacher.bio ? `<p class="cd-text">${esc(teacher.bio)}</p>` : ''}
         ${cdVideoEmbed(teacher.intro_video_url) ? `<div class="cd-video" style="margin-top:12px"><iframe src="${esc(cdVideoEmbed(teacher.intro_video_url))}" title="Meet ${esc(teacher.full_name || 'the teacher')}" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>` : ''}
         <dl class="cd-facts cd-facts-col">

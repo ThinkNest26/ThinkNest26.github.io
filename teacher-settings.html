@@ -8,10 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=168">
-  <link rel="stylesheet" href="app.css?v=168">
-  <link rel="stylesheet" href="rtl.css?v=168">
-  <script src="i18n.js?v=168"></script>
+  <link rel="stylesheet" href="style.css?v=169">
+  <link rel="stylesheet" href="app.css?v=169">
+  <link rel="stylesheet" href="rtl.css?v=169">
+  <script src="i18n.js?v=169"></script>
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -55,8 +55,26 @@
           <label>What you can help with <input type="text" name="subject" placeholder="For example, Maths and Science"></label>
           <label>Short description <textarea name="bio" rows="3" placeholder="One or two sentences students will see"></textarea></label>
           <label>Meeting link (Google Meet or Zoom) <input type="url" name="meeting_link" placeholder="https://meet.google.com/..."></label>
+          <div class="note"><b>🛡️ Mentor safeguarding agreement</b><br>Sessions are with children, so for every session I will: use only this meeting link (never a private one), keep the camera on in a suitable, quiet place, welcome a parent to join, end the session if anything worrying happens and report it to Think Nest, and never contact a student outside Think Nest or ask for personal details or photos.</div>
+          <label class="remember agree-box"><input type="checkbox" name="agree"> <span>I agree to the mentor safeguarding agreement.</span></label>
           <button class="btn btn-red auth-btn">Save mentor settings</button>
         </form>
+        <section class="panel auth-form wide" id="verify-box">
+          <h2>✅ Get verified</h2>
+          <p class="meta">Parents trust verified teachers. Upload these privately: only the Think Nest team can see them. Once checked, a ✅ Verified teacher badge shows on your profile and courses.</p>
+          <div id="vdocs"></div>
+          <label>Photo ID (passport or Emirates ID) <input type="file" data-vdoc="id" accept="image/*,.pdf"></label>
+          <label>Teaching qualification <input type="file" data-vdoc="qualification" accept="image/*,.pdf"></label>
+          <label>Police or good conduct certificate <input type="file" data-vdoc="conduct" accept="image/*,.pdf"></label>
+          <div class="note"><b>🛡️ Think Nest safeguarding code</b><br>I put children’s safety first. I keep all contact with students inside Think Nest, in group spaces or shared session threads that parents can see. I never ask students for personal details, photos or private meetings. I report any concern about a child’s safety to Think Nest straight away.</div>
+          <label class="remember agree-box"><input type="checkbox" id="sg-code"> <span>I agree to the Think Nest safeguarding code.</span></label>
+          <button type="button" class="btn btn-red auth-btn" id="vsave">Save</button>
+        </section>
+        <section class="panel auth-form wide" id="mfa-box">
+          <h2>🔐 Two-step log-in</h2>
+          <p class="meta">Protect your account: after your password, you also type a 6-digit code from an app on your phone (Google Authenticator, Microsoft Authenticator or Authy).</p>
+          <div id="mfa-body"><p class="empty">Loading…</p></div>
+        </section>
         <form class="panel auth-form wide" id="pw-form">
           <h2>Change password</h2>
           <label>New password <input type="password" name="password" minlength="8" autocomplete="new-password" required></label>
@@ -85,13 +103,13 @@
   <div class="side-shade" id="side-shade"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=168"></script>
-  <script src="app.js?v=168"></script>
-  <script src="nav.js?v=168"></script>
-  <script src="notify.js?v=168" defer></script>
-  <script src="teacher.js?v=168"></script>
-  <script src="roles.js?v=168"></script>
+  <script src="supabase-config.js?v=169"></script>
+  <script src="app.js?v=169"></script>
+  <script src="nav.js?v=169"></script>
+  <script src="notify.js?v=169" defer></script>
+  <script src="teacher.js?v=169"></script>
+  <script src="roles.js?v=169"></script>
   <script>startTeacherSettings(); dualRolePanel('teacher');</script>
-  <script src="emailpref.js?v=168"></script>
+  <script src="emailpref.js?v=169"></script>
 </body>
 </html>

@@ -94,7 +94,7 @@ async function startGroup() {
     const active = members.filter(m => m.status === 'active');
     document.getElementById('ghead').innerHTML = `<span class="group-ic big ${isClass ? 'cls' : ''}">${esc(gIni(g.name))}</span>${isClass ? '<span class="class-flag">🏫 Class</span>' : ''}
       <div><h1>${esc(g.name)}</h1>${g.description ? `<p>${esc(g.description)}</p>` : ''}
-      <div class="avatars">${active.slice(0, 8).map(m => `<span class="initials" title="${esc(m.full_name)}">${esc(gIni(m.full_name))}</span>`).join('')}<span class="meta">${active.length} member${active.length === 1 ? '' : 's'}</span></div></div>
+      <div class="avatars">${active.slice(0, 8).map(m => `<span class="initials" title="${esc(m.role === 'member' ? tnNameFor(m.full_name, 'student') : m.full_name)}">${esc(gIni(m.full_name))}</span>`).join('')}<span class="meta">${active.length} member${active.length === 1 ? '' : 's'}</span></div></div>
       <div class="ghead-actions">${teacherRun && isOwner ? '<button type="button" class="pill pill-soft big" id="att-g">📋 Attendance</button>' : ''}${isOwner ? '<button class="pill pill-soft big" id="edit-g">Edit</button>' : ''}</div>`;
     const ab = document.getElementById('att-g'); if (ab) ab.onclick = () => openAttendanceDialog({ gid, title: g.name });
     const eb = document.getElementById('edit-g');
@@ -123,7 +123,7 @@ async function startGroup() {
     const likes = p.group_post_likes || [], comments = (p.group_post_comments || []).slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     const liked = likes.some(l => l.user_id === user.id);
     return `<article class="panel post" data-gpost="${p.id}">
-        <header class="post-head"><span class="initials" data-av="${p.author_id}">${esc(gIni(p.author_name))}</span><div><b>${esc(p.author_name || 'Member')}</b> ${gTag(p.author_role)}<span class="meta">${gAgo(p.created_at)}</span></div>
+        <header class="post-head"><span class="initials" data-av="${p.author_id}">${esc(gIni(p.author_name))}</span><div><b>${esc(tnNameFor(p.author_name, p.author_role) || 'Member')}</b> ${gTag(p.author_role)}<span class="meta">${gAgo(p.created_at)}</span></div>
         <div class="post-menu">${p.author_id === user.id || isOwner || isAdmin ? '<button class="link-btn" data-del-gpost>Delete</button>' : ''}${p.author_id !== user.id ? '<button class="link-btn" data-rep-gpost>Report</button>' : ''}</div></header>
         <p class="post-body">${esc(p.body).replace(/\n/g, '<br>')}</p>
         ${p.image_path && gsigned[p.image_path] ? `<img class="post-img" src="${gsigned[p.image_path]}" alt="Picture shared by ${esc(p.author_name || 'a member')}">` : ''}
@@ -133,7 +133,7 @@ async function startGroup() {
         </div>
         <div class="comments" ${comments.length ? '' : 'hidden'}>
           ${comments.map(c => `<div class="comment" data-gcomment="${c.id}"><span class="initials">${esc(gIni(c.author_name))}</span>
-            <div class="bubble"><b>${esc(c.author_name || 'Member')}</b> ${gTag(c.author_role)}<p>${esc(c.body)}</p><span class="meta">${gAgo(c.created_at)}${c.author_id === user.id || isOwner || isAdmin ? ' · <button class="link-btn" data-del-gcomment>Delete</button>' : ''}</span></div></div>`).join('')}
+            <div class="bubble"><b>${esc(tnNameFor(c.author_name, c.author_role) || 'Member')}</b> ${gTag(c.author_role)}<p>${esc(c.body)}</p><span class="meta">${gAgo(c.created_at)}${c.author_id === user.id || isOwner || isAdmin ? ' · <button class="link-btn" data-del-gcomment>Delete</button>' : ''}</span></div></div>`).join('')}
           ${isMember ? '<form class="comment-form"><label class="grow"><span class="sr">Write a comment</span><input type="text" name="c" maxlength="1000" placeholder="Write a comment…"></label><button class="pill pill-live">Send</button></form>' : ''}
         </div></article>`;
   }
@@ -279,7 +279,7 @@ async function startGroup() {
     if (isClass && typeof leaderboardHtml === 'function') leaderboardHtml(gid, 'Class leaderboard').then(h => { const b = document.getElementById('class-board'); if (b) b.innerHTML = h; });
     document.getElementById('members').innerHTML = members.map(m => `<div class="pending-row">
         <span class="initials">${esc(gIni(m.full_name))}</span>
-        <div><b>${esc(m.full_name)}</b> ${m.role === 'teacher' ? gTag('teacher') : ''}<span class="meta">${m.role === 'owner' ? 'Created the group' : m.status === 'invited' ? 'Invited, hasn’t joined yet' : (m.grade || 'Member')}</span></div>
+        <div><b>${esc(m.role === 'member' ? tnNameFor(m.full_name, 'student') : m.full_name)}</b> ${m.role === 'teacher' ? gTag('teacher') : ''}<span class="meta">${m.role === 'owner' ? 'Created the group' : m.status === 'invited' ? 'Invited, hasn’t joined yet' : (m.grade || 'Member')}</span></div>
         ${teacherRun && (isOwner || isAdmin) && m.role === 'member' && m.status === 'active' ? `<button class="pill pill-soft" data-star="${m.user_id}" data-name="${esc(m.full_name)}">⭐ Stars</button>` : ''}
         ${(isOwner || isAdmin) && m.role !== 'owner' ? `<button class="link-btn" data-kick="${m.user_id}" data-name="${esc(m.full_name)}">${m.status === 'invited' ? 'Cancel invite' : 'Remove'}</button>` : ''}</div>`).join('');
     document.getElementById('danger').innerHTML = isOwner || isAdmin ? `<button class="pill pill-soft big danger" id="del-group">${isClass ? '🗑️ Delete this class' : 'Delete this group'}</button>` : isMember ? '<button class="pill pill-soft big danger" id="leave">Leave this group</button>' : '';

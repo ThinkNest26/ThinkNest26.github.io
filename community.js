@@ -92,7 +92,7 @@ async function startCommunity() {
     const name = id => (list.find(g => g.id === id) || {}).name || '';
     box.innerHTML = `<div class="group-tiles">${list.map(g => `<a class="panel group-tile" href="group.html?id=${g.id}"><span class="g-ic big ${g.kind === 'class' ? 'cls' : ''}">${esc(gIc(g))}</span><b>${esc(g.name)}</b><span class="meta">${g.members} members${g.kind === 'class' ? ' · with ' + esc(g.owner_name || 'your teacher') : ''}</span><span class="tile-go">Open →</span></a>`).join('')}</div>
       <h3 class="dash-h">Latest from your ${boxId === 'ct-classes' ? 'classes' : 'groups'}</h3>` +
-      ((gp || []).length ? gp.map(p => `<a class="panel post gp-post" href="group.html?id=${p.group_id}"><span class="pt-badge">${esc(name(p.group_id))}</span><header class="post-head"><span class="initials">${esc((p.author_name || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</span><div><b>${esc(p.author_name || 'Member')}</b> ${roleTag(p.author_role)}<span class="meta">${ago(p.created_at)}</span></div></header><p class="post-body">${esc(p.body.slice(0, 280))}${p.body.length > 280 ? '…' : ''}</p></a>`).join('') : '<p class="empty">No posts yet. Open a group to start the conversation.</p>');
+      ((gp || []).length ? gp.map(p => `<a class="panel post gp-post" href="group.html?id=${p.group_id}"><span class="pt-badge">${esc(name(p.group_id))}</span><header class="post-head"><span class="initials">${esc((p.author_name || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</span><div><b>${esc(tnNameFor(p.author_name, p.author_role) || 'Member')}</b> ${roleTag(p.author_role)}<span class="meta">${ago(p.created_at)}</span></div></header><p class="post-body">${esc(p.body.slice(0, 280))}${p.body.length > 280 ? '…' : ''}</p></a>`).join('') : '<p class="empty">No posts yet. Open a group to start the conversation.</p>');
   }
   document.querySelector('.comm-tabs').addEventListener('click', e => {
     const b = e.target.closest('[data-ctab]'); if (!b) return;
@@ -128,7 +128,7 @@ async function startCommunity() {
       hack: ['💡', PAR ? 'Parent tip' : 'Teaching hack'], resource: ['📚', PAR ? 'Recommendation' : 'Resource'], help: ['🆘', PAR ? 'Need advice' : 'Need help'], funny: ['😂', PAR ? 'Parent life' : 'Teacher life'], shoutout: ['🙌', 'Shout-out'], poll: ['📊', 'Poll'] }[p.post_type];
     return `<article class="panel post ${st !== 'published' ? 'post-' + st : ''} ${p.post_type && p.post_type !== 'post' ? 'pt-' + p.post_type : ''}" data-post="${p.id}" id="post-${p.id}">${banner}${PT ? `<span class="pt-badge">${PT[0]} ${PT[1]}</span>` : ''}
       <header class="post-head"><span class="initials" data-av="${p.author_id}">${esc(iniOf(p.author_name))}</span>
-        <div><b>${esc(p.author_name || 'Member')}</b> ${roleTag(p.author_role)}<span class="meta">${ago(p.created_at)}</span></div>
+        <div><b>${esc(tnNameFor(p.author_name, p.author_role) || 'Member')}</b> ${roleTag(p.author_role)}<span class="meta">${ago(p.created_at)}</span></div>
         <div class="post-menu">${mine || isAdmin ? `<button class="link-btn" data-del-post>Delete</button>` : ''}${!mine ? `<button class="link-btn" data-report>Report</button>` : ''}</div></header>
       <p class="post-body">${esc(p.body).replace(/\n/g, '<br>')}</p>
       ${p.image_path && signed[p.image_path] ? `<img class="post-img" src="${signed[p.image_path]}" alt="Picture shared by ${esc(p.author_name || 'a member')}">` : ''}
@@ -138,7 +138,7 @@ async function startCommunity() {
       </div>
       <div class="comments" ${comments.length ? '' : 'hidden'}>
         ${comments.map(c => `<div class="comment" data-comment="${c.id}"><span class="initials" data-av="${c.author_id}">${esc(iniOf(c.author_name))}</span>
-          <div class="bubble"><b>${esc(c.author_name || 'Member')}</b> ${roleTag(c.author_role)}<p>${esc(c.body)}</p><span class="meta">${ago(c.created_at)}${c.author_id === user.id || isAdmin ? ' · <button class="link-btn" data-del-comment>Delete</button>' : ''}</span></div></div>`).join('')}
+          <div class="bubble"><b>${esc(tnNameFor(c.author_name, c.author_role) || 'Member')}</b> ${roleTag(c.author_role)}<p>${esc(c.body)}</p><span class="meta">${ago(c.created_at)}${c.author_id === user.id || isAdmin ? ' · <button class="link-btn" data-del-comment>Delete</button>' : ''}</span></div></div>`).join('')}
         <form class="comment-form"><label class="grow"><span class="sr">Write a comment</span><input type="text" name="c" maxlength="1000" placeholder="Write a comment…"></label><button class="pill pill-live">Send</button></form>
       </div>
     </article>`;
@@ -193,7 +193,7 @@ async function startCommunity() {
   function sideLists() {
     const seen = new Map();
     posts.forEach(p => { if (!seen.has(p.author_id)) seen.set(p.author_id, p); });
-    document.getElementById('active').innerHTML = [...seen.values()].slice(0, 6).map(p => `<div class="side-row"><span class="initials" data-av="${p.author_id}">${esc(iniOf(p.author_name))}</span><span>${esc(p.author_name || 'Member')} ${roleTag(p.author_role)}</span></div>`).join('') || '<p class="empty">No one yet.</p>';
+    document.getElementById('active').innerHTML = [...seen.values()].slice(0, 6).map(p => `<div class="side-row"><span class="initials" data-av="${p.author_id}">${esc(iniOf(p.author_name))}</span><span>${esc(tnNameFor(p.author_name, p.author_role) || 'Member')} ${roleTag(p.author_role)}</span></div>`).join('') || '<p class="empty">No one yet.</p>';
     document.getElementById('recent').innerHTML = posts.slice(0, 6).map(p => `<a class="side-row" href="#" data-jump="${p.id}"><span class="recent-text">${esc(p.body.slice(0, 70))}${p.body.length > 70 ? '…' : ''}</span><span class="meta">${ago(p.created_at)}</span></a>`).join('') || '<p class="empty">No posts yet.</p>';
   }
   document.getElementById('recent').addEventListener('click', e => {
@@ -521,5 +521,55 @@ async function loadDeletionRequests() {
       if (er) return say(friendly(er));
       say('Account deleted.'); loadDeletionRequests();
     }
+  };
+}
+
+
+// ---------- Admin: safeguarding log ----------
+async function loadSafeguarding() {
+  const box = document.getElementById('sg-box'); if (!box) return;
+  const { data, error } = await db.rpc('safeguarding_log');
+  if (error) { box.innerHTML = '<p class="empty">Run database update Batch 6 to see the safeguarding log.</p>'; return; }
+  const rows = data || [], open = rows.filter(r => r.status !== 'closed'), closed = rows.filter(r => r.status === 'closed').slice(0, 20);
+  document.getElementById('n-sg').textContent = open.length;
+  const K = { unkind: 'Unkind or bullying', private: 'Asked for private things', adult: 'An adult worried them', content: 'Upsetting content', me: 'Not OK, needs to talk', other: 'Something else', auto: '🤖 Flagged automatically' };
+  const card = r => `<article class="panel msg-card ${r.status === 'closed' ? 'done' : ''}" data-sg="${r.id}">
+      <header><b>${esc(K[r.kind] || r.kind)}</b> ${['me', 'adult', 'private'].includes(r.kind) ? '<span class="tag tag-wait">Urgent</span>' : ''}<span class="meta">${new Date(r.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</span></header>
+      <p class="meta">From: <b>${esc(r.reporter_name || 'Unknown')}</b> (${esc(r.reporter_role || '')})${r.who ? ' · About: ' + esc(r.who) : ''}${r.page ? ' · Page: ' + esc(r.page) : ''}</p>
+      ${r.details ? `<p class="msg-body">${esc(r.details)}</p>` : ''}
+      <label>Notes (what you did) <textarea rows="2" data-sgnote>${esc(r.notes || '')}</textarea></label>
+      <div class="person-actions"><button class="pill pill-live" data-sgsave>Save notes</button>${r.status === 'closed' ? '<button class="pill pill-soft" data-sgopen>Reopen</button>' : '<button class="pill pill-soft" data-sgclose>✓ Close</button>'}</div></article>`;
+  box.innerHTML = (open.length ? open.map(card).join('') : '<p class="empty">Nothing open. 🎉</p>') + (closed.length ? `<details class="hubreq-done"><summary>Closed (${closed.length})</summary>${closed.map(card).join('')}</details>` : '');
+  box.onclick = async e => {
+    const row = e.target.closest('[data-sg]'); if (!row) return;
+    const st = e.target.closest('[data-sgclose]') ? 'closed' : e.target.closest('[data-sgopen]') ? 'open' : e.target.closest('[data-sgsave]') ? null : undefined;
+    if (st === undefined) return;
+    const { error: er } = await db.rpc('update_safeguarding', { rid: Number(row.dataset.sg), new_status: st, new_notes: row.querySelector('[data-sgnote]').value });
+    if (er) return say(friendly(er));
+    say('Saved.'); loadSafeguarding();
+  };
+}
+
+// ---------- Admin: teacher verification ----------
+async function loadTeacherChecks() {
+  const box = document.getElementById('tchk-box'); if (!box) return;
+  const { data, error } = await db.rpc('teacher_checks');
+  if (error) { box.innerHTML = '<p class="empty">Run database update Batch 6 to see teacher checks.</p>'; return; }
+  const rows = data || [], waiting = rows.filter(r => !r.verified_at);
+  document.getElementById('n-tchk').textContent = waiting.length;
+  const N = { id: 'Photo ID', qualification: 'Qualification', conduct: 'Good conduct' };
+  box.innerHTML = rows.length ? rows.map(r => `<article class="panel person" data-tc="${r.user_id}"><div class="person-info"><h4>${esc(r.full_name || 'Teacher')} ${r.verified_at ? '<span class="tag tag-now">✅ Verified</span>' : ''}</h4>
+      <span class="meta">${r.safeguarding_agreed_at ? '🛡️ Agreed to the safeguarding code' : '⚠️ Hasn’t agreed to the safeguarding code yet'}</span>
+      <span class="meta">${(r.docs || []).map(d => `<button class="link-btn" data-doc="${esc(d.path)}">📎 ${esc(N[d.kind] || d.kind)}</button>`).join(' ') || 'No documents yet'}</span></div>
+      <div class="person-actions">${r.verified_at ? '<button class="pill pill-soft" data-unver>Remove badge</button>' : '<button class="pill pill-live" data-ver>✅ Mark as verified</button>'}</div></article>`).join('') : '<p class="empty">No teacher documents yet.</p>';
+  box.onclick = async e => {
+    const d = e.target.closest('[data-doc]');
+    if (d) { const { data: s, error: se } = await db.storage.from('teacher-docs').createSignedUrl(d.dataset.doc, 600); if (se) return say(friendly(se)); return window.open(s.signedUrl, '_blank', 'noopener'); }
+    const row = e.target.closest('[data-tc]'); if (!row) return;
+    const on = !!e.target.closest('[data-ver]'), off = !!e.target.closest('[data-unver]'); if (!on && !off) return;
+    if (on && !confirm('Mark this teacher as verified? Only do this after checking their ID, qualification and good conduct certificate.')) return;
+    const { error: er } = await db.rpc('set_teacher_verified', { tid: row.dataset.tc, ok: on });
+    if (er) return say(friendly(er));
+    say(on ? '✅ Verified. The badge now shows on their profile and courses.' : 'Badge removed.'); loadTeacherChecks();
   };
 }

@@ -109,6 +109,7 @@ async function startChat() {
     e.preventDefault();
     const body = ta.value.trim(), file = form.file.files[0];
     if ((!body && !file) || !current) return;
+    if (body && typeof tnFlagRisky === 'function') tnFlagRisky(body, 'private message');
     if (body && looksPrivate(body) && !confirm('This looks like it has a phone number or email address. Sharing contact details isn’t allowed on Think Nest, and this message will be checked by the Think Nest team. Send anyway?')) return;
     const btn = form.querySelector('.btn'); btn.disabled = true; btn.textContent = file ? 'Sending…' : 'Send';
     const row = { conversation_id: current.id, body: body || null };

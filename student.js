@@ -14,6 +14,7 @@ async function initShell() {
   (document.getElementById('logout') || document.createElement('a')).addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; });
   const { data: p } = await db.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
   gateApproval(p);
+  window.TN_ME_ROLE = p && p.role;
   const initials = ((p && p.full_name) || session.user.email).split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
   const small = document.getElementById('me-initials-small'); if (small) small.textContent = initials;
   return { user: session.user, profile: p || {} };
@@ -317,7 +318,7 @@ async function startMentors() {
       const who = b.mentors ? b.mentors.name : 'your mentor', link = b.mentors && b.mentors.meeting_link;
       const soon = b.status === 'accepted' && new Date(b.starts_at) - Date.now() < 15 * 60e3;
       return `<article class="panel person" data-bid="${b.id}"><div class="person-info"><h4>Session with ${esc(who)}</h4><span class="meta">${esc(when(b.starts_at))}</span>
-        ${b.status === 'pending' && b.suggested_at ? `<span class="meta">🕒 <b>${esc(who)} suggested ${esc(when(b.suggested_at))}</b>${b.suggest_note ? ': “' + esc(b.suggest_note) + '”' : ''}</span>` : b.status === 'pending' ? '<span class="meta">⏳ Waiting for the mentor to accept</span>' : `<span class="meta">${new Date(b.starts_at) < Date.now() - 3600e3 ? '✅ Done. Your mentor’s summary appears in the session thread.' : '✅ Accepted. It’s in your calendar.'}</span>`}</div>
+        ${b.status === 'pending' && b.suggested_at ? `<span class="meta">🕒 <b>${esc(who)} suggested ${esc(when(b.suggested_at))}</b>${b.suggest_note ? ': “' + esc(b.suggest_note) + '”' : ''}</span>` : b.status === 'pending' && b.parent_ok === false ? '<span class="meta">👪 Waiting for your parent to agree (we’ve told them)</span>' : b.status === 'pending' ? '<span class="meta">⏳ Waiting for the mentor to accept</span>' : `<span class="meta">${new Date(b.starts_at) < Date.now() - 3600e3 ? '✅ Done. Your mentor’s summary appears in the session thread.' : '✅ Accepted. It’s in your calendar.'}</span>`}</div>
         <div class="person-actions">${b.status === 'pending' && b.suggested_at ? '<button class="pill pill-live" data-take="1">Accept the new time</button><button class="pill pill-soft danger" data-take="0">Cancel the session</button>' : ''}${b.status === 'accepted' && link && new Date(b.starts_at) > Date.now() - 3600e3 ? `<a class="pill ${soon ? 'pill-live' : 'pill-soft'}" href="${esc(link)}" target="_blank" rel="noopener">${soon ? '▶ Join now' : '🔗 Meeting link'}</a>` : ''}<button class="pill pill-soft" data-thread="${b.id}" data-title="Session with ${esc(who)}" data-when="${esc(b.starts_at)}">💬 Session thread</button></div></article>`;
     }).join('') : '';
   }
@@ -357,7 +358,7 @@ async function startMentors() {
     save.disabled = false; save.textContent = 'Book session';
     if (error) return showError(err, friendly(error));
     dlg.close();
-    say(nb && nb.status === 'pending' ? 'Request sent for ' + when(at) + '. You’ll see it in My Calendar once your mentor accepts.' : 'Session booked for ' + when(at) + '. You’ll find it in My Calendar.');
+    say(nb && nb.parent_ok === false ? 'Request sent for ' + when(at) + '. We’ve asked your parent to agree first, then your mentor will confirm.' : nb && nb.status === 'pending' ? 'Request sent for ' + when(at) + '. You’ll see it in My Calendar once your mentor accepts.' : 'Session booked for ' + when(at) + '. You’ll find it in My Calendar.');
   });
 }
 
