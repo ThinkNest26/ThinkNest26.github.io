@@ -78,7 +78,8 @@ async function startAllCourses() {
 
 // ---------- One course: lessons and progress ----------
 async function startCourse() {
-  const { user } = await initShell();
+  const { user, profile } = await initShell();
+  { const bl = document.querySelector('.back-link'); if (bl && ['teacher', 'admin', 'school_leader'].includes(profile.role)) { bl.href = 'teacher-hub.html'; bl.textContent = '‹ My workshops'; } else if (bl && profile.role === 'parent') { bl.href = 'parent-hub.html'; bl.textContent = '‹ My workshops'; } }
   const id = Number(new URLSearchParams(location.search).get('id'));
   const [c, ls, en, done, recs] = await Promise.all([
     db.from('courses').select('*').eq('id', id).maybeSingle(),
@@ -331,10 +332,18 @@ function ytId(url) {
   const m = String(url).match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/);
   return m ? m[1] : null;
 }
+// YouTube, Vimeo or Google Drive link -> a player address (null for other websites)
+function videoEmbed(url) {
+  const s = String(url || ''), id = ytId(s);
+  if (id) return 'https://www.youtube-nocookie.com/embed/' + id;
+  const vm = s.match(/vimeo\.com\/(?:video\/)?(\d+)/); if (vm) return 'https://player.vimeo.com/video/' + vm[1];
+  const gd = s.match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([\w-]{20,})/); if (gd) return 'https://drive.google.com/file/d/' + gd[1] + '/preview';
+  return null;
+}
 function recCard(r) {
-  const id = ytId(r.youtube_url);
+  const src = r.video_path ? null : videoEmbed(r.youtube_url);
   return `<article class="learn rec">
-    ${id ? `<iframe src="https://www.youtube-nocookie.com/embed/${id}" title="${esc(r.title)}" loading="lazy" allow="encrypted-media; picture-in-picture" allowfullscreen></iframe>`
+    ${src ? `<iframe src="${esc(src)}" title="${esc(r.title)}" loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`
          : `<a href="${esc(r.youtube_url)}" target="_blank" rel="noopener" class="rec-link">Watch video</a>`}
     <div class="learn-body"><span class="meta">${esc(r.courses ? r.courses.title : '')}${r.recorded_at ? ' · ' + new Date(r.recorded_at).toLocaleDateString('en-GB') : ''}</span><h4>${esc(r.title)}</h4></div>
   </article>`;
@@ -347,7 +356,11 @@ async function startRecordings() {
   if (!ids.length) { list.innerHTML = '<div class="empty-box"><p>Register for a course to see its recordings here.</p><a class="btn btn-red" href="all-courses.html">Browse courses</a></div>'; return; }
   const { data, error } = await db.from('recordings').select('*, courses(title)').in('course_id', ids).order('recorded_at', { ascending: false });
   if (error) return say(friendly(error));
-  list.innerHTML = data.length ? data.map(recCard).join('') : '<p class="empty">No recordings yet for your courses.</p>';
+  if (!data.length) { list.innerHTML = '<p class="empty">No recordings yet for your courses.</p>'; return; }
+  // one section per course, newest first inside each
+  const by = {}; data.forEach(r => { const k = r.course_id; (by[k] = by[k] || { title: r.courses ? r.courses.title : 'Course', items: [] }).items.push(r); });
+  list.classList.remove('grid-cards');
+  list.innerHTML = Object.entries(by).map(([cid, g]) => `<section class="rec-group"><h2 class="dash-h"><a href="course.html?id=${cid}" style="color:inherit;text-decoration:none">${esc(g.title)}</a> <span class="count">${g.items.length}</span></h2><div class="grid-cards">${g.items.map(recCard).join('')}</div></section>`).join('');
 }
 
 // ---------- Certificates ----------

@@ -2185,3 +2185,4 @@ html.tn-pv .side { box-shadow: inset -4px 0 0 #8E5BD8; }
 .msg-body { white-space: pre-line; }
 /* the sidebar shows only once the right menu for this person is built */
 body.app .side nav:not(.nav-ready) { visibility: hidden; }
+label[hidden] { display: none !important; }

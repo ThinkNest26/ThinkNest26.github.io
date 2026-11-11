@@ -16,7 +16,7 @@ async function startChat() {
   const isStudent = me.role === 'student', isAdult = !isStudent;
   if (isAdult) document.getElementById('safety').textContent = me.role === 'parent'
     ? 'You can read your child’s chats here. Only the children in a chat can write in it.'
-    : 'Group chats from the study groups you’ve joined. Private chats are only between student friends.';
+    : 'Group chats from your classes and study groups, and private messages with other teachers. Students can only chat privately with their student friends.';
   document.getElementById('new-chat').hidden = !isStudent;
 
   let current = null, channel = null, convs = [];

@@ -26,15 +26,15 @@ async function startPathPage() {
     return;
   }
   const curName = (pathCurricula(st.subject).find(c => c[0] === st.curriculum) || [])[1] || '';
-  document.title = `${S.name} · ${st.grade} – Think Nest`;
+  document.title = `${S.name} · ${gradeLabel(st.curriculum, st.grade)} – Think Nest`;
   host.innerHTML = `<section class="pp-hero" style="--c:${S.color}">
       <a class="pp-back" href="index.html#paths">‹ Change path</a>
       <div class="pp-hero-in">
         <span class="pp-ic" aria-hidden="true" data-no-tr dir="ltr">${S.icon}</span>
-        <div><p class="pp-kicker">Your path</p><h1>${esc(S.name)} · ${esc(st.grade)}</h1>
+        <div><p class="pp-kicker">Your path</p><h1>${esc(S.name)} · ${esc(gradeLabel(st.curriculum, st.grade))}</h1>
           <p class="pp-chips"><span>${esc(curName)}</span><span id="pp-stage" hidden></span><span id="pp-ages" hidden></span></p></div>
       </div>
-      <div class="pp-share"><button type="button" class="pp-btn" id="pp-share">📤 Share this path</button><a class="pp-btn ghost" id="pp-wa" target="_blank" rel="noopener">WhatsApp</a></div>
+      <div class="pp-share"><button type="button" class="pp-btn" id="pp-share">📤 Share this path</button><a class="pp-btn ghost" id="pp-wa" target="_blank" rel="noopener">💬 Share on WhatsApp</a></div>
     </section>
     <div class="pp-grid">
       <section class="pp-main"><h2>📚 What you’ll learn</h2><div id="pp-learn"><p class="empty">Loading…</p></div></section>
@@ -42,7 +42,7 @@ async function startPathPage() {
         <section class="pp-card pp-next" id="pp-next"></section></aside>
     </div>`;
   // share
-  const url = location.href, text = `${S.name} · ${st.grade} (${curName}) on Think Nest`;
+  const url = location.href, text = `${S.name} · ${gradeLabel(st.curriculum, st.grade)} (${curName}) on Think Nest`;
   document.getElementById('pp-wa').href = 'https://wa.me/?text=' + encodeURIComponent(text + ' ' + url);
   document.getElementById('pp-share').addEventListener('click', async () => {
     if (navigator.share) { try { await navigator.share({ title: 'Think Nest', text, url }); return; } catch (_) { return; } }
@@ -72,7 +72,7 @@ async function startPathPage() {
           <div class="pp-topics">${topics.map(([t, os]) => `<details class="pp-topic" style="--c:${S.color}"><summary><span class="pp-tic" aria-hidden="true">${ppIcon(t, st.subject)}</span><b>${esc(t)}</b><span class="pp-count">${os.length}</span></summary>
             <ul>${os.map(x => `<li>${esc(x)}</li>`).join('')}</ul></details>`).join('')}</div>`
           : (part ? `<div class="cur-details one">${curDetailsHtml(part)}</div>` : '')}
-        <p class="pp-guide"><a href="curriculum.html?c=${encodeURIComponent(st.curriculum)}&g=${encodeURIComponent(st.grade)}">See the full ${esc(st.grade)} curriculum guide ↗</a></p>`;
+        <p class="pp-guide"><a href="curriculum.html?c=${encodeURIComponent(st.curriculum)}&g=${encodeURIComponent(st.grade)}" target="_blank" rel="noopener">See the full ${esc(gradeLabel(st.curriculum, st.grade))} curriculum guide ↗</a></p>`;
     }
   }
   // classes + next live class

@@ -43,26 +43,29 @@ async function startConnect(sp) {
     <div id="cx-body"></div>`;
   const body = document.getElementById('cx-body');
   const cafePage = sp === 'teachers' ? 'teacher-cafe.html' : 'parent-cafe.html';
-  const sayHi = (id, name) => `<div class="cx-contact"><a class="btn btn-red cx-hi" href="${cafePage}?ask=${encodeURIComponent(name || '')}">💬 Ask in the café</a>${ON.messages ? `<a class="link-btn" href="messages.html?with=${id}">Send a professional message</a>` : ''}</div>`;
+  const sayHi = (id, name) => `<div class="cx-contact">${ON.messages ? `<a class="btn btn-red cx-hi" href="messages.html?with=${id}">✉️ Message ${E((name || '').split(' ')[0] || 'them')}</a><a class="link-btn" href="${cafePage}?ask=${encodeURIComponent(name || '')}">or say hello in the café</a>` : `<a class="btn btn-red cx-hi" href="${cafePage}?ask=${encodeURIComponent(name || '')}">💬 Say hello in the café</a>`}</div>`;
 
   async function roulette() {
     const { data: mine } = await db.from('hub_profiles').select('*').eq('user_id', uid).eq('hub', sp).maybeSingle();
     const wk = new Date(); wk.setDate(wk.getDate() - ((wk.getDay() + 6) % 7));
     const { data: m } = await db.from('coffee_matches').select('*').eq('hub', sp).gte('week', wk.toISOString().slice(0, 10)).or(`user_a.eq.${uid},user_b.eq.${uid}`).maybeSingle();
     let partner = null;
-    if (m) { const pid = m.user_a === uid ? m.user_b : m.user_a; const { data: p } = await db.from('profiles').select('id, full_name, subject, school').eq('id', pid).maybeSingle(); partner = p; }
-    body.innerHTML = `<section class="panel cx-roulette">
-      <div class="cx-cups" aria-hidden="true"><span>☕</span><span class="cx-plus">+</span><span>☕</span></div>
-      ${partner ? `<h2>This week’s ${W.partner}</h2><div class="cx-match"><span class="initials big">${E(ini(partner.full_name))}</span><div><b>${E(partner.full_name)}</b><span class="meta">${E([partner.subject, partner.school].filter(Boolean).join(' · '))}</span></div></div>
-          <p>Swap ideas on a topic you share, for 15 minutes this week: in the café, online, or in the staffroom with colleagues around. ☕</p>${sayHi(partner.id, partner.full_name)}`
-        : `<h2>Swap ideas with a ${W.colleague}</h2><p>${W.partners} pairs you with a ${W.colleague} who shares your interests, using your “I can help with” and “I’d love to learn” topics. Fill those in below first for the best match.</p>
-          <button type="button" class="btn btn-red btn-big" id="cx-match">☕ Find me a ${W.partner}</button>`}
-      <label class="switch-row cx-opt"><input type="checkbox" id="cx-roul" ${mine && mine.roulette ? 'checked' : ''}> I’m happy to be paired as a ${W.partner}</label>
-    </section>
-    <section class="panel cx-me"><h3>My interests</h3><p class="meta">Used for ${W.partners} and the ${W.directory}. Keep it to learning and growth topics, please.</p>
+    let pInt = null;
+    if (m) { const pid = m.user_a === uid ? m.user_b : m.user_a; const { data: p } = await db.from('profiles').select('id, full_name, subject, school').eq('id', pid).maybeSingle(); partner = p;
+      try { const { data: hp } = await db.from('hub_profiles').select('can_help, want_learn').eq('user_id', pid).eq('hub', sp).maybeSingle(); pInt = hp; } catch (_) {} }
+    const hasInt = !!(mine && ((mine.can_help || '').trim() || (mine.want_learn || '').trim()));
+    const meBox = `<section class="panel cx-me"><h3>${partner ? 'My interests' : 'Step 1: your interests'}</h3><p class="meta">Used to find you a good ${W.partner} and for the ${W.directory}. Keep it to learning and growth topics, please.</p>
       <label>I can help with <input type="text" id="cx-help" maxlength="200" value="${E(mine && mine.can_help)}" placeholder="${P ? 'For example, healthy lunchboxes, budgeting, Arabic' : 'For example, phonics, Canva, behaviour tips'}"></label>
       <label>I’d love to learn <input type="text" id="cx-learn" maxlength="200" value="${E(mine && mine.want_learn)}" placeholder="${P ? 'For example, photography, yoga, starting a small business' : 'For example, AI tools, public speaking'}"></label>
-      <button type="button" class="btn btn-red" id="cx-save">Save my profile</button></section>`;
+      <button type="button" class="btn btn-red" id="cx-save">Save my interests</button></section>`;
+    body.innerHTML = (partner ? '' : meBox) + `<section class="panel cx-roulette">
+      <div class="cx-cups" aria-hidden="true"><span>☕</span><span class="cx-plus">+</span><span>☕</span></div>
+      ${partner ? `<h2>This week’s ${W.partner}</h2><div class="cx-match"><span class="initials big">${E(ini(partner.full_name))}</span><div><b>${E(partner.full_name)}</b><span class="meta">${E([partner.subject, partner.school].filter(Boolean).join(' · '))}</span>${pInt && pInt.can_help ? `<span class="meta">🤝 Can help with: ${E(pInt.can_help)}</span>` : ''}${pInt && pInt.want_learn ? `<span class="meta">🌱 Would love to learn: ${E(pInt.want_learn)}</span>` : ''}</div></div>
+          <p>Swap ideas on a topic you share, for 15 minutes this week: in the café, online, or in the staffroom with colleagues around. ☕</p>${sayHi(partner.id, partner.full_name)}`
+        : `<h2>Step 2: swap ideas with a ${W.colleague}</h2><p>${W.partners} pairs you with a ${W.colleague} who shares your interests. Your ${W.partner} appears right here, with a button to message them.</p>
+          <button type="button" class="btn btn-red btn-big" id="cx-match" ${hasInt ? '' : 'disabled'}>☕ Find me a ${W.partner}</button>${hasInt ? '' : '<p class="meta">Save your interests in step 1 first.</p>'}`}
+      <label class="switch-row cx-opt"><input type="checkbox" id="cx-roul" ${mine && mine.roulette ? 'checked' : ''}> I’m happy to be paired as a ${W.partner}</label>
+    </section>` + (partner ? meBox : '');
   }
   async function meetups() {
     const { data: ms } = await db.from('cafe_meetups').select('*').eq('hub', sp).gte('starts_at', new Date(Date.now() - 3 * 3600e3).toISOString()).order('starts_at');
@@ -111,8 +114,11 @@ async function startConnect(sp) {
       say('☕ Paired! Say hello to your ' + W.partner + ' in the café.'); return roulette();
     }
     if (e.target.id === 'cx-save') {
-      const { error } = await db.from('hub_profiles').upsert({ user_id: uid, hub: sp, can_help: document.getElementById('cx-help').value.trim(), want_learn: document.getElementById('cx-learn').value.trim(), roulette: document.getElementById('cx-roul').checked, updated_at: new Date().toISOString() });
-      return say(error ? friendly(error) : 'Profile saved. ☕');
+      const help = document.getElementById('cx-help').value.trim(), learn = document.getElementById('cx-learn').value.trim();
+      if (!help && !learn) return say('Write at least one thing you can help with or would love to learn.');
+      const { error } = await db.from('hub_profiles').upsert({ user_id: uid, hub: sp, can_help: help, want_learn: learn, roulette: document.getElementById('cx-roul').checked, updated_at: new Date().toISOString() });
+      if (error) return say(friendly(error));
+      say('Interests saved. ☕'); return roulette();
     }
     if (e.target.id === 'cx-new') { document.getElementById('cx-form').hidden = false; return; }
     if (e.target.id === 'cx-cancel') { document.getElementById('cx-form').hidden = true; return; }

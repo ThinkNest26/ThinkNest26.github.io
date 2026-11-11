@@ -22,9 +22,10 @@
     teacher: [
       { ic: '🏠', label: 'Home', href: 'teacher-dashboard.html' },
       { ic: '🏫', label: 'My Classes', dyn: 'classes', items: [['classes.html', 'All my classes'], ['classes.html?new=1', '➕ New class'], ['teacher-attendance.html', 'Attendance overview'], ['groups.html', 'Study groups']] },
-      { ic: '📘', label: 'Online Courses', items: [['teacher-courses.html', 'My courses'], ['teacher-calendar.html', 'Live classes'], ['teacher-requests.html', 'Session requests'], ['teacher-certificates.html', '🏅 Certificates'], ['teacher-insights.html', '📊 Course insights']] },
+      { ic: '📘', label: 'Online Courses', items: [['teacher-courses.html', 'My courses'], ['teacher-calendar.html', 'Live classes'], ['teacher-requests.html', 'Session requests']] },
+      { ic: '📊', label: 'Progress & certificates', items: [['teacher-insights.html', '📊 Student insights'], ['teacher-certificates.html', '🏅 Certificates']] },
       { ic: '💬', label: 'Messages & Community', items: [['messages.html', 'Messages'], ['community.html', 'Community']] },
-      { ic: '☕', label: 'For me', items: [['teacher-hub.html', 'Beyond the Bell workshops'], ['teacher-cafe.html', '☕ Teacher Café'], ['teacher-connect.html', '🤝 Coffee & Connections']] },
+      { ic: '☕', label: 'For me', items: [['teacher-hub.html', '🔔 My workshops (Beyond the Bell)'], ['teacher-cafe.html', '☕ Teacher Café'], ['teacher-connect.html', '🤝 Coffee & Connections']] },
       { ic: '🧰', label: 'Resources', items: [['revision.html', 'Revision Hub'], ['curriculum.html', 'Curriculum guide']] }
     ],
     parent: [
@@ -157,6 +158,8 @@
     const roleOk = sec => !sec.roles || sec.roles === '*' || role === 'admin' || (sc && sec.roles.split(' ').includes(sc.my_role));
     const menu = (MENUS[view] || MENUS.student).filter(roleOk);
     let here = ALIAS[page] || page;
+    // a teacher opening a workshop they joined is in "For me", not in the courses they teach
+    if (page === 'course.html' && ['teacher', 'admin', 'school_leader'].includes(role)) here = 'teacher-hub.html';
     if (page === 'school.html' && /^#(people|settings|import|dashboard|reports|announce|coverage|evidence|attendance)$/.test(location.hash)) here = 'school.html' + location.hash;
     if (page === 'group.html' && document.querySelector('.class-flag')) here = 'classes.html';
     if (page === 'planner.html') { const m = new URLSearchParams(location.search).get('mode') || (new URLSearchParams(location.search).get('week') ? 'weeks' : new URLSearchParams(location.search).get('plan') ? 'units' : sessionStorage.getItem('tn_pl_mode') || 'units'); here = 'planner.html?mode=' + m + (m === 'weeks' && new URLSearchParams(location.search).get('all') === '1' ? '&all=1' : ''); }

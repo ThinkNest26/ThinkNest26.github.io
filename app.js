@@ -229,6 +229,7 @@ function startSignupPage() {
     steps.forEach((s, k) => s.hidden = k !== n);
     dots.forEach((d, k) => d.classList.toggle('on', k <= n));
     back.hidden = n === 0; next.hidden = n === steps.length - 1; create.hidden = n !== steps.length - 1;
+    { const ag = document.querySelector('#signup-final .agree-box'); if (ag) ag.style.setProperty('display', n === steps.length - 1 ? 'flex' : 'none', 'important'); }
     showError(err, '');
     const first = steps[n].querySelector('input, select'); if (first) first.focus();
   }
@@ -528,3 +529,27 @@ async function liveProgress(uid, enrolls) {
   } catch (_) {}
   return enrolls;
 }
+
+// ----- Grade boxes: ask for the curriculum first, then show Year levels for British (Grade 1 = Year 2) -----
+function tnYearLabel(g) {
+  if (g === 'KG1') return 'Reception (KG1)';
+  if (g === 'KG2') return 'Year 1 (KG2)';
+  const m = /^Grade (\d+)$/.exec(g || '');
+  return m ? 'Year ' + (Number(m[1]) + 1) + ' (Grade ' + m[1] + ')' : g;
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('form').forEach(f => {
+    const g = f.querySelector('select[name=grade]'), c = f.querySelector('select[name=curriculum]');
+    if (!g || !c) return;
+    const gl = g.closest('label'), cl = c.closest('label');
+    if (gl && cl && gl.parentNode === cl.parentNode && gl.compareDocumentPosition(cl) & Node.DOCUMENT_POSITION_FOLLOWING) gl.parentNode.insertBefore(cl, gl);
+    [...g.options].forEach(o => { if (o.value) { o.value = o.value; o.dataset.grade = o.value; } });
+    const relabel = () => {
+      const british = /british/i.test(c.value);
+      [...g.options].forEach(o => { if (o.dataset.grade) o.textContent = british ? tnYearLabel(o.dataset.grade) : o.dataset.grade; else o.textContent = british ? 'Select your year' : 'Select your grade'; });
+      if (gl && gl.firstChild && gl.firstChild.nodeType === 3 && /\S/.test(gl.firstChild.textContent)) gl.firstChild.textContent = (british ? 'Year' : 'Grade') + ' ';
+    };
+    c.addEventListener('change', relabel);
+    relabel(); setTimeout(relabel, 1500); // again after saved details load
+  });
+});

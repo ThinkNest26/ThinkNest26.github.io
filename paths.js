@@ -21,6 +21,14 @@ function pathSubjectKey(s) {
   return s;
 }
 const gradeIndex = g => PATH_GRADES.indexOf(g);
+// British schools use Year levels (Grade 1 = Year 2). Other curricula keep grades.
+function gradeLabel(cur, g) {
+  if (cur !== 'british' || !g) return g;
+  if (g === 'KG1') return 'Reception (KG1)';
+  if (g === 'KG2') return 'Year 1 (KG2)';
+  const m = /^Grade (\d+)$/.exec(g);
+  return m ? 'Year ' + (Number(m[1]) + 1) + ' (Grade ' + m[1] + ')' : g;
+}
 function arabicSummary(cur, grade) {
   const i = gradeIndex(grade);
   const band = i <= 1 ? 'Children learn the Arabic letters and their sounds, listen to stories and songs, and begin to read and write simple words.'
@@ -95,12 +103,12 @@ async function drawPathStep() {
     return;
   }
   if (!pathState.grade) {
-    body.innerHTML = stepper(2) + `<p class="hint">Which grade is the student in this school year?</p><div class="cur-grades path-grades">${PATH_GRADES.map(g => `<button type="button" class="chip" data-grade="${g}">${g}</button>`).join('')}</div>
+    body.innerHTML = stepper(2) + `<p class="hint">Which grade is the student in this school year?</p><div class="cur-grades path-grades">${PATH_GRADES.map(g => `<button type="button" class="chip" data-grade="${g}">${esc(gradeLabel(pathState.curriculum, g))}</button>`).join('')}</div>
       <button type="button" class="link-btn" data-back="cur">‹ Change curriculum</button>`;
     return;
   }
   const curName = (pathCurricula(pathState.subject).find(c => c[0] === pathState.curriculum) || [])[1];
-  body.innerHTML = stepper(3) + `<p class="path-summary"><b>${esc(s.name)}</b> · ${esc(curName)} · ${esc(pathState.grade)} <button type="button" class="link-btn" data-back="grade">Change</button> · <a href="path.html?s=${encodeURIComponent(pathState.subject)}&c=${encodeURIComponent(pathState.curriculum)}&g=${encodeURIComponent(pathState.grade)}">Open as a full page ↗</a></p><div id="path-learn"><p class="empty">Loading…</p></div><div id="path-classes"></div><div id="path-actions"></div>`;
+  body.innerHTML = stepper(3) + `<p class="path-summary"><b>${esc(s.name)}</b> · ${esc(curName)} · ${esc(gradeLabel(pathState.curriculum, pathState.grade))} <button type="button" class="link-btn" data-back="grade">Change</button> · <a href="path.html?s=${encodeURIComponent(pathState.subject)}&c=${encodeURIComponent(pathState.curriculum)}&g=${encodeURIComponent(pathState.grade)}">Open as a full page ↗</a></p><div id="path-learn"><p class="empty">Loading…</p></div><div id="path-classes"></div><div id="path-actions"></div>`;
   // what they'll learn
   let learn = '';
   if (pathState.subject === 'arabic') learn = arabicSummary(pathState.curriculum, pathState.grade);
@@ -127,7 +135,7 @@ async function drawPathStep() {
             ${block(entries.slice(0, 2))}${entries.length > 2 ? `<details><summary>Show all ${entries.length} topics</summary>${block(entries.slice(2))}</details>` : ''}</div>`;
         })() : ''}
         ${also ? `<details class="also"><summary>More about this grade</summary>${curDetailsHtml(also)}</details>` : ''}
-        <p class="meta"><a href="curriculum.html?c=${pathState.curriculum}&g=${encodeURIComponent(pathState.grade)}" target="_blank" rel="noopener">See the full ${esc(pathState.grade)} guide ↗</a></p>`;
+        <p class="meta"><a href="curriculum.html?c=${pathState.curriculum}&g=${encodeURIComponent(pathState.grade)}" target="_blank" rel="noopener">See the full ${esc(gradeLabel(pathState.curriculum, pathState.grade))} guide ↗</a></p>`;
     }
   }
   document.getElementById('path-learn').innerHTML = `<h3>What you’ll learn</h3>` + (learn || '<p class="meta">The details for this grade are not available yet. Please ask the Think Nest team to run the curriculum guide update.</p>');
@@ -218,7 +226,11 @@ function initPathFinder() {
     more.hidden = false; ready();
     if (window.matchMedia('(max-width: 700px)').matches) more.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }));
-  cur.addEventListener('click', e => { const c = e.target.closest('[data-cur]'); if (!c) return; st.curriculum = c.dataset.cur; cur.querySelectorAll('[data-cur]').forEach(x => x.setAttribute('aria-checked', String(x === c))); ready(); });
+  cur.addEventListener('click', e => { const c = e.target.closest('[data-cur]'); if (!c) return; st.curriculum = c.dataset.cur; cur.querySelectorAll('[data-cur]').forEach(x => x.setAttribute('aria-checked', String(x === c)));
+    // show Year levels for British, grades for the others
+    [...grade.options].forEach(o => { if (o.value) o.textContent = gradeLabel(st.curriculum, o.value); });
+    if (grade.options[0] && !grade.options[0].value) grade.options[0].textContent = st.curriculum === 'british' ? 'Choose a year…' : 'Choose a grade…';
+    ready(); });
   grade.addEventListener('change', ready);
   go.addEventListener('click', () => { if (!go.disabled) location.href = 'path.html?s=' + encodeURIComponent(st.subject) + '&c=' + encodeURIComponent(st.curriculum) + '&g=' + encodeURIComponent(grade.value); });
   // live "classes open" badges

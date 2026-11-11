@@ -1880,7 +1880,18 @@
 "⏳ Taking a while? If you’re using a": "⏳ يستغرق وقتًا؟ إذا كنت تستخدم",
 "Private window": "نافذة خاصة",
 ", please try a normal window or another browser.": "، جرّب نافذة عادية أو متصفحًا آخر.",
-"🔄 Try the check again": "🔄 أعد التحقق"
+"🔄 Try the check again": "🔄 أعد التحقق",
+"Group chats from your classes and study groups, and private messages with other teachers. Students can only chat privately with their student friends.": "محادثات جماعية من فصولك ومجموعات الدراسة، ورسائل خاصة مع معلمين آخرين. يمكن للطلاب المحادثة بشكل خاص مع أصدقائهم الطلاب فقط.",
+"💬 Share on WhatsApp": "💬 شارك عبر واتساب",
+"Video link": "رابط الفيديو",
+"Save my interests": "احفظ اهتماماتي",
+"Step 1: your interests": "الخطوة 1: اهتماماتك",
+"Save your interests in step 1 first.": "احفظ اهتماماتك في الخطوة 1 أولًا.",
+"🔔 My workshops (Beyond the Bell)": "🔔 ورشي (ما بعد الجرس)",
+"Progress & certificates": "التقدّم والشهادات",
+"📊 Student insights": "📊 رؤى الطلاب",
+"📘 My online courses →": "📘 دوراتي عبر الإنترنت ←",
+"Registered": "تاريخ التسجيل"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

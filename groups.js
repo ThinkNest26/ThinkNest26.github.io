@@ -367,6 +367,7 @@ function openTeacherGroupDialog(mode) {
   cd.querySelector('.course-pick').firstChild.textContent = isCls ? 'Add everyone from a course ' : 'Pick students from a course (optional) ';
   cf.querySelector('button.btn-red').textContent = isCls ? 'Create class' : 'Create group';
   cf.name.placeholder = isCls ? 'For example, Grade 4 Maths class' : 'For example, Fractions team';
+  { const lb = cf.name.closest('label'); if (lb && lb.firstChild && lb.firstChild.nodeType === 3) lb.firstChild.textContent = isCls ? 'Class name ' : 'Group name '; }
   cf.reset(); cd.showModal();
   (async () => {
     const uid = (await db.auth.getSession()).data.session.user.id;
