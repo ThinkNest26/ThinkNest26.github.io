@@ -1907,7 +1907,16 @@
 "Your child’s course request": "طلب دورة لطفلك",
 "✅ I agree": "✅ أوافق",
 "No, I don’t agree": "لا، لا أوافق",
-"Cancel my request": "إلغاء طلبي"
+"Cancel my request": "إلغاء طلبي",
+"Save lesson": "حفظ الدرس",
+"Publish now": "انشر الآن",
+"📄 Duplicate": "📄 نسخ",
+"✏️ Edit lesson": "✏️ تعديل الدرس",
+"When can students see it?": "متى يمكن للطلاب رؤيته؟",
+"How many times can students hand in?": "كم مرة يمكن للطلاب التسليم؟",
+"As many as they like": "بلا حدود",
+"Once": "مرة واحدة",
+"➕ Add this objective and choose another": "➕ أضف هذا الهدف واختر هدفًا آخر"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

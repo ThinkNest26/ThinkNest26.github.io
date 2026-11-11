@@ -172,6 +172,20 @@ async function publishCourse(c, p, on) {
 }
 function teacherProfileReady(p) { return !!(p && String(p.bio || '').trim() && String(p.education_degree || '').trim() && p.experience_years != null && p.experience_years !== ''); }
 
+// Lesson visibility: published now, a draft (no date) or scheduled (a date in the future)
+function lessonState(l) {
+  if (!('publish_at' in l)) return 'live';
+  if (!l.publish_at) return 'draft';
+  return new Date(l.publish_at) > new Date() ? 'later' : 'live';
+}
+const lessonObjHtml = t => t ? `<span class="meta lesson-obj">${String(t).split('\n').filter(Boolean).map(o => '🎯 ' + esc(o)).join('<br>')}</span>` : '';
+function whenFromForm(sel, at) {
+  if (sel === 'draft') return { ok: true, v: null };
+  if (sel === 'later') { if (!at) return { ok: false, msg: 'Choose the date and time to publish the lesson.' }; return { ok: true, v: new Date(at).toISOString() }; }
+  return { ok: true, v: new Date().toISOString() };
+}
+const toLocalInput = iso => { if (!iso) return ''; const d = new Date(iso); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
+
 function courseDialog(onSaved) {
   const dlg = document.getElementById('course-dialog'), f = document.getElementById('course-form'), err = document.getElementById('course-error');
   let editing = null, teacher = null;
@@ -268,7 +282,7 @@ async function startTeacherCourses() {
           <span class="meta">${c.published === false ? '📝 Draft · ' : ''}${esc(c.category || '')}${c.weeks ? ' · ' + c.weeks + ' weeks' : ''} · ${(c.enrollments && c.enrollments[0] ? c.enrollments[0].count : 0)} students</span>
           <h4>${esc(c.title)}</h4><p class="desc">${esc(c.description || '')}</p>
           ${waiting[c.id] ? `<a class="tag tag-now" href="teacher-course.html?id=${c.id}#t-reqs">📝 ${waiting[c.id]} registration${waiting[c.id] === 1 ? '' : 's'} to answer</a>` : ''}
-          <div class="row"><button class="pill pill-soft" data-edit="${c.id}">Edit details</button>${c.published === false ? `<button class="pill pill-live" data-pub="${c.id}">🚀 Publish</button>` : ''}<a class="pill pill-live" href="teacher-course.html?id=${c.id}">Open</a></div>
+          <div class="row"><button class="pill pill-soft" data-edit="${c.id}">Edit details</button><button class="pill pill-soft" data-dup="${c.id}" title="Copy this course with all its lessons and resources">📄 Duplicate</button>${c.published === false ? `<button class="pill pill-live" data-pub="${c.id}">🚀 Publish</button>` : ''}<a class="pill pill-live" href="teacher-course.html?id=${c.id}">Open</a></div>
         </div></article>`;
     const drafts = courses.filter(c => c.published === false), live = courses.filter(c => c.published !== false);
     list.innerHTML = courses.length
@@ -287,6 +301,16 @@ async function startTeacherCourses() {
   list.addEventListener('click', async e => {
     const b = e.target.closest('[data-edit]'); if (b) return dlg.open(courses.find(c => c.id === Number(b.dataset.edit)), { id: user.id, full_name: profile.full_name });
     const p = e.target.closest('[data-pub]'); if (p && await publishCourse(courses.find(c => c.id === Number(p.dataset.pub)), profile, true)) load();
+    const du = e.target.closest('[data-dup]');
+    if (du) {
+      const src = courses.find(c => c.id === Number(du.dataset.dup));
+      const name = prompt('Name for the copy? It will be saved as a draft with all the lessons, quizzes, worksheets and resources, but no students.', src.title + ' (copy)');
+      if (name === null) return;
+      du.disabled = true; du.textContent = 'Copying…';
+      const { data: nid, error } = await db.rpc('duplicate_course', { cid: src.id, new_title: name.trim() || src.title + ' (copy)' });
+      if (error) { du.disabled = false; du.textContent = '📄 Duplicate'; return say(/duplicate_course/.test(error.message || '') ? 'Please run the latest database update (Batch 3 Part B) first.' : friendly(error)); }
+      say('Copied! Change the dates and times, then publish it when it’s ready.'); location.href = 'teacher-course.html?id=' + nid;
+    }
   });
   load();
 }
@@ -367,11 +391,12 @@ async function startTeacherCourse() {
     const { data } = await db.from('lessons').select('*').eq('course_id', id).order('position');
     lessons = data || [];
     document.getElementById('lessons').innerHTML = lessons.length ? lessons.map((l, k) => `<div class="lesson">
-        <b>${String(k + 1).padStart(2, '0')}</b><span class="lesson-title" id="lesson-${l.id}">${esc(l.title)}${l.objective_text ? `<span class="meta lesson-obj">🎯 ${esc(l.objective_text)}</span>` : ''}</span>
+        <b>${String(k + 1).padStart(2, '0')}</b><span class="lesson-title" id="lesson-${l.id}">${esc(l.title)}${lessonState(l) === 'draft' ? ' <span class="tag">📝 Draft</span>' : lessonState(l) === 'later' ? ` <span class="tag">🕒 Publishes ${new Date(l.publish_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</span>` : ''}${lessonObjHtml(l.objective_text)}</span>
         ${l.video_url ? '<span class="tag">Video</span>' : ''}${l.resource_url ? '<span class="tag">Link</span>' : ''}${l.material_kind ? `<span class="tag tag-kind">${{ worksheet: '📝 Worksheet', test: '✅ Test', activities: '🧩 Activities' }[l.material_kind]}</span>` : ''}
         ${l.material_kind && l.material_kind !== 'activities' ? `<button class="pill pill-live" data-results="${l.id}">Results</button>` : ''}
         <button class="pill pill-soft" data-up="${l.id}" ${k === 0 ? 'disabled' : ''} aria-label="Move up">↑</button>
         <button class="pill pill-soft" data-down="${l.id}" ${k === lessons.length - 1 ? 'disabled' : ''} aria-label="Move down">↓</button>
+        ${lessonState(l) !== 'live' ? `<button class="pill pill-live" data-pub-lesson="${l.id}">Publish now</button>` : ''}<button class="pill pill-soft" data-edit-lesson="${l.id}">Edit</button>
         <button class="pill pill-soft" data-del-lesson="${l.id}">Delete</button></div>`).join('')
       : '<p class="empty">No lessons yet. Add the first one below.</p>';
     if (typeof loadTeacherItems === 'function') loadTeacherItems(lessons, c);
@@ -384,19 +409,61 @@ async function startTeacherCourse() {
     if (!lf.title.value.trim()) return say('Give the lesson a title.');
     const extra = builder ? builder.payload() : { objective_id: null, objective_text: null, material_kind: null, material: null, key: null };
     if (!extra) return;
+    const when = whenFromForm(lf.when ? lf.when.value : 'now', lf.publish_at ? lf.publish_at.value : '');
+    if (!when.ok) return say(when.msg);
     const btn = lf.querySelector(':scope > button.btn-red'); if (btn) btn.disabled = true;
-    const { data: nl, error } = await db.from('lessons').insert({ course_id: id, position: lessons.length + 1, title: lf.title.value.trim(), video_url: lf.video_url.value.trim() || null, resource_url: lf.resource_url.value.trim() || null,
-      objective_id: extra.objective_id, objective_text: extra.objective_text, material_kind: extra.material_kind, material: extra.material }).select().single();
+    const row = { course_id: id, position: lessons.length + 1, title: lf.title.value.trim(), video_url: lf.video_url.value.trim() || null, resource_url: lf.resource_url.value.trim() || null,
+      objective_id: extra.objective_id, objective_text: extra.objective_text, material_kind: extra.material_kind, material: extra.material, publish_at: when.v };
+    let { data: nl, error } = await db.from('lessons').insert(row).select().single();
+    if (error && /publish_at/.test(error.message || '')) { delete row.publish_at; ({ data: nl, error } = await db.from('lessons').insert(row).select().single()); }
     if (!error && extra.key) { const r = await db.from('lesson_keys').upsert({ lesson_id: nl.id, answers: extra.key }); if (r.error) say(friendly(r.error)); }
     if (btn) btn.disabled = false;
     if (error) return say(friendly(error));
-    lf.reset(); if (builder) builder.reset(); say('Lesson added. Students in this course can see it now.'); loadLessons();
+    const wv = lf.when ? lf.when.value : 'now';
+    lf.reset(); lf.querySelector('.lesson-at') && (lf.querySelector('.lesson-at').hidden = true); if (builder) builder.reset();
+    say(wv === 'draft' ? 'Saved as a draft. Only you can see it. Press “Publish now” when it’s ready.' : wv === 'later' ? 'Saved. Students will see it on the date you chose.' : 'Lesson published. Students in this course can see it now.'); loadLessons();
   });
+  if (lf.when) lf.when.addEventListener('change', () => { lf.querySelector('.lesson-at').hidden = lf.when.value !== 'later'; });
+
+  // edit a lesson: title, objectives and when students can see it
+  function editLesson(l) {
+    let d = document.getElementById('lesson-edit');
+    if (!d) { d = document.createElement('dialog'); d.id = 'lesson-edit'; d.className = 'dlg'; document.body.appendChild(d); }
+    const st = lessonState(l);
+    d.innerHTML = `<form class="auth-form" id="le-form" style="padding:22px;display:grid;gap:12px;min-width:min(520px,90vw)">
+      <h2 style="margin:0">✏️ Edit lesson</h2>
+      <label>Lesson title <input name="title" required value="${esc(l.title)}"></label>
+      <label>Learning objectives (one per line) <textarea name="objs" rows="4">${esc(l.objective_text || '')}</textarea></label>
+      <div class="two"><label>When can students see it?<select name="when"><option value="now" ${st === 'live' ? 'selected' : ''}>Published</option><option value="draft" ${st === 'draft' ? 'selected' : ''}>Draft (only you can see it)</option><option value="later" ${st === 'later' ? 'selected' : ''}>Publish on a date…</option></select></label>
+      <label class="le-at" ${st === 'later' ? '' : 'hidden'}>Publish on <input type="datetime-local" name="publish_at" value="${st === 'later' ? toLocalInput(l.publish_at) : ''}"></label></div>
+      <p class="meta">To change the quizzes, worksheets and other things in this lesson, use <b>Edit</b> next to each one under the lesson.</p>
+      <div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-le-close>Cancel</button><button class="btn btn-red auth-btn">Save changes</button></div></form>`;
+    const f = d.querySelector('form');
+    f.when.onchange = () => { d.querySelector('.le-at').hidden = f.when.value !== 'later'; };
+    d.querySelector('[data-le-close]').onclick = () => d.close();
+    f.onsubmit = async e => {
+      e.preventDefault();
+      if (!f.title.value.trim()) return say('Give the lesson a title.');
+      const keep = f.when.value === 'now' && st === 'live';
+      const w = keep ? { ok: true, v: l.publish_at } : whenFromForm(f.when.value, f.publish_at.value);
+      if (!w.ok) return say(w.msg);
+      const objs = f.objs.value.split('\n').map(s => s.trim()).filter(Boolean).join('\n') || null;
+      const up = { title: f.title.value.trim(), objective_text: objs };
+      if ('publish_at' in l) up.publish_at = w.v;
+      const { error } = await db.from('lessons').update(up).eq('id', l.id);
+      if (error) return say(friendly(error));
+      d.close(); say('Lesson saved.'); loadLessons();
+    };
+    d.showModal();
+  }
   const hm = location.hash.match(/^#lesson-(\d+)$/);
   if (hm) { const l = lessons.find(x => x.id === Number(hm[1])); if (l && l.material_kind && l.material_kind !== 'activities') showLessonResults(l); }
   document.getElementById('lessons').addEventListener('click', async e => {
     const up = e.target.closest('[data-up]'), down = e.target.closest('[data-down]'), del = e.target.closest('[data-del-lesson]'), res = e.target.closest('[data-results]');
     if (res) return showLessonResults(lessons.find(l => l.id === Number(res.dataset.results)));
+    const ed = e.target.closest('[data-edit-lesson]'); if (ed) return editLesson(lessons.find(l => l.id === Number(ed.dataset.editLesson)));
+    const pub = e.target.closest('[data-pub-lesson]');
+    if (pub) { const { error } = await db.from('lessons').update({ publish_at: new Date().toISOString() }).eq('id', Number(pub.dataset.pubLesson)); if (error) return say(friendly(error)); say('Published. Students in this course have been told.'); return loadLessons(); }
     if (del) {
       if (!confirm('Delete this lesson?')) return;
       const { error } = await db.from('lessons').delete().eq('id', Number(del.dataset.delLesson));

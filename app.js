@@ -553,3 +553,20 @@ document.addEventListener('DOMContentLoaded', () => {
     relabel(); setTimeout(relabel, 1500); // again after saved details load
   });
 });
+
+// ----- Print just one quiz or worksheet (not the whole page) -----
+function tnPrintPart(el, title) {
+  if (!el) return window.print();
+  const c = el.cloneNode(true);
+  c.querySelectorAll('button, .step-buttons, .result-box, .submit-box button, [data-print]').forEach(x => x.remove());
+  c.querySelectorAll('input[type=text], textarea').forEach(x => { const s = document.createElement('div'); s.className = 'line'; s.style.height = x.tagName === 'TEXTAREA' ? '90px' : '28px'; x.replaceWith(s); });
+  const w = window.open('', '_blank'); if (!w) return window.print();
+  const esc2 = s => String(s || '').replace(/[<>&]/g, ch => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[ch]));
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc2(title || 'Think Nest')}</title><style>
+    body{font-family:Raleway,Arial,sans-serif;color:#1D2026;margin:28px;line-height:1.5} h1{font-size:22px;margin:0 0 4px} .top{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #3E4B94;padding-bottom:8px;margin-bottom:16px}
+    .name{font-size:14px} fieldset{border:0;padding:0;margin:0 0 16px;break-inside:avoid} legend{font-weight:700;margin-bottom:6px} label{display:block;margin:4px 0}
+    .line{border-bottom:1px solid #999;margin:6px 0 2px} .meta{color:#666;font-size:13px} .act-num{display:inline-block;min-width:22px} img{max-width:100%} iframe{display:none}
+    </style></head><body><div class="top"><div><h1>${esc2(title)}</h1><span class="meta">Think Nest</span></div><div class="name">Name: ______________________</div></div>${c.innerHTML}
+    <script>window.onload=function(){setTimeout(function(){window.print()},300)}<\/script></body></html>`);
+  w.document.close();
+}

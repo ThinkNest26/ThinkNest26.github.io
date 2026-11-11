@@ -40,6 +40,16 @@ function initLessonBuilder(course) {
     </div>`;
   const gen = box.querySelector('#lb-gen'), editor = box.querySelector('#lb-editor');
   let picker = objectivePicker(box.querySelector('#lb-picker'), course);
+  // more than one objective for a lesson
+  let moreObj = [];
+  box.querySelector('#lb-picker').insertAdjacentHTML('afterend', '<div class="lb-more"><ul class="lb-objs" id="lb-objs"></ul><button type="button" class="pill pill-soft" id="lb-addobj">➕ Add this objective and choose another</button></div>');
+  const drawObjs = () => { box.querySelector('#lb-objs').innerHTML = moreObj.map((o, i) => `<li>🎯 ${esc(o)} <button type="button" class="link-btn" data-rmobj="${i}" aria-label="Remove">✕</button></li>`).join(''); };
+  box.querySelector('#lb-addobj').addEventListener('click', () => {
+    const v = picker.value(); if (!v) return say('Choose or write an objective first.');
+    if (!moreObj.includes(v)) moreObj.push(v);
+    picker = objectivePicker(box.querySelector('#lb-picker'), course); drawObjs();
+  });
+  box.addEventListener('click', e => { const r = e.target.closest('[data-rmobj]'); if (r) { moreObj.splice(Number(r.dataset.rmobj), 1); drawObjs(); } });
   // Materials are now added with "+ Add to this lesson" (materials.js), so the old single-material picker is hidden
   if (typeof openItemBuilder === 'function') { box.querySelector('.lb-kind').hidden = true; box.insertAdjacentHTML('beforeend', '<p class="note">💡 After you add the lesson, click <b>+ Add to this lesson</b> under it to add worksheets, quizzes, Google Forms, videos, writing tasks, flashcards and more.</p>'); }
   const kind = () => (box.querySelector('input[name=lb-kind]:checked') || {}).value || '';
@@ -132,7 +142,8 @@ function initLessonBuilder(course) {
     payload() {
       const obj = objectiveText(), k = kind();
       if (picker.isOwnEmpty()) { say('Type your objective, or choose one from the list.'); return null; }
-      const out = { objective_id: picker.id(), objective_text: obj || null, material_kind: null, material: null, key: null };
+      const allObj = moreObj.concat(obj && !moreObj.includes(obj) ? [obj] : []);
+      const out = { objective_id: picker.id() || null, objective_text: allObj.length ? allObj.join('\n') : null, material_kind: null, material: null, key: null };
       if (k && material) {
         if (k === 'activities') {
           if (!material.items.length || material.items.some(a => !String(a.name || '').trim() || !(a.steps || []).length)) { say('Every activity needs a name and at least one step.'); return null; }
@@ -145,7 +156,7 @@ function initLessonBuilder(course) {
       } else if (k && !material) { say('Click “Create with Gemini” or “Write it myself” first, or choose None.'); return null; }
       return out;
     },
-    reset() { picker = objectivePicker(box.querySelector('#lb-picker'), course); box.querySelector('input[name=lb-kind][value=""]').checked = true; gen.hidden = true; material = null; key = []; editor.innerHTML = ''; },
+    reset() { moreObj = []; drawObjs(); picker = objectivePicker(box.querySelector('#lb-picker'), course); box.querySelector('input[name=lb-kind][value=""]').checked = true; gen.hidden = true; material = null; key = []; editor.innerHTML = ''; },
     setCourse(c) { course = c; picker = objectivePicker(box.querySelector('#lb-picker'), course); }
   };
 }
@@ -225,7 +236,7 @@ async function initStudentLessons(lessons, courseId, isEnrolled, onDone) {
       panel.hidden = !panel.hidden;
       o.textContent = panel.hidden ? (o.dataset.label) : 'Close';
     }
-    if (e.target.closest('[data-print]')) window.print();
+    if (e.target.closest('[data-print]')) { const pp = e.target.closest('.lesson-material') || e.target.closest('form'); tnPrintPart(pp, 'Worksheet'); }
   });
   box.addEventListener('submit', async e => {
     const f = e.target.closest('[data-quiz]'); if (!f) return;

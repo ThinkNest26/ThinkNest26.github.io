@@ -49,7 +49,7 @@ function ensureItemDialog() {
   return d;
 }
 
-async function openItemBuilder(lesson, course, onSaved) {
+async function openItemBuilder(lesson, course, onSaved, editItem) {
   const dlg = ensureItemDialog(), title = dlg.querySelector('#item-title');
   // a fresh box each time, so old click handlers can't save the same item twice
   const oldBody = dlg.querySelector('#item-body'), body = oldBody.cloneNode(false); oldBody.replaceWith(body);
@@ -115,9 +115,10 @@ async function openItemBuilder(lesson, course, onSaved) {
         ${f}
         <label>Instructions for students (optional) <textarea id="it-instr" rows="2" maxlength="1000">${esc(st.instructions)}</textarea></label>
         <label class="due">Due date (optional) <input type="date" id="it-due" value="${esc(st.due)}"></label>
-        <div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-back-menu>Cancel</button><button type="button" class="btn btn-red auth-btn" id="it-save">Add to lesson</button></div>
+        ${MARKABLE.includes(st.kind) ? `<label class="due">How many times can students hand in? <select id="it-tries">${[['', 'As many as they like'], ['1', 'Once'], ['2', '2 times'], ['3', '3 times'], ['5', '5 times']].map(([v, n]) => `<option value="${v}" ${String(st.data.max_attempts || '') === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>` : ''}
+        <div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-back-menu>Cancel</button><button type="button" class="btn btn-red auth-btn" id="it-save">${editItem ? 'Save changes' : 'Add to lesson'}</button></div>
       </div>`;
-    st.picker = objectivePicker(body.querySelector('#it-obj'), course, st.objective || lesson.objective_text || '');
+    st.picker = objectivePicker(body.querySelector('#it-obj'), course, st.objective || String(lesson.objective_text || '').split('\n')[0] || '');
   }
   // keep typed values when redrawing
   function capture() {
@@ -126,6 +127,7 @@ async function openItemBuilder(lesson, course, onSaved) {
     if (v('it-title') !== undefined) st.title = v('it-title');
     if (v('it-instr') !== undefined) st.instructions = v('it-instr');
     if (v('it-due') !== undefined) st.due = v('it-due');
+    if (v('it-tries') !== undefined) st.data.max_attempts = v('it-tries') ? Number(v('it-tries')) : null;
     if (v('it-url') !== undefined) st.data.url = v('it-url').trim();
     const h = body.querySelector('#it-handin'); if (h) st.data.handin = h.checked;
     if (v('it-sc') !== undefined) st.data.success_criteria = v('it-sc').split('\n').map(s => s.trim()).filter(Boolean);
@@ -152,7 +154,7 @@ async function openItemBuilder(lesson, course, onSaved) {
   body.addEventListener('click', async e => {
     const t = e.target;
     const tool = t.closest('[data-tool]'); if (tool) return start(tool.dataset.tool);
-    if (t.closest('[data-back-menu]')) return menu();
+    if (t.closest('[data-back-menu]')) return editItem ? dlg.close() : menu();
     const lt = t.closest('[data-lt]'); if (lt) { capture(); st.data.tool = lt.dataset.lt; if (!st.title) st.title = lt.dataset.lt + ' activity'; return draw(); }
     if (t.closest('[data-qadd]')) { capture(); st.data.questions.push({ type: 'multiple_choice', question: '', options: ['', '', '', ''], marks: 1 }); st.key.push({ answer: '' }); return draw(); }
     const qrm = t.closest('[data-qrm]'); if (qrm) { capture(); const i = Number(qrm.dataset.qrm); st.data.questions.splice(i, 1); st.key.splice(i, 1); return draw(); }
@@ -195,7 +197,7 @@ async function openItemBuilder(lesson, course, onSaved) {
     capture();
     const k = st.kind, d = st.data;
     if (!st.title.trim()) return say('Give it a title students will see.');
-    if (k === 'file' && !body.querySelector('#it-file').files[0]) return say('Choose a file to upload.');
+    if (k === 'file' && !body.querySelector('#it-file').files[0] && !(editItem && d.path)) return say('Choose a file to upload.');
     if (['form', 'link'].includes(k) && !/^https?:\/\//.test(d.url || '')) return say('Paste the full link, starting with https://');
     if (k === 'video' && !matYt(d.url)) return say('Paste a YouTube link, for example https://www.youtube.com/watch?v=...');
     if (['quiz', 'worksheet', 'exit'].includes(k) && !d.questions.length) return say('Add at least one question, or use Gemini.');
@@ -210,7 +212,7 @@ async function openItemBuilder(lesson, course, onSaved) {
     if (k === 'activities' && (!d.items.length || d.items.some(a => !String(a.name || '').trim() || !(a.steps || []).length))) return say('Every activity needs a name and at least one step.');
     btn.disabled = true; btn.textContent = 'Saving…';
     try {
-      if (k === 'file') {
+      if (k === 'file' && body.querySelector('#it-file').files[0]) {
         const file = body.querySelector('#it-file').files[0];
         if (file.size > 20 * 1024 * 1024) throw new Error('Files must be smaller than 20 MB.');
         const path = `${course.id}/${lesson.id}/${Date.now()}-${file.name.replace(/[^\w.\-]+/g, '_')}`;
@@ -220,16 +222,30 @@ async function openItemBuilder(lesson, course, onSaved) {
       }
       if (st.instructions.trim()) d.instructions = st.instructions.trim();
       if (st.objective) d.objective = st.objective;
-      const { data: pos } = await db.from('lesson_items').select('position').eq('lesson_id', lesson.id).order('position', { ascending: false }).limit(1);
-      const { data: it, error } = await db.from('lesson_items').insert({ lesson_id: lesson.id, kind: k, title: st.title.trim(), data: d, due_date: st.due || null, position: ((pos && pos[0] && pos[0].position) || 0) + 1 }).select().single();
+      let it, error;
+      if (editItem) {
+        ({ data: it, error } = await db.from('lesson_items').update({ title: st.title.trim(), data: d, due_date: st.due || null }).eq('id', editItem.id).select().single());
+      } else {
+        const { data: pos } = await db.from('lesson_items').select('position').eq('lesson_id', lesson.id).order('position', { ascending: false }).limit(1);
+        ({ data: it, error } = await db.from('lesson_items').insert({ lesson_id: lesson.id, kind: k, title: st.title.trim(), data: d, due_date: st.due || null, position: ((pos && pos[0] && pos[0].position) || 0) + 1 }).select().single());
+      }
       if (error) throw error;
       const needsKey = QUESTION_KINDS.includes(k) && d.questions.length || k === 'writing';
       if (needsKey) { const r = await db.from('item_keys').upsert({ item_id: it.id, answers: k === 'writing' ? st.key : d.questions.map((q, i) => ({ answer: String((st.key[i] || {}).answer || '').trim(), explanation: (st.key[i] || {}).explanation || '' })) }); if (r.error) throw r.error; }
-      dlg.close(); say('Added. Students in this course have been told.'); if (onSaved) onSaved();
-    } catch (err) { btn.disabled = false; btn.textContent = 'Add to lesson'; say(friendly(err)); }
+      dlg.close(); say(editItem ? 'Changes saved.' : 'Added. Students in this course have been told.'); if (onSaved) onSaved();
+    } catch (err) { btn.disabled = false; btn.textContent = editItem ? 'Save changes' : 'Add to lesson'; say(friendly(err)); }
   }
 
-  menu();
+  if (editItem) {
+    // open the existing item, with its answers, ready to change
+    let key = [];
+    try { const { data: kr } = await db.from('item_keys').select('answers').eq('item_id', editItem.id).maybeSingle(); if (kr && kr.answers) key = kr.answers; } catch (_) {}
+    const d0 = JSON.parse(JSON.stringify(editItem.data || {}));
+    st = { kind: editItem.kind, title: editItem.title || '', instructions: d0.instructions || '', due: editItem.due_date || '', objective: d0.objective || '', data: d0, key: Array.isArray(key) ? key : [] };
+    if (QUESTION_KINDS.includes(st.kind) && !st.data.questions) st.data.questions = [];
+    draw();
+    title.innerHTML = '✏️ Edit: ' + esc(editItem.title || '');
+  } else menu();
   if (!dlg.open) dlg.showModal();
 }
 
@@ -247,17 +263,18 @@ async function loadTeacherItems(lessons, course) {
     const items = byLesson[l.id] || [];
     box.innerHTML = items.map(i => `<div class="item-chip" id="item-${i.id}" title="${esc(i.data.objective ? '🎯 ' + i.data.objective : '')}"><span>${TOOL(i.kind).ic}</span><b>${esc(i.title)}</b><span class="meta">${esc(TOOL(i.kind).name)}${i.data.objective ? ' · 🎯' : ''}${i.due_date ? ' · due ' + new Date(i.due_date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''}</span>
         ${MARKABLE.includes(i.kind) && !(i.kind === 'file' && !i.data.handin) && !(i.kind === 'video' && !(i.data.questions || []).length) ? `<button type="button" class="pill pill-live" data-iresults="${i.id}">Results</button>` : ''}
-        <button type="button" class="link-btn" data-idel="${i.id}">Delete</button></div>`).join('') +
+        <button type="button" class="link-btn" data-iedit="${i.id}">Edit</button><button type="button" class="link-btn" data-idel="${i.id}">Delete</button></div>`).join('') +
       `<button type="button" class="pill pill-soft big add-item" data-iadd="${l.id}">+ Add to this lesson</button>`;
     box.onclick = async e => {
       const a = e.target.closest('[data-iadd]'), r = e.target.closest('[data-iresults]'), d = e.target.closest('[data-idel]');
       if (a) openItemBuilder(l, course, () => loadTeacherItems(lessons, course));
+      const ed = e.target.closest('[data-iedit]'); if (ed) openItemBuilder(l, course, () => loadTeacherItems(lessons, course), items.find(x => x.id === Number(ed.dataset.iedit)));
       if (r) showItemResults(items.find(x => x.id === Number(r.dataset.iresults)));
       if (d) { if (!confirm('Delete this from the lesson? Students’ answers to it will be deleted too.')) return;
         const it = items.find(x => x.id === Number(d.dataset.idel));
         const { error } = await db.from('lesson_items').delete().eq('id', it.id);
         if (error) return say(friendly(error));
-        if (it.kind === 'file' && it.data.path) db.storage.from('lesson-files').remove([it.data.path]);
+        if (it.kind === 'file' && it.data.path) { const { data: others } = await db.from('lesson_items').select('id').eq('data->>path', it.data.path).limit(1); if (!(others || []).length) db.storage.from('lesson-files').remove([it.data.path]); } // copied courses share files
         loadTeacherItems(lessons, course); }
     };
   });
@@ -270,12 +287,13 @@ async function showItemResults(item) {
   dlg.querySelector('h2').textContent = 'Results: ' + item.title;
   body.innerHTML = '<p class="empty">Loading…</p>'; dlg.showModal();
   const [{ data: rows }, { data: k }] = await Promise.all([db.rpc('item_results', { iid: item.id }), db.from('item_keys').select('answers').eq('item_id', item.id).maybeSingle()]);
+  const tries = {}; try { const { data: at } = await db.from('item_responses').select('student_id, attempts').eq('item_id', item.id); (at || []).forEach(x => tries[x.student_id] = x.attempts); } catch (_) {}
   const qs = item.data.questions || [], keys = (k && k.answers) || [];
   const total = qs.reduce((s, q) => s + (Number(q.marks) || 1), 0);
   const keyBox = qs.length ? `<details class="key-box"><summary>🔒 Answer key</summary><ol>${qs.map((q, i) => `<li>${esc(q.question)}<br><b>${esc((keys[i] || {}).answer || '—')}</b></li>`).join('')}</ol></details>`
     : item.kind === 'writing' && keys[0] && (keys[0].marking_points || []).length ? `<details class="key-box"><summary>🔒 What a strong answer includes</summary><ul>${keys[0].marking_points.map(p => `<li>${esc(p)}</li>`).join('')}</ul></details>` : '';
   body.innerHTML = keyBox + ((rows || []).length ? rows.map(r => `<article class="panel result" data-sid="${r.student_id}">
-      <header><b>${esc(r.full_name || 'Student')}</b><span class="meta">Handed in ${new Date(r.submitted_at).toLocaleString('en-GB')}</span><span class="tag ${r.needs_marking ? 'tag-wait' : 'tag-now'}">${r.needs_marking ? 'Needs marking' : 'Marked'}</span></header>
+      <header><b>${esc(r.full_name || 'Student')}</b><span class="meta">Handed in ${new Date(r.submitted_at).toLocaleString('en-GB')}${tries[r.student_id] > 1 ? ' · 🔁 ' + tries[r.student_id] + ' times' : ''}</span><span class="tag ${r.needs_marking ? 'tag-wait' : 'tag-now'}">${r.needs_marking ? 'Needs marking' : 'Marked'}</span></header>
       ${qs.length ? `<p>Auto-marked: <b>${r.auto_score ?? 0} / ${r.auto_total ?? 0}</b></p><ol class="result-answers">${qs.map((q, i) => { const a = (r.answers || [])[i] ?? ''; const auto = ['multiple_choice', 'true_false', 'fill_blank'].includes(q.type);
           const ok = auto && String((keys[i] || {}).answer || '').toLowerCase().split('|').map(s => s.trim()).includes(String(a).trim().toLowerCase().replace(/\.$/, ''));
           return `<li><span class="meta">${esc(q.question)}</span><br>${auto ? (ok ? '✅ ' : '❌ ') : '✍️ '}${esc(a || '(no answer)')}</li>`; }).join('')}</ol>` : ''}
@@ -296,13 +314,20 @@ async function showItemResults(item) {
 }
 
 // ---------- Students ----------
+// how many hand-ins are left (null = no limit)
+function triesLeft(item, resp) { const max = (item.data || {}).max_attempts; if (!max) return null; return Math.max(max - ((resp && (resp.attempts || 1)) || 0), 0); }
+function triesNote(item, resp) {
+  const max = (item.data || {}).max_attempts; if (!max) return '';
+  const left = triesLeft(item, resp);
+  return left === 0 ? `<p class="meta tries">🔒 You’ve used all ${max} of your hand-ins for this.</p>` : `<p class="meta tries">🔁 You can hand this in ${left === max ? max + ' time' + (max === 1 ? '' : 's') : left + ' more time' + (left === 1 ? '' : 's')}.</p>`;
+}
 function questionsForm(item, resp) {
   const qs = item.data.questions || [], ans = (resp && resp.answers) || [];
   if (!qs.length) return '';
   return `<form class="lesson-quiz" data-iquiz="${item.id}">${qs.map((q, i) => `<fieldset class="quiz-q"><legend><span class="act-num">${i + 1}</span> ${esc(q.question)} <span class="meta">(${q.marks || 1} mark${(q.marks || 1) == 1 ? '' : 's'})</span></legend>
       ${['multiple_choice', 'true_false'].includes(q.type) ? (q.options || []).map(o => `<label class="remember"><input type="radio" name="q${i}" value="${esc(o)}" ${String(ans[i]) === String(o) ? 'checked' : ''}> ${esc(o)}</label>`).join('')
         : q.type === 'long_answer' ? `<textarea name="q${i}" rows="4" maxlength="3000">${esc(ans[i] || '')}</textarea>` : `<input type="text" name="q${i}" maxlength="500" value="${esc(ans[i] || '')}">`}</fieldset>`).join('')}
-    <div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-print>🖨️ Print</button><button class="btn btn-red auth-btn">${resp ? 'Hand in again' : 'Hand in my answers'}</button></div></form>`;
+    ${triesNote(item, resp)}<div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-print>🖨️ Print</button>${triesLeft(item, resp) === 0 ? '' : `<button class="btn btn-red auth-btn">${resp ? 'Hand in again' : 'Hand in my answers'}</button>`}</div></form>`;
 }
 function resultBox(resp) {
   if (!resp) return '';
@@ -313,7 +338,7 @@ function handInBox(item, resp, opts = {}) {
   return `<form class="panel submit-box" data-ihand="${item.id}">
     ${opts.text ? `<label>Your answer <textarea name="txt" rows="${opts.rows || 8}" maxlength="20000">${esc((resp && resp.text_answer) || '')}</textarea></label><p class="meta wordcount">${opts.target ? 'Aim for about ' + opts.target + ' words · ' : ''}<span>0</span> words</p>` : ''}
     ${opts.file ? `<label>${opts.text ? 'Or add a photo or file of your work' : 'Upload a photo or file of your completed work'} (up to 10 MB) <input type="file" name="file" accept="image/*,.pdf,.doc,.docx"></label>${resp && resp.file_name ? `<p class="meta">Uploaded: ${esc(resp.file_name)}</p>` : ''}` : ''}
-    <button class="btn btn-red auth-btn">${opts.label || (resp ? 'Hand in again' : 'Hand in')}</button></form>`;
+    ${triesNote(item, resp)}${triesLeft(item, resp) === 0 ? '' : `<button class="btn btn-red auth-btn">${opts.label || (resp ? 'Hand in again' : 'Hand in')}</button>`}</form>`;
 }
 function itemViewHtml(item, resp) {
   const d = item.data || {}, instr = (d.objective ? `<p class="obj-line">🎯 <b>Learning objective:</b> ${esc(d.objective)}</p>` : '') + (d.instructions ? `<p class="quiz-instr">${esc(d.instructions)}</p>` : '');
@@ -361,7 +386,7 @@ async function initStudentItems(lessons, isEnrolled, onDone) {
     if (o) { if (!isEnrolled()) return say('Join the course first to open this.'); const id = Number(o.dataset.iopen), v = document.getElementById('iv-' + id); if (v.hidden) open(id); else { v.hidden = true; o.setAttribute('aria-expanded', 'false'); } return; }
     const f = e.target.closest('[data-openfile]');
     if (f) { const { data, error } = await db.storage.from('lesson-files').createSignedUrl(f.dataset.openfile, 900); if (error) return say(friendly(error)); return window.open(data.signedUrl, '_blank', 'noopener'); }
-    if (e.target.closest('[data-print]')) return window.print();
+    if (e.target.closest('[data-print]')) { const pv = e.target.closest('[id^="iv-"]'); const pid = pv && Number(pv.id.slice(3)); const pit = items.find(x => x.id === pid); return tnPrintPart(pv, pit ? pit.title : 'Worksheet'); }
     const fc = e.target.closest('[data-fc]');
     if (fc) {
       const it = items.find(x => x.id === Number(fc.dataset.fc)); let cards = shuffled[it.id] || it.data.cards, i = Number(fc.dataset.i);
@@ -398,7 +423,7 @@ async function initStudentItems(lessons, isEnrolled, onDone) {
     }
     const btn = form.querySelector('.btn-red'); btn.disabled = true;
     const { data, error } = await db.rpc('submit_item', { iid: id, ans, txt, fpath, fname });
-    if (error) { btn.disabled = false; return say(friendly(error)); }
+    if (error) { btn.disabled = false; return say(/NO_MORE_TRIES/.test(error.message || '') ? 'You’ve used all your hand-ins for this one.' : friendly(error)); }
     const { data: r } = await db.from('item_responses').select('*').eq('item_id', id).eq('student_id', session.user.id).maybeSingle();
     resp[id] = r; drawLists(); open(id);
     say(data.total ? `Handed in! You scored ${data.score} / ${data.total}${data.needs_marking ? ' so far. Your teacher will mark the rest.' : '. 🎉'}` : 'Handed in! 🎉');

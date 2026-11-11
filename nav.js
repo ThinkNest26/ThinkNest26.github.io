@@ -198,6 +198,7 @@
     fillDynamic(view, page, qid);
     if (sc && role !== 'admin') schoolAnnouncements(view, page);
     profileMenu(view);
+    if (view === 'student' || view === 'school_student') newLessonBadge();
   }
 
   // Put the person's own classes / children into the menu, by name
@@ -257,6 +258,21 @@
     const ok = typeof go === 'string' && !(go === 'staff-room.html' && /student|parent/.test(view)) && !(go === 'school-community.html' && view === 'school_parent');
     location.replace(ok ? go : (SCHOOL_HOME[view] || 'index.html'));
     return true;
+  }
+
+  // Students: how many lessons were published this week that they haven't done yet
+  async function newLessonBadge() {
+    try {
+      const uid = window.TN_UID; if (!uid) return;
+      const { data: en } = await db.from('enrollments').select('course_id').eq('user_id', uid);
+      const ids = (en || []).map(e => e.course_id); if (!ids.length) return;
+      const since = new Date(Date.now() - 7 * 864e5).toISOString();
+      const [{ data: ls, error }, { data: lp }] = await Promise.all([db.from('lessons').select('id').in('course_id', ids).gte('publish_at', since), db.from('lesson_progress').select('lesson_id').eq('user_id', uid)]);
+      if (error) return;
+      const done = new Set((lp || []).map(x => x.lesson_id)), n = (ls || []).filter(l => !done.has(l.id)).length;
+      const a = document.querySelector('.side nav a[href="my-courses.html"]'); if (!a || !n) return;
+      a.insertAdjacentHTML('beforeend', ` <i class="nav2-badge" title="New lessons this week">${n}</i>`);
+    } catch (_) {}
   }
 
   // Account, help and log out live in the profile circle (top right)

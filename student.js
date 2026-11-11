@@ -28,6 +28,7 @@ function courseCard(c, e, k) {
       <span class="meta">${esc(c.category || '')}${c.weeks ? ' · ' + c.weeks + ' weeks' : ''}${c.level ? ' · ' + esc(c.level) : ''}</span>
       <h4>${esc(c.title)}</h4>
       <p class="desc">${esc(c.description || '')}</p>
+      ${e && e._new ? `<span class="tag tag-now">🆕 ${e._new} new lesson${e._new === 1 ? '' : 's'}</span>` : ''}
       ${e ? `<div class="bar"><i style="width:${e.progress}%"></i></div>
              <div class="row"><a class="pill pill-live" href="course.html?id=${c.id}">Continue</a><span class="done">${e.progress}% completed</span></div>`
           : c._req ? `<div class="row"><a class="pill pill-soft" href="course-details.html?id=${c.id}">View course details</a><span class="done">⏳ ${c._req === 'parent' ? 'Waiting for your parent' : 'Waiting for the teacher'}</span></div>`
@@ -48,6 +49,12 @@ async function startMyCourses() {
   const { data, error } = await db.from('enrollments').select('*, courses(*)').eq('user_id', user.id).order('created_at');
   if (error) return say(friendly(error));
   if (typeof liveProgress === 'function') await liveProgress(user.id, data);
+  try {
+    const since = new Date(Date.now() - 7 * 864e5).toISOString();
+    const [{ data: ls }, { data: lp }] = await Promise.all([db.from('lessons').select('id, course_id').in('course_id', data.map(e => e.course_id)).gte('publish_at', since), db.from('lesson_progress').select('lesson_id').eq('user_id', user.id)]);
+    const done = new Set((lp || []).map(x => x.lesson_id));
+    (ls || []).filter(l => !done.has(l.id)).forEach(l => { const e = data.find(x => x.course_id === l.course_id); if (e) e._new = (e._new || 0) + 1; });
+  } catch (_) {}
   const list = document.getElementById('list');
   let pend = [];
   try { const { data: rqs } = await db.from('course_requests').select('status, courses(*)').eq('student_id', user.id).in('status', ['parent', 'teacher']).order('created_at'); pend = (rqs || []).filter(r => r.courses); } catch (_) {}
@@ -115,7 +122,7 @@ async function startCourse() {
     if (!lessons.length) { box.innerHTML = '<p class="empty">Lessons for this course will be added soon.</p>'; return; }
     box.innerHTML = lessons.map(l => `<div class="lesson ${doneIds.has(l.id) ? 'is-done' : ''}">
         <b>${String(l.position).padStart(2, '0')}</b>
-        <span class="lesson-title" id="lesson-${l.id}">${esc(l.title)}${l.objective_text ? `<span class="meta lesson-obj">🎯 ${esc(l.objective_text)}</span>` : ''}</span>
+        <span class="lesson-title" id="lesson-${l.id}">${esc(l.title)}${l.publish_at && Date.now() - new Date(l.publish_at) < 7 * 864e5 && !doneIds.has(l.id) ? ' <span class="tag tag-now">🆕 New</span>' : ''}${l.objective_text ? `<span class="meta lesson-obj">${String(l.objective_text).split('\n').filter(Boolean).map(o => '🎯 ' + esc(o)).join('<br>')}</span>` : ''}</span>
         ${l.video_url ? `<a href="${esc(l.video_url)}" target="_blank" rel="noopener" class="pill pill-soft">Watch</a>` : ''}
         ${l.resource_url ? `<a href="${esc(l.resource_url)}" target="_blank" rel="noopener" class="pill pill-soft">Link</a>` : ''}
         ${l.material_kind ? `<button class="pill pill-live" data-open-lesson="${l.id}" data-label="${{ worksheet: '📝 Open worksheet', test: '✅ Open test', activities: '🧩 Open activities' }[l.material_kind]}">${{ worksheet: '📝 Open worksheet', test: '✅ Open test', activities: '🧩 Open activities' }[l.material_kind]}</button>` : ''}
