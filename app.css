@@ -2209,3 +2209,7 @@ label[hidden] { display: none !important; }
 .st-form textarea { font: inherit; padding: 10px 12px; border: 1px solid #D6D9E2; border-radius: 10px; width: 100%; box-sizing: border-box; }
 .st-kind { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 .st-btns { display: flex; justify-content: flex-end; }
+/* new pop-up windows sit in the middle of the screen */
+#reg-dialog, #session-thread, #lesson-edit { position: fixed; inset: 0; margin: auto; height: fit-content; }
+#lesson-edit { width: min(600px, 94vw); padding: 0; }
+.slot-pick { display: block; margin-top: 4px; font: inherit; font-size: .85rem; padding: 4px 6px; border-radius: 8px; border: 1px solid #D6D9E2; max-width: 220px; }

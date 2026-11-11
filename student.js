@@ -60,6 +60,15 @@ async function startMyCourses() {
   try { const { data: rqs } = await db.from('course_requests').select('status, courses(*)').eq('student_id', user.id).in('status', ['parent', 'teacher']).order('created_at'); pend = (rqs || []).filter(r => r.courses); } catch (_) {}
   list.innerHTML = data.length || pend.length ? data.map((e, k) => courseCard(e.courses, e, k)).join('') + pend.map((r, k) => courseCard(Object.assign({}, r.courses, { _req: r.status }), null, k + data.length)).join('')
     : '<div class="empty-box"><p>You haven’t registered for any courses yet.</p><a class="btn btn-red" href="all-courses.html">Browse all courses</a></div>';
+  // classes from before classes and courses were joined (not part of a course) stay reachable
+  try {
+    const { data: gs } = await db.rpc('my_groups');
+    const ids = (gs || []).filter(g => g.kind === 'class' && g.my_status === 'active').map(g => g.id);
+    if (ids.length) {
+      const { data: cl } = await db.from('study_groups').select('id, name').in('id', ids).is('course_id', null);
+      if ((cl || []).length) list.insertAdjacentHTML('beforeend', `<p class="hint tc-h">🏫 Your other classes: ${cl.map(c => `<a href="group.html?id=${c.id}">${esc(c.name)}</a>`).join(' · ')}</p>`);
+    }
+  } catch (_) {}
 }
 
 // ---------- All courses ----------

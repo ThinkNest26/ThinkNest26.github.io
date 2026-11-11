@@ -8,10 +8,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=166">
-<link rel="stylesheet" href="app.css?v=166">
-<link rel="stylesheet" href="rtl.css?v=166">
-<script src="i18n.js?v=166"></script>
+<link rel="stylesheet" href="style.css?v=167">
+<link rel="stylesheet" href="app.css?v=167">
+<link rel="stylesheet" href="rtl.css?v=167">
+<script src="i18n.js?v=167"></script>
 <style>
   .cd-hero { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 28px; align-items: start; }
   .cd-hero img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 14px; }
@@ -55,7 +55,7 @@
   .cd-t-head b { display: block; font-size: 1.1rem; }
   .cd-avatar { flex: none; width: 64px; height: 64px; border-radius: 50%; background: #3E4B94; color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 1.3rem; }
   .cd-bottom { justify-content: center; margin: 32px 0 8px; }
-  #reg-dialog { border: 0; border-radius: 16px; padding: 0; width: min(600px, 94vw); max-height: 92vh; overflow-y: auto; }
+  #reg-dialog { border: 0; border-radius: 16px; padding: 0; width: min(600px, 94vw); max-height: 92vh; overflow-y: auto; margin: auto; position: fixed; inset: 0; height: fit-content; }
   #reg-dialog::backdrop { background: rgba(20, 24, 40, .45); }
   #reg-form { padding: 26px; display: grid; gap: 14px; }
   #reg-form h2 { margin: 0; font-size: 1.35rem; font-weight: 800; }
@@ -149,8 +149,8 @@
 </fieldset>
 <label>Anything the teacher should know? (optional)<textarea name="notes" rows="3" placeholder="For example, learning needs or times your child can’t attend"></textarea></label>
 <label>How did you hear about Think Nest? (optional)<select name="heard_from"><option value="">Choose one</option><option>Friend or family</option><option>School</option><option>Facebook</option><option>Instagram</option><option>WhatsApp</option><option>Google search</option><option>Other</option></select></label>
-<label class="agree"><input type="checkbox" name="agree"> I confirm a parent or guardian agrees to this registration.</label>
-<label class="agree"><input type="checkbox" name="privacy"> I agree to the <a href="privacy.html" target="_blank" rel="noopener">privacy policy</a>.</label>
+<label class="agree"><input type="checkbox" name="agree"> <span>I confirm a parent or guardian agrees to this registration.</span></label>
+<label class="agree"><input type="checkbox" name="privacy"> <span>I agree to the <a href="privacy.html" target="_blank" rel="noopener">privacy policy</a>.</span></label>
 <p class="form-error" id="reg-error" role="alert"></p>
 <p class="meta">Under 16? We’ll email your parent or guardian to agree first. Then the teacher confirms your place.</p>
 <div class="btns"><button type="button" class="pill pill-soft" data-close>Cancel</button><button type="submit" class="btn btn-red">Send my request</button></div>
@@ -160,12 +160,12 @@
 <div class="side-shade" id="side-shade"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="supabase-config.js?v=166"></script>
-<script src="app.js?v=166"></script>
-<script src="nav.js?v=166"></script>
-<script src="notify.js?v=166" defer></script>
-<script src="student.js?v=166"></script>
-<script src="coursedetails.js?v=166"></script>
+<script src="supabase-config.js?v=167"></script>
+<script src="app.js?v=167"></script>
+<script src="nav.js?v=167"></script>
+<script src="notify.js?v=167" defer></script>
+<script src="student.js?v=167"></script>
+<script src="coursedetails.js?v=167"></script>
 <script>startCourseDetails();</script>
 </body>
 </html>

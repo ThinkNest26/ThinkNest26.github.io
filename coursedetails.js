@@ -59,7 +59,20 @@ async function startCourseDetails() {
   const goals = cdLines(course.learning_goals);
   const timeLine = slots.length ? (multi ? 'choose one of ' + slots.join(' | ') : slots[0]) + (course.time_zone ? ' (' + course.time_zone + ')' : '') : '';
 
+  const role = profile.role || 'student', isOwner = course.teacher_id === user.id;
+  let kids = [];
+  if (role === 'parent' || profile.also_parent) {
+    try { const { data: ln } = await db.from('parent_links').select('student_id').eq('parent_id', user.id); const ids = (ln || []).map(l => l.student_id); if (ids.length) { const { data: kp } = await db.from('profiles').select('id, full_name').in('id', ids); kids = kp || []; } } catch (_) {}
+  }
   function actionHtml() {
+    if (isOwner) return course.published === false ? '<p class="cd-wait">📝 This course is a draft. Only you can see this page until you publish it.</p>' : '<p class="cd-wait">👀 This is your course, as parents and students see it.</p>';
+    if (role === 'parent' || (role !== 'student' && kids.length)) {
+      if (!kids.length) return '<p class="cd-wait">To ask for a place, first link your child to your account.</p><a class="btn btn-red" href="add-child.html">Add a child</a>';
+      if (closed) return `<p class="cd-closed">Registration closed on ${cdDate(course.registration_deadline)}.</p>`;
+      if (full()) return `<p class="cd-closed">This course is full.</p>`;
+      return `<label class="kid-pick">For which child? <select data-kid>${kids.map(k => `<option value="${k.id}">${esc(k.full_name || 'My child')}</option>`).join('')}</select></label><button class="btn btn-red" data-parent-ask>Ask for a place</button>${placesText() ? `<span class="cd-places">${placesText()}</span>` : ''}`;
+    }
+    if (role !== 'student') return '<p class="cd-wait">This course is for students. Students register from their own account.</p>';
     if (enrol) return `<p class="cd-done">✅ Your place is confirmed${enrol.time_slot ? ' (' + esc(enrol.time_slot) + ')' : ''}.</p><a class="btn btn-red" href="course.html?id=${id}">Go to the course</a>`;
     if (req && req.status === 'parent') return `<p class="cd-wait">⏳ Request sent. Waiting for your parent or guardian to agree. We emailed ${esc(req.parent_email || 'them')}.</p><button class="link-btn" data-cancel-req="${req.id}">Cancel my request</button>`;
     if (req && req.status === 'teacher') return `<p class="cd-wait">⏳ Request sent. Waiting for the teacher to confirm your place${req.time_slot ? ' (' + esc(req.time_slot) + ')' : ''}.</p><button class="link-btn" data-cancel-req="${req.id}">Cancel my request</button>`;
@@ -82,7 +95,7 @@ async function startCourseDetails() {
         <dl class="cd-facts">
           ${fact('Subject', course.subject)}
           ${fact('Curriculum', CD_CUR[course.curriculum] || course.curriculum)}
-          ${fact('Grade', course.grade)}
+          ${fact(course.curriculum === 'british' ? 'Year' : 'Grade', course.curriculum === 'british' && typeof tnYearLabel === 'function' ? tnYearLabel(course.grade) : course.grade)}
           ${fact('Age', course.age_range)}
           ${fact('Level', course.level)}
           ${fact('Taught in', course.course_language)}
@@ -179,11 +192,20 @@ async function startCourseDetails() {
     f.reset(); showError(err, '');
     if (!multi && slots.length) { const r0 = f.querySelector('input[name=time_slot]:not([disabled])'); if (r0) r0.checked = true; }
     f.student_name.value = profile.full_name || '';
-    f.student_grade.value = profile.grade || course.grade || '';
+    { const g0 = profile.grade || course.grade || ''; f.student_grade.value = /british/i.test(profile.curriculum || '') || course.curriculum === 'british' ? (typeof tnYearLabel === 'function' ? tnYearLabel(g0) : g0) : g0; }
     dlg.showModal();
   }
   box.addEventListener('click', async e => {
     if (e.target.closest('[data-register]')) return openForm();
+    const pa = e.target.closest('[data-parent-ask]');
+    if (pa) {
+      const sel = pa.parentElement.querySelector('[data-kid]'); pa.disabled = true;
+      const { data, error } = await db.rpc('parent_request_course', { kid: sel.value, cid: id });
+      pa.disabled = false;
+      if (error) return say(friendly(error));
+      pa.outerHTML = '<p class="cd-wait">' + (data === 'approved' ? '✅ Your child already has a place.' : '⏳ Request sent. The teacher will confirm your child’s place, and you’ll both be told.') + '</p>';
+      return;
+    }
     const cr = e.target.closest('[data-cancel-req]');
     if (cr && confirm('Cancel your registration request?')) {
       const { error } = await db.rpc('cancel_course_request', { rid: Number(cr.dataset.cancelReq) });
@@ -191,7 +213,7 @@ async function startCourseDetails() {
       req = Object.assign({}, req, { status: 'cancelled' }); redraw(); say('Request cancelled.');
     }
   });
-  if (params.get('register') === '1' && !enrol && !(req && ['parent', 'teacher'].includes(req.status)) && !closed && !full() && course.published !== false) openForm();
+  if (params.get('register') === '1' && role === 'student' && !isOwner && !enrol && !(req && ['parent', 'teacher'].includes(req.status)) && !closed && !full() && course.published !== false) openForm();
 
   f.addEventListener('submit', async e => {
     e.preventDefault(); showError(err, '');

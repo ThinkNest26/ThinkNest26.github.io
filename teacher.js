@@ -186,6 +186,8 @@ function whenFromForm(sel, at) {
 }
 const toLocalInput = iso => { if (!iso) return ''; const d = new Date(iso); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
 
+const slotsOf = c => String((c && c.class_schedule) || '').split('\n').map(s => s.trim()).filter(Boolean);
+
 function courseDialog(onSaved) {
   const dlg = document.getElementById('course-dialog'), f = document.getElementById('course-form'), err = document.getElementById('course-error');
   let editing = null, teacher = null;
@@ -516,13 +518,20 @@ async function startTeacherCourse() {
     const has = new Set((certs.data || []).map(x => x.user_id));
     const rows = en.data || [];
     document.getElementById('students').innerHTML = rows.length ? rows.map(r => `<tr>
-        <td><b>${esc(r.student_name || (r.profiles ? r.profiles.full_name : '') || 'Student')}</b>${r.parent_name || r.parent_email || r.parent_phone ? `<span class="meta" style="display:block">Parent: ${esc([r.parent_name, r.parent_email, r.parent_phone].filter(Boolean).join(', '))}</span>` : ''}${r.emergency_name || r.emergency_phone ? `<span class="meta" style="display:block">Emergency contact: ${esc([r.emergency_name, r.emergency_phone].filter(Boolean).join(', '))}</span>` : ''}${r.student_age || r.student_language ? `<span class="meta" style="display:block">${esc([r.student_age ? 'Age ' + r.student_age : '', r.student_language ? 'Main language: ' + r.student_language : ''].filter(Boolean).join(', '))}</span>` : ''}${r.notes ? `<span class="meta" style="display:block">Note: ${esc(r.notes)}</span>` : ''}</td><td>${esc(r.student_grade || (r.profiles ? r.profiles.grade || '' : ''))}${r.time_slot ? `<span class="meta" style="display:block">🕒 ${esc(r.time_slot)}</span>` : ''}</td>
+        <td><b>${esc(r.student_name || (r.profiles ? r.profiles.full_name : '') || 'Student')}</b>${r.parent_name || r.parent_email || r.parent_phone ? `<span class="meta" style="display:block">Parent: ${esc([r.parent_name, r.parent_email, r.parent_phone].filter(Boolean).join(', '))}</span>` : ''}${r.emergency_name || r.emergency_phone ? `<span class="meta" style="display:block">Emergency contact: ${esc([r.emergency_name, r.emergency_phone].filter(Boolean).join(', '))}</span>` : ''}${r.student_age || r.student_language ? `<span class="meta" style="display:block">${esc([r.student_age ? 'Age ' + r.student_age : '', r.student_language ? 'Main language: ' + r.student_language : ''].filter(Boolean).join(', '))}</span>` : ''}${r.notes ? `<span class="meta" style="display:block">Note: ${esc(r.notes)}</span>` : ''}</td><td>${esc(r.student_grade || (r.profiles ? r.profiles.grade || '' : ''))}${slotsOf(c).length > 1 ? `<select class="slot-pick" data-slot-for="${r.user_id}" aria-label="Class time">${r.time_slot ? '' : '<option value="">Choose a time…</option>'}${slotsOf(c).map(sl => `<option ${sl === r.time_slot ? 'selected' : ''}>${esc(sl)}</option>`).join('')}</select>` : r.time_slot ? `<span class="meta" style="display:block">🕒 ${esc(r.time_slot)}</span>` : ''}</td>
         <td>${new Date(r.created_at).toLocaleDateString('en-GB')}</td>
         <td><div class="bar small"><i style="width:${r.progress}%"></i></div> ${r.progress}%</td>
         <td><a class="pill pill-live" href="teacher-certificates.html?course=${id}&student=${r.user_id}">🏅 Award</a></td></tr>`).join('')
       : '<tr><td colspan="5" class="empty">No students have registered for this course yet.</td></tr>';
   }
   loadStudents();
+  // move a student to another class time (and so to that time's group)
+  document.getElementById('students').addEventListener('change', async e => {
+    const sel = e.target.closest('[data-slot-for]'); if (!sel || !sel.value) return;
+    const { error } = await db.rpc('set_student_slot', { cid: id, sid: sel.dataset.slotFor, slot: sel.value });
+    if (error) { say(/COURSE_FULL/.test(error.message || '') ? 'That class time is full.' : /set_student_slot/.test(error.message || '') ? 'Please run the latest database update (gap fixes) first.' : friendly(error)); return loadStudents(); }
+    say('Moved to ' + sel.value + '. Their group has been updated.'); if (typeof loadGroups === 'function') loadGroups();
+  });
   const cdlg = document.getElementById('cert-dialog'), cf = document.getElementById('cert-form'), cerr = document.getElementById('cert-error');
   let certFor = null;
   document.getElementById('students').addEventListener('click', e => {
