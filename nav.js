@@ -13,7 +13,6 @@
   const MENUS = {
     student: [
       { ic: '🏠', label: 'Home', href: 'student-dashboard.html' },
-      { ic: '🏫', label: 'My Classes', dyn: 'classes', items: [['classes.html', 'All my classes']] },
       { ic: '📘', label: 'Online Courses', items: [['my-courses.html', 'My courses'], ['all-courses.html', 'Find a course'], ['calendar.html', 'My calendar'], ['recordings.html', 'Recordings'], ['mentors.html', 'Mentors'], ['files.html', 'My files']] },
       { ic: '🏆', label: 'My Progress', items: [['rewards.html', 'My rewards'], ['certificates.html', 'My certificates'], ['reports.html', 'My reports']] },
       { ic: '💬', label: 'Friends & Community', items: [['community.html', 'Community'], ['friends.html', 'My friends'], ['groups.html', 'Study groups'], ['messages.html', 'Messages']] },
@@ -21,10 +20,9 @@
     ],
     teacher: [
       { ic: '🏠', label: 'Home', href: 'teacher-dashboard.html' },
-      { ic: '🏫', label: 'My Classes', dyn: 'classes', items: [['classes.html', 'All my classes'], ['classes.html?new=1', '➕ New class'], ['teacher-attendance.html', 'Attendance overview'], ['groups.html', 'Study groups']] },
-      { ic: '📘', label: 'Online Courses', items: [['teacher-courses.html', 'My courses'], ['teacher-settings.html#tprofile-form', '👤 My teacher profile'], ['teacher-calendar.html', 'Live classes'], ['teacher-requests.html', 'Session requests']] },
+      { ic: '📘', label: 'Online Courses', items: [['teacher-courses.html', 'My courses'], ['teacher-settings.html#tprofile-form', '👤 My teacher profile'], ['teacher-calendar.html', 'Live classes'], ['teacher-attendance.html', '📋 Attendance'], ['teacher-requests.html', 'Session requests']] },
       { ic: '📊', label: 'Progress & certificates', items: [['teacher-insights.html', '📊 Student insights'], ['teacher-certificates.html', '🏅 Certificates']] },
-      { ic: '💬', label: 'Messages & Community', items: [['messages.html', 'Messages'], ['community.html', 'Community']] },
+      { ic: '💬', label: 'Messages & Community', items: [['messages.html', 'Messages'], ['community.html', 'Community'], ['groups.html', 'Study groups']] },
       { ic: '☕', label: 'For me', items: [['teacher-hub.html', '🔔 My workshops (Beyond the Bell)'], ['teacher-cafe.html', '☕ Teacher Café'], ['teacher-connect.html', '🤝 Coffee & Connections']] },
       { ic: '🧰', label: 'Resources', items: [['revision.html', 'Revision Hub'], ['curriculum.html', 'Curriculum guide']] }
     ],
@@ -161,7 +159,8 @@
     // a teacher opening a workshop they joined is in "For me", not in the courses they teach
     if (page === 'course.html' && ['teacher', 'admin', 'school_leader'].includes(role)) here = 'teacher-hub.html';
     if (page === 'school.html' && /^#(people|settings|import|dashboard|reports|announce|coverage|evidence|attendance)$/.test(location.hash)) here = 'school.html' + location.hash;
-    if (page === 'group.html' && document.querySelector('.class-flag')) here = 'classes.html';
+    if (page === 'group.html' && document.querySelector('.class-flag')) here = ['teacher', 'admin'].includes(role) ? 'teacher-courses.html' : role === 'student' ? 'my-courses.html' : 'classes.html';
+    if (page === 'classes.html' && ['teacher', 'admin', 'student'].includes(role)) here = role === 'student' ? 'my-courses.html' : 'teacher-courses.html';
     if (page === 'planner.html') { const m = new URLSearchParams(location.search).get('mode') || (new URLSearchParams(location.search).get('week') ? 'weeks' : new URLSearchParams(location.search).get('plan') ? 'units' : sessionStorage.getItem('tn_pl_mode') || 'units'); here = 'planner.html?mode=' + m + (m === 'weeks' && new URLSearchParams(location.search).get('all') === '1' ? '&all=1' : ''); }
     if (page === 'observe.html' && (new URLSearchParams(location.search).get('mode') === 'mine' || document.querySelector('.ob-mine-mode'))) here = 'observe.html?mode=mine';
     const qid = new URLSearchParams(location.search).get('id');
@@ -296,7 +295,7 @@
   // ----- Welcome tour (first visit, once per role) -----
   const TOURS = {
     student: [['👋', 'Welcome to Think Nest!', 'This is your learning nest. Here’s a quick tour of the best bits. It takes 30 seconds.'],
-      ['📚', 'Your courses', 'Find and join courses in <b>Online Courses → Find a course</b>. Your school class is under <b>🏫 My Classes</b>. Inside each lesson you’ll find quizzes, worksheets, videos and activities.'],
+      ['📚', 'Your courses', 'Find a course in <b>Online Courses → Find a course</b> and ask for a place. Once you’re in, your group for that course is on the course page. Inside each lesson you’ll find quizzes, worksheets, videos and activities.'],
       ['🏆', 'Earn Nest Points', 'Hand in work, come to class and help others to earn points and badges. Grow from 🥚 Hatchling to 🏆 Eagle in <b>My Progress</b>!'],
       ['💬', 'Learn together', 'Make friends, join study groups and post in the <b>Community</b>. Be kind, and use <b>Report</b> if something isn’t right.']],
     parent: [['👋', 'Welcome to Think Nest!', 'Here’s a quick tour to help you follow your children’s learning.'],
@@ -305,7 +304,7 @@
       ['🚗', 'Something for you too', '<b>Beyond the School Run</b> is our Parent Hub: workshops just for you, and the private <b>Parent Café</b>.']],
     teacher: [['👋', 'Welcome to Think Nest!', 'Thank you for teaching with us. Here’s a quick tour of your toolkit.'],
       ['📘', 'Courses and lessons', '<b>📘 Online Courses → My courses</b>: create a course, add lessons, then <b>+ Add to this lesson</b> for 10 tools, many with AI help.'],
-      ['📋', 'Classes, attendance and certificates', 'Create a class in <b>🏫 My Classes</b>: add students, then use its community, attendance, insights and report cards, all inside the class.'],
+      ['👥', 'Groups, attendance and reports', 'Each class time in a course is a <b>group</b>. Students join it when you approve their registration. Open <b>👥 Groups</b> on the course page for its community, attendance, resources and report cards.'],
       ['🔔', 'Beyond the Bell', 'Our Teacher Hub is for <i>you</i>: workshops, the <b>Teacher Café</b> and <b>Coffee &amp; Connections</b>.']]
   };
   TOURS.admin = TOURS.teacher;

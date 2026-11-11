@@ -1923,7 +1923,11 @@
 "🔗 Meeting link": "🔗 رابط الاجتماع",
 "Accept the new time": "قبول الوقت الجديد",
 "Cancel the session": "إلغاء الجلسة",
-"My session requests": "طلبات جلساتي"
+"My session requests": "طلبات جلساتي",
+"👥 Groups": "👥 المجموعات",
+"‹ Back to the course": "‹ العودة إلى الدورة",
+"📣 Group community": "📣 مجتمع المجموعة",
+"📣 Community": "📣 المجتمع"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

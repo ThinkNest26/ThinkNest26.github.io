@@ -46,6 +46,13 @@ async function caInit() {
   const wait = () => document.querySelector('#ghead .ghead-actions');
   for (let i = 0; i < 120 && !wait(); i++) await new Promise(r => setTimeout(r, 150)); // slow connections: wait up to 18 seconds for the class header
   const head = wait();
+  if (g.course_id) {
+    // a group inside an online course: students join through registration, so no "add students" or "delete"
+    const { data: cr } = await db.from('courses').select('id, title').eq('id', g.course_id).maybeSingle();
+    const gh = document.getElementById('ghead');
+    if (gh && cr && !document.getElementById('cg-note')) gh.insertAdjacentHTML('afterend', `<div class="note" id="cg-note">📘 This group is part of the course <a href="teacher-course.html?id=${cr.id}#t-groups"><b>${caE(cr.title)}</b></a>. Students join it automatically when you approve their registration.</div>`);
+    return;
+  }
   if (head && !document.getElementById('ca-open')) head.insertAdjacentHTML('afterbegin', '<button type="button" class="pill pill-live big ca-open" id="ca-open">➕ Add students</button>');
   if (head && !document.getElementById('ca-del')) {
     head.insertAdjacentHTML('beforeend', '<button type="button" class="pill pill-soft big danger ca-del" id="ca-del">🗑️ Delete class</button>');

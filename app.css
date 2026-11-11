@@ -2187,3 +2187,8 @@ html.tn-pv .side { box-shadow: inset -4px 0 0 #8E5BD8; }
 body.app .side nav:not(.nav-ready) { visibility: hidden; }
 label[hidden] { display: none !important; }
 .grid-cards > .tc-h { grid-column: 1 / -1; margin: 10px 0 0; }
+
+.cgroup { display: grid; gap: 12px; margin-bottom: 14px; }
+.cgroup-top { display: flex; gap: 12px; align-items: center; }
+.cgroup-top b { display: block; font-size: 1.05rem; }
+.my-group { margin: 16px 0; display: grid; gap: 10px; }

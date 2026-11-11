@@ -80,6 +80,7 @@ async function startGroup() {
   if (!g) { document.querySelector('main').innerHTML = '<div class="empty-box"><p>This group doesn’t exist, or you’re not a member.</p><a class="btn btn-red" href="groups.html">Back to study groups</a></div>'; return; }
   let members = mem.data || [];
   const meRow = members.find(m => m.user_id === user.id);
+  if (g.kind === 'class' && g.course_id) { const bk = document.getElementById('back'); if (bk) { const t = ['teacher', 'admin', 'school_leader'].includes(me.role); bk.href = (t ? 'teacher-course.html?id=' : 'course.html?id=') + g.course_id + (t ? '#t-groups' : ''); bk.textContent = '‹ Back to the course'; } }
   const isMember = meRow && meRow.status === 'active';
   const isOwner = g.owner_id === user.id, isAdmin = me.role === 'admin', isClass = g.kind === 'class', teacherRun = isClass || (isOwner && ['teacher', 'school_leader', 'admin'].includes(me.role));
   if (isClass) { const bk = document.getElementById('back'); if (bk && me.role !== 'parent') { bk.href = 'classes.html'; bk.textContent = '‹ My classes'; } }
@@ -286,6 +287,7 @@ async function startGroup() {
   }
   async function drawInvites() {
     document.getElementById('invite-box').hidden = false;
+    if (isClass && g && g.course_id) { document.getElementById('invite-box').innerHTML = `<h3>Adding students</h3><p class="meta">Students join this group when you approve their registration for the course. <a href="teacher-course.html?id=${g.course_id}#t-reqs">See registration requests</a>.</p>`; return; }
     if (teacherRun) {
       const { data: studs } = await db.rpc('my_students');
       const inGroup = new Set(members.map(m => m.user_id)), seen = new Set();

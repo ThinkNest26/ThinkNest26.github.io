@@ -289,6 +289,10 @@ async function startTeacherCourses() {
       ? (drafts.length ? `<h2 class="dash-h tc-h">📝 Drafts <span class="count">${drafts.length}</span></h2><p class="hint tc-h">Only you can see drafts. Add the details and lessons, then press Publish.</p>${drafts.map(card).join('')}` : '')
         + (live.length ? `<h2 class="dash-h tc-h">✅ Published <span class="count">${live.length}</span></h2>${live.map(card).join('')}` : '')
       : '<div class="empty-box"><p>You haven’t created any courses yet.</p></div>';
+    try {
+      const { data: old } = await db.from('study_groups').select('id').eq('owner_id', user.id).eq('kind', 'class').is('course_id', null).limit(1);
+      if ((old || []).length) list.insertAdjacentHTML('beforeend', '<p class="hint tc-h">You also have classes from before classes and courses were joined together. <a href="classes.html">Open my older classes</a>.</p>');
+    } catch (_) {}
   }
   const dlg = courseDialog(() => load());
   document.getElementById('new-course').addEventListener('click', () => {
@@ -353,6 +357,30 @@ async function startTeacherCourse() {
   if (location.hash === '#attendance') { const at = document.querySelector('[data-tab="t-att"]'); if (at) at.click(); }
   if (location.hash === '#t-reqs') { const rt = document.querySelector('[data-tab="t-reqs"]'); if (rt) rt.click(); }
 
+  // groups: one for each time option, with community, resources, members, attendance, insights and report cards
+  async function loadGroups() {
+    const box = document.getElementById('cgroups'); if (!box) return;
+    const { data, error } = await db.rpc('course_groups', { cid: id });
+    if (error) { box.innerHTML = '<p class="empty">Run the latest database update (merge classes into courses) to see the groups.</p>'; return; }
+    const gs = data || [];
+    box.innerHTML = `<p class="hint">Each class time is a group. Students join their group automatically when you approve their registration. Take attendance, post, share resources and write reports inside each group.</p>`
+      + (gs.length ? gs.map(g => `<article class="panel cgroup">
+          <div class="cgroup-top"><span class="group-ic cls">👥</span><div><b>${esc(g.slot || 'All students')}</b><span class="meta">${g.members} student${g.members === 1 ? '' : 's'}</span></div></div>
+          <div class="class-links">
+            <a class="pill pill-live" href="group.html?id=${g.id}">📣 Community</a>
+            <button type="button" class="pill pill-live" data-gatt="${g.id}" data-name="${esc(g.name)}">📋 Attendance</button>
+            <a class="pill pill-soft" href="group.html?id=${g.id}#t-res">📚 Resources</a>
+            <a class="pill pill-soft" href="group.html?id=${g.id}#t-mem">👥 Students &amp; ⭐ stars</a>
+            <a class="pill pill-soft" href="group.html?id=${g.id}#t-rc">📝 Report cards</a>
+          </div></article>`).join('')
+        : '<p class="empty">The groups appear once the first student has a confirmed place.</p>');
+  }
+  loadGroups();
+  document.getElementById('cgroups') && document.getElementById('cgroups').addEventListener('click', e => {
+    const a = e.target.closest('[data-gatt]'); if (a && typeof openAttendanceDialog === 'function') openAttendanceDialog({ gid: Number(a.dataset.gatt), title: a.dataset.name });
+  });
+  if (location.hash === '#t-groups') { const gt = document.querySelector('[data-tab="t-groups"]'); if (gt) gt.click(); }
+
   // registration requests
   async function loadRequests() {
     const box = document.getElementById('reqs'); if (!box) return;
@@ -382,7 +410,7 @@ async function startTeacherCourse() {
     const { error } = await db.rpc('teacher_decide_request', { rid: Number(row.dataset.rq), ok, reason });
     if (error) return say(/COURSE_FULL/.test(error.message || '') ? 'That class time is full. Raise the maximum in Edit details, or decline with a reason.' : friendly(error));
     say(ok ? '✅ Approved. The student has been told.' : 'Declined. The student has been told why.');
-    loadRequests(); if (typeof loadStudents === 'function') loadStudents();
+    loadRequests(); loadGroups(); if (typeof loadStudents === 'function') loadStudents();
   });
 
   // lessons

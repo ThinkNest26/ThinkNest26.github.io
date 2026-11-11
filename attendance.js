@@ -163,11 +163,15 @@ async function attendanceHub(hostId, opts = {}) {
   const host = document.getElementById(hostId); if (!host) return;
   const { data: { session } } = await db.auth.getSession();
   const uid = session.user.id, today = todayDubai();
-  const [{ data: courses }, { data: groups }, { data: marks }] = await Promise.all([
+  const [{ data: courses0 }, { data: groups }, { data: marks }, { data: cgs }] = await Promise.all([
     db.from('courses').select('id, title, grade, subject').eq('teacher_id', uid).order('title'),
     db.rpc('my_groups'),
-    db.from('attendance').select('course_id, group_id, status').eq('day', today)
+    db.from('attendance').select('course_id, group_id, status').eq('day', today),
+    db.from('study_groups').select('id, course_id').eq('owner_id', uid).eq('kind', 'class')
   ]);
+  // attendance is taken once, in each course group, so courses that have groups aren't listed twice
+  const grouped = new Set((cgs || []).filter(g => g.course_id).map(g => g.course_id));
+  const courses = (courses0 || []).filter(c => !grouped.has(c.id));
   const classes = (groups || []).filter(g => g.my_role === 'owner' && g.my_status === 'active' && (g.kind === 'class' || !opts.classesOnly));
   const teacherGroups = classes.filter(g => g.kind === 'class').concat(classes.filter(g => g.kind !== 'class'));
   const count = (k, v) => (marks || []).filter(m => m[k] === v);
@@ -180,7 +184,7 @@ async function attendanceHub(hostId, opts = {}) {
       <button type="button" class="btn ${done ? 'btn-white outline' : 'btn-red'}" data-hub="${type}" data-id="${id}" data-name="${esc(title)}">${done ? 'Open' : 'Take attendance'}</button></div>`;
   };
   const rows = (courses || []).map(c => item('course', c.id, c.title, ['Course', c.grade, c.subject].filter(Boolean).join(' · ')))
-    .concat(teacherGroups.map(g => item(g.kind === 'class' ? 'class' : 'group', g.id, g.name, (g.kind === 'class' ? 'Class' : 'Study group') + ' · ' + g.members + ' members')));
+    .concat(teacherGroups.map(g => item(g.kind === 'class' ? 'class' : 'group', g.id, g.name, (g.kind === 'class' ? 'Course group' : 'Study group') + ' · ' + g.members + ' members')));
   const notDone = rows.filter(r => !r.includes('class="hub-row done"')).length;
   host.innerHTML = rows.length ? `<div class="hub-head"><b>Today, ${new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</b><span class="meta">${notDone ? notDone + ' register' + (notDone === 1 ? '' : 's') + ' still to take' : 'All registers taken today 🎉'}</span></div><div class="hub-list">${rows.join('')}</div>`
     : '<div class="empty-box"><p>Create a course or a class first, then take attendance here.</p><a class="btn btn-red" href="teacher-courses.html">Go to My Courses</a></div>';

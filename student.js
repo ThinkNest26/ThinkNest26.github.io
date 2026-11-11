@@ -136,6 +136,18 @@ async function startCourse() {
   }
   drawHero(); drawLessons();
   if (enrol && typeof studentAttendance === 'function') studentAttendance(id, 'my-att');
+  // the student's group for this course (community, resources, members)
+  if (enrol) {
+    try {
+      const { data: gs } = await db.rpc('course_groups', { cid: id });
+      const mine = (gs || []).filter(x => x.mine);
+      if (mine.length) {
+        const host = document.getElementById('my-att');
+        host.insertAdjacentHTML('beforebegin', `<section class="panel my-group">${mine.map(x => `<div><b>👥 Your group: ${esc(x.slot || 'everyone in this course')}</b><span class="meta" style="display:block">${x.members} student${x.members === 1 ? '' : 's'} · post, ask questions and share with your group and teacher</span></div>
+          <div class="class-links"><a class="pill pill-live" href="group.html?id=${x.id}">📣 Group community</a><a class="pill pill-soft" href="group.html?id=${x.id}#t-res">📚 Resources</a><a class="pill pill-soft" href="group.html?id=${x.id}#t-mem">👥 Members</a></div>`).join('')}</section>`);
+      }
+    } catch (_) {}
+  }
   if (typeof initStudentLessons === 'function') {
     await initStudentLessons(lessons, id, () => !!enrol, async lid => {
       if (doneIds.has(lid)) return;
