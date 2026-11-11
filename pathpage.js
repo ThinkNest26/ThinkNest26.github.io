@@ -97,7 +97,7 @@ async function startPathPage() {
         <div class="pp-class-top"><span class="pp-tic" aria-hidden="true" data-no-tr dir="ltr">${S.icon}</span><div><b>${esc(c.title)}</b><span class="meta">${esc(c.teacher_name || 'Think Nest teacher')}${c.weeks ? ' · ' + c.weeks + ' weeks' : ''}</span></div></div>
         ${c.description ? `<p class="pp-desc">${esc(String(c.description).slice(0, 140))}${String(c.description).length > 140 ? '…' : ''}</p>` : ''}
         <p class="pp-when">${nextBy[c.id] ? '📅 Next live class: ' + nextBy[c.id].toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : '📅 Live classes to be announced'}</p>
-        ${!session ? '' : joined.has(c.id) ? `<a class="btn btn-white outline pp-act" href="course.html?id=${c.id}">✓ Joined · Open</a>` : canAct ? `<button type="button" class="btn btn-red pp-act" data-join="${c.id}">Join this class</button>` : ''}
+        ${!session ? '' : joined.has(c.id) ? `<a class="btn btn-white outline pp-act" href="course.html?id=${c.id}">✓ Joined · Open</a>` : canAct ? (role === 'parent' ? `<button type="button" class="btn btn-red pp-act" data-join="${c.id}">Ask for a place</button><a class="link-btn" href="course-details.html?id=${c.id}">Details</a>` : `<a class="btn btn-red pp-act" href="course-details.html?id=${c.id}">View course details</a>`) : ''}
       </article>`).join('')
     : `<div class="pp-none"><span aria-hidden="true">🌱</span><p><b>No class is open for this path yet.</b><br>Join the waiting list and we’ll tell you as soon as one opens.</p></div>`);
   // next step
@@ -121,10 +121,11 @@ async function startPathPage() {
     if (j) {
       j.disabled = true;
       const cid = Number(j.dataset.join);
-      const res = kid ? await db.rpc('parent_enroll', { kid: kid.value, cid }) : await db.from('enrollments').insert({ user_id: session.user.id, course_id: cid });
+      if (!kid) { location.href = 'course-details.html?id=' + cid; return; }
+      const res = await db.rpc('parent_request_course', { kid: kid.value, cid });
       if (res.error && !String(res.error.message).includes('duplicate')) { j.disabled = false; return say(friendly(res.error)); }
       try { localStorage.removeItem('tn_path'); } catch (_) {}
-      if (kid) { say('Done! Your child has joined the class.'); j.outerHTML = '<span class="pp-done">✅ Joined</span>'; } else location.href = 'course.html?id=' + cid;
+      say(res.data === 'approved' ? 'Your child already has a place.' : 'Request sent! The teacher will confirm your child’s place, and you’ll be told.'); j.outerHTML = '<span class="pp-done">⏳ Request sent</span>';
     }
     if (e.target.id === 'pp-wait') {
       e.target.disabled = true;

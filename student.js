@@ -30,7 +30,8 @@ function courseCard(c, e, k) {
       <p class="desc">${esc(c.description || '')}</p>
       ${e ? `<div class="bar"><i style="width:${e.progress}%"></i></div>
              <div class="row"><a class="pill pill-live" href="course.html?id=${c.id}">Continue</a><span class="done">${e.progress}% completed</span></div>`
-          : `<div class="row"><a class="pill pill-soft" href="course-details.html?id=${c.id}">View course details</a><a class="pill pill-live" href="course-details.html?id=${c.id}&register=1">Register</a></div>`}
+          : c._req ? `<div class="row"><a class="pill pill-soft" href="course-details.html?id=${c.id}">View course details</a><span class="done">⏳ ${c._req === 'parent' ? 'Waiting for your parent' : 'Waiting for the teacher'}</span></div>`
+          : `<div class="row"><a class="pill pill-live" href="course-details.html?id=${c.id}">View course details</a></div>`}
     </div></article>`;
 }
 
@@ -48,7 +49,9 @@ async function startMyCourses() {
   if (error) return say(friendly(error));
   if (typeof liveProgress === 'function') await liveProgress(user.id, data);
   const list = document.getElementById('list');
-  list.innerHTML = data.length ? data.map((e, k) => courseCard(e.courses, e, k)).join('')
+  let pend = [];
+  try { const { data: rqs } = await db.from('course_requests').select('status, courses(*)').eq('student_id', user.id).in('status', ['parent', 'teacher']).order('created_at'); pend = (rqs || []).filter(r => r.courses); } catch (_) {}
+  list.innerHTML = data.length || pend.length ? data.map((e, k) => courseCard(e.courses, e, k)).join('') + pend.map((r, k) => courseCard(Object.assign({}, r.courses, { _req: r.status }), null, k + data.length)).join('')
     : '<div class="empty-box"><p>You haven’t registered for any courses yet.</p><a class="btn btn-red" href="all-courses.html">Browse all courses</a></div>';
 }
 
@@ -63,6 +66,7 @@ async function startAllCourses() {
   if (cs.error) return say(friendly(cs.error));
   const mine = en.data || [];
   if (typeof liveProgress === 'function') await liveProgress(user.id, mine);
+  try { const { data: rqs } = await db.from('course_requests').select('course_id, status').eq('student_id', user.id).in('status', ['parent', 'teacher']); (rqs || []).forEach(r => { const c = (cs.data || []).find(x => x.id === r.course_id); if (c) c._req = r.status; }); } catch (_) {}
   const list = document.getElementById('list');
   const q = document.getElementById('q');
   q.value = new URLSearchParams(location.search).get('q') || '';

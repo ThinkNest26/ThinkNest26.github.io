@@ -20,12 +20,14 @@ async function startCourseDetails() {
   const id = Number(params.get('id'));
   const box = document.getElementById('cd');
 
-  const [c, ls, en, t, pl] = await Promise.all([
+  const [c, ls, en, t, pl, rq, sp] = await Promise.all([
     db.from('courses').select('*').eq('id', id).maybeSingle(),
     db.from('lessons').select('id, title, position').eq('course_id', id).order('position'),
     db.from('enrollments').select('*').eq('user_id', user.id).eq('course_id', id).maybeSingle(),
     db.rpc('course_teacher', { cid: id }),
-    db.rpc('course_places', { cid: id })
+    db.rpc('course_places', { cid: id }),
+    db.from('course_requests').select('*').eq('course_id', id).eq('student_id', user.id).order('created_at', { ascending: false }).limit(1),
+    db.rpc('course_slot_places', { cid: id })
   ]);
   if (!c.data) { box.innerHTML = '<p class="empty">This course could not be found. <a href="all-courses.html">Go back to all courses</a>.</p>'; return; }
   const course = c.data;
@@ -33,6 +35,10 @@ async function startCourseDetails() {
   const teacher = (t.data && t.data[0]) || { full_name: course.teacher_name };
   let enrol = en.data;
   let taken = typeof pl.data === 'number' ? pl.data : null;
+  let req = (rq.data || [])[0] || null;
+  const slotTaken = {}; (sp.data || []).forEach(r => slotTaken[r.slot || ''] = r.taken);
+  const slots = cdLines(course.class_schedule);  // one time option per line
+  const multi = slots.length > 1;
 
   let sessions = [];
   try {
@@ -46,17 +52,22 @@ async function startCourseDetails() {
   const initials = (teacher.full_name || 'T').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
   const today = new Date().toISOString().slice(0, 10);
   const closed = course.registration_deadline && course.registration_deadline < today;
-  const full = () => course.max_students && taken !== null && taken >= course.max_students;
-  const placesText = () => course.max_students && taken !== null ? Math.max(course.max_students - taken, 0) + ' of ' + course.max_students + ' places left' : '';
+  const slotLeft = sl => course.max_students ? Math.max(course.max_students - (slotTaken[sl || ''] || 0), 0) : null;
+  const full = () => !!course.max_students && (multi ? slots.every(sl => slotLeft(sl) === 0) : (taken !== null && taken >= course.max_students));
+  const placesText = () => !course.max_students ? '' : multi ? slots.map(sl => slotLeft(sl) + ' left: ' + sl).join(' · ') : (taken !== null ? Math.max(course.max_students - taken, 0) + ' of ' + course.max_students + ' places left' : '');
   const video = cdVideoEmbed(course.intro_video_url);
   const goals = cdLines(course.learning_goals);
-  const timeLine = [course.class_schedule, course.time_zone].filter(Boolean).join(', ');
+  const timeLine = slots.length ? (multi ? 'choose one of ' + slots.join(' | ') : slots[0]) + (course.time_zone ? ' (' + course.time_zone + ')' : '') : '';
 
   function actionHtml() {
-    if (enrol) return `<p class="cd-done">✅ You’re registered for this course.</p><a class="btn btn-red" href="course.html?id=${id}">Go to the course</a>`;
+    if (enrol) return `<p class="cd-done">✅ Your place is confirmed${enrol.time_slot ? ' (' + esc(enrol.time_slot) + ')' : ''}.</p><a class="btn btn-red" href="course.html?id=${id}">Go to the course</a>`;
+    if (req && req.status === 'parent') return `<p class="cd-wait">⏳ Request sent. Waiting for your parent or guardian to agree. We emailed ${esc(req.parent_email || 'them')}.</p><button class="link-btn" data-cancel-req="${req.id}">Cancel my request</button>`;
+    if (req && req.status === 'teacher') return `<p class="cd-wait">⏳ Request sent. Waiting for the teacher to confirm your place${req.time_slot ? ' (' + esc(req.time_slot) + ')' : ''}.</p><button class="link-btn" data-cancel-req="${req.id}">Cancel my request</button>`;
+    const declined = req && req.status === 'declined' ? `<p class="cd-closed">Your last request wasn’t approved${req.decline_reason ? ': ' + esc(req.decline_reason) : '.'}</p>` : '';
+    if (course.published === false) return '<p class="cd-wait">📝 This course is a draft. Only you can see this page until you publish it.</p>';
     if (closed) return `<p class="cd-closed">Registration closed on ${cdDate(course.registration_deadline)}.</p>`;
     if (full()) return `<p class="cd-closed">This course is full.</p>`;
-    return `<button class="btn btn-red" data-register>Register for this course</button>${placesText() ? `<span class="cd-places">${placesText()}</span>` : ''}${course.registration_deadline ? `<span class="cd-places">Register by ${cdDate(course.registration_deadline)}</span>` : ''}`;
+    return declined + `<button class="btn btn-red" data-register>${req && req.status === 'declined' ? 'Register again' : 'Register for this course'}</button>${placesText() ? `<span class="cd-places">${placesText()}</span>` : ''}${course.registration_deadline ? `<span class="cd-places">Register by ${cdDate(course.registration_deadline)}</span>` : ''}`;
   }
   const sec = (title, inner) => inner ? `<section class="panel cd-sec"><h2>${title}</h2>${inner}</section>` : '';
   const para = s => s ? `<p class="cd-text">${esc(s)}</p>` : '';
@@ -153,14 +164,34 @@ async function startCourseDetails() {
   dlg.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => dlg.close()));
   const redraw = () => ['cd-action-top', 'cd-action-bottom'].forEach(k => document.getElementById(k).innerHTML = actionHtml());
 
+  const sum = document.getElementById('reg-summary');
+  if (sum) sum.innerHTML = [course.teacher_name ? 'Teacher: ' + esc(course.teacher_name) : '', course.start_date ? 'Starts ' + cdDate(course.start_date) + (course.end_date ? ', ends ' + cdDate(course.end_date) : '') : '',
+    course.lesson_minutes ? course.lesson_minutes + ' minutes per lesson' : '', 'Price: ' + esc(course.price || 'Free')].filter(Boolean).map(x => `<span>${x}</span>`).join('') + (course.description ? `<p>${esc(course.description.slice(0, 240))}${course.description.length > 240 ? '…' : ''}</p>` : '');
+  const slotBox = document.getElementById('reg-slots');
+  if (slotBox) {
+    slotBox.hidden = !slots.length;
+    slotBox.innerHTML = slots.length ? `<legend>${multi ? 'Choose a class time' : 'Class time'}${course.time_zone ? ' (' + esc(course.time_zone) + ')' : ''}</legend>` + slots.map((sl, i) => {
+      const left = slotLeft(sl), off = left === 0;
+      return `<label class="reg-slot ${off ? 'off' : ''}"><input type="radio" name="time_slot" value="${esc(sl)}" ${off ? 'disabled' : ''} ${!multi && !off ? 'checked' : ''}> <span>${esc(sl)}${left !== null ? ` <small>${off ? 'full' : left + ' places left'}</small>` : ''}</span></label>`;
+    }).join('') : '';
+  }
   function openForm() {
     f.reset(); showError(err, '');
+    if (!multi && slots.length) { const r0 = f.querySelector('input[name=time_slot]:not([disabled])'); if (r0) r0.checked = true; }
     f.student_name.value = profile.full_name || '';
     f.student_grade.value = profile.grade || course.grade || '';
     dlg.showModal();
   }
-  box.addEventListener('click', e => { if (e.target.closest('[data-register]')) openForm(); });
-  if (params.get('register') === '1' && !enrol && !closed && !full()) openForm();
+  box.addEventListener('click', async e => {
+    if (e.target.closest('[data-register]')) return openForm();
+    const cr = e.target.closest('[data-cancel-req]');
+    if (cr && confirm('Cancel your registration request?')) {
+      const { error } = await db.rpc('cancel_course_request', { rid: Number(cr.dataset.cancelReq) });
+      if (error) return say(friendly(error));
+      req = Object.assign({}, req, { status: 'cancelled' }); redraw(); say('Request cancelled.');
+    }
+  });
+  if (params.get('register') === '1' && !enrol && !(req && ['parent', 'teacher'].includes(req.status)) && !closed && !full() && course.published !== false) openForm();
 
   f.addEventListener('submit', async e => {
     e.preventDefault(); showError(err, '');
@@ -180,17 +211,26 @@ async function startCourseDetails() {
     if (!row.parent_phone) return showError(err, 'Write a parent phone number, so the teacher can reach you.');
     if (!f.agree.checked) return showError(err, 'Tick the box to confirm a parent or guardian agrees to this registration.');
     if (!f.privacy.checked) return showError(err, 'Tick the box to agree to the privacy policy.');
-    const sb = f.querySelector('button[type=submit]'); sb.disabled = true; sb.textContent = 'Registering…';
-    const { data, error } = await db.from('enrollments').insert(row).select().single();
-    sb.disabled = false; sb.textContent = 'Register';
+    const ts = f.querySelector('input[name=time_slot]:checked');
+    if (slots.length && !ts) return showError(err, 'Choose a class time.');
+    row.time_slot = ts ? ts.value : null;
+    const sb = f.querySelector('button[type=submit]'); sb.disabled = true; sb.textContent = 'Sending…';
+    const details = Object.assign({}, row); delete details.user_id; delete details.course_id;
+    const { data, error } = await db.rpc('request_course', { cid: id, d: details });
+    sb.disabled = false; sb.textContent = 'Send my request';
     if (error) {
       const m = String(error.message || '');
       if (m.includes('duplicate')) { dlg.close(); say('You’re already registered for this course.'); return; }
-      if (m.includes('COURSE_FULL')) { taken = course.max_students; dlg.close(); redraw(); say('Sorry, this course has just become full.'); return; }
+      if (m.includes('COURSE_FULL')) { dlg.close(); say(multi ? 'Sorry, that class time has just become full. Please choose another.' : 'Sorry, this course has just become full.'); return; }
       if (m.includes('REGISTRATION_CLOSED')) { dlg.close(); say('Registration for this course has closed.'); return; }
       return showError(err, '⚠️ The registration couldn’t be saved: ' + (m || friendly(error)));
     }
-    enrol = data; if (taken !== null) taken++; dlg.close(); redraw();
-    say('You’re registered for the course! You’ll find it in My Courses.');
+    dlg.close();
+    if (data === 'approved') { location.href = 'course.html?id=' + id; return; }
+    req = { id: null, status: data, parent_email: row.parent_email, time_slot: row.time_slot };
+    const { data: fresh } = await db.from('course_requests').select('*').eq('course_id', id).eq('student_id', user.id).order('created_at', { ascending: false }).limit(1);
+    if (fresh && fresh[0]) req = fresh[0];
+    redraw();
+    say(data === 'parent' ? 'Request sent! We’ve emailed your parent or guardian to agree, then the teacher will confirm your place.' : 'Request sent! The teacher will confirm your place soon.');
   });
 }

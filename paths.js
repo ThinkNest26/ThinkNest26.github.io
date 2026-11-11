@@ -152,7 +152,7 @@ async function drawPathStep() {
   const kidPick = role === 'parent' ? (kids.length ? `<label class="kid-pick">For which child? <select id="path-kid">${kids.map(k => `<option value="${k.id}">${esc(k.full_name || 'My child')}</option>`).join('')}</select></label>` : '<p class="note">Link your child to your account first: <a href="add-child.html">Add a child</a>.</p>') : '';
   const canAct = role === 'student' || (role === 'parent' && kids.length);
   document.getElementById('path-classes').innerHTML = `<h3>Classes for this path</h3>` + kidPick + (match.length ? match.map(c => `<div class="path-class"><div><b>${esc(c.title)}</b><span class="meta">${esc(c.teacher_name || '')}${c.weeks ? ' · ' + c.weeks + ' weeks' : ''}</span></div>
-      ${!session ? '' : joined.has(c.id) ? `<a class="pill pill-soft" href="course.html?id=${c.id}">Joined · Open</a>` : canAct ? `<button type="button" class="btn btn-red" data-join="${c.id}">Join</button>` : ''}</div>`).join('')
+      ${!session ? '' : joined.has(c.id) ? `<a class="pill pill-soft" href="course.html?id=${c.id}">Joined · Open</a>` : canAct ? (role === 'parent' ? `<button type="button" class="btn btn-red" data-join="${c.id}">Ask for a place</button>` : `<a class="btn btn-red" href="course-details.html?id=${c.id}">View details</a>`) : ''}</div>`).join('')
     : `<p class="meta">No class is open for this path yet. Join the waiting list and we’ll let you know as soon as one opens.</p>`);
   let actions = '';
   if (!session) {
@@ -185,10 +185,11 @@ function initPaths() {
       j.disabled = true;
       const cid = Number(j.dataset.join);
       const { data: { session } } = await db.auth.getSession();
-      const res = kid ? await db.rpc('parent_enroll', { kid: kid.value, cid }) : await db.from('enrollments').insert({ user_id: session.user.id, course_id: cid });
+      if (!kid) { location.href = 'course-details.html?id=' + cid; return; }
+      const res = await db.rpc('parent_request_course', { kid: kid.value, cid });
       if (res.error && !String(res.error.message).includes('duplicate')) { j.disabled = false; return say(friendly(res.error)); }
       try { localStorage.removeItem('tn_path'); } catch (_) {}
-      if (kid) { say('Done! Your child has joined the class.'); drawPathStep(); } else location.href = 'course.html?id=' + cid;
+      say(res.data === 'approved' ? 'Your child already has a place.' : 'Request sent! The teacher will confirm your child’s place, and you’ll be told.'); drawPathStep();
     }
     if (e.target.id === 'path-wait') {
       e.target.disabled = true;

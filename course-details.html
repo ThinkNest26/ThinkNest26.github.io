@@ -8,10 +8,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=160">
-<link rel="stylesheet" href="app.css?v=160">
-<link rel="stylesheet" href="rtl.css?v=160">
-<script src="i18n.js?v=160"></script>
+<link rel="stylesheet" href="style.css?v=161">
+<link rel="stylesheet" href="app.css?v=161">
+<link rel="stylesheet" href="rtl.css?v=161">
+<script src="i18n.js?v=161"></script>
 <style>
   .cd-hero { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 28px; align-items: start; }
   .cd-hero img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 14px; }
@@ -24,6 +24,15 @@
   .cd-action { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
   .cd-done { margin: 0; font-weight: 700; color: #2FA08A; }
   .cd-closed { margin: 0; font-weight: 700; color: #C2453A; }
+  .cd-wait { margin: 0; font-weight: 700; color: #3E4B94; line-height: 1.5; }
+  .reg-summary { background: #F3F4FA; border-radius: 12px; padding: 12px 14px; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .9rem; }
+  .reg-summary span { font-weight: 600; }
+  .reg-summary p { margin: 4px 0 0; flex-basis: 100%; color: #4A4F62; line-height: 1.5; }
+  .reg-slot { display: flex !important; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid #D6D9E2; border-radius: 10px; font-weight: 600; cursor: pointer; }
+  .reg-slot input { width: auto !important; }
+  .reg-slot small { color: #6E7485; font-weight: 500; margin-inline-start: 6px; }
+  .reg-slot.off { opacity: .55; cursor: not-allowed; }
+  .reg-slot:has(input:checked) { border-color: #3E4B94; background: #F3F4FA; }
   .cd-places { color: #6E7485; font-weight: 600; font-size: .92rem; }
   .cd-when { margin: -6px 0 20px; line-height: 1.5; }
   .cd-video { position: relative; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #1E2233; }
@@ -110,8 +119,10 @@
 
 <dialog id="reg-dialog" aria-labelledby="reg-title">
 <form id="reg-form" novalidate>
-<h2 id="reg-title">Register for this course</h2>
+<h2 id="reg-title">Ask for a place on this course</h2>
 <p class="meta" id="reg-course"></p>
+<div class="reg-summary" id="reg-summary"></div>
+<fieldset id="reg-slots" hidden></fieldset>
 <fieldset>
 <legend>Student</legend>
 <label>Full name<input name="student_name" autocomplete="off" required></label>
@@ -141,19 +152,20 @@
 <label class="agree"><input type="checkbox" name="agree"> I confirm a parent or guardian agrees to this registration.</label>
 <label class="agree"><input type="checkbox" name="privacy"> I agree to the <a href="privacy.html" target="_blank" rel="noopener">privacy policy</a>.</label>
 <p class="form-error" id="reg-error" role="alert"></p>
-<div class="btns"><button type="button" class="pill pill-soft" data-close>Cancel</button><button type="submit" class="btn btn-red">Register</button></div>
+<p class="meta">Under 16? We’ll email your parent or guardian to agree first. Then the teacher confirms your place.</p>
+<div class="btns"><button type="button" class="pill pill-soft" data-close>Cancel</button><button type="submit" class="btn btn-red">Send my request</button></div>
 </form>
 </dialog>
 
 <div class="side-shade" id="side-shade"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="supabase-config.js?v=160"></script>
-<script src="app.js?v=160"></script>
-<script src="nav.js?v=160"></script>
-<script src="notify.js?v=160" defer></script>
-<script src="student.js?v=160"></script>
-<script src="coursedetails.js?v=160"></script>
+<script src="supabase-config.js?v=161"></script>
+<script src="app.js?v=161"></script>
+<script src="nav.js?v=161"></script>
+<script src="notify.js?v=161" defer></script>
+<script src="student.js?v=161"></script>
+<script src="coursedetails.js?v=161"></script>
 <script>startCourseDetails();</script>
 </body>
 </html>

@@ -401,7 +401,7 @@ async function startDashboard() {
           <h4>${esc(c.title)}</h4>
           <p class="desc">${esc(c.description || '')}</p>
           ${e ? `<div class="row"><a class="pill pill-soft" href="course.html?id=${c.id}">Continue</a><span class="done">${e.progress}% completed</span></div>`
-              : `<button class="btn btn-red btn-small" data-join="${c.id}">Join course</button>`}
+              : `<a class="btn btn-red btn-small" href="course-details.html?id=${c.id}">View course details</a>`}
         </div></article>`;
     }).join('') : '<p class="empty">Courses will appear here soon.</p>';
   }

@@ -2186,3 +2186,4 @@ html.tn-pv .side { box-shadow: inset -4px 0 0 #8E5BD8; }
 /* the sidebar shows only once the right menu for this person is built */
 body.app .side nav:not(.nav-ready) { visibility: hidden; }
 label[hidden] { display: none !important; }
+.grid-cards > .tc-h { grid-column: 1 / -1; margin: 10px 0 0; }

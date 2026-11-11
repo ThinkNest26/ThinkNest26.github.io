@@ -80,7 +80,7 @@ const CI_NUMBERS = ['lesson_minutes', 'max_students'];
 function addCourseInfoFields(f, err) {
   if (!f || f.intro_video_url) return;
   const html = `<details class="ci-more" open style="margin:6px 0 4px">
-    <summary style="font-weight:700;cursor:pointer;padding:6px 0">Details for parents (shown on the course details page)</summary>
+    <summary style="font-weight:700;cursor:pointer;padding:6px 0">Details for parents (needed before you can publish)</summary>
     <div style="display:grid;gap:12px;padding-top:8px">
       <label>Sample lesson or introduction video (optional)<input name="intro_video_url" type="url" placeholder="Paste a YouTube or Vimeo link"></label>
       <p class="meta" style="margin:-6px 0 0">Tip: upload to YouTube as “Unlisted” so only people with the link can see it.</p>
@@ -89,11 +89,13 @@ function addCourseInfoFields(f, err) {
         <label>End date<input name="end_date" type="date"></label>
         <label>Register by<input name="registration_deadline" type="date"></label>
       </div>
-      <label>Class days and times<input name="class_schedule" placeholder="e.g. Mondays and Wednesdays, 4:00–4:45 pm"></label>
+      <label>Class days and times (one option per line: students choose one)<textarea name="class_schedule" rows="3" placeholder="e.g.
+Sun and Wed, 5–7 pm
+Mon and Thu, 6–8 pm"></textarea></label>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
         <label>Time zone<input name="time_zone" placeholder="e.g. UAE time (GMT+4)"></label>
         <label>Lesson length (minutes)<input name="lesson_minutes" type="number" min="5" max="300"></label>
-        <label>Maximum students<input name="max_students" type="number" min="1" max="500" placeholder="Leave empty for no limit"></label>
+        <label>Maximum students (for each time option)<input name="max_students" type="number" min="1" max="500"></label>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
         <label>Age range<input name="age_range" placeholder="e.g. 7–8 years"></label>
@@ -135,6 +137,41 @@ function courseVideoEmbed(url) {
   return null;
 }
 
+// What still needs filling in before a course can be published
+function coursePublishGaps(c, p) {
+  const gaps = [];
+  if (!String(c.description || '').trim()) gaps.push('a short description');
+  if (!c.start_date) gaps.push('the start date');
+  if (!String(c.class_schedule || '').trim()) gaps.push('the class days and times');
+  if (!c.lesson_minutes) gaps.push('how long each lesson is');
+  if (!String(c.age_range || '').trim()) gaps.push('the age range');
+  if (!String(c.course_language || '').trim()) gaps.push('the language it’s taught in');
+  if (!String(c.learning_goals || '').trim()) gaps.push('what students will be able to do by the end');
+  if (!String(c.requirements || '').trim()) gaps.push('what students need');
+  if ((c.audience || 'students') === 'students' && !c.max_students) gaps.push('the maximum number of students');
+  if (p) {
+    if (!String(p.bio || '').trim()) gaps.push('your teacher profile: a short bio');
+    if (!String(p.education_degree || '').trim()) gaps.push('your teacher profile: your qualification');
+    if (p.experience_years == null || p.experience_years === '') gaps.push('your teacher profile: years of experience');
+  }
+  return gaps;
+}
+async function publishCourse(c, p, on) {
+  if (on) {
+    const gaps = coursePublishGaps(c, p);
+    if (gaps.length) {
+      const prof = gaps.some(g => g.startsWith('your teacher profile'));
+      alert('Before publishing “' + c.title + '”, please add:\n\n• ' + gaps.join('\n• ') + '\n\n' + (prof ? 'Your teacher profile is in Online Courses → 👤 My teacher profile. ' : '') + 'Course details are in Edit details → Details for parents.');
+      return false;
+    }
+  } else if (!confirm('Unpublish “' + c.title + '”? It will be hidden from students until you publish it again. Students already registered keep their place.')) return false;
+  const { error } = await db.from('courses').update({ published: on }).eq('id', c.id);
+  if (error) { say(/published/.test(error.message || '') ? 'Please run the latest database update (Batch 3) first.' : friendly(error)); return false; }
+  say(on ? '🎉 Published! Students can now find and register for it.' : 'Unpublished. It’s now a draft.');
+  return true;
+}
+function teacherProfileReady(p) { return !!(p && String(p.bio || '').trim() && String(p.education_degree || '').trim() && p.experience_years != null && p.experience_years !== ''); }
+
 function courseDialog(onSaved) {
   const dlg = document.getElementById('course-dialog'), f = document.getElementById('course-form'), err = document.getElementById('course-error');
   let editing = null, teacher = null;
@@ -157,11 +194,14 @@ function courseDialog(onSaved) {
     let res;
     try {
       if (editing) res = await db.from('courses').update(row).eq('id', editing.id).select().single();
-      else res = await db.from('courses').insert({ ...row, teacher_id: teacher.id, teacher_name: teacher.full_name }).select().single();
+      else {
+        res = await db.from('courses').insert({ ...row, teacher_id: teacher.id, teacher_name: teacher.full_name, published: false }).select().single();
+        if (res.error && /published/.test(res.error.message || '')) res = await db.from('courses').insert({ ...row, teacher_id: teacher.id, teacher_name: teacher.full_name }).select().single();
+      }
     } catch (x) { res = { error: x }; }
     if (sb) { sb.disabled = false; sb.textContent = sbText; }
     if (res.error) return showError(err, '⚠️ The course couldn’t be saved: ' + (res.error.message || friendly(res.error)));
-    dlg.close(); say(editing ? 'Course saved.' : 'Course created.'); onSaved(res.data);
+    dlg.close(); say(editing ? 'Course saved.' : 'Saved as a draft. Add the details and lessons, then press Publish when it’s ready.'); onSaved(res.data);
   });
   return {
     open(course, me) {
@@ -220,18 +260,34 @@ async function startTeacherCourses() {
     if (error) { const r = await db.from('courses').select('*').eq('teacher_id', user.id).order('id'); data = r.data; if (r.error) error = r.error; else error = null; }
     if (error) { list.innerHTML = `<div class="empty-box"><p>⚠️ Your courses couldn’t be loaded: <b>${esc(error.message || friendly(error))}</b></p><p class="meta">Please send a screenshot of this message to the Think Nest team.</p><button class="btn btn-red" onclick="location.reload()">Try again</button></div>`; return; }
     courses = data || [];
-    list.innerHTML = courses.length ? courses.map(c => `<article class="learn">
+    let waiting = {};
+    try { const { data: rq } = await db.from('course_requests').select('course_id').eq('status', 'teacher').in('course_id', courses.map(c => c.id)); (rq || []).forEach(r => waiting[r.course_id] = (waiting[r.course_id] || 0) + 1); } catch (_) {}
+    const card = c => `<article class="learn">
         <img src="${tImg(c)}" alt="">
         <div class="learn-body">
-          <span class="meta">${esc(c.category || '')}${c.weeks ? ' · ' + c.weeks + ' weeks' : ''} · ${(c.enrollments && c.enrollments[0] ? c.enrollments[0].count : 0)} students</span>
+          <span class="meta">${c.published === false ? '📝 Draft · ' : ''}${esc(c.category || '')}${c.weeks ? ' · ' + c.weeks + ' weeks' : ''} · ${(c.enrollments && c.enrollments[0] ? c.enrollments[0].count : 0)} students</span>
           <h4>${esc(c.title)}</h4><p class="desc">${esc(c.description || '')}</p>
-          <div class="row"><button class="pill pill-soft" data-edit="${c.id}">Edit details</button><a class="pill pill-live" href="teacher-course.html?id=${c.id}">Open</a></div>
-        </div></article>`).join('')
+          ${waiting[c.id] ? `<a class="tag tag-now" href="teacher-course.html?id=${c.id}#t-reqs">📝 ${waiting[c.id]} registration${waiting[c.id] === 1 ? '' : 's'} to answer</a>` : ''}
+          <div class="row"><button class="pill pill-soft" data-edit="${c.id}">Edit details</button>${c.published === false ? `<button class="pill pill-live" data-pub="${c.id}">🚀 Publish</button>` : ''}<a class="pill pill-live" href="teacher-course.html?id=${c.id}">Open</a></div>
+        </div></article>`;
+    const drafts = courses.filter(c => c.published === false), live = courses.filter(c => c.published !== false);
+    list.innerHTML = courses.length
+      ? (drafts.length ? `<h2 class="dash-h tc-h">📝 Drafts <span class="count">${drafts.length}</span></h2><p class="hint tc-h">Only you can see drafts. Add the details and lessons, then press Publish.</p>${drafts.map(card).join('')}` : '')
+        + (live.length ? `<h2 class="dash-h tc-h">✅ Published <span class="count">${live.length}</span></h2>${live.map(card).join('')}` : '')
       : '<div class="empty-box"><p>You haven’t created any courses yet.</p></div>';
   }
   const dlg = courseDialog(() => load());
-  document.getElementById('new-course').addEventListener('click', () => dlg.open(null, { id: user.id, full_name: profile.full_name }));
-  list.addEventListener('click', e => { const b = e.target.closest('[data-edit]'); if (b) dlg.open(courses.find(c => c.id === Number(b.dataset.edit)), { id: user.id, full_name: profile.full_name }); });
+  document.getElementById('new-course').addEventListener('click', () => {
+    if (!teacherProfileReady(profile)) {
+      if (confirm('Before creating a course, please complete your teacher profile (a short bio, your qualification and your years of experience). Parents see it on every course you teach.\n\nOpen your teacher profile now?')) location.href = 'teacher-settings.html#tprofile-form';
+      return;
+    }
+    dlg.open(null, { id: user.id, full_name: profile.full_name });
+  });
+  list.addEventListener('click', async e => {
+    const b = e.target.closest('[data-edit]'); if (b) return dlg.open(courses.find(c => c.id === Number(b.dataset.edit)), { id: user.id, full_name: profile.full_name });
+    const p = e.target.closest('[data-pub]'); if (p && await publishCourse(courses.find(c => c.id === Number(p.dataset.pub)), profile, true)) load();
+  });
   load();
 }
 
@@ -249,9 +305,11 @@ async function startTeacherCourse() {
     document.title = c.title + ' – Think Nest';
     const cur = { british: 'British Curriculum', ib: 'IB', american: 'American Curriculum' }[c.curriculum] || '';
     hero.innerHTML = `<img src="${tImg(c)}" alt=""><div><span class="meta">${esc([cur, c.grade, c.subject].filter(Boolean).join(' · ') || 'Set the curriculum, grade and subject in Edit details')}</span><span class="meta">${esc(c.category || '')}${c.weeks ? ' · ' + c.weeks + ' weeks' : ''} · ${esc(c.level || '')}</span>
-      <h1>${esc(c.title)}</h1><p>${esc(c.description || '')}</p>
-      <div class="row start"><button class="pill pill-soft big" id="edit-course">Edit details</button><button class="pill pill-soft big danger" id="del-course">Delete course</button></div></div>`;
+      <h1>${esc(c.title)} ${c.published === false ? '<span class="tag">📝 Draft</span>' : c.published === true ? '<span class="tag tag-now">✅ Published</span>' : ''}</h1><p>${esc(c.description || '')}</p>
+      <div class="row start">${c.published === false ? '<button class="pill pill-live big" id="pub-course">🚀 Publish</button>' : c.published === true ? '<button class="pill pill-soft big" id="pub-course">Unpublish</button>' : ''}<button class="pill pill-soft big" id="edit-course">Edit details</button><a class="pill pill-soft big" href="course-details.html?id=${c.id}" target="_blank" rel="noopener">👀 Preview as a parent</a><button class="pill pill-soft big danger" id="del-course">Delete course</button></div></div>`;
     document.getElementById('edit-course').addEventListener('click', () => dlg.open(c, { id: user.id, full_name: profile.full_name }));
+    const pb = document.getElementById('pub-course');
+    if (pb) pb.addEventListener('click', async () => { if (await publishCourse(c, profile, c.published === false)) { c = Object.assign({}, c, { published: c.published === false }); drawHero(); } });
     document.getElementById('del-course').addEventListener('click', async () => {
       if (!confirm('Delete “' + c.title + '”? Its lessons, live classes and recordings will be deleted too, and students will lose their progress.')) return;
       const { error } = await db.from('courses').delete().eq('id', c.id);
@@ -269,6 +327,39 @@ async function startTeacherCourse() {
     if (t.dataset.tab === 't-att' && !attDone && typeof attendancePanel === 'function') { attDone = true; attendancePanel(document.getElementById('att-host'), { cid: id }); }
   }));
   if (location.hash === '#attendance') { const at = document.querySelector('[data-tab="t-att"]'); if (at) at.click(); }
+  if (location.hash === '#t-reqs') { const rt = document.querySelector('[data-tab="t-reqs"]'); if (rt) rt.click(); }
+
+  // registration requests
+  async function loadRequests() {
+    const box = document.getElementById('reqs'); if (!box) return;
+    const { data, error } = await db.from('course_requests').select('*').eq('course_id', id).order('created_at', { ascending: false });
+    if (error) { box.innerHTML = '<p class="empty">Run the latest database update (Batch 3) to see registration requests.</p>'; return; }
+    const rows = data || [], waiting = rows.filter(r => r.status === 'teacher'), parent = rows.filter(r => r.status === 'parent'), done = rows.filter(r => !['teacher', 'parent'].includes(r.status)).slice(0, 30);
+    const n = document.getElementById('reqs-n'); if (n) { n.hidden = !waiting.length; n.textContent = waiting.length; }
+    const info = r => { const d = r.details || {}; return `<div class="person-info"><h4>${esc(d.student_name || 'Student')}${d.registered_by_parent ? ' <span class="tag">👪 By parent</span>' : ''}</h4>
+        <span class="meta">${esc([d.student_age ? 'Age ' + d.student_age : '', d.student_grade, d.student_language ? 'Main language: ' + d.student_language : ''].filter(Boolean).join(' · '))}</span>
+        ${r.time_slot ? `<span class="meta">🕒 ${esc(r.time_slot)}</span>` : ''}
+        <span class="meta">Parent: ${esc([d.parent_name, d.parent_email, d.parent_phone].filter(Boolean).join(', ') || 'not given')}</span>
+        ${d.notes ? `<span class="meta">Note: ${esc(d.notes)}</span>` : ''}<span class="meta">Asked ${new Date(r.created_at).toLocaleDateString('en-GB')}</span></div>`; };
+    box.innerHTML = `<h3>Waiting for you <span class="count">${waiting.length}</span></h3>` + (waiting.length ? waiting.map(r => `<article class="panel person" data-rq="${r.id}">${info(r)}
+        <div class="person-actions"><button class="pill pill-live" data-rq-ok>✅ Approve</button><button class="pill pill-soft danger" data-rq-no>Decline</button></div></article>`).join('') : '<p class="meta">No requests waiting. 🎉</p>')
+      + (parent.length ? `<h3>Waiting for a parent to agree <span class="count">${parent.length}</span></h3>` + parent.map(r => `<article class="panel person" data-rq="${r.id}">${info(r)}<div class="person-actions"><button class="link-btn" data-rq-ok>Approve without waiting</button></div></article>`).join('') : '')
+      + (done.length ? `<details class="hubreq-done"><summary>Answered (${done.length})</summary>${done.map(r => `<div class="pending-row"><b>${esc((r.details || {}).student_name || 'Student')}</b><span class="meta">${{ approved: '✅ Approved', declined: '❌ Declined' + (r.decline_reason ? ': ' + esc(r.decline_reason) : ''), cancelled: 'Cancelled by the student' }[r.status] || r.status}</span></div>`).join('')}</details>` : '');
+  }
+  loadRequests();
+  document.getElementById('reqs') && document.getElementById('reqs').addEventListener('click', async e => {
+    const row = e.target.closest('[data-rq]'); if (!row) return;
+    const ok = !!e.target.closest('[data-rq-ok]'), no = !!e.target.closest('[data-rq-no]'); if (!ok && !no) return;
+    let reason = null;
+    if (no) {
+      reason = prompt('Why can’t this student join? They’ll see your reason.\n\nFor example: “This course is for Cambridge students” or “This class time is full: please choose another.”', '');
+      if (reason === null) return;
+    } else if (row.querySelector('[data-rq-ok].link-btn') && !confirm('The parent hasn’t agreed yet. Approve anyway?')) return;
+    const { error } = await db.rpc('teacher_decide_request', { rid: Number(row.dataset.rq), ok, reason });
+    if (error) return say(/COURSE_FULL/.test(error.message || '') ? 'That class time is full. Raise the maximum in Edit details, or decline with a reason.' : friendly(error));
+    say(ok ? '✅ Approved. The student has been told.' : 'Declined. The student has been told why.');
+    loadRequests(); if (typeof loadStudents === 'function') loadStudents();
+  });
 
   // lessons
   let lessons = [];
@@ -330,7 +421,7 @@ async function startTeacherCourse() {
     const has = new Set((certs.data || []).map(x => x.user_id));
     const rows = en.data || [];
     document.getElementById('students').innerHTML = rows.length ? rows.map(r => `<tr>
-        <td><b>${esc(r.student_name || (r.profiles ? r.profiles.full_name : '') || 'Student')}</b>${r.parent_name || r.parent_email || r.parent_phone ? `<span class="meta" style="display:block">Parent: ${esc([r.parent_name, r.parent_email, r.parent_phone].filter(Boolean).join(', '))}</span>` : ''}${r.emergency_name || r.emergency_phone ? `<span class="meta" style="display:block">Emergency contact: ${esc([r.emergency_name, r.emergency_phone].filter(Boolean).join(', '))}</span>` : ''}${r.student_age || r.student_language ? `<span class="meta" style="display:block">${esc([r.student_age ? 'Age ' + r.student_age : '', r.student_language ? 'Main language: ' + r.student_language : ''].filter(Boolean).join(', '))}</span>` : ''}${r.notes ? `<span class="meta" style="display:block">Note: ${esc(r.notes)}</span>` : ''}</td><td>${esc(r.student_grade || (r.profiles ? r.profiles.grade || '' : ''))}</td>
+        <td><b>${esc(r.student_name || (r.profiles ? r.profiles.full_name : '') || 'Student')}</b>${r.parent_name || r.parent_email || r.parent_phone ? `<span class="meta" style="display:block">Parent: ${esc([r.parent_name, r.parent_email, r.parent_phone].filter(Boolean).join(', '))}</span>` : ''}${r.emergency_name || r.emergency_phone ? `<span class="meta" style="display:block">Emergency contact: ${esc([r.emergency_name, r.emergency_phone].filter(Boolean).join(', '))}</span>` : ''}${r.student_age || r.student_language ? `<span class="meta" style="display:block">${esc([r.student_age ? 'Age ' + r.student_age : '', r.student_language ? 'Main language: ' + r.student_language : ''].filter(Boolean).join(', '))}</span>` : ''}${r.notes ? `<span class="meta" style="display:block">Note: ${esc(r.notes)}</span>` : ''}</td><td>${esc(r.student_grade || (r.profiles ? r.profiles.grade || '' : ''))}${r.time_slot ? `<span class="meta" style="display:block">🕒 ${esc(r.time_slot)}</span>` : ''}</td>
         <td>${new Date(r.created_at).toLocaleDateString('en-GB')}</td>
         <td><div class="bar small"><i style="width:${r.progress}%"></i></div> ${r.progress}%</td>
         <td><a class="pill pill-live" href="teacher-certificates.html?course=${id}&student=${r.user_id}">🏅 Award</a></td></tr>`).join('')

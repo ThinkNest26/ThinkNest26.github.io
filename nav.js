@@ -22,7 +22,7 @@
     teacher: [
       { ic: '🏠', label: 'Home', href: 'teacher-dashboard.html' },
       { ic: '🏫', label: 'My Classes', dyn: 'classes', items: [['classes.html', 'All my classes'], ['classes.html?new=1', '➕ New class'], ['teacher-attendance.html', 'Attendance overview'], ['groups.html', 'Study groups']] },
-      { ic: '📘', label: 'Online Courses', items: [['teacher-courses.html', 'My courses'], ['teacher-calendar.html', 'Live classes'], ['teacher-requests.html', 'Session requests']] },
+      { ic: '📘', label: 'Online Courses', items: [['teacher-courses.html', 'My courses'], ['teacher-settings.html#tprofile-form', '👤 My teacher profile'], ['teacher-calendar.html', 'Live classes'], ['teacher-requests.html', 'Session requests']] },
       { ic: '📊', label: 'Progress & certificates', items: [['teacher-insights.html', '📊 Student insights'], ['teacher-certificates.html', '🏅 Certificates']] },
       { ic: '💬', label: 'Messages & Community', items: [['messages.html', 'Messages'], ['community.html', 'Community']] },
       { ic: '☕', label: 'For me', items: [['teacher-hub.html', '🔔 My workshops (Beyond the Bell)'], ['teacher-cafe.html', '☕ Teacher Café'], ['teacher-connect.html', '🤝 Coffee & Connections']] },

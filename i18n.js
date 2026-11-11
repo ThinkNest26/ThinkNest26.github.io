@@ -1894,7 +1894,20 @@
 "Registered": "تاريخ التسجيل",
 "Confirm your child’s account": "تأكيد حساب طفلك",
 "Confirm my child’s account": "تأكيد حساب طفلي",
-"This wasn’t me / I don’t agree": "لم أكن أنا / لا أوافق"
+"This wasn’t me / I don’t agree": "لم أكن أنا / لا أوافق",
+"👤 My teacher profile": "👤 ملفي كمعلّم",
+"📝 Registrations": "📝 طلبات التسجيل",
+"Ask for a place on this course": "اطلب مكانًا في هذه الدورة",
+"Send my request": "أرسل طلبي",
+"View course details": "عرض تفاصيل الدورة",
+"Ask for a place": "اطلب مكانًا",
+"🚀 Publish": "🚀 نشر",
+"Unpublish": "إلغاء النشر",
+"👀 Preview as a parent": "👀 معاينة كوليّ أمر",
+"Your child’s course request": "طلب دورة لطفلك",
+"✅ I agree": "✅ أوافق",
+"No, I don’t agree": "لا، لا أوافق",
+"Cancel my request": "إلغاء طلبي"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times
