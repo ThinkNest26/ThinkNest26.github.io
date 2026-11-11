@@ -65,4 +65,35 @@
     d.showModal();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addButton); else addButton();
+
+  // ---- 💬 Send feedback (everyone, from the profile menu) ----
+  window.tnFeedback = async function () {
+    let me = {}, email = '';
+    try { const { data: { session } } = await db.auth.getSession(); if (session) { email = session.user.email || ''; const { data: p } = await db.from('profiles').select('full_name, role').eq('id', session.user.id).maybeSingle(); me = p || {}; } } catch (_) {}
+    const d = document.createElement('dialog'); d.className = 'dlg tn-help'; d.id = 'tn-feedback';
+    d.innerHTML = `<form class="auth-form" style="display:grid;gap:12px">
+      <h2 style="margin:0">💬 Send feedback</h2>
+      <p class="meta" style="margin:0">Something not working, confusing, or an idea to make Think Nest better? Tell us. We read every message.</p>
+      <fieldset style="border:0;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:8px 16px"><legend style="font-weight:700;margin-bottom:6px">What is it about?</legend>
+        ${[['bug', '🐞 Something isn’t working'], ['confusing', '🤔 Something is confusing'], ['idea', '💡 An idea'], ['praise', '💛 Something I like']].map(([v, t], i) => `<label class="remember"><input type="radio" name="kind" value="${v}" ${i === 0 ? 'checked' : ''}> ${t}</label>`).join('')}</fieldset>
+      <label>Tell us more <textarea name="msg" rows="4" maxlength="2000" required placeholder="What happened, and what did you expect?"></textarea></label>
+      <p class="meta">We’ll also send the page you’re on (${esc(location.pathname.split('/').pop() || 'home')}) to help us find the problem.</p>
+      <div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-x>Cancel</button><button class="btn btn-red auth-btn">Send feedback</button></div></form>`;
+    document.body.appendChild(d);
+    d.addEventListener('close', () => d.remove());
+    d.querySelector('[data-x]').onclick = () => d.close();
+    const f = d.querySelector('form');
+    f.onsubmit = async e => {
+      e.preventDefault();
+      const kind = f.querySelector('input[name=kind]:checked').value, labels = { bug: 'Something isn’t working', confusing: 'Something is confusing', idea: 'An idea', praise: 'Something I like' };
+      const msg = f.msg.value.trim(); if (!msg) return;
+      const info = 'Page: ' + location.pathname.split('/').pop() + location.search + '\nScreen: ' + window.innerWidth + '×' + window.innerHeight + '\nBrowser: ' + navigator.userAgent.slice(0, 160);
+      const b = f.querySelector('button.btn-red'); b.disabled = true;
+      const { error } = await db.from('contact_messages').insert({ name: me.full_name || 'Think Nest user', email: email || 'unknown', who: ({ student: 'Student', parent: 'Parent or guardian', teacher: 'Teacher', admin: 'Teacher' }[me.role] || 'Other'), topic: 'Feedback: ' + labels[kind], message: msg + '\n\n' + info });
+      b.disabled = false;
+      if (error) return say('Sorry, that didn’t send. Please try again, or use Contact us.');
+      d.close(); say('💛 Thank you! Your feedback has been sent to the Think Nest team.');
+    };
+    d.showModal();
+  };
 })();

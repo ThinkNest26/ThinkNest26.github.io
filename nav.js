@@ -2,7 +2,7 @@
 // Uses db from supabase-config.js
 (function () {
   // safety features on every signed-in page
-  if (!document.getElementById('tn-safety-js')) { const sj = document.createElement('script'); sj.id = 'tn-safety-js'; sj.src = 'safety.js?v=170'; document.body.appendChild(sj); }
+  if (!document.getElementById('tn-safety-js')) { const sj = document.createElement('script'); sj.id = 'tn-safety-js'; sj.src = 'safety.js?v=171'; document.body.appendChild(sj); }
   // Hide the old built-in menu until the right one is ready (stops the sidebar changing on every click)
   setTimeout(() => { const n0 = document.querySelector('.side nav'); if (n0) n0.classList.add('nav-ready'); }, 3000);
   // Help, contact and reference pages open in a new tab, so people don't lose their place
@@ -285,13 +285,14 @@
     pic.dataset.menu = '1'; pic.setAttribute('role', 'button'); pic.setAttribute('tabindex', '0'); pic.setAttribute('aria-haspopup', 'true'); pic.setAttribute('aria-expanded', 'false');
     pic.style.cursor = 'pointer';
     const m = document.createElement('div'); m.className = 'prof-menu'; m.hidden = true; m.setAttribute('role', 'menu');
-    m.innerHTML = `<a role="menuitem" href="${SETTINGS[view] || 'settings.html'}">⚙️ Account settings</a><a role="menuitem" href="help.html">❓ Help Centre</a><a role="menuitem" href="contact.html">✉️ Contact us</a><a role="menuitem" href="index.html">🌐 Think Nest website</a><a role="menuitem" href="#" class="prof-out">↩ Log out</a>`;
+    m.innerHTML = `<a role="menuitem" href="${SETTINGS[view] || 'settings.html'}">⚙️ Account settings</a><a role="menuitem" href="help.html">❓ Help Centre</a><a role="menuitem" href="#" class="prof-fb">💬 Send feedback</a><a role="menuitem" href="contact.html">✉️ Contact us</a><a role="menuitem" href="index.html">🌐 Think Nest website</a><a role="menuitem" href="#" class="prof-out">↩ Log out</a>`;
     (pic.parentElement || document.body).style.position = 'relative'; pic.after(m);
     const toggle = open => { m.hidden = !open; pic.setAttribute('aria-expanded', String(open)); };
     pic.addEventListener('click', e => { e.stopPropagation(); toggle(m.hidden); });
     pic.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(m.hidden); } if (e.key === 'Escape') toggle(false); });
     document.addEventListener('click', e => { if (!m.contains(e.target)) toggle(false); });
     m.querySelector('.prof-out').addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; });
+    m.querySelector('.prof-fb').addEventListener('click', e => { e.preventDefault(); toggle(false); if (typeof tnFeedback === 'function') tnFeedback(); });
   }
 
   // ----- Welcome tour (first visit, once per role) -----
