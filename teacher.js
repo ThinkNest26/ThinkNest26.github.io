@@ -72,14 +72,79 @@ function startTeacherSignup() {
 }
 
 // ---------- Course form (used on two pages) ----------
+// ---------- Extra course information shown on the course details page ----------
+const CI_FIELDS = ['intro_video_url', 'start_date', 'end_date', 'registration_deadline', 'class_schedule', 'time_zone', 'lesson_minutes', 'max_students', 'age_range', 'course_language', 'prior_knowledge', 'not_for', 'requirements', 'learning_goals', 'homework_time', 'feedback_info', 'certificate', 'price', 'missed_lesson_policy', 'cancel_policy'];
+const CI_NUMBERS = ['lesson_minutes', 'max_students'];
+
+function addCourseInfoFields(f, err) {
+  if (!f || f.intro_video_url) return;
+  const html = `<details class="ci-more" open style="margin:6px 0 4px">
+    <summary style="font-weight:700;cursor:pointer;padding:6px 0">Details for parents (shown on the course details page)</summary>
+    <div style="display:grid;gap:12px;padding-top:8px">
+      <label>Sample lesson or introduction video (optional)<input name="intro_video_url" type="url" placeholder="Paste a YouTube or Vimeo link"></label>
+      <p class="meta" style="margin:-6px 0 0">Tip: upload to YouTube as “Unlisted” so only people with the link can see it.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+        <label>Start date<input name="start_date" type="date"></label>
+        <label>End date<input name="end_date" type="date"></label>
+        <label>Register by<input name="registration_deadline" type="date"></label>
+      </div>
+      <label>Class days and times<input name="class_schedule" placeholder="e.g. Mondays and Wednesdays, 4:00–4:45 pm"></label>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+        <label>Time zone<input name="time_zone" placeholder="e.g. UAE time (GMT+4)"></label>
+        <label>Lesson length (minutes)<input name="lesson_minutes" type="number" min="5" max="300"></label>
+        <label>Maximum students<input name="max_students" type="number" min="1" max="500" placeholder="Leave empty for no limit"></label>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+        <label>Age range<input name="age_range" placeholder="e.g. 7–8 years"></label>
+        <label>Taught in<input name="course_language" placeholder="e.g. English"></label>
+      </div>
+      <label>By the end, students will be able to…<textarea name="learning_goals" rows="3" placeholder="One goal per line"></textarea></label>
+      <label>What students should already know<textarea name="prior_knowledge" rows="2" placeholder="e.g. Can read simple sentences"></textarea></label>
+      <label>This course is not suitable for (optional)<textarea name="not_for" rows="2" placeholder="e.g. Students who already read fluently"></textarea></label>
+      <label>What students need<textarea name="requirements" rows="2" placeholder="e.g. A laptop or tablet with a camera and microphone, a notebook and coloured pencils"></textarea></label>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+        <label>Homework each week<input name="homework_time" placeholder="e.g. About 30 minutes"></label>
+        <label>Certificate at the end<select name="certificate"><option value="">Select</option><option>Yes</option><option>No</option></select></label>
+        <label>Price<input name="price" placeholder="e.g. Free"></label>
+      </div>
+      <label>Feedback and progress<textarea name="feedback_info" rows="2" placeholder="e.g. Written feedback on every task and a progress update for parents every 2 weeks"></textarea></label>
+      <label>If a student misses a lesson<textarea name="missed_lesson_policy" rows="2" placeholder="e.g. The recording and resources are available the same day"></textarea></label>
+      <label>Cancelling or switching courses<textarea name="cancel_policy" rows="2" placeholder="e.g. Parents can cancel or switch to another course in the first 2 weeks"></textarea></label>
+    </div></details>`;
+  if (err) err.insertAdjacentHTML('beforebegin', html); else f.insertAdjacentHTML('beforeend', html);
+}
+
+function readCourseInfo(f) {
+  const row = {};
+  CI_FIELDS.forEach(k => {
+    if (!f[k]) return;
+    const v = f[k].value.trim();
+    row[k] = !v ? null : CI_NUMBERS.includes(k) ? Number(v) : v;
+  });
+  return row;
+}
+
+// YouTube or Vimeo link -> embeddable address (null if the link isn't one of those)
+function courseVideoEmbed(url) {
+  const s = String(url || '');
+  const yt = s.match(/(?:youtu\.be\/|v=|embed\/|shorts\/|live\/)([\w-]{11})/);
+  if (yt) return 'https://www.youtube-nocookie.com/embed/' + yt[1] + '?rel=0';
+  const vm = s.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (vm) return 'https://player.vimeo.com/video/' + vm[1];
+  return null;
+}
+
 function courseDialog(onSaved) {
   const dlg = document.getElementById('course-dialog'), f = document.getElementById('course-form'), err = document.getElementById('course-error');
   let editing = null, teacher = null;
+  addCourseInfoFields(f, err);
   f.addEventListener('submit', async e => {
     e.preventDefault(); showError(err, '');
     const row = { title: f.title.value.trim(), description: f.description.value.trim() || null, category: f.category.value, level: f.level.value,
                   weeks: f.weeks.value ? Number(f.weeks.value) : null, image_url: f.image_url.value.trim() || null,
                   curriculum: f.curriculum ? f.curriculum.value || null : null, audience: f.audience ? f.audience.value || 'students' : 'students', format: f.format ? f.format.value.trim() || null : null, grade: f.grade ? f.grade.value || null : null, subject: f.subject ? f.subject.value.trim() || null : null };
+    Object.assign(row, readCourseInfo(f));
+    if (row.intro_video_url && !courseVideoEmbed(row.intro_video_url)) return showError(err, 'The sample lesson video link doesn’t work. Paste a YouTube or Vimeo link, like https://youtu.be/…');
     const forStudents = !f.audience || f.audience.value === 'students';
     if (!forStudents && !f.category.value) return showError(err, 'Choose a hub topic.');
     if (forStudents && f.subject && !row.subject) return showError(err, 'Choose a subject.');
@@ -102,7 +167,8 @@ function courseDialog(onSaved) {
       editing = course; teacher = me;
       document.getElementById('course-dlg-title').textContent = course ? 'Edit course' : 'New course';
       f.reset();
-      if (course) ['title', 'description', 'category', 'level', 'weeks', 'image_url', 'curriculum', 'grade', 'subject', 'audience', 'format'].forEach(k => { if (f[k]) f[k].value = course[k] ?? ''; });
+      if (course) ['title', 'description', 'category', 'level', 'weeks', 'image_url', 'curriculum', 'grade', 'subject', 'audience', 'format'].concat(CI_FIELDS).forEach(k => { if (f[k]) f[k].value = course[k] ?? ''; });
+      else { if (f.time_zone) f.time_zone.value = 'UAE time (GMT+4)'; if (f.price) f.price.value = 'Free'; }
       showError(err, ''); dlg.showModal();
       if (typeof syncCourseForm === 'function') syncCourseForm(course);
     }
@@ -263,7 +329,7 @@ async function startTeacherCourse() {
     const has = new Set((certs.data || []).map(x => x.user_id));
     const rows = en.data || [];
     document.getElementById('students').innerHTML = rows.length ? rows.map(r => `<tr>
-        <td><b>${esc(r.student_name || (r.profiles ? r.profiles.full_name : '') || 'Student')}</b>${r.parent_name || r.parent_email || r.parent_phone ? `<span class="meta" style="display:block">Parent: ${esc([r.parent_name, r.parent_email, r.parent_phone].filter(Boolean).join(', '))}</span>` : ''}${r.notes ? `<span class="meta" style="display:block">Note: ${esc(r.notes)}</span>` : ''}</td><td>${esc(r.student_grade || (r.profiles ? r.profiles.grade || '' : ''))}</td>
+        <td><b>${esc(r.student_name || (r.profiles ? r.profiles.full_name : '') || 'Student')}</b>${r.parent_name || r.parent_email || r.parent_phone ? `<span class="meta" style="display:block">Parent: ${esc([r.parent_name, r.parent_email, r.parent_phone].filter(Boolean).join(', '))}</span>` : ''}${r.emergency_name || r.emergency_phone ? `<span class="meta" style="display:block">Emergency contact: ${esc([r.emergency_name, r.emergency_phone].filter(Boolean).join(', '))}</span>` : ''}${r.student_age || r.student_language ? `<span class="meta" style="display:block">${esc([r.student_age ? 'Age ' + r.student_age : '', r.student_language ? 'Main language: ' + r.student_language : ''].filter(Boolean).join(', '))}</span>` : ''}${r.notes ? `<span class="meta" style="display:block">Note: ${esc(r.notes)}</span>` : ''}</td><td>${esc(r.student_grade || (r.profiles ? r.profiles.grade || '' : ''))}</td>
         <td>${new Date(r.created_at).toLocaleDateString('en-GB')}</td>
         <td><div class="bar small"><i style="width:${r.progress}%"></i></div> ${r.progress}%</td>
         <td><a class="pill pill-live" href="teacher-certificates.html?course=${id}&student=${r.user_id}">🏅 Award</a></td></tr>`).join('')
