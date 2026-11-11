@@ -190,6 +190,19 @@ async function startCourseDetails() {
 
     <div class="cd-action cd-bottom" id="cd-action-bottom">${actionHtml()}</div>`;
 
+  // ---- share this course (WhatsApp, or the phone's share menu) ----
+  {
+    const top = document.getElementById('cd-action-top');
+    if (top && course.published !== false) {
+      const url = location.origin + location.pathname + '?id=' + id;
+      const msg = course.title + ' on Think Nest' + (course.teacher_name ? ' with ' + course.teacher_name : '') + ': ' + url;
+      top.insertAdjacentHTML('afterend', `<p class="cd-share"><a class="pill pill-soft" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">💬 Share on WhatsApp</a> <button type="button" class="pill pill-soft" id="cd-share-btn">🔗 Share or copy link</button></p>`);
+      document.getElementById('cd-share-btn').onclick = async () => {
+        if (navigator.share) { try { await navigator.share({ title: course.title + ' – Think Nest', text: msg.replace(': ' + url, ''), url }); return; } catch (_) { return; } }
+        try { await navigator.clipboard.writeText(url); say('Link copied. Paste it anywhere to share.'); } catch (_) { prompt('Copy this link:', url); }
+      };
+    }
+  }
   // ---- registration form ----
   const dlg = document.getElementById('reg-dialog'), f = document.getElementById('reg-form'), err = document.getElementById('reg-error');
   document.getElementById('reg-course').textContent = course.title;

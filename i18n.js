@@ -2261,7 +2261,8 @@
 "What students will learn": "ما سيتعلّمه الطلاب",
 "What your child needs": "ما يحتاجه طفلك",
 "Class times": "مواعيد الحصص",
-"Free": "مجانية"
+"Free": "مجانية",
+"🔗 Share or copy link": "🔗 شارك أو انسخ الرابط"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times
