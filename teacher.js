@@ -693,8 +693,9 @@ async function startTeacherRequests() {
     document.getElementById('pending').innerHTML = ''; return;
   }
   async function load() {
-    const { data, error } = await db.from('bookings').select('*, profiles(full_name, grade, curriculum)').eq('mentor_id', m.id).in('status', ['pending', 'accepted']).gte('starts_at', new Date(Date.now() - 3600000).toISOString()).order('starts_at');
+    const { data: all, error } = await db.from('bookings').select('*, profiles(full_name, grade, curriculum)').eq('mentor_id', m.id).in('status', ['pending', 'accepted']).gte('starts_at', new Date(Date.now() - 30 * 864e5).toISOString()).order('starts_at');
     if (error) return say(friendly(error));
+    const cut = Date.now() - 3600000, data = all.filter(b => new Date(b.starts_at) >= cut), past = all.filter(b => b.status === 'accepted' && new Date(b.starts_at) < cut).reverse();
     const pend = data.filter(b => b.status === 'pending'), acc = data.filter(b => b.status === 'accepted');
     document.getElementById('n-pend').textContent = pend.length;
     const nm = b => b.profiles ? b.profiles.full_name : 'A student';
@@ -704,7 +705,7 @@ async function startTeacherRequests() {
           <span class="meta">${esc(when(b.starts_at))}${b.profiles && b.profiles.grade ? ' · ' + esc(b.profiles.grade) : ''}</span>
           ${b.note ? `<span class="meta">“${esc(b.note)}”</span>` : ''}</div>
         ${b.suggested_at ? `<span class="meta">🕒 You suggested ${esc(when(b.suggested_at))}. Waiting for the student to answer.</span>` : ''}</div>
-        <div class="person-actions"><button class="pill pill-live" data-ans="1" data-id="${b.id}">Accept</button><button class="pill pill-soft" data-suggest="${b.id}">🕒 Suggest a different time</button><button class="pill pill-soft danger" data-ans="0" data-id="${b.id}">Reject</button></div>
+        <div class="person-actions"><button class="pill pill-live" data-ans="1" data-id="${b.id}">Accept</button><button class="pill pill-soft" data-suggest="${b.id}">🕒 Suggest a different time</button><button class="pill pill-soft" data-thread="${b.id}" data-title="Session with ${esc(nm(b))}" data-when="${esc(b.starts_at)}">💬 Thread</button><button class="pill pill-soft danger" data-ans="0" data-id="${b.id}">Reject</button></div>
         <form class="suggest-form" data-sform="${b.id}" hidden><label>New date and time <input type="datetime-local" name="at" required></label><label>Message (optional) <input name="msg" maxlength="200" placeholder="For example: I’m teaching then. Does this time work?"></label><button class="pill pill-live">Send suggestion</button></form></article>`).join('')
       : '<p class="empty">No requests waiting.</p>';
     document.getElementById('accepted').innerHTML = acc.length ? acc.map(b => {
@@ -712,10 +713,18 @@ async function startTeacherRequests() {
       const soon = new Date(b.starts_at) - Date.now() < 15 * 60e3;
       return `<article class="event ev-book"><div><h4>Session with ${esc(nm(b))}</h4><span class="meta">${esc(b.note || '')}</span><span class="when">${esc(when(b.starts_at))}</span>
         ${m.meeting_link ? `<span class="meta">The student joins with the same link from their calendar. Open it a few minutes early.</span>` : `<span class="meta">⚠️ Add your meeting link (Google Meet or Zoom) in <a href="teacher-settings.html">Account Settings → Mentor sessions</a> so you and the student can join.</span>`}</div>
-        <div class="event-actions">${m.meeting_link ? `<a class="pill ${live || soon ? 'pill-live' : 'pill-soft'}" href="${esc(m.meeting_link)}" target="_blank" rel="noopener">${live || soon ? '▶ Join now' : '🔗 Meeting link'}</a>` : ''}<span class="tag ${live ? 'tag-now' : ''}">${rel}</span></div></article>`;
+        <div class="event-actions">${m.meeting_link ? `<a class="pill ${live || soon ? 'pill-live' : 'pill-soft'}" href="${esc(m.meeting_link)}" target="_blank" rel="noopener">${live || soon ? '▶ Join now' : '🔗 Meeting link'}</a>` : ''}<button class="pill pill-soft" data-thread="${b.id}" data-title="Session with ${esc(nm(b))}" data-when="${esc(b.starts_at)}">💬 Session thread</button><span class="tag ${live ? 'tag-now' : ''}">${rel}</span></div></article>`;
     }).join('') : '<p class="empty">No accepted sessions coming up.</p>';
+    let pastBox = document.getElementById('past-sessions');
+    if (!pastBox) { pastBox = document.createElement('section'); pastBox.id = 'past-sessions'; document.getElementById('accepted').after(pastBox); }
+    pastBox.innerHTML = past.length ? `<h2 class="dash-h">Recent sessions (last 30 days)</h2><p class="hint">Write a short summary after each session. The student and their parents see it, and parents get it by email.</p>` + past.map(b => `<article class="event ev-book"><div><h4>Session with ${esc(nm(b))}</h4><span class="when">${esc(when(b.starts_at))}</span></div>
+        <div class="event-actions"><button class="pill pill-live" data-thread="${b.id}" data-title="Session with ${esc(nm(b))}" data-when="${esc(b.starts_at)}" data-summary="1">📋 Write a summary</button><button class="pill pill-soft" data-thread="${b.id}" data-title="Session with ${esc(nm(b))}" data-when="${esc(b.starts_at)}">💬 Thread</button></div></article>`).join('') : '';
   }
   load();
+  document.addEventListener('click', e => {
+    const th = e.target.closest('[data-thread]'); if (!th || typeof openSessionThread !== 'function') return;
+    openSessionThread(Number(th.dataset.thread), { title: th.dataset.title, when: th.dataset.when, role: 'mentor', summary: !!th.dataset.summary });
+  });
   document.getElementById('pending').addEventListener('click', e => {
     const sg = e.target.closest('[data-suggest]'); if (!sg) return;
     const f = document.querySelector(`[data-sform="${sg.dataset.suggest}"]`); if (f) f.hidden = !f.hidden;

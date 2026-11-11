@@ -177,6 +177,8 @@ async function startChild() {
   const cv = await db.rpc('child_conversations', { kid: kidId });
   const chats = cv.data || [];
   document.getElementById('k-chats').innerHTML = chats.length ? chats.map(c => `<a class="pending-row" href="messages.html?c=${c.id}"><span class="initials">${c.kind === 'group' ? '👥' : esc(ini(c.title))}</span><div><b>${c.kind === 'group' ? 'Group chat: ' : 'Chat with '}${esc(c.title || '')}</b><span class="meta">${c.messages} message${c.messages === 1 ? '' : 's'}${c.last_at ? ' · last ' + new Date(c.last_at).toLocaleDateString('en-GB') : ''}</span></div><span class="pill pill-soft">Read</span></a>`).join('') : '<p class="empty">No chats yet.</p>';
+  // mentor sessions, each with its shared thread (summaries from the mentor appear here)
+  if (typeof childSessions === 'function') { let sh = document.getElementById('k-sessions'); if (!sh) { sh = document.createElement('section'); sh.id = 'k-sessions'; const kc = document.getElementById('k-chats'); (kc.closest('section') || kc.parentElement).after(sh); } childSessions(kidId, sh); }
   document.getElementById('unlink').addEventListener('click', async () => {
     if (!confirm('Remove ' + (k.full_name || 'this child') + ' from your parent account? You can add them again later.')) return;
     const { error } = await db.from('parent_links').delete().eq('parent_id', user.id).eq('student_id', kidId);

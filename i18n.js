@@ -1932,7 +1932,12 @@
 "Show all courses": "عرض جميع الدورات",
 "Private messages with other teachers. Students can only chat privately with their student friends. For a class or study group, post in its community feed instead.": "رسائل خاصة مع معلمين آخرين. يمكن للطلاب المحادثة بشكل خاص مع أصدقائهم الطلاب فقط. للفصول ومجموعات الدراسة، انشر في صفحة المجتمع الخاصة بها.",
 "Join now": "انضم الآن",
-"No classmates found with that name.": "لم يتم العثور على زملاء بهذا الاسم."
+"No classmates found with that name.": "لم يتم العثور على زملاء بهذا الاسم.",
+"💬 Session thread": "💬 محادثة الجلسة",
+"📋 Write a summary": "📋 اكتب ملخّصًا",
+"💬 Thread": "💬 المحادثة",
+"Recent sessions (last 30 days)": "الجلسات الأخيرة (آخر 30 يومًا)",
+"🧑‍🏫 Mentor sessions": "🧑‍🏫 جلسات الإرشاد"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

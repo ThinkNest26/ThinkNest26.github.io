@@ -2193,3 +2193,19 @@ label[hidden] { display: none !important; }
 .cgroup-top b { display: block; font-size: 1.05rem; }
 .my-group { margin: 16px 0; display: grid; gap: 10px; }
 .course-scope { margin: -6px 0 18px; }
+
+.st-dlg { width: min(640px, 94vw); border: 0; border-radius: 16px; padding: 0; }
+.st-wrap { padding: 20px; display: grid; gap: 12px; }
+.st-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.st-head h2 { margin: 0; font-size: 1.25rem; }
+.st-list { max-height: 45vh; overflow-y: auto; display: grid; gap: 10px; padding: 2px; }
+.st-msg { background: #F5F6FB; border-radius: 12px; padding: 10px 12px; }
+.st-msg header { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.st-msg header .meta { margin-inline-start: auto; }
+.st-msg p { margin: 6px 0 0; line-height: 1.55; }
+.st-mentor { background: #EEF0F8; }
+.st-special { border-inline-start: 4px solid #F27A6F; }
+.st-form { display: grid; gap: 8px; }
+.st-form textarea { font: inherit; padding: 10px 12px; border: 1px solid #D6D9E2; border-radius: 10px; width: 100%; box-sizing: border-box; }
+.st-kind { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.st-btns { display: flex; justify-content: flex-end; }

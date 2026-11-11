@@ -300,7 +300,7 @@ async function startMentors() {
 
   // my session requests, including new times a mentor suggested
   async function myRequests() {
-    const { data: bk } = await db.from('bookings').select('*, mentors(name, meeting_link)').eq('user_id', user.id).in('status', ['pending', 'accepted']).gte('starts_at', new Date(Date.now() - 3600e3).toISOString()).order('starts_at');
+    const { data: bk } = await db.from('bookings').select('*, mentors(name, meeting_link)').eq('user_id', user.id).in('status', ['pending', 'accepted']).gte('starts_at', new Date(Date.now() - 30 * 864e5).toISOString()).order('starts_at', { ascending: false });
     let host = document.getElementById('my-bookings');
     if (!host) { host = document.createElement('section'); host.id = 'my-bookings'; list.before(host); }
     const rows = bk || [];
@@ -308,11 +308,12 @@ async function startMentors() {
       const who = b.mentors ? b.mentors.name : 'your mentor', link = b.mentors && b.mentors.meeting_link;
       const soon = b.status === 'accepted' && new Date(b.starts_at) - Date.now() < 15 * 60e3;
       return `<article class="panel person" data-bid="${b.id}"><div class="person-info"><h4>Session with ${esc(who)}</h4><span class="meta">${esc(when(b.starts_at))}</span>
-        ${b.status === 'pending' && b.suggested_at ? `<span class="meta">🕒 <b>${esc(who)} suggested ${esc(when(b.suggested_at))}</b>${b.suggest_note ? ': “' + esc(b.suggest_note) + '”' : ''}</span>` : b.status === 'pending' ? '<span class="meta">⏳ Waiting for the mentor to accept</span>' : '<span class="meta">✅ Accepted. It’s in your calendar.</span>'}</div>
-        <div class="person-actions">${b.status === 'pending' && b.suggested_at ? '<button class="pill pill-live" data-take="1">Accept the new time</button><button class="pill pill-soft danger" data-take="0">Cancel the session</button>' : ''}${b.status === 'accepted' && link ? `<a class="pill ${soon ? 'pill-live' : 'pill-soft'}" href="${esc(link)}" target="_blank" rel="noopener">${soon ? '▶ Join now' : '🔗 Meeting link'}</a>` : ''}</div></article>`;
+        ${b.status === 'pending' && b.suggested_at ? `<span class="meta">🕒 <b>${esc(who)} suggested ${esc(when(b.suggested_at))}</b>${b.suggest_note ? ': “' + esc(b.suggest_note) + '”' : ''}</span>` : b.status === 'pending' ? '<span class="meta">⏳ Waiting for the mentor to accept</span>' : `<span class="meta">${new Date(b.starts_at) < Date.now() - 3600e3 ? '✅ Done. Your mentor’s summary appears in the session thread.' : '✅ Accepted. It’s in your calendar.'}</span>`}</div>
+        <div class="person-actions">${b.status === 'pending' && b.suggested_at ? '<button class="pill pill-live" data-take="1">Accept the new time</button><button class="pill pill-soft danger" data-take="0">Cancel the session</button>' : ''}${b.status === 'accepted' && link && new Date(b.starts_at) > Date.now() - 3600e3 ? `<a class="pill ${soon ? 'pill-live' : 'pill-soft'}" href="${esc(link)}" target="_blank" rel="noopener">${soon ? '▶ Join now' : '🔗 Meeting link'}</a>` : ''}<button class="pill pill-soft" data-thread="${b.id}" data-title="Session with ${esc(who)}" data-when="${esc(b.starts_at)}">💬 Session thread</button></div></article>`;
     }).join('') : '';
   }
   myRequests();
+  document.addEventListener('click', e => { const th = e.target.closest('[data-thread]'); if (th && typeof openSessionThread === 'function') openSessionThread(Number(th.dataset.thread), { title: th.dataset.title, when: th.dataset.when, role: 'student' }); });
   document.addEventListener('click', async e => {
     const tb = e.target.closest('[data-take]'); if (!tb) return;
     const bid = Number(tb.closest('[data-bid]').dataset.bid), ok = tb.dataset.take === '1';
