@@ -1891,7 +1891,10 @@
 "Progress & certificates": "التقدّم والشهادات",
 "📊 Student insights": "📊 رؤى الطلاب",
 "📘 My online courses →": "📘 دوراتي عبر الإنترنت ←",
-"Registered": "تاريخ التسجيل"
+"Registered": "تاريخ التسجيل",
+"Confirm your child’s account": "تأكيد حساب طفلك",
+"Confirm my child’s account": "تأكيد حساب طفلي",
+"This wasn’t me / I don’t agree": "لم أكن أنا / لا أوافق"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

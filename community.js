@@ -399,10 +399,22 @@ async function loadNewAccounts() {
       <span class="initials">${esc((r.full_name || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</span>
       <div class="person-info"><h4>${esc(r.full_name || 'No name')} <span class="tag">${label(r)}</span></h4><span class="meta">${esc(r.email || '')}${r.created_at ? ' · signed up ' + new Date(r.created_at).toLocaleDateString('en-GB') : ''}</span>
         <span class="meta">${esc([r.grade, r.curriculum, r.school, r.country].filter(Boolean).join(' · '))}</span>
-        ${r.parent_name || r.parent_email ? `<span class="meta">Parent: ${esc([r.parent_name, r.parent_email].filter(Boolean).join(' · '))}</span>` : ''}</div>
+        ${r.parent_name || r.parent_email ? `<span class="meta">Parent: ${esc([r.parent_name, r.parent_email].filter(Boolean).join(' · '))}</span>` : ''}${r.role === 'student' ? '<span class="meta pc-status" data-pc="' + r.id + '"></span>' : ''}</div>
       <div class="person-actions"><button class="pill pill-live" data-accok>Approve</button>${r.account_status === 'pending' ? '<button class="pill pill-soft danger" data-accno>Decline</button>' : ''}</div></article>`;
   box.innerHTML = (pending.length ? pending.map(card).join('') : '<p class="empty">No new accounts waiting. 🎉</p>') +
     (declined.length ? `<details class="hubreq-done"><summary>Declined (${declined.length})</summary>${declined.map(card).join('')}</details>` : '');
+  // has the parent confirmed by email?
+  try {
+    const sids = rows.filter(r => r.role === 'student').map(r => r.id);
+    if (sids.length) {
+      const { data: pcs } = await db.from('parent_consents').select('student_id, status, sent_to').in('student_id', sids);
+      (pcs || []).forEach(p => { const el = box.querySelector(`[data-pc="${p.student_id}"]`); if (el) el.innerHTML = p.status === 'confirmed' ? '✅ <b>Parent confirmed by email</b>' : p.status === 'declined' ? '❌ <b>Parent said this wasn’t them. Don’t approve.</b>' : '⏳ Waiting for the parent to confirm (email sent to ' + esc(p.sent_to || '') + ')'; });
+    }
+  } catch (_) {}
+  box.querySelectorAll('[data-accok]').forEach(b => b.addEventListener('click', e => {
+    const st = b.closest('[data-acc]').querySelector('.pc-status');
+    if (st && /Waiting|wasn’t them/.test(st.textContent) && !confirm('The parent hasn’t confirmed this account by email yet. Approve it anyway?')) { e.stopImmediatePropagation(); e.preventDefault(); }
+  }, true));
   rows.filter(r => r.role === 'student').forEach(async r => {
     const { data: by } = await db.rpc('registered_by', { kid: r.id });
     const el = box.querySelector(`[data-acc="${r.id}"] .person-info`);
