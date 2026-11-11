@@ -152,7 +152,7 @@ async function drawPathStep() {
   const kidPick = role === 'parent' ? (kids.length ? `<label class="kid-pick">For which child? <select id="path-kid">${kids.map(k => `<option value="${k.id}">${esc(k.full_name || 'My child')}</option>`).join('')}</select></label>` : '<p class="note">Link your child to your account first: <a href="add-child.html">Add a child</a>.</p>') : '';
   const canAct = role === 'student' || (role === 'parent' && kids.length);
   document.getElementById('path-classes').innerHTML = `<h3>Classes for this path</h3>` + kidPick + (match.length ? match.map(c => `<div class="path-class"><div><b>${esc(c.title)}</b><span class="meta">${esc(c.teacher_name || '')}${c.weeks ? ' · ' + c.weeks + ' weeks' : ''}</span></div>
-      ${!session ? '' : joined.has(c.id) ? `<a class="pill pill-soft" href="course.html?id=${c.id}">Joined · Open</a>` : canAct ? (role === 'parent' ? `<button type="button" class="btn btn-red" data-join="${c.id}">Ask for a place</button>` : `<a class="btn btn-red" href="course-details.html?id=${c.id}">View details</a>`) : ''}</div>`).join('')
+      ${!session ? `<a class="pill pill-soft" href="course-details.html?id=${c.id}">View details</a>` : joined.has(c.id) ? `<a class="pill pill-soft" href="course.html?id=${c.id}">Joined · Open</a>` : canAct ? (role === 'parent' ? `<button type="button" class="btn btn-red" data-join="${c.id}">Ask for a place</button>` : `<a class="btn btn-red" href="course-details.html?id=${c.id}">View details</a>`) : ''}</div>`).join('')
     : `<p class="meta">No class is open for this path yet. Join the waiting list and we’ll let you know as soon as one opens.</p>`);
   let actions = '';
   if (!session) {

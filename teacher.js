@@ -241,6 +241,7 @@ async function startTeacherDashboard() {
   const { data: courses } = await db.from('courses').select('id, title').eq('teacher_id', user.id);
   const ids = (courses || []).map(c => c.id);
   document.getElementById('st-courses').textContent = ids.length;
+  teacherChecklist(user, profile);
   const { data: myMentor } = await db.from('mentors').select('id').eq('teacher_id', user.id).maybeSingle();
   if (myMentor) {
     const { data: pend } = await db.from('bookings').select('id').eq('mentor_id', myMentor.id).eq('status', 'pending');
@@ -375,12 +376,14 @@ async function startTeacherCourse() {
             <a class="pill pill-soft" href="group.html?id=${g.id}#t-res">📚 Resources</a>
             <a class="pill pill-soft" href="group.html?id=${g.id}#t-mem">👥 Students &amp; ⭐ stars</a>
             <a class="pill pill-soft" href="group.html?id=${g.id}#t-rc">📝 Report cards</a>
+            <button type="button" class="pill pill-soft" data-sched="${g.id}" data-slot="${esc(g.slot || '')}" data-name="${esc(g.name)}">📅 Schedule live classes</button>
           </div></article>`).join('')
         : '<p class="empty">The groups appear once the first student has a confirmed place.</p>');
   }
   loadGroups();
   document.getElementById('cgroups') && document.getElementById('cgroups').addEventListener('click', e => {
     const a = e.target.closest('[data-gatt]'); if (a && typeof openAttendanceDialog === 'function') openAttendanceDialog({ gid: Number(a.dataset.gatt), title: a.dataset.name });
+    const sc = e.target.closest('[data-sched]'); if (sc) scheduleGroupClasses(c, Number(sc.dataset.sched), sc.dataset.slot, sc.dataset.name);
   });
   if (location.hash === '#t-groups') { const gt = document.querySelector('[data-tab="t-groups"]'); if (gt) gt.click(); }
 
@@ -397,13 +400,22 @@ async function startTeacherCourse() {
         ${r.time_slot ? `<span class="meta">🕒 ${esc(r.time_slot)}</span>` : ''}
         <span class="meta">Parent: ${esc([d.parent_name, d.parent_email, d.parent_phone].filter(Boolean).join(', ') || 'not given')}</span>
         ${d.notes ? `<span class="meta">Note: ${esc(d.notes)}</span>` : ''}<span class="meta">Asked ${new Date(r.created_at).toLocaleDateString('en-GB')}</span></div>`; };
-    box.innerHTML = `<h3>Waiting for you <span class="count">${waiting.length}</span></h3>` + (waiting.length ? waiting.map(r => `<article class="panel person" data-rq="${r.id}">${info(r)}
+    box.innerHTML = `<h3>Waiting for you <span class="count">${waiting.length}</span></h3>` + (waiting.length > 1 ? '<p class="meta"><label class="remember" style="display:inline-flex"><input type="checkbox" id="rq-all"> Select all</label> <button type="button" class="pill pill-live" id="rq-bulk">✅ Approve selected</button></p>' : '') + (waiting.length ? waiting.map(r => `<article class="panel person" data-rq="${r.id}">${waiting.length > 1 ? `<input type="checkbox" class="rq-pick" value="${r.id}" aria-label="Select" style="width:20px;height:20px;margin-inline-end:8px">` : ''}${info(r)}
         <div class="person-actions"><button class="pill pill-live" data-rq-ok>✅ Approve</button><button class="pill pill-soft danger" data-rq-no>Decline</button></div></article>`).join('') : '<p class="meta">No requests waiting. 🎉</p>')
       + (parent.length ? `<h3>Waiting for a parent to agree <span class="count">${parent.length}</span></h3>` + parent.map(r => `<article class="panel person" data-rq="${r.id}">${info(r)}<div class="person-actions"><button class="link-btn" data-rq-ok>Approve without waiting</button></div></article>`).join('') : '')
       + (done.length ? `<details class="hubreq-done"><summary>Answered (${done.length})</summary>${done.map(r => `<div class="pending-row"><b>${esc((r.details || {}).student_name || 'Student')}</b><span class="meta">${{ approved: '✅ Approved', declined: '❌ Declined' + (r.decline_reason ? ': ' + esc(r.decline_reason) : ''), cancelled: 'Cancelled by the student' }[r.status] || r.status}</span></div>`).join('')}</details>` : '');
   }
   loadRequests();
   document.getElementById('reqs') && document.getElementById('reqs').addEventListener('click', async e => {
+    if (e.target.id === 'rq-all') { document.querySelectorAll('.rq-pick').forEach(x => x.checked = e.target.checked); return; }
+    if (e.target.id === 'rq-bulk') {
+      const picks = [...document.querySelectorAll('.rq-pick:checked')].map(x => Number(x.value)); if (!picks.length) return say('Tick the students to approve first.');
+      if (!confirm('Approve ' + picks.length + ' student' + (picks.length === 1 ? '' : 's') + '?')) return;
+      let ok = 0, full = 0;
+      for (const rid of picks) { const { error } = await db.rpc('teacher_decide_request', { rid, ok: true, reason: null }); if (!error) ok++; else if (/COURSE_FULL/.test(error.message || '')) full++; }
+      say('✅ Approved ' + ok + (full ? '. ' + full + ' couldn’t be approved because their class time is full.' : '.')); loadRequests(); loadGroups(); if (typeof loadStudents === 'function') loadStudents(); return;
+    }
+    if (e.target.classList.contains('rq-pick')) return;
     const row = e.target.closest('[data-rq]'); if (!row) return;
     const ok = !!e.target.closest('[data-rq-ok]'), no = !!e.target.closest('[data-rq-no]'); if (!ok && !no) return;
     let reason = null;
@@ -539,10 +551,19 @@ async function startTeacherCourse() {
         <td><b>${esc(r.student_name || (r.profiles ? r.profiles.full_name : '') || 'Student')}</b>${r.parent_name || r.parent_email || r.parent_phone ? `<span class="meta" style="display:block">Parent: ${esc([r.parent_name, r.parent_email, r.parent_phone].filter(Boolean).join(', '))}</span>` : ''}${r.emergency_name || r.emergency_phone ? `<span class="meta" style="display:block">Emergency contact: ${esc([r.emergency_name, r.emergency_phone].filter(Boolean).join(', '))}</span>` : ''}${r.student_age || r.student_language ? `<span class="meta" style="display:block">${esc([r.student_age ? 'Age ' + r.student_age : '', r.student_language ? 'Main language: ' + r.student_language : ''].filter(Boolean).join(', '))}</span>` : ''}${r.notes ? `<span class="meta" style="display:block">Note: ${esc(r.notes)}</span>` : ''}</td><td>${esc(r.student_grade || (r.profiles ? r.profiles.grade || '' : ''))}${slotsOf(c).length > 1 ? `<select class="slot-pick" data-slot-for="${r.user_id}" aria-label="Class time">${r.time_slot ? '' : '<option value="">Choose a time…</option>'}${slotsOf(c).map(sl => `<option ${sl === r.time_slot ? 'selected' : ''}>${esc(sl)}</option>`).join('')}</select>` : r.time_slot ? `<span class="meta" style="display:block">🕒 ${esc(r.time_slot)}</span>` : ''}</td>
         <td>${new Date(r.created_at).toLocaleDateString('en-GB')}</td>
         <td><div class="bar small"><i style="width:${r.progress}%"></i></div> ${r.progress}%</td>
-        <td><a class="pill pill-live" href="teacher-certificates.html?course=${id}&student=${r.user_id}">🏅 Award</a></td></tr>`).join('')
+        <td><a class="pill pill-live" href="teacher-certificates.html?course=${id}&student=${r.user_id}">🏅 Award</a> <button type="button" class="link-btn" data-remove-stud="${r.user_id}" data-name="${esc(r.student_name || (r.profiles ? r.profiles.full_name : '') || 'this student')}">Remove</button></td></tr>`).join('')
       : '<tr><td colspan="5" class="empty">No students have registered for this course yet.</td></tr>';
   }
   loadStudents();
+  document.getElementById('students').addEventListener('click', async e => {
+    const rb = e.target.closest('[data-remove-stud]'); if (!rb) return;
+    const why = prompt('Remove ' + rb.dataset.name + ' from this course? They and their parents will be told, with your reason.\n\nReason:', '');
+    if (why === null) return;
+    if (!why.trim()) return say('Please give a short reason, so the family understands.');
+    const { error } = await db.rpc('remove_student', { cid: id, sid: rb.dataset.removeStud, reason: why.trim() });
+    if (error) return say(friendly(error));
+    say('Removed. The student and their parents have been told.'); loadStudents(); loadGroups();
+  });
   // move a student to another class time (and so to that time's group)
   document.getElementById('students').addEventListener('change', async e => {
     const sel = e.target.closest('[data-slot-for]'); if (!sel || !sel.value) return;
@@ -860,4 +881,68 @@ async function teacherVerification(user, p) {
     const { error: ce } = await db.rpc('agree_safeguarding_code', { ok: code.checked }); if (ce) return say(friendly(ce));
     say(files.length ? 'Uploaded. The Think Nest team will check your documents.' : 'Saved.'); draw();
   };
+}
+
+
+// ---------- Teacher: create all the live classes for one group from its days and time ----------
+function scheduleGroupClasses(c, gid, slot, gname) {
+  let d = document.getElementById('sched-dlg');
+  if (!d) { d = document.createElement('dialog'); d.id = 'sched-dlg'; d.className = 'dlg'; document.body.appendChild(d); }
+  const guessDays = s => { const m = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 }; return Object.keys(m).filter(k => new RegExp('\\b' + k, 'i').test(s || '')).map(k => m[k]); };
+  const gd = guessDays(slot), names = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const today = new Date().toISOString().slice(0, 10);
+  d.innerHTML = `<form class="auth-form" style="display:grid;gap:12px;min-width:min(520px,88vw)">
+    <h2 style="margin:0">📅 Live classes for ${esc(slot || gname)}</h2>
+    <p class="meta" style="margin:0">Think Nest makes a live class for every chosen day between the two dates. Students in this group see them in their calendar and get a reminder.</p>
+    <fieldset style="border:0;padding:0;margin:0"><legend style="font-weight:700;margin-bottom:6px">Days</legend><div style="display:flex;flex-wrap:wrap;gap:8px">${names.map((n, i) => `<label class="remember"><input type="checkbox" name="day" value="${i}" ${gd.includes(i) ? 'checked' : ''}> ${n}</label>`).join('')}</div></fieldset>
+    <div class="two"><label>Start time <input type="time" name="time" required value="17:00"></label><label>Length (minutes) <input type="number" name="mins" min="10" max="240" value="${c.lesson_minutes || 60}"></label></div>
+    <div class="two"><label>From <input type="date" name="from" required value="${c.start_date && c.start_date > today ? c.start_date : today}"></label><label>Until <input type="date" name="to" required value="${c.end_date || ''}"></label></div>
+    <label>Meeting link (Google Meet or Zoom) <input type="url" name="link" required placeholder="https://meet.google.com/..."></label>
+    <div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-x>Cancel</button><button class="btn btn-red auth-btn">Create live classes</button></div></form>`;
+  const f = d.querySelector('form');
+  d.querySelector('[data-x]').onclick = () => d.close();
+  f.onsubmit = async e => {
+    e.preventDefault();
+    const days = [...f.querySelectorAll('input[name=day]:checked')].map(x => Number(x.value));
+    if (!days.length) return say('Choose at least one day.');
+    if (!f.to.value || f.to.value < f.from.value) return say('Choose an end date after the start date.');
+    const [hh, mm] = f.time.value.split(':').map(Number), mins = Number(f.mins.value) || 60, rows = [];
+    for (let dt = new Date(f.from.value + 'T00:00:00'); dt <= new Date(f.to.value + 'T00:00:00'); dt.setDate(dt.getDate() + 1)) {
+      if (!days.includes(dt.getDay())) continue;
+      const st = new Date(dt); st.setHours(hh, mm, 0, 0);
+      if (st < new Date()) continue;
+      rows.push({ course_id: c.id, group_id: gid, title: c.title + (slot ? ' · ' + slot : ''), starts_at: st.toISOString(), ends_at: new Date(st.getTime() + mins * 60e3).toISOString(), meeting_link: f.link.value.trim() });
+    }
+    if (!rows.length) return say('No class dates fall between those dates.');
+    if (rows.length > 120) return say('That’s more than 120 classes. Please choose a shorter date range.');
+    if (!confirm('Create ' + rows.length + ' live classes for this group?')) return;
+    let { error } = await db.from('sessions').insert(rows);
+    if (error && /group_id/.test(error.message || '')) return say('Please run the latest database update (Batch 7) first.');
+    if (error) return say(friendly(error));
+    d.close(); say('📅 ' + rows.length + ' live classes created. They’re in Live classes and in each student’s calendar.');
+  };
+  d.showModal();
+}
+
+// ---------- Teacher dashboard: getting-started checklist ----------
+async function teacherChecklist(user, p) {
+  const host = document.querySelector('.panel.profile'); if (!host) return;
+  const { data: cs } = await db.from('courses').select('*').eq('teacher_id', user.id);
+  const courses = cs || [];
+  let lessonsN = 0;
+  try { if (courses.length) { const { count } = await db.from('lessons').select('id', { count: 'exact', head: true }).in('course_id', courses.map(x => x.id)); lessonsN = count || 0; } } catch (_) {}
+  let verified = false; try { const { data: me } = await db.from('profiles').select('verified_at').eq('id', user.id).maybeSingle(); verified = !!(me && me.verified_at); } catch (_) {}
+  const steps = [
+    [teacherProfileReady(p), 'Complete your teacher profile', 'teacher-settings.html#tprofile-form'],
+    [verified, 'Get verified (upload your documents)', 'teacher-settings.html#verify-box'],
+    [courses.length > 0, 'Create your first course', 'teacher-courses.html'],
+    [courses.some(x => !coursePublishGaps(x).length), 'Add the details parents need', 'teacher-courses.html'],
+    [lessonsN > 0, 'Add your first lesson', courses[0] ? 'teacher-course.html?id=' + courses[0].id : 'teacher-courses.html'],
+    [courses.some(x => x.published !== false), 'Publish a course', 'teacher-courses.html']
+  ];
+  const done = steps.filter(s => s[0]).length;
+  if (done === steps.length) return;
+  host.insertAdjacentHTML('afterend', `<section class="panel getting-started"><h2 class="dash-h">🚀 Getting started <span class="count">${done} of ${steps.length}</span></h2>
+    <div class="bar" style="margin:4px 0 14px"><i style="width:${Math.round(done / steps.length * 100)}%"></i></div>
+    <ol class="steps-list">${steps.map(([ok, label, href]) => `<li class="${ok ? 'done' : ''}">${ok ? '✅ ' + esc(label) : `<a href="${href}"><b>${esc(label)}</b></a>`}</li>`).join('')}</ol></section>`);
 }

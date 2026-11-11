@@ -166,6 +166,18 @@ async function startCourse() {
     if (live !== enrol.progress && (doneIds.size || live > enrol.progress)) { const up = await db.from('enrollments').update({ progress: live }).eq('id', enrol.id).select().single(); enrol = up.error ? Object.assign({}, enrol, { progress: live }) : up.data; }
   }
   drawHero(); drawLessons();
+  if (enrol) {
+    const hero0 = document.getElementById('course-hero');
+    if (hero0 && !document.getElementById('leave-course')) hero0.insertAdjacentHTML('afterend', '<p class="meta" style="text-align:end"><button type="button" class="link-btn" id="leave-course">Leave this course</button></p>');
+    const lb = document.getElementById('leave-course');
+    if (lb) lb.onclick = async () => {
+      const why = prompt('Leave “' + course.title + '”? Your place will be offered to the next student, and your teacher will be told.\n\nReason (optional):', '');
+      if (why === null) return;
+      const { error } = await db.rpc('leave_course', { cid: id, kid: null, reason: why.trim() || null });
+      if (error) return say(friendly(error));
+      say('You’ve left the course.'); location.href = 'my-courses.html';
+    };
+  }
   if (enrol && typeof studentAttendance === 'function') studentAttendance(id, 'my-att');
   // the student's group for this course (community, resources, members)
   if (enrol) {
@@ -232,11 +244,29 @@ async function startCalendar() {
     db.from('bookings').select('*, mentors(name, meeting_link)').eq('user_id', user.id).in('status', ['booked', 'pending', 'accepted', 'rejected']).order('starts_at')
   ]);
   if (ses.error) say(friendly(ses.error));
+  let myGroupIds = null;
+  try { const { data: mg } = await db.rpc('my_groups'); myGroupIds = new Set((mg || []).map(g => g.id)); } catch (_) {}
+  const sesMine = (ses.data || []).filter(s => !s.group_id || !myGroupIds || myGroupIds.has(s.group_id));
   const events = [
-    ...(ses.data || []).map(s => ({ kind: 'class', at: new Date(s.starts_at), title: s.title, sub: [s.courses && s.courses.title, s.mentors && 'with ' + s.mentors.name].filter(Boolean).join(' · '), link: s.meeting_link })),
+    ...sesMine.map(s => ({ kind: 'class', at: new Date(s.starts_at), end: s.ends_at ? new Date(s.ends_at) : null, title: s.title, sub: [s.courses && s.courses.title, s.mentors && 'with ' + s.mentors.name].filter(Boolean).join(' · '), link: s.meeting_link })),
     ...(bk.data || []).map(b => ({ kind: 'book', id: b.id, status: b.status, at: new Date(b.starts_at), title: 'Mentor session with ' + (b.mentors ? b.mentors.name : 'your mentor'), sub: [b.status === 'pending' && b.suggested_at ? '🕒 Your mentor suggested ' + when(b.suggested_at) + '. Answer in Mentors.' : b.status === 'pending' ? 'Waiting for the mentor to accept' : b.status === 'rejected' ? 'The mentor couldn’t take this session' : '', b.note || ''].filter(Boolean).join(' · '), link: b.status === 'pending' || b.status === 'rejected' ? null : b.mentors && b.mentors.meeting_link }))
   ].sort((a, b) => a.at - b.at);
 
+  // 📅 Add my classes and sessions to a phone or computer calendar (.ics file)
+  const mt = document.getElementById('month-title');
+  if (mt && !document.getElementById('ics-btn')) {
+    mt.insertAdjacentHTML('afterend', '<button type="button" class="pill pill-soft" id="ics-btn" style="margin-inline-start:12px">📅 Add to my calendar</button>');
+    document.getElementById('ics-btn').onclick = () => {
+      const up = events.filter(e => e.at > new Date(Date.now() - 864e5) && !/Waiting|couldn’t/.test(e.sub || ''));
+      if (!up.length) return say('Nothing coming up to add yet.');
+      const f = d => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+      const clean = t => String(t || '').replace(/[\\;,]/g, ' ').replace(/\n/g, ' ');
+      const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Think Nest//EN', 'CALSCALE:GREGORIAN'].concat(...up.map((e, i) => ['BEGIN:VEVENT', 'UID:tn-' + f(e.at) + '-' + i + '@thinknestonline.com', 'DTSTAMP:' + f(new Date()), 'DTSTART:' + f(e.at), 'DTEND:' + f(e.end || new Date(e.at.getTime() + 60 * 60e3)),
+        'SUMMARY:' + clean(e.title), 'DESCRIPTION:' + clean([e.sub, e.link].filter(Boolean).join(' · ')), e.link ? 'URL:' + e.link : '', 'BEGIN:VALARM', 'TRIGGER:-PT30M', 'ACTION:DISPLAY', 'DESCRIPTION:' + clean(e.title), 'END:VALARM', 'END:VEVENT'].filter(Boolean)), ['END:VCALENDAR']).join('\r\n');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' })); a.download = 'think-nest-calendar.ics'; document.body.appendChild(a); a.click(); a.remove();
+      say('Downloaded. Open the file to add your classes to your calendar.');
+    };
+  }
   const dayKey = d => d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
   let month = new Date(); month.setDate(1);
   let picked = null;

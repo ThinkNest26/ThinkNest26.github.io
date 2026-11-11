@@ -16,7 +16,16 @@ const cdDate = d => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { 
 const cdLines = s => String(s || '').split(/\n+/).map(x => x.replace(/^[-•*]\s*/, '').trim()).filter(Boolean);
 
 async function startCourseDetails() {
-  const { user, profile } = await initShell();
+  // visitors without an account can look at a course before signing up
+  const { data: { session: s0 } } = await db.auth.getSession();
+  const guest = !s0;
+  let user = { id: '00000000-0000-0000-0000-000000000000' }, profile = {};
+  if (guest) {
+    document.body.classList.add('guest'); document.body.classList.remove('loading');
+    const side = document.getElementById('side'); if (side) side.remove();
+    const bar = document.querySelector('.app-bar'); if (bar) bar.innerHTML = '<a href="index.html"><img src="images/tn-logo-dark.png" alt="Think Nest home" style="height:44px"></a><div class="bar-right"><a class="pill pill-soft" href="start.html">Log in</a></div>';
+    const bl = document.querySelector('.back-link'); if (bl) { bl.href = 'index.html#paths'; bl.textContent = '‹ Think Paths'; }
+  } else ({ user, profile } = await initShell());
   const params = new URLSearchParams(location.search);
   const id = Number(params.get('id'));
   const box = document.getElementById('cd');
@@ -65,7 +74,13 @@ async function startCourseDetails() {
   if (role === 'parent' || profile.also_parent) {
     try { const { data: ln } = await db.from('parent_links').select('student_id').eq('parent_id', user.id); const ids = (ln || []).map(l => l.student_id); if (ids.length) { const { data: kp } = await db.from('profiles').select('id, full_name').in('id', ids); kids = kp || []; } } catch (_) {}
   }
+  let onWait = null;
+  if (!guest) { try { const { data: w } = await db.rpc('my_waitlist_place', { cid: id }); onWait = (w && w[0]) || null; } catch (_) {} }
   function actionHtml() {
+    if (guest) {
+      if (course.published === false) return '';
+      return `<p class="cd-wait">Create a free account to ask for a place. It takes a minute.</p><a class="btn btn-red" href="signup.html" data-after>I’m a student</a> <a class="btn btn-white outline" href="parent-signup.html" data-after>I’m a parent</a> <a class="link-btn" href="start.html" data-after>I already have an account</a>`;
+    }
     if (isOwner) return course.published === false ? '<p class="cd-wait">📝 This course is a draft. Only you can see this page until you publish it.</p>' : '<p class="cd-wait">👀 This is your course, as parents and students see it.</p>';
     if (role === 'parent' || (role !== 'student' && kids.length)) {
       if (!kids.length) return '<p class="cd-wait">To ask for a place, first link your child to your account.</p><a class="btn btn-red" href="add-child.html">Add a child</a>';
@@ -80,7 +95,8 @@ async function startCourseDetails() {
     const declined = req && req.status === 'declined' ? `<p class="cd-closed">Your last request wasn’t approved${req.decline_reason ? ': ' + esc(req.decline_reason) : '.'}</p>` : '';
     if (course.published === false) return '<p class="cd-wait">📝 This course is a draft. Only you can see this page until you publish it.</p>';
     if (closed) return `<p class="cd-closed">Registration closed on ${cdDate(course.registration_deadline)}.</p>`;
-    if (full()) return `<p class="cd-closed">This course is full.</p>`;
+    if (onWait) return `<p class="cd-wait">📋 You’re on the waiting list${onWait.slot ? ' for ' + esc(onWait.slot) : ''} (number ${onWait.place}). If a place opens, we’ll send your request to the teacher straight away.</p><button class="link-btn" data-leave-wait>Leave the waiting list</button>`;
+    if (full()) return `<p class="cd-closed">This course is full.</p><button class="btn btn-red" data-register data-wait>📋 Join the waiting list</button>`;
     return declined + `<button class="btn btn-red" data-register>${req && req.status === 'declined' ? 'Register again' : 'Register for this course'}</button>${placesText() ? `<span class="cd-places">${placesText()}</span>` : ''}${course.registration_deadline ? `<span class="cd-places">Register by ${cdDate(course.registration_deadline)}</span>` : ''}`;
   }
   const sec = (title, inner) => inner ? `<section class="panel cd-sec"><h2>${title}</h2>${inner}</section>` : '';
@@ -191,8 +207,11 @@ async function startCourseDetails() {
       return `<label class="reg-slot ${off ? 'off' : ''}"><input type="radio" name="time_slot" value="${esc(sl)}" ${off ? 'disabled' : ''} ${!multi && !off ? 'checked' : ''}> <span>${esc(sl)}${left !== null ? ` <small>${off ? 'full' : left + ' places left'}</small>` : ''}</span></label>`;
     }).join('') : '';
   }
+  let waitMode = false;
   function openForm() {
     f.reset(); showError(err, '');
+    document.getElementById('reg-title').textContent = waitMode ? 'Join the waiting list' : 'Ask for a place on this course';
+    f.querySelectorAll('input[name=time_slot]').forEach(r => { if (waitMode) r.disabled = false; });
     if (!multi && slots.length) { const r0 = f.querySelector('input[name=time_slot]:not([disabled])'); if (r0) r0.checked = true; }
     f.student_name.value = profile.full_name || '';
     if (profile.country) f.student_country.value = profile.country;
@@ -201,7 +220,9 @@ async function startCourseDetails() {
     dlg.showModal();
   }
   box.addEventListener('click', async e => {
-    if (e.target.closest('[data-register]')) return openForm();
+    if (e.target.closest('[data-after]')) { try { sessionStorage.setItem('tn_after_login', 'course-details.html?id=' + id); sessionStorage.setItem('tn_return', 'course-details.html?id=' + id); } catch (_) {} return; }
+    if (e.target.closest('[data-leave-wait]')) { const { error } = await db.rpc('leave_waitlist', { cid: id }); if (error) return say(friendly(error)); onWait = null; redraw(); return say('You’ve left the waiting list.'); }
+    if (e.target.closest('[data-register]')) { waitMode = !!e.target.closest('[data-wait]'); return openForm(); }
     const pa = e.target.closest('[data-parent-ask]');
     if (pa) {
       const sel = pa.parentElement.querySelector('[data-kid]'); pa.disabled = true;
@@ -218,7 +239,7 @@ async function startCourseDetails() {
       req = Object.assign({}, req, { status: 'cancelled' }); redraw(); say('Request cancelled.');
     }
   });
-  if (params.get('register') === '1' && role === 'student' && !isOwner && !enrol && !(req && ['parent', 'teacher'].includes(req.status)) && !closed && !full() && course.published !== false) openForm();
+  if (!guest && params.get('register') === '1' && role === 'student' && !isOwner && !enrol && !(req && ['parent', 'teacher'].includes(req.status)) && !closed && !full() && course.published !== false) openForm();
 
   f.addEventListener('submit', async e => {
     e.preventDefault(); showError(err, '');
@@ -246,12 +267,19 @@ async function startCourseDetails() {
     row.time_slot = ts ? ts.value : null;
     const sb = f.querySelector('button[type=submit]'); sb.disabled = true; sb.textContent = 'Sending…';
     const details = Object.assign({}, row); delete details.user_id; delete details.course_id;
+    if (waitMode) {
+      const { data: wp, error: we } = await db.rpc('join_course_waitlist', { cid: id, d: details });
+      sb.disabled = false; sb.textContent = 'Send my request';
+      if (we) return showError(err, '⚠️ ' + (we.message || friendly(we)));
+      dlg.close(); onWait = { slot: details.time_slot, place: wp }; redraw();
+      return say('You’re on the waiting list. If a place opens, your request goes to the teacher automatically.');
+    }
     const { data, error } = await db.rpc('request_course', { cid: id, d: details });
     sb.disabled = false; sb.textContent = 'Send my request';
     if (error) {
       const m = String(error.message || '');
       if (m.includes('duplicate')) { dlg.close(); say('You’re already registered for this course.'); return; }
-      if (m.includes('COURSE_FULL')) { dlg.close(); say(multi ? 'Sorry, that class time has just become full. Please choose another.' : 'Sorry, this course has just become full.'); return; }
+      if (m.includes('COURSE_FULL')) { dlg.close(); say(multi ? 'Sorry, that class time has just become full. Choose another, or join the waiting list.' : 'Sorry, this course has just become full. You can join the waiting list.'); return; }
       if (m.includes('REGISTRATION_CLOSED')) { dlg.close(); say('Registration for this course has closed.'); return; }
       return showError(err, '⚠️ The registration couldn’t be saved: ' + (m || friendly(error)));
     }

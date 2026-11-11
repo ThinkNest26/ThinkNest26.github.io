@@ -94,6 +94,7 @@ async function startParentDashboard() {
   // This week, for all children
   if (!kids.length) return;
   const ids = kids.map(k => k.id);
+  parentAttention(kids);
   const [en, bk] = await Promise.all([
     db.from('enrollments').select('user_id, course_id').in('user_id', ids),
     db.from('bookings').select('*, mentors(name)').in('user_id', ids).neq('status', 'cancelled').gte('starts_at', new Date().toISOString()).order('starts_at').limit(10)
@@ -144,6 +145,19 @@ async function startChild() {
       <div><h4>${esc(e.courses ? e.courses.title : 'Course')}</h4><span class="meta">${e.courses && e.courses.teacher_name ? 'With ' + esc(e.courses.teacher_name) + ' · ' : ''}Joined ${new Date(e.created_at).toLocaleDateString('en-GB')}</span></div>
       <div class="kid-bar"><div class="bar"><i style="width:${e.progress}%"></i></div><b>${e.progress}%</b></div></article>`).join('')
     : '<p class="empty">Not on any courses yet.</p>';
+  // a parent can take their child off a course
+  document.getElementById('k-course-list').querySelectorAll('.kid-course').forEach((el, i) => {
+    const e = enr[i]; if (!e) return;
+    el.insertAdjacentHTML('beforeend', `<button type="button" class="link-btn" data-leave="${e.course_id}">Leave this course</button>`);
+  });
+  document.getElementById('k-course-list').onclick = async ev => {
+    const b = ev.target.closest('[data-leave]'); if (!b) return;
+    const why = prompt('Take ' + (k.full_name || 'your child') + ' off this course? Their place will be offered to the next student.\n\nReason (optional, the teacher will see it):', '');
+    if (why === null) return;
+    const { error } = await db.rpc('leave_course', { cid: Number(b.dataset.leave), kid: kidId, reason: why.trim() || null });
+    if (error) return say(friendly(error));
+    say('Done. The teacher has been told.'); location.reload();
+  };
 
   const events = [
     ...ses.map(s => ({ at: new Date(s.starts_at), title: s.title, sub: s.courses ? s.courses.title : 'Live class', kind: 'class' })),
@@ -237,4 +251,27 @@ async function startParentSettings() {
     if (error) return showError(err, friendly(error));
     pf.reset(); say('Your password has been changed.');
   });
+}
+
+
+// ---------- Parent: one box for everything that needs a parent's answer ----------
+async function parentAttention(kids) {
+  const host = document.getElementById('kid-cards'); if (!host) return;
+  const ids = kids.map(k => k.id), name = id => ((kids.find(k => k.id === id) || {}).full_name || 'Your child').split(' ')[0];
+  const items = [];
+  try {
+    const { data: rq } = await db.from('course_requests').select('id, student_id, status, parent_token, courses(title)').in('student_id', ids).eq('status', 'parent');
+    (rq || []).forEach(r => items.push(`<a class="pending-row" href="parent-approve.html?t=${r.parent_token}"><span>📘</span><div><b>${esc(name(r.student_id))} wants to join “${esc(r.courses ? r.courses.title : 'a course')}”</b><span class="meta">Please agree or say no</span></div><span class="pill pill-live">Answer</span></a>`));
+  } catch (_) {}
+  try {
+    const { data: bk } = await db.from('bookings').select('id, user_id, starts_at, parent_ok, parent_token, mentors(name)').in('user_id', ids).eq('parent_ok', false).neq('status', 'cancelled').gte('starts_at', new Date().toISOString());
+    (bk || []).forEach(b => items.push(`<a class="pending-row" href="parent-booking.html?t=${b.parent_token}"><span>🧑‍🏫</span><div><b>${esc(name(b.user_id))} asked for a mentor session with ${esc(b.mentors ? b.mentors.name : 'a mentor')}</b><span class="meta">${esc(when(b.starts_at))}</span></div><span class="pill pill-live">Answer</span></a>`));
+  } catch (_) {}
+  try {
+    const since = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
+    const { data: at } = await db.from('attendance').select('student_id, status, day, course_id, group_id').in('student_id', ids).in('status', ['absent', 'late']).gte('day', since).order('day', { ascending: false }).limit(10);
+    (at || []).forEach(a => items.push(`<a class="pending-row" href="child.html?id=${a.student_id}"><span>${a.status === 'absent' ? '❌' : '⏰'}</span><div><b>${esc(name(a.student_id))} was ${a.status} on ${new Date(a.day + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}</b><span class="meta">See attendance</span></div></a>`));
+  } catch (_) {}
+  if (!items.length) return;
+  host.insertAdjacentHTML('beforebegin', `<section class="panel attention" id="attention"><h2 class="dash-h">👀 Needs your attention <span class="count">${items.length}</span></h2><div class="approve-list">${items.join('')}</div></section>`);
 }

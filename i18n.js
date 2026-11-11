@@ -1953,7 +1953,18 @@
 "📦 My data": "📦 بياناتي",
 "⬇ Download my data": "⬇ تنزيل بياناتي",
 "👪 Agree or say no": "👪 الموافقة أو الرفض",
-"🎥 Join the call": "🎥 انضم إلى المكالمة"
+"🎥 Join the call": "🎥 انضم إلى المكالمة",
+"👀 Needs your attention": "👀 يحتاج إلى انتباهك",
+"Leave this course": "مغادرة هذه الدورة",
+"📅 Add to my calendar": "📅 أضف إلى تقويمي",
+"📝 To do": "📝 المهام",
+"👋 Your first steps": "👋 خطواتك الأولى",
+"📋 Join the waiting list": "📋 انضم إلى قائمة الانتظار",
+"Leave the waiting list": "مغادرة قائمة الانتظار",
+"🚀 Getting started": "🚀 البداية",
+"✅ Approve selected": "✅ الموافقة على المحدد",
+"📅 Schedule live classes": "📅 جدولة الحصص المباشرة",
+"☀️ Today": "☀️ اليوم"
 };
   const norm = s => s.replace(/\s+/g, ' ').trim();
   // sentences with names, numbers or times

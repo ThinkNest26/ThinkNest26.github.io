@@ -2,7 +2,7 @@
 // Uses db from supabase-config.js
 (function () {
   // safety features on every signed-in page
-  if (!document.getElementById('tn-safety-js')) { const sj = document.createElement('script'); sj.id = 'tn-safety-js'; sj.src = 'safety.js?v=169'; document.body.appendChild(sj); }
+  if (!document.getElementById('tn-safety-js')) { const sj = document.createElement('script'); sj.id = 'tn-safety-js'; sj.src = 'safety.js?v=170'; document.body.appendChild(sj); }
   // Hide the old built-in menu until the right one is ready (stops the sidebar changing on every click)
   setTimeout(() => { const n0 = document.querySelector('.side nav'); if (n0) n0.classList.add('nav-ready'); }, 3000);
   // Help, contact and reference pages open in a new tab, so people don't lose their place

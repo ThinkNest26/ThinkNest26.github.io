@@ -2218,3 +2218,17 @@ label[hidden] { display: none !important; }
 .tn-help-btn:focus-visible { outline: 3px solid #F27A6F; outline-offset: 2px; }
 @media (max-width: 600px) { .tn-help-btn span { display: none; } .tn-help-btn { padding: 12px 14px; font-size: 1.2rem; } }
 dialog.tn-help { position: fixed; inset: 0; margin: auto; height: fit-content; width: min(560px, 94vw); max-height: 92vh; overflow-y: auto; }
+
+.steps-list { margin: 0; padding-inline-start: 22px; display: grid; gap: 10px; line-height: 1.6; }
+.steps-list li.done { color: #6E7485; }
+.attention { margin-bottom: 18px; }
+body.guest .app-main { margin: 0 !important; padding-inline-start: 0 !important; width: 100% !important; max-width: none !important; }
+body.guest .app-bar { justify-content: space-between; }
+.today-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.today-card { display: grid; gap: 2px; justify-items: start; text-align: start; border: 1px solid #E3E6F0; background: #fff; border-radius: 14px; padding: 12px 14px; font: inherit; cursor: pointer; }
+.today-card b { font-size: 1.6rem; color: #3E4B94; }
+.today-card.urgent { border-color: #F27A6F; background: #FFF4F2; }
+.adm-today { margin-bottom: 18px; }
+.getting-started { margin: 16px 0; }
+#sched-dlg { position: fixed; inset: 0; margin: auto; height: fit-content; width: min(600px, 94vw); max-height: 92vh; overflow-y: auto; }
+body.app.guest { grid-template-columns: 1fr; display: block; }

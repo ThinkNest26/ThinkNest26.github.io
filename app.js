@@ -214,6 +214,7 @@ async function startLoginPage() {
           : `This is a ${r} account, not a school staff account. Please go back and choose Log in → ${r === 'parent' ? 'Parent' : 'Student'}. (If your browser filled in a saved login, check the email.)`);
       }
     }
+    { let back = null; try { back = sessionStorage.getItem('tn_after_login'); sessionStorage.removeItem('tn_after_login'); } catch (_) {} if (back && /^course-details\.html\?id=\d+/.test(back)) { location.href = back; return; } }
     location.href = await homeFor(d.user.id);
   });
 }
@@ -369,6 +370,7 @@ async function startDashboard() {
   // Stats
   const myEnr = enr.data || [];
   await liveProgress(uid, myEnr);
+  studentToDo(uid, myEnr, p);
   document.getElementById('st-enrolled').textContent = myEnr.length;
   document.getElementById('st-active').textContent = myEnr.filter(e => e.progress < 100).length;
   document.getElementById('st-done').textContent = myEnr.filter(e => e.progress >= 100).length;
@@ -623,4 +625,34 @@ async function tnDownloadMyData() {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'think-nest-my-data.json'; document.body.appendChild(a); a.click(); a.remove();
   say('Your data has been downloaded.');
+}
+
+// ----- Student dashboard: first steps for new students, and a To do list across all courses -----
+async function studentToDo(uid, myEnr, p) {
+  const fs = document.getElementById('first-steps'), td = document.getElementById('todo');
+  if (fs && !myEnr.length) {
+    let waiting = 0, parentLinked = false;
+    try { const { data: r } = await db.from('course_requests').select('id').eq('student_id', uid).in('status', ['parent', 'teacher']); waiting = (r || []).length; } catch (_) {}
+    try { const { data: l } = await db.from('parent_links').select('parent_id').eq('student_id', uid).limit(1); parentLinked = !!(l || []).length; } catch (_) {}
+    fs.hidden = false;
+    fs.innerHTML = `<h2 class="dash-h">👋 Your first steps</h2><ol class="steps-list">
+      <li class="${waiting ? 'done' : ''}"><b>Find a course</b> for your curriculum and grade, and ask for a place. ${waiting ? '✅ You’ve asked: waiting for an answer.' : '<a class="pill pill-live" href="all-courses.html">Find a course</a>'}</li>
+      <li class="${parentLinked ? 'done' : ''}"><b>Link your parent</b> so they can follow your progress and agree to courses. ${parentLinked ? '✅ Done.' : 'Give them your family code from <a href="settings.html">Account settings</a>.'}</li>
+      <li><b>Say hello</b> in the <a href="community.html">Community</a> once you’re in a course.</li></ol>`;
+  }
+  if (!td || !myEnr.length) return;
+  try {
+    const cids = myEnr.map(e => e.course_id);
+    const { data: ls } = await db.from('lessons').select('id, course_id, title, courses(title)').in('course_id', cids);
+    const lids = (ls || []).map(l => l.id); if (!lids.length) return;
+    const soon = new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10);
+    const [{ data: its }, { data: rs }] = await Promise.all([db.from('lesson_items').select('id, lesson_id, title, kind, due_date').in('lesson_id', lids).not('due_date', 'is', null).lte('due_date', soon).order('due_date'), db.from('item_responses').select('item_id').eq('student_id', uid)]);
+    const done = new Set((rs || []).map(r => r.item_id)), today = new Date().toISOString().slice(0, 10);
+    const list = (its || []).filter(i => !done.has(i.id));
+    if (!list.length) return;
+    const les = id => (ls || []).find(l => l.id === id) || {};
+    td.hidden = false;
+    td.innerHTML = `<h2 class="dash-h">📝 To do <span class="count">${list.length}</span></h2><div class="approve-list">${list.slice(0, 8).map(i => { const l = les(i.lesson_id), late = i.due_date < today;
+      return `<a class="pending-row" href="course.html?id=${l.course_id}#item-${i.id}"><span>${late ? '⚠️' : '📌'}</span><div><b>${esc(i.title)}</b><span class="meta">${esc((l.courses && l.courses.title) || '')} · ${late ? 'was due' : 'due'} ${new Date(i.due_date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}</span></div>${late ? '<span class="tag tag-wait">Late</span>' : ''}</a>`; }).join('')}</div>`;
+  } catch (_) {}
 }

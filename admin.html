@@ -9,10 +9,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=169">
-<link rel="stylesheet" href="app.css?v=169">
-<link rel="stylesheet" href="rtl.css?v=169">
-<script src="i18n.js?v=169"></script>
+<link rel="stylesheet" href="style.css?v=170">
+<link rel="stylesheet" href="app.css?v=170">
+<link rel="stylesheet" href="rtl.css?v=170">
+<script src="i18n.js?v=170"></script>
 </head>
 <body class="app loading">
 <aside class="side" id="side">
@@ -42,6 +42,7 @@
 <div class="stat s1"><span class="stat-ic">✅</span><div><b id="st-enrol">0</b><span>Course enrolments</span></div></div>
 <div class="stat stat-wait"><span class="stat-ic">🔔</span><div><b id="st-waiting">0</b><span>Waiting for you</span></div></div>
 </section>
+<section class="panel adm-today" id="adm-today"><h2 class="dash-h">☀️ Today</h2><div class="today-grid" id="today-grid"><p class="empty">Loading…</p></div></section>
 <div class="adm-tabs" role="tablist" aria-label="Admin sections">
 <button role="tab" id="tab-accounts" aria-controls="pane-accounts" aria-selected="false" data-tab="accounts"><span>👥</span>Accounts<i class="adm-badge" data-badge="accounts" hidden>0</i></button>
 <button role="tab" id="tab-hubs" aria-controls="pane-hubs" aria-selected="false" data-tab="hubs"><span>🏠</span>Hubs<i class="adm-badge" data-badge="hubs" hidden>0</i></button>
@@ -119,15 +120,26 @@
 <div class="side-shade" id="side-shade"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="supabase-config.js?v=169"></script>
-<script src="app.js?v=169"></script>
-<script src="nav.js?v=169"></script>
-<script src="notify.js?v=169" defer></script>
-<script src="teacher.js?v=169"></script>
+<script src="supabase-config.js?v=170"></script>
+<script src="app.js?v=170"></script>
+<script src="nav.js?v=170"></script>
+<script src="notify.js?v=170" defer></script>
+<script src="teacher.js?v=170"></script>
 <script>startAdmin();</script>
-<script src="admintabs.js?v=169"></script>
-<script src="community.js?v=169"></script>
-<script src="chat.js?v=169"></script>
-<script>loadReports().then(loadGroupReports); loadMessageReview(); loadApprovalSetting(); loadWaitlists(); loadHubRequests(); loadNewAccounts(); loadContactMessages(); loadConnectAdmin(); loadEmailAdmin(); loadDeletionRequests(); loadSafeguarding(); loadTeacherChecks();</script>
+<script src="admintabs.js?v=170"></script>
+<script src="community.js?v=170"></script>
+<script src="chat.js?v=170"></script>
+<script>loadReports().then(loadGroupReports); loadMessageReview(); loadApprovalSetting(); loadWaitlists(); loadHubRequests(); loadNewAccounts(); loadContactMessages(); loadConnectAdmin(); loadEmailAdmin(); loadDeletionRequests(); loadSafeguarding(); loadTeacherChecks();
+setTimeout(function adminToday() {
+  const n = id => Number((document.getElementById(id) || {}).textContent || 0);
+  const items = [['🛟', 'Safety concerns', n('n-sg'), 'safety'], ['✅', 'Teachers to verify', n('n-tchk'), 'safety'], ['👥', 'New accounts', n('n-newacc'), 'accounts'], ['🗑️', 'Deletion requests', n('n-delreq'), 'accounts'],
+    ['🏠', 'Hub requests', n('n-hubreq'), 'hubs'], ['✉️', 'Website messages', n('n-contact'), 'messages'], ['🚩', 'Reported posts', n('n-reports'), 'safety'], ['💬', 'Messages to check', n('n-msgs'), 'safety']];
+  const g = document.getElementById('today-grid'); if (!g) return;
+  const todo = items.filter(x => x[2] > 0);
+  g.innerHTML = todo.length ? todo.map(([ic, l, c, tab]) => `<button type="button" class="today-card ${/Safety|verify/.test(l) ? 'urgent' : ''}" data-go="${tab}"><span>${ic}</span><b>${c}</b><small>${l}</small></button>`).join('') : '<p class="empty">Nothing waiting. 🎉 Everything is up to date.</p>';
+  g.onclick = e => { const b = e.target.closest('[data-go]'); if (b) { const t = document.getElementById('tab-' + b.dataset.go); if (t) t.click(); } };
+  if (!adminToday.again) { adminToday.again = true; setTimeout(adminToday, 4000); }
+}, 2500);
+</script>
 </body>
 </html>
