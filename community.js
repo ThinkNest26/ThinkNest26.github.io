@@ -79,7 +79,7 @@ async function startCommunity() {
   const active = (myGroups || []).filter(g => g.my_status === 'active');
   const studyGroups = active.filter(g => g.kind !== 'class'), classes = active.filter(g => g.kind === 'class');
   const gIc = g => (g.name || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
-  document.getElementById('side-groups').innerHTML = `<h3>My groups &amp; classes</h3>${active.length ? active.map(g => `<a class="side-group" href="group.html?id=${g.id}"><span class="g-ic ${g.kind === 'class' ? 'cls' : ''}">${esc(gIc(g))}</span><span><b>${esc(g.name)}</b><span class="meta">${g.kind === 'class' ? '🏫 Class · ' : '👥 '}${g.members} members</span></span></a>`).join('') : '<p class="meta">You’re not in any groups yet.</p>'}
+  document.getElementById('side-groups').innerHTML = `<h3>My groups &amp; courses</h3>${active.length ? active.map(g => `<a class="side-group" href="group.html?id=${g.id}"><span class="g-ic ${g.kind === 'class' ? 'cls' : ''}">${esc(gIc(g))}</span><span><b>${esc(g.name)}</b><span class="meta">${g.kind === 'class' ? '🏫 Class · ' : '👥 '}${g.members} members</span></span></a>`).join('') : '<p class="meta">You’re not in any groups yet.</p>'}
     <a class="rw-link" href="groups.html">${me.role === 'student' ? '+ Create or join a study group' : 'Open Study Groups →'}</a>`;
   if (classes.length && typeof leaderboardHtml === 'function') {
     const lb = await leaderboardHtml(classes[0].id, classes[0].name);
@@ -87,11 +87,11 @@ async function startCommunity() {
   }
   async function groupTab(list, boxId, emptyMsg) {
     const box = document.getElementById(boxId);
-    if (!list.length) { box.innerHTML = `<div class="empty-box"><p>${emptyMsg}</p><a class="btn btn-red" href="groups.html">Go to Study Groups</a></div>`; return; }
+    if (!list.length) { const toCourses = boxId === 'ct-classes'; box.innerHTML = `<div class="empty-box"><p>${emptyMsg}</p><a class="btn btn-red" href="${toCourses ? (['teacher', 'school_leader', 'admin'].includes(me.role) ? 'teacher-courses.html' : 'my-courses.html') : 'groups.html'}">${toCourses ? 'Go to My courses' : 'Go to Study Groups'}</a></div>`; return; }
     const { data: gp } = await db.from('group_posts').select('id, group_id, author_name, author_role, body, created_at').in('group_id', list.map(g => g.id)).order('created_at', { ascending: false }).limit(25);
     const name = id => (list.find(g => g.id === id) || {}).name || '';
     box.innerHTML = `<div class="group-tiles">${list.map(g => `<a class="panel group-tile" href="group.html?id=${g.id}"><span class="g-ic big ${g.kind === 'class' ? 'cls' : ''}">${esc(gIc(g))}</span><b>${esc(g.name)}</b><span class="meta">${g.members} members${g.kind === 'class' ? ' · with ' + esc(g.owner_name || 'your teacher') : ''}</span><span class="tile-go">Open →</span></a>`).join('')}</div>
-      <h3 class="dash-h">Latest from your ${boxId === 'ct-classes' ? 'classes' : 'groups'}</h3>` +
+      <h3 class="dash-h">Latest from your ${boxId === 'ct-classes' ? 'courses' : 'groups'}</h3>` +
       ((gp || []).length ? gp.map(p => `<a class="panel post gp-post" href="group.html?id=${p.group_id}"><span class="pt-badge">${esc(name(p.group_id))}</span><header class="post-head"><span class="initials">${esc((p.author_name || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</span><div><b>${esc(tnNameFor(p.author_name, p.author_role) || 'Member')}</b> ${roleTag(p.author_role)}<span class="meta">${ago(p.created_at)}</span></div></header><p class="post-body">${esc(p.body.slice(0, 280))}${p.body.length > 280 ? '…' : ''}</p></a>`).join('') : '<p class="empty">No posts yet. Open a group to start the conversation.</p>');
   }
   document.querySelector('.comm-tabs').addEventListener('click', e => {
@@ -99,7 +99,7 @@ async function startCommunity() {
     document.querySelectorAll('[data-ctab]').forEach(x => x.setAttribute('aria-selected', x === b));
     ['everyone', 'groups', 'classes'].forEach(t => document.getElementById('ct-' + t).hidden = t !== b.dataset.ctab);
     if (b.dataset.ctab === 'groups') groupTab(studyGroups, 'ct-groups', me.role === 'student' ? 'You’re not in a study group yet. Create one and invite your friends!' : 'No study groups yet.');
-    if (b.dataset.ctab === 'classes') groupTab(classes, 'ct-classes', ['teacher', 'school_leader', 'admin'].includes(me.role) ? 'You haven’t made a class yet. Create one on the My Classes page.' : 'You’re not in a class yet. Your teacher will add you.');
+    if (b.dataset.ctab === 'classes') groupTab(classes, 'ct-classes', ['teacher', 'school_leader', 'admin'].includes(me.role) ? 'Your courses’ communities appear here once students join your courses.' : 'You’re not on a course yet. Find a course and ask for a place, and its community will appear here.');
   });
 
   const feed = document.getElementById('feed'), more = document.getElementById('more');

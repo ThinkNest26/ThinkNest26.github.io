@@ -161,8 +161,17 @@ async function publishCourse(c, p, on) {
   if (on) {
     const gaps = coursePublishGaps(c, p);
     if (gaps.length) {
-      const prof = gaps.some(g => g.startsWith('your teacher profile'));
-      alert('Before publishing “' + c.title + '”, please add:\n\n• ' + gaps.join('\n• ') + '\n\n' + (prof ? 'Your teacher profile is in Online Courses → 👤 My teacher profile. ' : '') + 'Course details are in Edit details → Details for parents.');
+      const prof = gaps.some(g => g.startsWith('your teacher profile')), det = gaps.some(g => !g.startsWith('your teacher profile'));
+      let dlg = document.getElementById('pub-gaps');
+      if (!dlg) { dlg = document.createElement('dialog'); dlg.id = 'pub-gaps'; dlg.className = 'dlg'; document.body.appendChild(dlg); }
+      dlg.innerHTML = `<form method="dialog" style="max-width:460px"><h2 style="margin-top:0">Almost ready to publish</h2><p>Before publishing “${esc(c.title)}”, please add:</p>
+        <ul>${gaps.map(g => `<li>${esc(g)}</li>`).join('')}</ul>
+        <div class="row" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px">
+          ${det ? '<button type="button" class="btn btn-red" data-go="details">✏️ Add the course details</button>' : ''}
+          ${prof ? '<a class="btn btn-white outline" href="teacher-settings.html#tprofile-form">👤 Complete my teacher profile</a>' : ''}
+          <button class="btn btn-white outline" value="close">Not now</button></div></form>`;
+      dlg.querySelector('[data-go="details"]')?.addEventListener('click', () => { dlg.close(); const ed = document.getElementById('edit-course'); if (ed) { ed.click(); setTimeout(() => { const m = document.querySelector('#course-form .ci-more'); if (m) { m.open = true; m.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }, 150); } });
+      dlg.showModal();
       return false;
     }
   } else if (!confirm('Unpublish “' + c.title + '”? It will be hidden from students until you publish it again. Students already registered keep their place.')) return false;

@@ -317,3 +317,16 @@ async function startCourseDetails() {
     say(data === 'parent' ? 'Request sent! We’ve emailed your parent or guardian to agree, then the teacher will confirm your place.' : 'Request sent! The teacher will confirm your place soon.');
   });
 }
+
+
+// Opened in a new tab (e.g. a teacher's "Preview as a parent"): the back link closes the tab instead of opening All courses
+(function () {
+  const bl = document.querySelector('.back-link'); if (!bl) return;
+  if (history.length <= 1) {
+    bl.textContent = '✕ Close preview';
+    bl.addEventListener('click', e => { e.preventDefault(); window.close(); setTimeout(() => { location.href = bl.getAttribute('href'); }, 300); });
+  } else {
+    let same = false; try { same = new URL(document.referrer).origin === location.origin; } catch (_) {}
+    if (same) { bl.textContent = '‹ Back'; bl.addEventListener('click', e => { e.preventDefault(); history.back(); }); }
+  }
+})();

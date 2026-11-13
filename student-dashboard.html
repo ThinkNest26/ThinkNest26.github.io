@@ -144,5 +144,7 @@
   <script>document.addEventListener("DOMContentLoaded", () => {}); setTimeout(() => { initPaths(); document.querySelectorAll("[data-path-find]").forEach(b => b.addEventListener("click", () => openPathChooser(null))); resumePendingPath(); if (typeof attendanceOverviewFor === 'function') db.auth.getSession().then(({ data }) => { if (!data.session) return; attendanceOverviewFor(data.session.user.id, 'my-att-all').then(() => { const b = document.getElementById('my-att-box'); if (b && !document.getElementById('my-att-all').textContent.includes('No attendance')) b.hidden = false; }); }); if (typeof getRewards === 'function') getRewards().then(s => { const b = document.getElementById('my-rewards'); if (s && b) { b.hidden = false; b.innerHTML = '<h2>My rewards</h2>' + rewardMiniHtml(s); } }); }, 600);</script>
   <script src="wellbeing.js?v=171"></script>
   <script>tnCheckin();</script>
+  <script src="characters.js?v=178"></script>
+  <script src="avatar-settings.js?v=178"></script>
 </body>
 </html>

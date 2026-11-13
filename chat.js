@@ -29,7 +29,7 @@ async function startChat() {
     // group and class chats were the same as each group's own feed, so Messages now holds private chats only
     convs = (data || []).filter(c => c.kind !== 'group');
     const total = convs.reduce((s, c) => s + Number(c.unread || 0), 0);
-    const dot = document.getElementById('nav-unread'); if (dot) dot.hidden = !total;
+    if (typeof window.tnSetUnread === 'function') window.tnSetUnread(total); else { const dot = document.getElementById('nav-unread'); if (dot) dot.hidden = !total; }
     document.getElementById('convs').innerHTML = convs.length ? convs.map(c => `<button class="conv ${current && current.id === c.id ? 'on' : ''}" data-conv="${c.id}">
         <span class="initials ${c.kind === 'group' ? 'grp' : ''}">${c.kind === 'group' ? '👥' : esc(cIni(c.title))}</span>
         <span class="conv-text"><b>${esc(c.title || 'Chat')}</b><span class="meta">${c.last_body ? esc((c.kind === 'group' && c.last_sender ? c.last_sender.split(' ')[0] + ': ' : '') + c.last_body.slice(0, 50)) : 'No messages yet'}</span></span>
