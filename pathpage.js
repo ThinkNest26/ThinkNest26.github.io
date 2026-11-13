@@ -76,7 +76,7 @@ async function startPathPage() {
     }
   }
   // classes + next live class
-  const { data: courses } = await db.from('courses').select('id, title, teacher_name, weeks, subject, description').eq('curriculum', st.curriculum).eq('grade', st.grade);
+  const { data: courses } = await db.from('courses').select('id, title, teacher_name, weeks, subject, description, class_schedule').eq('curriculum', st.curriculum).eq('grade', st.grade);
   const match = (courses || []).filter(c => pathSubjectKey(c.subject) === st.subject);
   const nextBy = {};
   if (match.length) {
@@ -122,6 +122,8 @@ async function startPathPage() {
       j.disabled = true;
       const cid = Number(j.dataset.join);
       if (!kid) { location.href = 'course-details.html?id=' + cid; return; }
+      // courses with class times: go to the course page to choose a time
+      { const jc = (courses || []).find(x => x.id === cid); if (jc && String(jc.class_schedule || '').trim()) { location.href = 'course-details.html?id=' + cid; return; } }
       const res = await db.rpc('parent_request_course', { kid: kid.value, cid });
       if (res.error && !String(res.error.message).includes('duplicate')) { j.disabled = false; return say(friendly(res.error)); }
       try { localStorage.removeItem('tn_path'); } catch (_) {}

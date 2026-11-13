@@ -86,7 +86,10 @@ async function startCourseDetails() {
       if (!kids.length) return '<p class="cd-wait">To ask for a place, first link your child to your account.</p><a class="btn btn-red" href="add-child.html">Add a child</a>';
       if (closed) return `<p class="cd-closed">Registration closed on ${cdDate(course.registration_deadline)}.</p>`;
       if (full()) return `<p class="cd-closed">This course is full.</p>`;
-      return `<label class="kid-pick">For which child? <select data-kid>${kids.map(k => `<option value="${k.id}">${esc(k.full_name || 'My child')}</option>`).join('')}</select></label><button class="btn btn-red" data-parent-ask>Ask for a place</button>${placesText() ? `<span class="cd-places">${placesText()}</span>` : ''}`;
+      // parents choose the class time too, with places left for each time
+      const pSlots = slots.length ? `<fieldset class="reg-slots-p"><legend>${multi ? 'Choose a class time' : 'Class time'}${course.time_zone ? ' (' + esc(course.time_zone) + ')' : ''}</legend>${slots.map(sl => { const left = slotLeft(sl), off = left === 0;
+        return `<label class="reg-slot ${off ? 'off' : ''}"><input type="radio" name="p_time_slot" value="${esc(sl)}" ${off ? 'disabled' : ''} ${!multi && !off ? 'checked' : ''}> <span>${esc(sl)}${left !== null ? ` <small>${off ? 'full' : left + (left === 1 ? ' place left' : ' places left')}</small>` : ''}</span></label>`; }).join('')}</fieldset>` : '';
+      return `<label class="kid-pick">For which child? <select data-kid>${kids.map(k => `<option value="${k.id}">${esc(k.full_name || 'My child')}</option>`).join('')}</select></label>${pSlots}<button class="btn btn-red" data-parent-ask>Ask for a place</button>${!slots.length && placesText() ? `<span class="cd-places">${placesText()}</span>` : ''}`;
     }
     if (role !== 'student') return '<p class="cd-wait">This course is for students. Students register from their own account.</p>';
     if (enrol) return `<p class="cd-done">✅ Your place is confirmed${enrol.time_slot ? ' (' + esc(enrol.time_slot) + ')' : ''}.</p><a class="btn btn-red" href="course.html?id=${id}">Go to the course</a>`;
@@ -238,10 +241,19 @@ async function startCourseDetails() {
     if (e.target.closest('[data-register]')) { waitMode = !!e.target.closest('[data-wait]'); return openForm(); }
     const pa = e.target.closest('[data-parent-ask]');
     if (pa) {
-      const sel = pa.parentElement.querySelector('[data-kid]'); pa.disabled = true;
+      const sel = pa.parentElement.querySelector('[data-kid]');
+      const pts = pa.parentElement.querySelector('input[name=p_time_slot]:checked');
+      if (slots.length && !pts) return say('Choose a class time first.');
+      pa.disabled = true;
       const { data, error } = await db.rpc('parent_request_course', { kid: sel.value, cid: id });
+      if (error) { pa.disabled = false; return say(friendly(error)); }
+      // save the chosen time on the request (checks the time still has places)
+      if (pts && data !== 'approved') {
+        const { error: se } = await db.rpc('set_request_slot', { kid: sel.value, cid: id, slot: pts.value });
+        if (se && /SLOT_FULL/.test(se.message || '')) { pa.disabled = false; return say('Sorry, that class time has just become full. Please choose another time.'); }
+        if (se) say('Request sent. The teacher will choose a class time with you.');
+      }
       pa.disabled = false;
-      if (error) return say(friendly(error));
       pa.outerHTML = '<p class="cd-wait">' + (data === 'approved' ? '✅ Your child already has a place.' : '⏳ Request sent. The teacher will confirm your child’s place, and you’ll both be told.') + '</p>';
       return;
     }
