@@ -396,7 +396,7 @@ async function startDashboard() {
   // Mentors
   const ms = mentors.data || [];
   document.getElementById('mentors').innerHTML = ms.length ? ms.map(m => `<article class="mentor">
-      <div class="mentor-top"><img src="${m.photo_url ? esc(m.photo_url) : 'images/tn-demo-mentor.png'}" alt=""><div><h4>${esc(m.name)}</h4><span>${esc(m.subject || '')}</span></div></div>
+      <div class="mentor-top">${m.photo_url ? `<img src="${esc(m.photo_url)}" alt="">` : `<span class="initials big" aria-hidden="true">${esc(String(m.name || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</span>`}<div><h4>${esc(m.name)}</h4><span>${esc(m.subject || '')}</span></div></div>
       <span class="when">${esc(m.bio || '')}</span>
       <div class="row"><a class="pill pill-soft" href="mentors.html#m${m.id}">Book a session</a></div>
     </article>`).join('') : '<p class="empty">Mentors will appear here soon.</p>';

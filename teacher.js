@@ -154,6 +154,8 @@ function coursePublishGaps(c, p) {
     if (!String(p.bio || '').trim()) gaps.push('your teacher profile: a short bio');
     if (!String(p.education_degree || '').trim()) gaps.push('your teacher profile: your qualification');
     if (p.experience_years == null || p.experience_years === '') gaps.push('your teacher profile: years of experience');
+    if (!String(p.photo_url || '').trim()) gaps.push('your teacher profile: a profile picture');
+    if (!String(p.intro_video_url || '').trim()) gaps.push('your teacher profile: an introduction video');
   }
   return gaps;
 }
@@ -180,7 +182,7 @@ async function publishCourse(c, p, on) {
   say(on ? '🎉 Published! Students can now find and register for it.' : 'Unpublished. It’s now a draft.');
   return true;
 }
-function teacherProfileReady(p) { return !!(p && String(p.bio || '').trim() && String(p.education_degree || '').trim() && p.experience_years != null && p.experience_years !== ''); }
+function teacherProfileReady(p) { return !!(p && String(p.bio || '').trim() && String(p.education_degree || '').trim() && p.experience_years != null && p.experience_years !== '' && String(p.photo_url || '').trim() && String(p.intro_video_url || '').trim()); }
 
 // Lesson visibility: published now, a draft (no date) or scheduled (a date in the future)
 function lessonState(l) {
@@ -366,7 +368,7 @@ async function startTeacherCourses() {
   const dlg = courseDialog(() => load());
   document.getElementById('new-course').addEventListener('click', () => {
     if (!teacherProfileReady(profile)) {
-      if (confirm('Before creating a course, please complete your teacher profile (a short bio, your qualification and your years of experience). Parents see it on every course you teach.\n\nOpen your teacher profile now?')) location.href = 'teacher-settings.html#tprofile-form';
+      if (confirm('Before creating a course, please complete your teacher profile: a profile picture, an introduction video, a short bio, your qualification and your years of experience. Parents see it on every course you teach.\n\nOpen your teacher profile now?')) location.href = 'teacher-settings.html#tprofile-form';
       return;
     }
     dlg.open(null, { id: user.id, full_name: profile.full_name });
@@ -879,7 +881,22 @@ async function startTeacherSettings() {
   const { user, profile: p } = await initTeacher();
   const f = document.getElementById('tprofile-form');
   Object.keys(T_OPTS).forEach(k => fillSelect(f[k], T_OPTS[k], p[k] || ''));
-  ['full_name', 'subject', 'phone', 'school', 'experience_years', 'bio', 'intro_video_url'].forEach(k => { if (f[k]) f[k].value = p[k] ?? ''; });
+  ['full_name', 'subject', 'phone', 'school', 'experience_years', 'bio', 'intro_video_url', 'photo_url'].forEach(k => { if (f[k]) f[k].value = p[k] ?? ''; });
+  // profile picture: upload, preview, saved with the profile
+  const tpPrev = document.getElementById('tp-photo-prev'), tpNone = document.getElementById('tp-photo-none'), tpMsg = document.getElementById('tp-photo-msg');
+  const showPhoto = () => { const u = f.photo_url && f.photo_url.value; if (tpPrev) { tpPrev.hidden = !u; if (u) tpPrev.src = u; } if (tpNone) { tpNone.hidden = !!u; tpNone.textContent = String(p.full_name || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase(); } };
+  showPhoto();
+  const tpIn = document.getElementById('tp-photo');
+  if (tpIn) tpIn.addEventListener('change', async () => {
+    const file = tpIn.files[0]; tpIn.value = ''; if (!file) return;
+    if (file.size > 3 * 1024 * 1024) { tpMsg.textContent = 'Please choose a photo smaller than 3 MB.'; return; }
+    tpMsg.textContent = 'Uploading…';
+    const path = `${user.id}/profile-${Date.now()}.${(file.name.split('.').pop() || 'jpg').toLowerCase()}`;
+    const up = await db.storage.from('course-images').upload(path, file, { contentType: file.type });
+    if (up.error) { tpMsg.textContent = /bucket|not found/i.test(up.error.message || '') ? 'Uploading needs a Supabase update first (teacher_photo.sql).' : '⚠️ ' + up.error.message; return; }
+    f.photo_url.value = db.storage.from('course-images').getPublicUrl(path).data.publicUrl; showPhoto();
+    tpMsg.textContent = '✅ Uploaded. Press Update to save your profile.';
+  });
   f.addEventListener('submit', async e => {
     e.preventDefault();
     const row = {}; ['full_name', 'subject', 'phone', 'school', 'bio', 'grade_levels', 'education_degree', 'teaching_method', 'curriculum'].forEach(k => row[k] = f[k].value.trim() || null);
@@ -889,8 +906,12 @@ async function startTeacherSettings() {
       if (iv && typeof courseVideoEmbed === 'function' && !courseVideoEmbed(iv)) return say('The introduction video link doesn’t work. Paste a YouTube, Vimeo or Google Drive link.');
       row.intro_video_url = iv || null;
     }
+    if (f.photo_url) row.photo_url = f.photo_url.value.trim() || null;
     let { error } = await db.from('profiles').update(row).eq('id', user.id);
+    if (error && /photo_url/.test(error.message || '')) { delete row.photo_url; ({ error } = await db.from('profiles').update(row).eq('id', user.id)); if (!error) return say('Your profile is saved, but the photo needs a Supabase update first (teacher_photo.sql).'); }
     if (error && /intro_video_url/.test(error.message || '')) { delete row.intro_video_url; ({ error } = await db.from('profiles').update(row).eq('id', user.id)); }
+    if (!error && row.photo_url) { try { await db.from('mentors').update({ photo_url: row.photo_url }).eq('teacher_id', user.id); } catch (_) {} }
+    if (!error) Object.assign(p, row);
     say(error ? friendly(error) : 'Your profile is saved.');
   });
 

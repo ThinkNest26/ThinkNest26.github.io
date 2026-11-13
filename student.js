@@ -382,7 +382,7 @@ async function startMentors() {
   if (error) return say(friendly(error));
   const list = document.getElementById('list');
   list.innerHTML = data.length ? data.map(m => `<article class="mentor big" id="m${m.id}">
-      <div class="mentor-top"><img src="${m.photo_url ? esc(m.photo_url) : 'images/tn-demo-mentor.png'}" alt=""><div><h4>${esc(m.name)}</h4><span>${esc(m.subject || '')}</span></div></div>
+      <div class="mentor-top">${m.photo_url ? `<img src="${esc(m.photo_url)}" alt="">` : `<span class="initials big" aria-hidden="true">${esc(String(m.name || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</span>`}<div><h4>${esc(m.name)}</h4><span>${esc(m.subject || '')}</span></div></div>
       <p class="desc">${esc(m.bio || '')}</p>
       <button class="btn btn-red btn-small" data-book="${m.id}" data-name="${esc(m.name)}">Book a session</button>
     </article>`).join('') : '<p class="empty">Mentors will appear here soon.</p>';

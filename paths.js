@@ -140,7 +140,7 @@ async function drawPathStep() {
   }
   document.getElementById('path-learn').innerHTML = `<h3>What you’ll learn</h3>` + (learn || '<p class="meta">The details for this grade are not available yet. Please ask the Think Nest team to run the curriculum guide update.</p>');
   // open classes
-  const { data: courses } = await db.from('courses').select('id, title, teacher_name, weeks, subject, curriculum, grade, description').eq('curriculum', pathState.curriculum).eq('grade', pathState.grade);
+  const { data: courses } = await db.from('courses').select('id, title, teacher_name, weeks, subject, curriculum, grade, description').in('curriculum', [pathState.curriculum, 'all']).in('grade', [pathState.grade, 'all']);
   const match = (courses || []).filter(c => pathSubjectKey(c.subject) === pathState.subject);
   const { data: { session } } = await db.auth.getSession();
   let role = null, kids = [], joined = new Set();

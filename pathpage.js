@@ -76,7 +76,7 @@ async function startPathPage() {
     }
   }
   // classes + next live class
-  const { data: courses } = await db.from('courses').select('id, title, teacher_name, weeks, subject, description, class_schedule').eq('curriculum', st.curriculum).eq('grade', st.grade);
+  const { data: courses } = await db.from('courses').select('id, title, teacher_name, weeks, subject, description, class_schedule').in('curriculum', [st.curriculum, 'all']).in('grade', [st.grade, 'all']);
   const match = (courses || []).filter(c => pathSubjectKey(c.subject) === st.subject);
   const nextBy = {};
   if (match.length) {

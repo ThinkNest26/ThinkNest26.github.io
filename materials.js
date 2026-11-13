@@ -81,7 +81,7 @@ async function openItemBuilder(lesson, course, onSaved, editItem) {
     const t = TOOL(st.kind);
     title.innerHTML = `<span class="tool-ic sm">${t.ic}</span> ${esc(t.name)}`;
     let f = '';
-    if (st.kind === 'file') f = `<label>File (PDF, Word, PowerPoint, Excel or picture, up to 20 MB) <input type="file" id="it-file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,image/*"></label>
+    if (st.kind === 'file') f = `<label>${editItem ? 'File' : 'File or files (you can choose several at once)'} (PDF, Word, PowerPoint, Excel or picture, up to 20 MB each) <input type="file" id="it-file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,image/*" ${editItem ? '' : 'multiple'}></label>
         <label class="remember row"><input type="checkbox" id="it-handin" ${st.data.handin ? 'checked' : ''}> Students hand in their completed work (photo or file)</label>`;
     if (st.kind === 'form') f = `<div class="helper-row"><a class="pill pill-soft big" href="https://forms.new" target="_blank" rel="noopener">+ Create a new Google Form ↗</a><a class="pill pill-soft big" href="https://forms.office.com" target="_blank" rel="noopener">+ Create a Microsoft Form ↗</a></div>
         <p class="note">When your form is ready, click <b>Send</b> in Google Forms, choose the 🔗 link tab, copy it and paste it here. Google Forms can also mark quizzes and collect the results for you.</p>
@@ -196,6 +196,9 @@ async function openItemBuilder(lesson, course, onSaved, editItem) {
   async function save(btn) {
     capture();
     const k = st.kind, d = st.data;
+    const fl = k === 'file' && body.querySelector('#it-file') ? [...body.querySelector('#it-file').files] : [];
+    let autoTitle = '';
+    if (k === 'file' && !st.title.trim() && fl[0]) { autoTitle = fl.length > 1 ? 'Worksheets' : fl[0].name.replace(/\.[^.]+$/, ''); st.title = autoTitle; }
     if (!st.title.trim()) return say('Give it a title students will see.');
     if (k === 'file' && !body.querySelector('#it-file').files[0] && !(editItem && d.path)) return say('Choose a file to upload.');
     if (['form', 'link'].includes(k) && !/^https?:\/\//.test(d.url || '')) return say('Paste the full link, starting with https://');
@@ -211,6 +214,28 @@ async function openItemBuilder(lesson, course, onSaved, editItem) {
     if (k === 'flashcards') { d.cards = d.cards.filter(c => c.front.trim() && c.back.trim()); if (!d.cards.length) return say('Add at least one card with a front and a back.'); }
     if (k === 'activities' && (!d.items.length || d.items.some(a => !String(a.name || '').trim() || !(a.steps || []).length))) return say('Every activity needs a name and at least one step.');
     btn.disabled = true; btn.textContent = 'Saving…';
+    // several files at once: one item for each file
+    if (k === 'file' && !editItem && fl.length > 1) {
+      try {
+        if (fl.some(x => x.size > 20 * 1024 * 1024)) throw new Error('Each file must be smaller than 20 MB.');
+        if (st.instructions.trim()) d.instructions = st.instructions.trim();
+        if (st.objective) d.objective = st.objective;
+        const { data: pos } = await db.from('lesson_items').select('position').eq('lesson_id', lesson.id).order('position', { ascending: false }).limit(1);
+        const p0 = (pos && pos[0] && pos[0].position) || 0, typed = st.title.trim();
+        for (const [i, file] of fl.entries()) {
+          btn.textContent = `Uploading ${i + 1} of ${fl.length}…`;
+          const path = `${course.id}/${lesson.id}/${Date.now()}-${i}-${file.name.replace(/[^\w.\-]+/g, '_')}`;
+          const up = await db.storage.from('lesson-files').upload(path, file, { contentType: file.type || undefined });
+          if (up.error) throw up.error;
+          const base = file.name.replace(/\.[^.]+$/, '');
+          const { error } = await db.from('lesson_items').insert({ lesson_id: lesson.id, kind: 'file', title: (typed && typed !== autoTitle ? typed + ' – ' + base : base).slice(0, 200),
+            data: Object.assign({}, d, { path, name: file.name, type: file.type, size: file.size }), due_date: st.due || null, position: p0 + i + 1 });
+          if (error) throw error;
+        }
+        dlg.close(); say(`Added ${fl.length} files. Students in this course have been told.`); if (onSaved) onSaved();
+      } catch (err) { btn.disabled = false; btn.textContent = 'Add to lesson'; say(friendly(err)); }
+      return;
+    }
     try {
       if (k === 'file' && body.querySelector('#it-file').files[0]) {
         const file = body.querySelector('#it-file').files[0];

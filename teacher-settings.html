@@ -62,7 +62,11 @@
           <div class="two"><label>Teaching method <select name="teaching_method"></select></label><label>Curriculum type <select name="curriculum"></select></label></div>
           <div class="two"><label>School <input type="text" name="school" placeholder="School name, Freelance or Other"></label><label>Teaching experience (years) <input type="number" name="experience_years" min="0" max="60"></label></div>
           <label>Bio <textarea name="bio" rows="4" placeholder="Write about yourself"></textarea></label>
-          <label>Introduction video (optional) <input type="url" name="intro_video_url" placeholder="YouTube, Vimeo or Google Drive link"></label>
+          <div class="tp-photo" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"><img id="tp-photo-prev" alt="Your profile picture" style="width:84px;height:84px;border-radius:50%;object-fit:cover;background:#eef0fa" hidden><span id="tp-photo-none" class="initials big" style="width:84px;height:84px">?</span>
+            <div><b>Profile picture (needed to create courses)</b><p class="meta" style="margin:2px 0 6px">A clear, friendly photo of you. Parents and students see it on your profile, your courses and the Mentors page.</p>
+            <label class="pill pill-soft" style="cursor:pointer;display:inline-block">📤 Upload a photo<input type="file" id="tp-photo" accept="image/png,image/jpeg,image/webp" hidden></label> <span class="meta" id="tp-photo-msg"></span></div></div>
+          <input type="hidden" name="photo_url">
+          <label>Introduction video (needed to create courses) <input type="url" name="intro_video_url" placeholder="YouTube, Vimeo or Google Drive link"></label>
           <p class="meta">A short video (1–2 minutes) where you introduce yourself to parents and students. It shows on your teacher profile and on every course you teach. Tip: on YouTube choose <b>Unlisted</b>.</p>
           <button class="btn btn-red auth-btn">Update</button>
         </form>
@@ -121,10 +125,10 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script src="supabase-config.js?v=171"></script>
-  <script src="app.js?v=171"></script>
+  <script src="app.js?v=183"></script>
   <script src="nav.js?v=178"></script>
   <script src="notify.js?v=171" defer></script>
-  <script src="teacher.js?v=181"></script>
+  <script src="teacher.js?v=183"></script>
   <script src="roles.js?v=171"></script>
   <script>startTeacherSettings(); dualRolePanel('teacher');</script>
   <script src="emailpref.js?v=171"></script>
