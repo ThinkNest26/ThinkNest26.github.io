@@ -72,13 +72,17 @@ async function startHubInApp(aud) {
   const memberBox = () => status === 'approved' ? `<div class="hub-hero-btns"><a class="btn btn-white" href="${cafe}">☕ Go to the ${cafeName} Café</a></div>`
     : status === 'pending' ? `<div class="hub-status pending">⏳ Your request to join is waiting for approval. We’ll let you know as soon as you’re in!</div>`
     : `<div class="hub-status">${status === 'declined' ? 'Your last request wasn’t approved. You can ask again, or contact us. ' : 'Join to take part in workshops and the ' + cafeName + ' Café. It’s free! '}<button type="button" class="btn btn-white" data-hreq>Join now</button></div>`;
+  // certificate button: a Think Nest certificate opens its page, an uploaded one opens the file
+  const certBtn = (ce, label) => !ce ? '' : ce.code ? `<a class="pill pill-live" href="certificate.html?code=${encodeURIComponent(ce.code)}" target="_blank" rel="noopener">${label}</a>`
+    : ce.file_path ? `<button type="button" class="pill pill-live" data-hcert-file="${hubEsc(ce.file_path)}">${label}</button>` : '';
   function draw() {
     const mine = courses.filter(c => joined.has(c.id) && !doneIds.has(c.id)), finished = courses.filter(c => doneIds.has(c.id)), shown = courses.filter(c => !pick || c.category === pick);
     box.innerHTML = `<section class="hub-hero" style="background:${H.grad}">${hubPic(H, 'big')}<div><span class="hub-kicker">${H.kicker}</span><h1>${H.name}</h1><p class="hub-tagline">${H.tagline}</p><p>${H.about}</p>${memberBox()}</div></section>
       ${mine.length ? `<h2 class="hub-h">My workshops</h2><div class="hub-courses">${mine.map(card).join('')}</div>` : ''}
-      ${finished.length || myCerts.length ? `<h2 class="hub-h">🏅 Completed workshops and certificates</h2><div class="hub-done">
-        ${finished.map(c => { const ce = myCerts.find(x => x.course_id === c.id); return `<div class="pending-row"><span>✅</span><div><b>${hubEsc(c.title)}</b><span class="meta">Completed${c.teacher_name ? ' · with ' + hubEsc(c.teacher_name) : ''}</span></div>${ce && ce.code ? `<a class="pill pill-live" href="certificate.html?code=${encodeURIComponent(ce.code)}" target="_blank" rel="noopener">🏅 Certificate</a>` : ''}</div>`; }).join('')}
-        ${myCerts.filter(ce => !doneIds.has(ce.course_id)).map(ce => `<div class="pending-row"><span>🏅</span><div><b>${hubEsc(ce.title || 'Certificate')}</b><span class="meta">${hubEsc((courses.find(c => c.id === ce.course_id) || {}).title || '')}</span></div>${ce.code ? `<a class="pill pill-live" href="certificate.html?code=${encodeURIComponent(ce.code)}" target="_blank" rel="noopener">Open</a>` : ''}</div>`).join('')}</div>` : ''}
+      <section id="hub-done"><h2 class="hub-h">🏅 My certificates and completed workshops</h2><div class="hub-done">
+        ${finished.map(c => { const ce = myCerts.find(x => x.course_id === c.id); return `<div class="pending-row"><span>✅</span><div><b>${hubEsc(c.title)}</b><span class="meta">Completed${c.teacher_name ? ' · with ' + hubEsc(c.teacher_name) : ''}</span></div>${certBtn(ce, '🏅 Certificate')}</div>`; }).join('')}
+        ${myCerts.filter(ce => !doneIds.has(ce.course_id)).map(ce => `<div class="pending-row"><span>🏅</span><div><b>${hubEsc(ce.title || 'Certificate')}</b><span class="meta">${hubEsc((courses.find(c => c.id === ce.course_id) || {}).title || '')}</span></div>${certBtn(ce, 'Open')}</div>`).join('')}
+        ${finished.length || myCerts.length ? '' : `<div class="hub-empty"><p>When you finish a workshop, it will appear here with your certificate.${mine.length ? ' Keep going with ' + hubEsc(mine[0].title) + '!' : ' Join a workshop below to get started.'}</p></div>`}</div></section>
       <h2 class="hub-h">Explore topics</h2>
       <div class="hub-cats">${H.cats.map(([k, ic, n, d]) => ['cafe', 'circles'].includes(k) ? `<a class="hub-cat hub-cat-cafe" href="${aud === 'teachers' ? 'teacher-cafe.html' : 'parent-cafe.html'}" style="--c:${H.color}"><span>${ic}</span><b>${n}</b><small>${d} · Open the café →</small></a>` : `<button type="button" class="hub-cat ${pick === k ? 'on' : ''}" data-hc="${k}" style="--c:${H.color}"><span>${ic}</span><b>${n}</b><small>${d}</small></button>`).join('')}</div>
       <h2 class="hub-h">${pick ? hubCat(aud, pick)[1] + ' ' + hubCat(aud, pick)[2] : 'What’s on'} ${pick ? '<button type="button" class="link-btn" data-hc="">Show all</button>' : ''}</h2>
@@ -86,6 +90,8 @@ async function startHubInApp(aud) {
       <section class="hub-host"><div><h2>Have a skill to share?</h2><p>Run a workshop for the ${H.name}: wellbeing, cooking, careers, crafts, anything people would love to learn.</p></div><a class="btn btn-red" href="contact.html?topic=host">Become a host</a></section>`;
   }
   box.addEventListener('click', async e => {
+    const cf = e.target.closest('[data-hcert-file]');
+    if (cf) { const { data, error } = await db.storage.from('certificates').createSignedUrl(cf.dataset.hcertFile, 600); if (error) return say(friendly(error)); return window.open(data.signedUrl, '_blank', 'noopener'); }
     const c = e.target.closest('[data-hc]'); if (c) { pick = c.dataset.hc; return draw(); }
     const rq = e.target.closest('[data-hreq]');
     if (rq) {
@@ -106,6 +112,8 @@ async function startHubInApp(aud) {
     joined.add(Number(j.dataset.hjoin)); say('You’ve joined! Find it under My workshops.'); draw();
   });
   draw();
+  const toDone = () => { if (location.hash === '#hub-done') { const d = document.getElementById('hub-done'); if (d) setTimeout(() => d.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100); } };
+  toDone(); window.addEventListener('hashchange', toDone);
 }
 // Small banner for the dashboards
 function hubBanner(aud, hostId) {

@@ -25,14 +25,14 @@
       { ic: '📘', label: 'Online Courses', items: [['teacher-courses.html', 'My courses'], ['teacher-settings.html#tprofile-form', '👤 My teacher profile'], ['teacher-calendar.html', 'Live classes'], ['teacher-attendance.html', '📋 Attendance'], ['teacher-requests.html', 'Session requests']] },
       { ic: '📊', label: 'Progress & certificates', items: [['teacher-insights.html', '📊 Student insights'], ['teacher-certificates.html', '🏅 Certificates']] },
       { ic: '💬', label: 'Messages & Community', items: [['messages.html', 'Messages'], ['community.html', 'Community'], ['groups.html', 'Study groups']] },
-      { ic: '☕', label: 'For me', items: [['teacher-hub.html', '🔔 My workshops (Beyond the Bell)'], ['teacher-cafe.html', '☕ Teacher Café'], ['teacher-connect.html', '🤝 Coffee & Connections']] },
+      { ic: '☕', label: 'For me', items: [['teacher-hub.html', '🔔 My workshops (Beyond the Bell)'], ['teacher-hub.html#hub-done', '🏅 My certificates'], ['teacher-cafe.html', '☕ Teacher Café'], ['teacher-connect.html', '🤝 Coffee & Connections']] },
       { ic: '🧰', label: 'Resources', items: [['revision.html', 'Revision Hub'], ['curriculum.html', 'Curriculum guide']] }
     ],
     parent: [
       { ic: '🏠', label: 'My Children', dyn: 'kids', items: [['parent-dashboard.html', 'All my children'], ['add-child.html', '➕ Add a child']] },
       { ic: '📅', label: 'Family calendar', href: 'parent-calendar.html' },
       { ic: '📝', label: 'Reports', href: 'reports.html' },
-      { ic: '🌟', label: 'For me', items: [['parent-hub.html', 'Beyond the School Run workshops'], ['parent-cafe.html', '☕ Parent Café'], ['parent-connect.html', '🤝 Parent Connections'], ['community.html', 'Community']] }
+      { ic: '🌟', label: 'For me', items: [['parent-hub.html', 'Beyond the School Run workshops'], ['parent-hub.html#hub-done', '🏅 My certificates'], ['parent-cafe.html', '☕ Parent Café'], ['parent-connect.html', '🤝 Parent Connections'], ['community.html', 'Community']] }
     ]
   };
   MENUS.school_leader = [
@@ -199,10 +199,30 @@
     fillDynamic(view, page, qid);
     if (sc && role !== 'admin') schoolAnnouncements(view, page);
     profileMenu(view);
+    unreadMessages();
     // reminders backup: if the database can't run them on a timer, any open Think Nest page sends them (at most every 10 minutes)
     try { const last = Number(localStorage.getItem('tn_rem') || 0); if (Date.now() - last > 10 * 60e3) { localStorage.setItem('tn_rem', String(Date.now())); db.rpc('send_reminders_and_lessons').then(r => { if (r && r.error) db.rpc('send_reminders'); }, () => {}); } } catch (_) {}
     if (view === 'student' || view === 'school_student') newLessonBadge();
   }
+
+  // How many unread private messages: a number next to Messages (and on its section when it's folded)
+  async function unreadMessages() {
+    const dot = document.getElementById('nav-unread'); if (!dot) return;
+    try {
+      const { data, error } = await db.rpc('my_conversations'); if (error) return;
+      const n = (data || []).filter(c => c.kind !== 'group').reduce((t, c) => t + Number(c.unread || 0), 0);
+      window.tnSetUnread(n);
+    } catch (_) {}
+  }
+  window.tnSetUnread = n => {
+    const txt = n > 99 ? '99+' : String(n);
+    document.querySelectorAll('#nav-unread').forEach(dot => {
+      dot.className = 'nav2-badge'; dot.textContent = txt; dot.hidden = !n;
+      const top = dot.closest('.nav2-sec') && dot.closest('.nav2-sec').querySelector('.nav2-toggle');
+      if (top) { let b = top.querySelector('.nav-count-top'); if (!b) { b = document.createElement('i'); b.className = 'nav2-badge nav-count-top'; top.insertBefore(b, top.querySelector('.nav2-arrow')); } b.textContent = txt; b.hidden = !n || top.getAttribute('aria-expanded') === 'true'; }
+    });
+  };
+  document.addEventListener('click', e => { const t = e.target.closest('.nav2-toggle'); if (!t) return; const b = t.querySelector('.nav-count-top'); if (b && b.textContent !== '0') setTimeout(() => { b.hidden = t.getAttribute('aria-expanded') === 'true'; }, 0); });
 
   // Put the person's own classes / children into the menu, by name
   async function fillDynamic(view, page, qid) {
