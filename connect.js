@@ -60,12 +60,13 @@ async function startConnect(sp) {
       <button type="button" class="btn btn-red" id="cx-save">Save my interests</button></section>`;
     body.innerHTML = (partner ? '' : meBox) + `<section class="panel cx-roulette">
       <div class="cx-cups" aria-hidden="true"><span>☕</span><span class="cx-plus">+</span><span>☕</span></div>
-      ${partner ? `<h2>This week’s ${W.partner}</h2><div class="cx-match"><span class="initials big">${E(ini(partner.full_name))}</span><div><b>${E(partner.full_name)}</b><span class="meta">${E([partner.subject, partner.school].filter(Boolean).join(' · '))}</span>${pInt && pInt.can_help ? `<span class="meta">🤝 Can help with: ${E(pInt.can_help)}</span>` : ''}${pInt && pInt.want_learn ? `<span class="meta">🌱 Would love to learn: ${E(pInt.want_learn)}</span>` : ''}</div></div>
+      ${partner ? `<h2>🎉 You have been paired with ${E(partner.full_name)}</h2><p class="meta">Your ${W.partner} for this week</p><div class="cx-match"><span class="initials big">${E(ini(partner.full_name))}</span><div><b>${E(partner.full_name)}</b><span class="meta">${E([partner.subject, partner.school].filter(Boolean).join(' · '))}</span>${pInt && pInt.can_help ? `<span class="meta">🤝 Can help with: ${E(pInt.can_help)}</span>` : ''}${pInt && pInt.want_learn ? `<span class="meta">🌱 Would love to learn: ${E(pInt.want_learn)}</span>` : ''}</div></div>
           <p>Swap ideas on a topic you share, for 15 minutes this week: in the café, online, or in the staffroom with colleagues around. ☕</p>${sayHi(partner.id, partner.full_name)}`
         : `<h2>Step 2: swap ideas with a ${W.colleague}</h2><p>${W.partners} pairs you with a ${W.colleague} who shares your interests. Your ${W.partner} appears right here, with a button to message them.</p>
           <button type="button" class="btn btn-red btn-big" id="cx-match" ${hasInt ? '' : 'disabled'}>☕ Find me a ${W.partner}</button>${hasInt ? '' : '<p class="meta">Save your interests in step 1 first.</p>'}`}
       <label class="switch-row cx-opt"><input type="checkbox" id="cx-roul" ${mine && mine.roulette ? 'checked' : ''}> I’m happy to be paired as a ${W.partner}</label>
     </section>` + (partner ? meBox : '');
+    return partner;
   }
   async function meetups() {
     const { data: ms } = await db.from('cafe_meetups').select('*').eq('hub', sp).gte('starts_at', new Date(Date.now() - 3 * 3600e3).toISOString()).order('starts_at');
@@ -111,7 +112,7 @@ async function startConnect(sp) {
       const { data, error } = await db.rpc('coffee_match_me', { sp });
       if (error) { e.target.disabled = false; e.target.textContent = '☕ Find me a ' + W.partner; return say(friendly(error)); }
       if (!(data || []).length) { say('No one is free to pair just now. You’re on the list, so you’ll be paired when another ' + W.colleague + ' joins in. ☕'); return roulette(); }
-      say('☕ Paired! Say hello to your ' + W.partner + ' in the café.'); return roulette();
+      const pr = await roulette(); say(pr ? '☕ You have been paired with ' + pr.full_name + '! Say hello using the message button.' : '☕ Paired! Your ' + W.partner + ' is shown on this page.'); return;
     }
     if (e.target.id === 'cx-save') {
       const help = document.getElementById('cx-help').value.trim(), learn = document.getElementById('cx-learn').value.trim();

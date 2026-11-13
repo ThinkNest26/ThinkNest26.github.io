@@ -9,7 +9,7 @@ function stEnsureDialog() {
   d = document.createElement('dialog');
   d.id = 'session-thread'; d.className = 'dlg st-dlg';
   d.innerHTML = `<div class="st-wrap"><header class="st-head"><div><h2 id="st-title">Session thread</h2><p class="meta" id="st-sub"></p></div><button type="button" class="link-btn" data-st-close>✕ Close</button></header>
-    <p class="note st-safe">👪 Shared by the mentor, the student and their parents. Everyone here can read every message.</p>
+    <p class="note st-safe">👪 All messages are visible to the mentor, the student and their parents. Everyone here can read every message.</p>
     <div class="st-list" id="st-list" aria-live="polite"><p class="empty">Loading…</p></div>
     <form class="st-form" id="st-form"><div class="st-kind" id="st-kind" hidden>
         <label class="remember"><input type="radio" name="kind" value="message" checked> Message</label>

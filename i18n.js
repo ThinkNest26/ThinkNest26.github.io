@@ -2202,7 +2202,7 @@
 "👀 This is your course, as parents and students see it.": "👀 هذه دورتك كما يراها الأهل والطلاب.",
 "👥 Members": "👥 الأعضاء",
 "👪 By parent": "👪 بواسطة وليّ الأمر",
-"👪 Shared by the mentor, the student and their parents. Everyone here can read every message.": "👪 مشتركة بين المرشد والطالب ووليّ أمره. يمكن للجميع هنا قراءة كل رسالة.",
+"👪 All messages are visible to the mentor, the student and their parents. Everyone here can read every message.": "👪 جميع الرسائل مرئية للمرشد والطالب ووليّ أمره. يمكن للجميع هنا قراءة كل رسالة.",
 "👪 Waiting for the parent to agree. You can accept once they do.": "👪 بانتظار موافقة وليّ الأمر. يمكنك القبول بعد موافقته.",
 "👪 Waiting for your parent to agree (we’ve told them)": "👪 بانتظار موافقة وليّ أمرك (أبلغناه)",
 "💛 If you feel unsafe right now, please tell a parent, a teacher at school or another adult you trust straight away. In the UAE you can also call the Child Protection helpline": "💛 إذا شعرت بعدم الأمان الآن، أخبر وليّ أمرك أو معلّمًا في المدرسة أو شخصًا بالغًا تثق به فورًا. ويمكنك في الإمارات أيضًا الاتصال بخط مساعدة حماية الطفل",
