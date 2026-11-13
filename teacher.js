@@ -193,6 +193,13 @@ function courseDialog(onSaved) {
   const dlg = document.getElementById('course-dialog'), f = document.getElementById('course-form'), err = document.getElementById('course-error');
   let editing = null, teacher = null;
   addCourseInfoFields(f, err);
+  // "All curricula" and "All grades": general courses (wellbeing, skills, critical thinking) show for every student
+  if (f.curriculum && f.curriculum.tagName === 'SELECT' && ![...f.curriculum.options].some(o => o.value === 'all')) {
+    const o = new Option('All curricula (any student)', 'all'); const first = [...f.curriculum.options].find(x => x.value); f.curriculum.insertBefore(o, first || null);
+  }
+  if (f.grade && f.grade.tagName === 'SELECT' && ![...f.grade.options].some(o => o.value === 'all')) {
+    const o = new Option('All grades', 'all'); const first = [...f.grade.options].find(x => x.value); f.grade.insertBefore(o, first || null);
+  }
   f.addEventListener('submit', async e => {
     e.preventDefault(); showError(err, '');
     const row = { title: f.title.value.trim(), description: f.description.value.trim() || null, category: f.category.value, level: f.level.value,
@@ -335,8 +342,8 @@ async function startTeacherCourse() {
   let builder = null;
   function drawHero() {
     document.title = c.title + ' – Think Nest';
-    const cur = { british: 'British Curriculum', ib: 'IB', american: 'American Curriculum' }[c.curriculum] || '';
-    hero.innerHTML = `<img src="${tImg(c)}" alt=""><div><span class="meta">${esc([cur, c.grade, c.subject].filter(Boolean).join(' · ') || 'Set the curriculum, grade and subject in Edit details')}</span><span class="meta">${esc(c.category || '')}${c.weeks ? ' · ' + c.weeks + ' weeks' : ''} · ${esc(c.level || '')}</span>
+    const cur = { british: 'British Curriculum', ib: 'IB', american: 'American Curriculum', all: 'All curricula' }[c.curriculum] || '';
+    hero.innerHTML = `<img src="${tImg(c)}" alt=""><div><span class="meta">${esc([cur, c.grade === 'all' ? 'All grades' : c.grade, c.subject].filter(Boolean).join(' · ') || 'Set the curriculum, grade and subject in Edit details')}</span><span class="meta">${esc(c.category || '')}${c.weeks ? ' · ' + c.weeks + ' weeks' : ''} · ${esc(c.level || '')}</span>
       <h1>${esc(c.title)} ${c.published === false ? '<span class="tag">📝 Draft</span>' : c.published === true ? '<span class="tag tag-now">✅ Published</span>' : ''}</h1><p>${esc(c.description || '')}</p>
       <div class="row start">${c.published === false ? '<button class="pill pill-live big" id="pub-course">🚀 Publish</button>' : c.published === true ? '<button class="pill pill-soft big" id="pub-course">Unpublish</button>' : ''}<button class="pill pill-soft big" id="edit-course">Edit details</button><a class="pill pill-soft big" href="course-details.html?id=${c.id}" target="_blank" rel="noopener">👀 Preview as a parent</a><button class="pill pill-soft big danger" id="del-course">Delete course</button></div></div>`;
     document.getElementById('edit-course').addEventListener('click', () => dlg.open(c, { id: user.id, full_name: profile.full_name }));

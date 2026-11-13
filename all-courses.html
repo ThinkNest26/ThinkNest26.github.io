@@ -29,6 +29,15 @@
   <link rel="stylesheet" href="app.css?v=171">
   <link rel="stylesheet" href="rtl.css?v=171">
   <script src="i18n.js?v=171"></script>
+  <style>
+    .profile-nudge { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 18px; }
+    .profile-nudge .pill { margin-inline-start: auto; }
+    .rec-sub { margin: -6px 0 12px; }
+    .explore-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
+    .course-filters { display: flex; flex-wrap: wrap; gap: 12px; margin: 4px 0 16px; }
+    .course-filters label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; min-width: 150px; }
+    .course-filters select { padding: 8px 10px; border-radius: 10px; border: 1px solid #d9dcef; background: #fff; font: inherit; font-weight: 500; }
+  </style>
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -81,7 +90,7 @@
   <script src="app.js?v=171"></script>
   <script src="nav.js?v=171"></script>
   <script src="notify.js?v=171" defer></script>
-  <script src="student.js?v=171"></script>
+  <script src="student.js?v=173"></script>
   <script>startAllCourses();</script>
 </body>
 </html>
