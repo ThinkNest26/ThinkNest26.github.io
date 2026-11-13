@@ -201,7 +201,7 @@ function lessonMaterialHtml(l, resp) {
     return obj + sc + `<div class="act-list">${(m.items || []).map((a, i) => `<article class="act-card"><div class="act-top"><span class="act-num">${i + 1}</span><div><h4>${esc(a.name || '')}</h4><span class="meta">${a.minutes ? esc(a.minutes) + ' min' : ''}</span></div></div>
       ${a.materials ? `<p class="act-mat"><b>You need:</b> ${esc(a.materials)}</p>` : ''}<ol class="act-steps">${(a.steps || []).map(s => `<li>${esc(s)}</li>`).join('')}</ol>
       ${a.support ? `<p class="act-extra"><b>Need help?</b> ${esc(a.support)}</p>` : ''}${a.challenge ? `<p class="act-extra"><b>Challenge:</b> ${esc(a.challenge)}</p>` : ''}</article>`).join('')}</div>
-      <div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-print>🖨️ Print</button></div>`;
+      <div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-print>🖨️ Print</button><button type="button" class="btn btn-white auth-btn outline" data-download>📥 Download PDF</button></div>`;
   }
   if (!m.questions) return obj;
   const done = !!resp, ans = (resp && resp.answers) || [];
@@ -215,7 +215,7 @@ function lessonMaterialHtml(l, resp) {
           : q.type === 'long_answer' ? `<textarea name="q${i}" rows="4" maxlength="3000">${esc(ans[i] || '')}</textarea>`
           : `<input type="text" name="q${i}" maxlength="500" value="${esc(ans[i] || '')}">`}
       </fieldset>`).join('')}
-      <div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-print>🖨️ Print</button><button class="btn btn-red auth-btn">${done ? 'Submit again' : 'Submit my answers'}</button></div>
+      <div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-print>🖨️ Print</button><button type="button" class="btn btn-white auth-btn outline" data-download>📥 Download PDF</button><button class="btn btn-red auth-btn">${done ? 'Submit again' : 'Submit my answers'}</button></div>
     </form>`;
 }
 async function initStudentLessons(lessons, courseId, isEnrolled, onDone) {
@@ -237,8 +237,8 @@ async function initStudentLessons(lessons, courseId, isEnrolled, onDone) {
       panel.hidden = !panel.hidden;
       o.textContent = panel.hidden ? (o.dataset.label) : 'Close';
     }
-    const pb = e.target.closest('[data-print]');
-    if (pb && !pb.closest('[id^="iv-"]')) { const pp = pb.closest('[id^="lm-"]') || pb.closest('.lesson-material') || pb.closest('form'); const pl = pp && pp.id && lessons.find(x => 'lm-' + x.id === pp.id); tnPrintPart(pp, pl && pl.title ? pl.title : 'Worksheet'); }
+    const pb = e.target.closest('[data-print], [data-download]');
+    if (pb && !pb.closest('[id^="iv-"]')) { const pp = pb.closest('[id^="lm-"]') || pb.closest('.lesson-material') || pb.closest('form'); const pl = pp && pp.id && lessons.find(x => 'lm-' + x.id === pp.id); const pt = pl && pl.title ? pl.title : 'Worksheet'; if (pb.hasAttribute('data-download')) tnDownloadPart(pp, pt); else tnPrintPart(pp, pt); }
   });
   box.addEventListener('submit', async e => {
     const f = e.target.closest('[data-quiz]'); if (!f) return;

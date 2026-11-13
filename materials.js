@@ -327,7 +327,7 @@ function questionsForm(item, resp) {
   return `<form class="lesson-quiz" data-iquiz="${item.id}">${qs.map((q, i) => `<fieldset class="quiz-q"><legend><span class="act-num">${i + 1}</span> ${esc(q.question)} <span class="meta">(${q.marks || 1} mark${(q.marks || 1) == 1 ? '' : 's'})</span></legend>
       ${['multiple_choice', 'true_false'].includes(q.type) ? (q.options || []).map(o => `<label class="remember"><input type="radio" name="q${i}" value="${esc(o)}" ${String(ans[i]) === String(o) ? 'checked' : ''}> ${esc(o)}</label>`).join('')
         : q.type === 'long_answer' ? `<textarea name="q${i}" rows="4" maxlength="3000">${esc(ans[i] || '')}</textarea>` : `<input type="text" name="q${i}" maxlength="500" value="${esc(ans[i] || '')}">`}</fieldset>`).join('')}
-    ${triesNote(item, resp)}<div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-print>🖨️ Print</button>${triesLeft(item, resp) === 0 ? '' : `<button class="btn btn-red auth-btn">${resp ? 'Hand in again' : 'Hand in my answers'}</button>`}</div></form>`;
+    ${triesNote(item, resp)}<div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-print>🖨️ Print</button><button type="button" class="btn btn-white auth-btn outline" data-download>📥 Download PDF</button>${triesLeft(item, resp) === 0 ? '' : `<button class="btn btn-red auth-btn">${resp ? 'Hand in again' : 'Hand in my answers'}</button>`}</div></form>`;
 }
 function resultBox(resp) {
   if (!resp) return '';
@@ -351,10 +351,10 @@ function itemViewHtml(item, resp) {
     case 'link': return due + instr + `<p><a class="btn btn-red" href="${esc(d.url)}" target="_blank" rel="noopener">Open ${esc(d.tool && d.tool !== 'Other' ? d.tool : 'the activity')} ↗</a></p>` + done + handInBox(item, resp, { label: resp ? 'Done ✅' : 'I’ve finished ✅' });
     case 'video': return due + instr + `<div class="video-box"><iframe src="https://www.youtube-nocookie.com/embed/${matYt(d.url)}" title="${esc(item.title)}" allowfullscreen loading="lazy"></iframe></div>` + done + ((d.questions || []).length ? questionsForm(item, resp) : handInBox(item, resp, { label: resp ? 'Watched ✅' : 'I’ve watched it ✅' }));
     case 'quiz': case 'worksheet': case 'exit': return due + instr + sc + done + questionsForm(item, resp);
-    case 'writing': return due + `<div class="writing-prompt"><b>✍️ Your task</b><p>${esc(d.prompt || '').replace(/\n/g, '<br>')}</p></div>` + ((d.tips || []).length ? `<div class="sc-box tips"><b>Tips</b><ul>${d.tips.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>` : '') + sc + instr + done + handInBox(item, resp, { text: true, file: d.allow_upload !== false, target: d.word_target }) + `<div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-print>🖨️ Print</button></div>`;
+    case 'writing': return due + `<div class="writing-prompt"><b>✍️ Your task</b><p>${esc(d.prompt || '').replace(/\n/g, '<br>')}</p></div>` + ((d.tips || []).length ? `<div class="sc-box tips"><b>Tips</b><ul>${d.tips.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>` : '') + sc + instr + done + handInBox(item, resp, { text: true, file: d.allow_upload !== false, target: d.word_target }) + `<div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-print>🖨️ Print</button><button type="button" class="btn btn-white auth-btn outline" data-download>📥 Download PDF</button></div>`;
     case 'flashcards': return instr + `<div class="fc" data-fc="${item.id}" data-i="0"><button type="button" class="fc-card" data-flip><span class="fc-face">${esc((d.cards[0] || {}).front || '')}</span><span class="meta">Tap to flip</span></button>
         <div class="fc-bar"><button type="button" class="pill pill-soft" data-fcprev>‹ Back</button><span class="meta fc-pos">1 / ${d.cards.length}</span><button type="button" class="pill pill-soft" data-fcshuffle>🔀 Shuffle</button><button type="button" class="pill pill-live" data-fcnext>Next ›</button></div></div>` + done + handInBox(item, resp, { label: resp ? 'Practised ✅' : 'I’ve practised these ✅' });
-    case 'activities': return due + instr + sc + `<div class="act-list">${(d.items || []).map((a, i) => `<article class="act-card"><div class="act-top"><span class="act-num">${i + 1}</span><div><h4>${esc(a.name || '')}</h4><span class="meta">${a.minutes ? esc(a.minutes) + ' min' : ''}</span></div></div>${a.materials ? `<p class="act-mat"><b>You need:</b> ${esc(a.materials)}</p>` : ''}<ol class="act-steps">${(a.steps || []).map(s => `<li>${esc(s)}</li>`).join('')}</ol></article>`).join('')}</div><div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-print>🖨️ Print</button></div>` + done + handInBox(item, resp, { label: resp ? 'Done ✅' : 'I’ve finished ✅' });
+    case 'activities': return due + instr + sc + `<div class="act-list">${(d.items || []).map((a, i) => `<article class="act-card"><div class="act-top"><span class="act-num">${i + 1}</span><div><h4>${esc(a.name || '')}</h4><span class="meta">${a.minutes ? esc(a.minutes) + ' min' : ''}</span></div></div>${a.materials ? `<p class="act-mat"><b>You need:</b> ${esc(a.materials)}</p>` : ''}<ol class="act-steps">${(a.steps || []).map(s => `<li>${esc(s)}</li>`).join('')}</ol></article>`).join('')}</div><div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-print>🖨️ Print</button><button type="button" class="btn btn-white auth-btn outline" data-download>📥 Download PDF</button></div>` + done + handInBox(item, resp, { label: resp ? 'Done ✅' : 'I’ve finished ✅' });
   }
   return '';
 }
@@ -386,7 +386,8 @@ async function initStudentItems(lessons, isEnrolled, onDone) {
     if (o) { if (!isEnrolled()) return say('Join the course first to open this.'); const id = Number(o.dataset.iopen), v = document.getElementById('iv-' + id); if (v.hidden) open(id); else { v.hidden = true; o.setAttribute('aria-expanded', 'false'); } return; }
     const f = e.target.closest('[data-openfile]');
     if (f) { const { data, error } = await db.storage.from('lesson-files').createSignedUrl(f.dataset.openfile, 900); if (error) return say(friendly(error)); return window.open(data.signedUrl, '_blank', 'noopener'); }
-    if (e.target.closest('[data-print]')) { const pv = e.target.closest('[id^="iv-"]'); const pid = pv && Number(pv.id.slice(3)); const pit = items.find(x => x.id === pid); return tnPrintPart(pv, pit ? pit.title : 'Worksheet'); }
+    const pbtn = e.target.closest('[data-print], [data-download]');
+    if (pbtn) { const pv = pbtn.closest('[id^="iv-"]'); const pid = pv && Number(pv.id.slice(3)); const pit = items.find(x => x.id === pid); const pt = pit ? pit.title : 'Worksheet'; return pbtn.hasAttribute('data-download') ? tnDownloadPart(pv, pt) : tnPrintPart(pv, pt); }
     const fc = e.target.closest('[data-fc]');
     if (fc) {
       const it = items.find(x => x.id === Number(fc.dataset.fc)); let cards = shuffled[it.id] || it.data.cards, i = Number(fc.dataset.i);
@@ -449,22 +450,22 @@ async function initStudentItems(lessons, isEnrolled, onDone) {
       body.tn-print-plain .side-shade, body.tn-print-plain .toast, body.tn-print-plain .back-link { display: none !important; }
       body.tn-print-plain .app-main { margin: 0 !important; padding: 0 !important; }
     }
-    #tn-print-area { font-family: Raleway, Arial, sans-serif; color: #222; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    #tn-print-area * { box-shadow: none !important; }
-    #tn-print-area .pr-head { display: flex; gap: 12px; align-items: center; border-bottom: 2px solid #3E4B94; padding-bottom: 8px; margin-bottom: 10px; }
-    #tn-print-area .pr-head img { height: 44px; }
-    #tn-print-area .pr-head h1 { font-size: 20px; margin: 0; color: #3E4B94; }
-    #tn-print-area .pr-head p { margin: 2px 0 0; font-size: 12px; color: #555; }
-    #tn-print-area .pr-name { display: flex; gap: 24px; margin: 6px 0 16px; font-size: 13px; }
-    #tn-print-area .pr-name span { flex: 1; border-bottom: 1px solid #999; padding-bottom: 2px; }
-    #tn-print-area .pr-part + h2, #tn-print-area .pr-part + .pr-part { margin-top: 24px; }
-    #tn-print-area .quiz-q { break-inside: avoid; border: 1px solid #ccc; border-radius: 6px; padding: 8px 12px; margin: 0 0 10px; }
-    #tn-print-area legend { font-weight: 700; font-size: 14px; padding: 0 4px; }
-    #tn-print-area label.remember { display: block; margin: 4px 0; font-size: 13px; }
-    #tn-print-area .pr-tick { display: inline-block; width: 18px; font-size: 14px; }
-    #tn-print-area .pr-answer { min-height: 22px; border-bottom: 1px solid #888; margin: 6px 0; padding: 2px 0; font-size: 13px; }
-    #tn-print-area .pr-long { min-height: 90px; border: 1px solid #888; border-radius: 4px; padding: 6px; white-space: pre-wrap; }
-    #tn-print-area .act-card, #tn-print-area .sc-box, #tn-print-area .writing-prompt { break-inside: avoid; }`;
+    .tn-print-sheet { background: #fff; font-family: Raleway, Arial, sans-serif; color: #222; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .tn-print-sheet * { box-shadow: none !important; }
+    .tn-print-sheet .pr-head { display: flex; gap: 12px; align-items: center; border-bottom: 2px solid #3E4B94; padding-bottom: 8px; margin-bottom: 10px; }
+    .tn-print-sheet .pr-head img { height: 44px; }
+    .tn-print-sheet .pr-head h1 { font-size: 20px; margin: 0; color: #3E4B94; }
+    .tn-print-sheet .pr-head p { margin: 2px 0 0; font-size: 12px; color: #555; }
+    .tn-print-sheet .pr-name { display: flex; gap: 24px; margin: 6px 0 16px; font-size: 13px; }
+    .tn-print-sheet .pr-name span { flex: 1; border-bottom: 1px solid #999; padding-bottom: 2px; }
+    .tn-print-sheet .pr-part + h2, .tn-print-sheet .pr-part + .pr-part { margin-top: 24px; }
+    .tn-print-sheet .quiz-q { break-inside: avoid; border: 1px solid #ccc; border-radius: 6px; padding: 8px 12px; margin: 0 0 10px; }
+    .tn-print-sheet legend { font-weight: 700; font-size: 14px; padding: 0 4px; }
+    .tn-print-sheet label.remember { display: block; margin: 4px 0; font-size: 13px; }
+    .tn-print-sheet .pr-tick { display: inline-block; width: 18px; font-size: 14px; }
+    .tn-print-sheet .pr-answer { min-height: 22px; border-bottom: 1px solid #888; margin: 6px 0; padding: 2px 0; font-size: 13px; }
+    .tn-print-sheet .pr-long { min-height: 90px; border: 1px solid #888; border-radius: 4px; padding: 6px; white-space: pre-wrap; }
+    .tn-print-sheet .act-card, .tn-print-sheet .sc-box, .tn-print-sheet .writing-prompt { break-inside: avoid; }`;
   document.head.appendChild(st);
 
   let busy = false;
@@ -491,16 +492,47 @@ async function initStudentItems(lessons, isEnrolled, onDone) {
     return copy;
   }
 
-  function build(parts) {
-    const a = area(), course = document.querySelector('#course-hero h1, #course-hero h2');
+  // The clean sheet: logo, title, course, name/date lines, then the quiz or worksheet
+  function makeSheet(parts) {
+    const sheet = document.createElement('div'); sheet.className = 'tn-print-sheet';
+    const course = document.querySelector('#course-hero h1, #course-hero h2');
     const one = parts.length === 1, cname = course ? course.textContent.trim() : '';
-    a.innerHTML = `<header class="pr-head"><img src="images/tn-logo.png" alt=""><div><h1>${safe((one ? parts[0].title : cname) || 'Worksheet')}</h1>${one && cname ? `<p>${safe(cname)}</p>` : ''}</div></header><div class="pr-name"><span>Name:</span><span>Date:</span></div>`;
+    sheet.innerHTML = `<header class="pr-head"><img src="images/tn-logo.png" alt=""><div><h1>${safe((one ? parts[0].title : cname) || 'Worksheet')}</h1>${one && cname ? `<p>${safe(cname)}</p>` : ''}</div></header><div class="pr-name"><span>Name:</span><span>Date:</span></div>`;
     parts.forEach(p => {
-      if (!one) { const h = document.createElement('h2'); h.textContent = p.title || ''; h.style.cssText = 'font-size:16px;color:#3E4B94;margin:18px 0 8px'; a.appendChild(h); }
-      a.appendChild(printableCopy(p.el));
+      if (!one) { const h = document.createElement('h2'); h.textContent = p.title || ''; h.style.cssText = 'font-size:16px;color:#3E4B94;margin:18px 0 8px'; sheet.appendChild(h); }
+      sheet.appendChild(printableCopy(p.el));
     });
+    return sheet;
+  }
+  function build(parts) {
+    const a = area(); a.innerHTML = ''; a.appendChild(makeSheet(parts));
     document.body.classList.add('tn-printing');
   }
+
+  // 📥 Download PDF: same clean sheet, saved as a PDF file
+  let pdfLib = null;
+  const loadPdfLib = () => pdfLib || (pdfLib = new Promise((ok, no) => {
+    if (window.html2pdf) return ok();
+    const sc = document.createElement('script');
+    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    sc.onload = () => ok(); sc.onerror = () => { pdfLib = null; no(); };
+    document.head.appendChild(sc);
+  }));
+  window.tnDownloadPart = async function (part, title) {
+    if (!part) return;
+    if (typeof say === 'function') say('Preparing your PDF…');
+    try { await loadPdfLib(); } catch (_) { if (typeof say === 'function') say('Could not prepare the PDF. Check your connection and try again.'); return; }
+    const sheet = makeSheet([{ el: part, title }]);
+    sheet.style.width = '180mm'; sheet.style.padding = '2mm';
+    const name = String(title || 'Worksheet').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-') || 'Worksheet';
+    await html2pdf().set({
+      margin: 12, filename: name + '.pdf',
+      image: { type: 'jpeg', quality: 0.95 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['css', 'legacy'], avoid: ['.quiz-q', '.act-card', '.sc-box', '.writing-prompt'] }
+    }).from(sheet).save();
+  };
 
   function cleanup() {
     document.body.classList.remove('tn-printing', 'tn-print-plain');
