@@ -82,7 +82,7 @@ section { margin-top: 100px; }
 .about-image img { width: 100%; max-width: 606px; margin-left: auto; }
 
 /* ----- Role cards ----- */
-.roles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; margin-top: 40px; }
+.roles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin-top: 40px; }
 .role-card { background: var(--white); border-radius: var(--radius); padding: 36px; box-shadow: 0 10px 40px rgba(62, 75, 148, .10); display: flex; flex-direction: column; gap: 10px; transition: transform .2s; }
 .role-card:hover { transform: translateY(-4px); }
 .role-card img { width: 84px; height: 84px; object-fit: contain; }
@@ -352,4 +352,4 @@ html.tn-ar .about-more span { display: inline-block; transform: scaleX(-1); }
 @media (max-width: 900px) { .about-intro { font-size: 1.02rem; } }
 .about-intro b { color: #1D2026; }
 
-@media (max-width: 1100px) and (min-width: 721px) { .roles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1100px) and (min-width: 721px) { .roles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
