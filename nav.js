@@ -22,7 +22,7 @@
     ],
     teacher: [
       { ic: '🏠', label: 'Home', href: 'teacher-dashboard.html' },
-      { ic: '📘', label: 'Online Courses', items: [['teacher-courses.html', 'My courses'], ['teacher-settings.html#tprofile-form', '👤 My teacher profile'], ['teacher-calendar.html', 'Live classes'], ['teacher-attendance.html', '📋 Attendance'], ['groups.html', '🧩 Study groups'], ['teacher-requests.html', 'Session requests']] },
+      { ic: '📘', label: 'Online Courses', items: [['teacher-courses.html', 'My courses'], ['teacher-settings.html#tprofile-form', '👤 My teacher profile'], ['teacher-my-calendar.html', '📅 My calendar'], ['teacher-calendar.html', 'Live classes'], ['teacher-attendance.html', '📋 Attendance'], ['groups.html', '🧩 Study groups'], ['teacher-requests.html', 'Session requests']] },
       { ic: '📊', label: 'Progress & certificates', items: [['teacher-insights.html', '📊 Student insights'], ['teacher-certificates.html', '🏅 Certificates']] },
       { ic: '💬', label: 'Messages & Community', items: [['messages.html', 'Messages'], ['community.html', 'Community']] },
       { ic: '☕', label: 'For me', items: [['teacher-hub.html', '🔔 My workshops (Beyond the Bell)'], ['teacher-hub.html#hub-done', '🏅 My certificates'], ['teacher-cafe.html', '☕ Teacher Café'], ['teacher-connect.html', '🤝 Coffee & Connections']] },

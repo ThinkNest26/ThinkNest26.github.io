@@ -68,11 +68,30 @@ async function weekForStudent(host, uid) {
     .concat((bk || []).map(b => ({ start: new Date(b.starts_at), end: new Date(new Date(b.starts_at).getTime() + 30 * 60e3), title: 'Mentor: ' + (b.mentors ? b.mentors.name : ''), link: b.mentors && b.mentors.meeting_link, color: '#2FA08A', sub: 'Mentor session' })));
   weekCalendar(host, ev, { legend: [['Maths', '#3E4B94'], ['English', '#F27A6F'], ['Science', '#2FA08A'], ['Arabic', '#D4A017'], ['Other', '#6A78C9']] });
 }
-async function weekForTeacher(host, uid) {
+async function weekForTeacher(host, uid, opts = {}) {
+  // live classes I teach
   const { data: cs } = await db.from('courses').select('id').eq('teacher_id', uid);
-  const ids = (cs || []).map(c => c.id);
-  const { data: ses } = ids.length ? await db.from('sessions').select('*, courses(title, subject)').in('course_id', ids) : { data: [] };
-  weekCalendar(host, (ses || []).map(s => wcSession(s, { page: 'teacher-course.html?id=' + s.course_id })), { legend: [['Maths', '#3E4B94'], ['English', '#F27A6F'], ['Science', '#2FA08A'], ['Arabic', '#D4A017'], ['Other', '#6A78C9']] });
+  const own = (cs || []).map(c => c.id);
+  // workshops I joined (Beyond the Bell) and my mentor profile
+  const [{ data: en }, { data: me }] = await Promise.all([db.from('enrollments').select('course_id').eq('user_id', uid), db.from('mentors').select('id').eq('teacher_id', uid).maybeSingle()]);
+  const joined = (en || []).map(e => e.course_id).filter(id => !own.includes(id));
+  const safe = p => Promise.resolve(p).then(r => r, () => ({ data: [] }));
+  const [{ data: ses }, { data: jses }, { data: bk }, { data: rs }] = await Promise.all([
+    own.length ? safe(db.from('sessions').select('*, courses(title, subject)').in('course_id', own)) : { data: [] },
+    joined.length ? safe(db.from('sessions').select('*, courses(title, subject)').in('course_id', joined)) : { data: [] },
+    me ? safe(db.from('bookings').select('*, profiles(full_name)').eq('mentor_id', me.id).in('status', ['booked', 'accepted'])) : { data: [] },
+    safe(db.from('meetup_rsvps').select('meetup_id, cafe_meetups(id, title, starts_at, hub, meeting_link)').eq('user_id', uid))
+  ]);
+  const ev = (ses || []).map(s => wcSession(s, { page: 'teacher-course.html?id=' + s.course_id }))
+    .concat((jses || []).map(s => wcSession(s, { color: '#8A5CF6', sub: '🔔 My workshop: ' + (s.courses ? s.courses.title : ''), page: 'course.html?id=' + s.course_id })))
+    .concat((bk || []).map(b => ({ start: new Date(b.starts_at), end: new Date(new Date(b.starts_at).getTime() + 30 * 60e3), title: 'Mentor session' + (b.profiles && b.profiles.full_name ? ': ' + b.profiles.full_name : ''), color: '#2FA08A', sub: 'Mentor session', page: 'teacher-requests.html' })))
+    .concat((rs || []).map(r => r.cafe_meetups).filter(Boolean).map(m => ({ start: new Date(m.starts_at), end: new Date(new Date(m.starts_at).getTime() + 60 * 60e3), title: '☕ ' + m.title, color: '#F27A6F', sub: 'Café meetup', link: m.meeting_link, page: m.hub === 'parents' ? 'parent-connect.html#meetups' : 'teacher-connect.html#meetups' })));
+  weekCalendar(host, ev, { legend: [['My live classes', '#3E4B94'], ['My workshops', '#8A5CF6'], ['Mentor sessions', '#2FA08A'], ['Café meetups', '#F27A6F']] });
+  if (opts.upcoming) {
+    const next = ev.filter(e => e.end > new Date()).sort((a, b) => a.start - b.start).slice(0, 12);
+    opts.upcoming.innerHTML = next.length ? next.map(e => `<div class="pending-row"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${e.color}"></span><div><b>${wcEsc(e.title)}</b><span class="meta">${e.start.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })} · ${wcTime(e.start)}${e.sub ? ' · ' + wcEsc(e.sub) : ''}</span></div>${e.page ? `<a class="pill pill-soft" href="${wcEsc(e.page)}">Open</a>` : ''}</div>`).join('')
+      : '<p class="empty">Nothing coming up. Add a live class from your course, or join a workshop in Beyond the Bell.</p>';
+  }
 }
 async function startFamilyCalendar() {
   const { user } = await initParent();
