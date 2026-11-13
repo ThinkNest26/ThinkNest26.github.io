@@ -158,36 +158,56 @@ async function attendanceOverviewFor(sid, hostId) {
     (recent.length ? `<p class="meta att-recent-h">Recent absences and late arrivals</p><ul class="att-recent">${recent.map(r => `<li>${ATT[r.status][0]} ${new Date(r.day + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} · ${esc(r.courses ? r.courses.title : r.study_groups ? r.study_groups.name : '')}${r.note ? ` · <i>${esc(r.note)}</i>` : ''}</li>`).join('')}</ul>` : '');
 }
 
-// ---------- Teachers: one place for every course and class ----------
+// ---------- Class days: read "Sun and Wed 5 to 7" style times ----------
+const TN_DAYS = [['sun', 'sunday', 'الأحد'], ['mon', 'monday', 'الاثنين'], ['tue', 'tuesday', 'tues', 'الثلاثاء'], ['wed', 'wednesday', 'الأربعاء'], ['thu', 'thursday', 'thur', 'thurs', 'الخميس'], ['fri', 'friday', 'الجمعة'], ['sat', 'saturday', 'السبت']];
+const TN_DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+function tnSlotDays(text) {
+  const t = String(text || '').toLowerCase(), out = new Set();
+  TN_DAYS.forEach((names, i) => { if (names.some(n => /[a-z]/.test(n) ? new RegExp('\\b' + n + '\\b').test(t) : t.includes(n))) out.add(i); });
+  // ranges like "Mon–Thu" or "Monday to Friday"
+  const r = t.match(/\b(sun|mon|tue|wed|thu|fri|sat)[a-z]*\s*(?:-|–|to)\s*(sun|mon|tue|wed|thu|fri|sat)[a-z]*/);
+  if (r) { const a = TN_DAYS.findIndex(n => n[0] === r[1]), b = TN_DAYS.findIndex(n => n[0] === r[2]); for (let i = a; ; i = (i + 1) % 7) { out.add(i); if (i === b) break; } }
+  if (/\b(daily|every ?day)\b/.test(t)) for (let i = 0; i < 7; i++) out.add(i);
+  return out;
+}
+const tnTodayIdx = () => new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Dubai' })).getDay();
+function tnNextDay(days) { const d = tnTodayIdx(); for (let k = 1; k <= 7; k++) if (days.has((d + k) % 7)) return TN_DAY_NAMES[(d + k) % 7]; return ''; }
+
+// ---------- Teachers: one register for each published course group, on its class days ----------
 async function attendanceHub(hostId, opts = {}) {
   const host = document.getElementById(hostId); if (!host) return;
   const { data: { session } } = await db.auth.getSession();
-  const uid = session.user.id, today = todayDubai();
+  const uid = session.user.id, today = todayDubai(), dIdx = tnTodayIdx();
   const [{ data: courses0 }, { data: groups }, { data: marks }, { data: cgs }] = await Promise.all([
-    db.from('courses').select('id, title, grade, subject').eq('teacher_id', uid).order('title'),
+    db.from('courses').select('*').eq('teacher_id', uid).order('title'),
     db.rpc('my_groups'),
     db.from('attendance').select('course_id, group_id, status').eq('day', today),
-    db.from('study_groups').select('id, course_id').eq('owner_id', uid).eq('kind', 'class')
+    db.from('study_groups').select('id, course_id, slot, name').eq('owner_id', uid).eq('kind', 'class')
   ]);
-  // attendance is taken once, in each course group, so courses that have groups aren't listed twice
-  const grouped = new Set((cgs || []).filter(g => g.course_id).map(g => g.course_id));
-  const courses = (courses0 || []).filter(c => !grouped.has(c.id));
-  const classes = (groups || []).filter(g => g.my_role === 'owner' && g.my_status === 'active' && (g.kind === 'class' || !opts.classesOnly));
-  const teacherGroups = classes.filter(g => g.kind === 'class').concat(classes.filter(g => g.kind !== 'class'));
+  // only published courses for students: no drafts, no study groups, no older classes that aren't part of a course
+  const courses = (courses0 || []).filter(c => c.published !== false && (c.audience || 'students') === 'students');
+  const cById = {}; courses.forEach(c => cById[c.id] = c);
+  const members = {}; (groups || []).forEach(g => members[g.id] = g.members);
+  const cgroups = (cgs || []).filter(g => g.course_id && cById[g.course_id]);
+  const grouped = new Set(cgroups.map(g => g.course_id));
   const count = (k, v) => (marks || []).filter(m => m[k] === v);
-  const item = (type, id, title, sub) => {
-    const m = count(type === 'course' ? 'course_id' : 'group_id', id);
+  const regs = courses.filter(c => !grouped.has(c.id)).map(c => ({ type: 'course', id: c.id, title: c.title, sub: ['Course', c.grade === 'all' ? 'All grades' : c.grade, c.subject].filter(Boolean).join(' · '), days: tnSlotDays(c.class_schedule) }))
+    .concat(cgroups.map(g => { const c = cById[g.course_id]; return { type: 'class', id: g.id, title: g.name, sub: [c.title, g.slot, members[g.id] != null ? members[g.id] + ' students' : ''].filter(Boolean).join(' · '), days: tnSlotDays(g.slot || c.class_schedule) }; }));
+  const item = r => {
+    const m = count(r.type === 'course' ? 'course_id' : 'group_id', r.id);
     const done = m.length, absent = m.filter(x => x.status === 'absent').length, late = m.filter(x => x.status === 'late').length;
-    return `<div class="hub-row ${done ? 'done' : ''}"><span class="hub-ic">${type === 'course' ? '📘' : type === 'class' ? '🏫' : '👥'}</span>
-      <div><b>${esc(title)}</b><span class="meta">${esc(sub)}</span></div>
-      <span class="hub-status">${done ? `✅ Taken today · ${done} marked${absent ? ` · ❌ ${absent}` : ''}${late ? ` · ⏰ ${late}` : ''}` : '⏳ Not taken today'}</span>
-      <button type="button" class="btn ${done ? 'btn-white outline' : 'btn-red'}" data-hub="${type}" data-id="${id}" data-name="${esc(title)}">${done ? 'Open' : 'Take attendance'}</button></div>`;
+    const isDay = !r.days.size || r.days.has(dIdx);
+    return `<div class="hub-row ${done ? 'done' : ''}"><span class="hub-ic">📘</span>
+      <div><b>${esc(r.title)}</b><span class="meta">${esc(r.sub)}</span></div>
+      <span class="hub-status">${done ? `✅ Taken today · ${done} marked${absent ? ` · ❌ ${absent}` : ''}${late ? ` · ⏰ ${late}` : ''}` : isDay ? '⏳ Not taken today' : r.days.size ? '📅 Next class: ' + tnNextDay(r.days) : ''}</span>
+      <button type="button" class="btn ${done || !isDay ? 'btn-white outline' : 'btn-red'}" data-hub="${r.type}" data-id="${r.id}" data-name="${esc(r.title)}">${done ? 'Open' : isDay ? 'Take attendance' : 'Open register'}</button></div>`;
   };
-  const rows = (courses || []).map(c => item('course', c.id, c.title, ['Course', c.grade, c.subject].filter(Boolean).join(' · ')))
-    .concat(teacherGroups.map(g => item(g.kind === 'class' ? 'class' : 'group', g.id, g.name, (g.kind === 'class' ? 'Course group' : 'Study group') + ' · ' + g.members + ' members')));
-  const notDone = rows.filter(r => !r.includes('class="hub-row done"')).length;
-  host.innerHTML = rows.length ? `<div class="hub-head"><b>Today, ${new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</b><span class="meta">${notDone ? notDone + ' register' + (notDone === 1 ? '' : 's') + ' still to take' : 'All registers taken today 🎉'}</span></div><div class="hub-list">${rows.join('')}</div>`
-    : '<div class="empty-box"><p>Create a course or a class first, then take attendance here.</p><a class="btn btn-red" href="teacher-courses.html">Go to My Courses</a></div>';
+  const todayRegs = regs.filter(r => !r.days.size || r.days.has(dIdx)), otherRegs = regs.filter(r => r.days.size && !r.days.has(dIdx));
+  const notDone = todayRegs.filter(r => !count(r.type === 'course' ? 'course_id' : 'group_id', r.id).length).length;
+  host.innerHTML = regs.length ? `<div class="hub-head"><b>Today, ${new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Dubai' })}</b><span class="meta">${todayRegs.length ? (notDone ? notDone + ' register' + (notDone === 1 ? '' : 's') + ' still to take' : 'All registers taken today 🎉') : 'No classes today'}</span></div>
+      ${todayRegs.length ? `<div class="hub-list">${todayRegs.map(item).join('')}</div>` : '<p class="empty">None of your courses has a class today. 🌿</p>'}
+      ${otherRegs.length ? `<details class="hubreq-done" style="margin-top:14px"><summary>Other days (${otherRegs.length}): open a register to catch up</summary><div class="hub-list">${otherRegs.map(item).join('')}</div></details>` : ''}`
+    : '<div class="empty-box"><p>Attendance appears here for your published courses, on their class days.</p><a class="btn btn-red" href="teacher-courses.html">Go to My Courses</a></div>';
   host.onclick = e => {
     const b = e.target.closest('[data-hub]'); if (!b) return;
     const id = Number(b.dataset.id);
@@ -195,4 +215,19 @@ async function attendanceHub(hostId, opts = {}) {
     const d = document.getElementById('att-dialog');
     d.addEventListener('close', () => attendanceHub(hostId, opts), { once: true });
   };
+}
+
+// ---------- One course page: its own Attendance tab ----------
+async function courseAttendanceTab(host, course) {
+  if (!host) return;
+  if (course.published === false) { host.innerHTML = '<div class="empty-box"><p>📋 Attendance opens once this course is published and students have joined.</p></div>'; return; }
+  const { data: gs } = await db.from('study_groups').select('id, name, slot').eq('course_id', course.id).eq('kind', 'class').order('name');
+  if (!(gs || []).length) return attendancePanel(host, { cid: course.id });
+  const dIdx = tnTodayIdx();
+  const { data: marks } = await db.from('attendance').select('group_id').eq('day', todayDubai()).in('group_id', gs.map(g => g.id));
+  host.innerHTML = `<p class="meta">Take the register for each group on its class days.</p><div class="hub-list">${gs.map(g => { const days = tnSlotDays(g.slot || course.class_schedule), isDay = !days.size || days.has(dIdx), done = (marks || []).some(m => m.group_id === g.id);
+    return `<div class="hub-row ${done ? 'done' : ''}"><span class="hub-ic">👥</span><div><b>${esc(g.name)}</b><span class="meta">${esc(g.slot || '')}</span></div>
+      <span class="hub-status">${done ? '✅ Taken today' : isDay ? '⏳ Class today' : days.size ? '📅 Next class: ' + tnNextDay(days) : ''}</span>
+      <button type="button" class="btn ${isDay && !done ? 'btn-red' : 'btn-white outline'}" data-cgatt="${g.id}" data-name="${esc(g.name)}">${done ? 'Open' : isDay ? 'Take attendance' : 'Open register'}</button></div>`; }).join('')}</div>`;
+  host.onclick = e => { const b = e.target.closest('[data-cgatt]'); if (!b) return; openAttendanceDialog({ gid: Number(b.dataset.cgatt), title: b.dataset.name }); document.getElementById('att-dialog').addEventListener('close', () => courseAttendanceTab(host, course), { once: true }); };
 }
