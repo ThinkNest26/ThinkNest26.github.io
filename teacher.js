@@ -138,6 +138,31 @@ function courseVideoEmbed(url) {
   return null;
 }
 
+// ----- Copy one lesson (with its worksheets, quizzes and answers) into another of my courses -----
+async function copyLessonDialog(l, c) {
+  if (!l) return;
+  const { data: { session } } = await db.auth.getSession();
+  const { data: cs } = await db.from('courses').select('id, title, published').eq('teacher_id', session.user.id).order('title');
+  let d = document.getElementById('copy-lesson-dlg');
+  if (!d) { d = document.createElement('dialog'); d.id = 'copy-lesson-dlg'; d.className = 'dlg'; document.body.appendChild(d); }
+  d.innerHTML = `<form class="auth-form" style="display:grid;gap:12px;min-width:min(460px,88vw)"><h2 style="margin:0">📄 Copy “${esc(l.title)}”</h2>
+    <p class="meta" style="margin:0">The copy includes everything in the lesson: worksheets, quizzes and their answers. It’s added at the end of the course as a draft, so you can check it before students see it.</p>
+    <label>Copy to <select name="to">${(cs || []).map(x => `<option value="${x.id}" ${x.id === c.id ? 'selected' : ''}>${esc(x.title)}${x.id === c.id ? ' (this course)' : ''}${x.published === false ? ' · draft' : ''}</option>`).join('')}</select></label>
+    <div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-x>Cancel</button><button class="btn btn-red auth-btn">Copy the lesson</button></div></form>`;
+  const f = d.querySelector('form'); d.querySelector('[data-x]').onclick = () => d.close();
+  f.onsubmit = async e => {
+    e.preventDefault(); const b = f.querySelector('.btn-red'); b.disabled = true; b.textContent = 'Copying…';
+    const to = Number(f.to.value);
+    const { error } = await db.rpc('copy_lesson', { lid: l.id, to_cid: to });
+    b.disabled = false; b.textContent = 'Copy the lesson';
+    if (error) return say(/function|schema cache/i.test(error.message || '') ? 'Please run the latest Supabase update (copy_lesson.sql) first.' : friendly(error));
+    d.close();
+    if (to === c.id) { say('✅ Copied. The copy is at the end of the list, as a draft.'); setTimeout(() => location.reload(), 600); }
+    else { say('✅ Copied. Opening that course…'); setTimeout(() => { location.href = 'teacher-course.html?id=' + to; }, 700); }
+  };
+  d.showModal();
+}
+
 // ----- Course page: study groups made for students on this course -----
 async function courseStudyGroupsTab(c) {
   const host = document.getElementById('sgroups-host'); if (!host) return;
@@ -562,7 +587,7 @@ async function startTeacherCourse() {
         ${l.material_kind && l.material_kind !== 'activities' ? `<button class="pill pill-live" data-results="${l.id}">Results</button>` : ''}
         <button class="pill pill-soft" data-up="${l.id}" ${k === 0 ? 'disabled' : ''} aria-label="Move up">↑</button>
         <button class="pill pill-soft" data-down="${l.id}" ${k === lessons.length - 1 ? 'disabled' : ''} aria-label="Move down">↓</button>
-        ${lessonState(l) !== 'live' && !(groupDates[l.id] || []).length ? `<button class="pill pill-live" data-pub-lesson="${l.id}">Publish now</button>` : ''}<button class="pill pill-soft" data-edit-lesson="${l.id}">Edit</button>
+        ${lessonState(l) !== 'live' && !(groupDates[l.id] || []).length ? `<button class="pill pill-live" data-pub-lesson="${l.id}">Publish now</button>` : ''}<button class="pill pill-soft" data-edit-lesson="${l.id}">Edit</button><button class="pill pill-soft" data-copy-lesson="${l.id}" title="Copy this lesson to another course">📄 Copy to…</button>
         <button class="pill pill-soft" data-del-lesson="${l.id}">Delete</button></div>`).join('')
       : '<p class="empty">No lessons yet. Add the first one below.</p>';
     if (typeof loadTeacherItems === 'function') loadTeacherItems(lessons, c);
@@ -641,6 +666,8 @@ async function startTeacherCourse() {
     const up = e.target.closest('[data-up]'), down = e.target.closest('[data-down]'), del = e.target.closest('[data-del-lesson]'), res = e.target.closest('[data-results]');
     if (res) return showLessonResults(lessons.find(l => l.id === Number(res.dataset.results)));
     const ed = e.target.closest('[data-edit-lesson]'); if (ed) return editLesson(lessons.find(l => l.id === Number(ed.dataset.editLesson)));
+    const cp = e.target.closest('[data-copy-lesson]');
+    if (cp) return copyLessonDialog(lessons.find(l => l.id === Number(cp.dataset.copyLesson)), c);
     const pub = e.target.closest('[data-pub-lesson]');
     if (pub) { const { error } = await db.from('lessons').update({ publish_at: new Date().toISOString() }).eq('id', Number(pub.dataset.pubLesson)); if (error) return say(friendly(error)); say('Published. Students in this course have been told.'); return loadLessons(); }
     if (del) {

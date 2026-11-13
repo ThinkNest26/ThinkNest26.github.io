@@ -28,7 +28,7 @@
   <link rel="stylesheet" href="style.css?v=182">
   <link rel="stylesheet" href="app.css?v=171">
   <link rel="stylesheet" href="rtl.css?v=171">
-  <script src="i18n.js?v=171"></script>
+  <script src="i18n.js?v=190"></script>
 </head>
 <body class="auth">
   <header class="app-top">
@@ -44,6 +44,7 @@
       <form class="auth-form" id="email-form" novalidate>
         <label>Child email <input type="email" name="email" placeholder="The email your child logs in with" required></label>
         <p class="note">Your child will see your request when they log in, and taps <b>Approve</b> to connect.</p>
+        <p class="note">👤 <b>Your child doesn’t have an email?</b> No problem. Go to <a href="parent-dashboard.html">My children</a> → <b>Enrol another child</b>, add their name, then choose <b>Create a username login</b>.</p>
         <p class="form-error" id="email-error" role="alert" hidden></p>
         <button class="btn btn-red auth-btn">Add</button>
       </form>

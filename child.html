@@ -30,7 +30,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@600;700;800&display=swap">
   <link rel="stylesheet" href="certs.css?v=171">
   <link rel="stylesheet" href="rtl.css?v=171">
-  <script src="i18n.js?v=176"></script>
+  <script src="i18n.js?v=190"></script>
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -80,7 +80,7 @@
       <h2 class="dash-h">Chats</h2>
       <p class="hint">Read-only. Your child is told that you can see their chats.</p>
       <section class="approve-list" id="k-chats"></section>
-      <p class="unlink-row"><button class="pill pill-soft big danger" id="unlink">Remove this child from my account</button></p>
+      <p class="unlink-row"><button class="pill pill-soft big" id="kid-newpw">🔑 New password (for username logins)</button> <button class="pill pill-soft big danger" id="unlink">Remove this child from my account</button></p>
     </main>
 
     <footer class="footer app-footer">
@@ -111,5 +111,15 @@
   <script src="sessionthread.js?v=176"></script>
   <script src="parent.js?v=171"></script>
   <script>startChild();</script>
+  <script>
+  document.getElementById('kid-newpw') && document.getElementById('kid-newpw').addEventListener('click', async () => {
+    const kid = new URLSearchParams(location.search).get('id');
+    const pw = prompt('Type a new password for your child (at least 8 characters). Use this if your child logs in with a username, not an email.');
+    if (pw === null) return; if (pw.length < 8) return say('Please use at least 8 characters.');
+    const { error } = await db.rpc('parent_reset_child_password', { kid, pw });
+    if (error) return say(/EMAIL_ACCOUNT/.test(error.message || '') ? 'Your child logs in with an email, so they can reset their password with “Forgot password?” on the log in page.' : /function|schema cache/i.test(error.message || '') ? 'Please run the latest Supabase update first.' : friendly(error));
+    say('🔑 New password saved: ' + pw);
+  });
+  </script>
 </body>
 </html>
