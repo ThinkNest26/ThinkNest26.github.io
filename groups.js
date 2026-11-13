@@ -35,6 +35,8 @@ async function startGroups() {
   const isTeach = ['teacher', 'school_leader', 'admin'].includes(me.role);
   const tgBtn = document.getElementById('new-tgroup');
   if (tgBtn) { tgBtn.hidden = !isTeach; if (isTeach) tgBtn.addEventListener('click', () => openTeacherGroupDialog('study')); }
+  // opened from a course page: start a study group for that course straight away
+  { const q = new URLSearchParams(location.search); if (isTeach && q.get('new') === '1' && q.get('course')) setTimeout(() => { openTeacherGroupDialog('study'); const pick = () => { const sel = document.getElementById('class-form').course; if (sel && sel.querySelector(`option[value="${q.get('course')}"]`)) { sel.value = q.get('course'); sel.onchange && sel.onchange(); } else setTimeout(pick, 200); }; pick(); }, 300); }
   const dlg = document.getElementById('group-dialog'), f = document.getElementById('group-form'), err = document.getElementById('group-error');
   newBtn.addEventListener('click', () => { f.reset(); showError(err, ''); dlg.showModal(); });
   dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
@@ -394,7 +396,9 @@ function openTeacherGroupDialog(mode) {
     const students = [...cf.querySelectorAll('input[name=stud]:checked')].map(x => x.value);
     if (!isCls && !students.length) return say('Choose at least one student.');
     const res = isCls ? await db.rpc('create_class', { cname: cf.name.value, cdesc: cf.desc.value, cid: cf.course.value ? Number(cf.course.value) : null, students })
-                      : await db.rpc('create_teacher_group', { gname: cf.name.value, gdesc: cf.desc.value, students });
+                      : await (async () => { const cid = cf.course.value ? Number(cf.course.value) : null;
+                          if (cid) { const r = await db.rpc('create_course_study_group', { gname: cf.name.value, gdesc: cf.desc.value, students, cid }); if (!r.error || !/function|schema cache/i.test(r.error.message || '')) return r; }
+                          return db.rpc('create_teacher_group', { gname: cf.name.value, gdesc: cf.desc.value, students }); })();
     if (res.error) return say(friendly(res.error));
     location.href = 'group.html?id=' + res.data + (isCls ? '&add=1' : '');
   };

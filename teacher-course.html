@@ -57,6 +57,8 @@
         <button role="tab" aria-selected="false" data-tab="t-students">Students</button>
         <button role="tab" aria-selected="false" data-tab="t-recs">Recordings</button>
         <button role="tab" aria-selected="false" data-tab="t-att" hidden>📋 Attendance</button>
+        <button role="tab" aria-selected="false" data-tab="t-sgroups">🧩 Study groups</button>
+        <button role="tab" aria-selected="false" data-tab="t-reports">📝 Reports</button>
       </div>
       <section id="t-lessons" class="tab-panel">
         <div class="lesson-list" id="lessons"></div>
@@ -79,6 +81,8 @@
         <div class="panel table-wrap"><table class="t-table"><thead><tr><th>Student</th><th>Grade and time</th><th>Registered</th><th>Progress</th><th>Certificate</th></tr></thead><tbody id="students"></tbody></table></div>
       </section>
       <section id="t-att" class="tab-panel" hidden><div id="att-host"></div></section>
+      <section id="t-sgroups" class="tab-panel" hidden><div id="sgroups-host"><p class="empty">Loading…</p></div></section>
+      <section id="t-reports" class="tab-panel" hidden><div id="reports-host"><p class="empty">Loading…</p></div></section>
       <section id="t-recs" class="tab-panel" hidden>
         <div class="grid-cards" id="recs"></div>
         <form class="panel inline-form" id="rec-form">
@@ -162,7 +166,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script src="supabase-config.js?v=171"></script>
   <script src="app.js?v=183"></script>
-  <script src="nav.js?v=178"></script>
+  <script src="nav.js?v=185"></script>
   <script src="notify.js?v=171" defer></script>
   <script src="objpicker.js?v=171"></script>
   <script src="lessons.js?v=171"></script>
@@ -170,7 +174,7 @@
   <script src="hubs.js?v=178"></script>
   <script src="courseform.js?v=171"></script>
   <script src="attendance.js?v=184"></script>
-  <script src="teacher.js?v=184"></script>
+  <script src="teacher.js?v=185"></script>
   <script>startTeacherCourse();</script>
 </body>
 </html>

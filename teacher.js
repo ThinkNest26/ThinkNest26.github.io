@@ -138,6 +138,26 @@ function courseVideoEmbed(url) {
   return null;
 }
 
+// ----- Course page: study groups made for students on this course -----
+async function courseStudyGroupsTab(c) {
+  const host = document.getElementById('sgroups-host'); if (!host) return;
+  let { data: gs, error } = await db.from('study_groups').select('id, name, description').eq('course_id', c.id).neq('kind', 'class').order('name');
+  if (error) gs = [];
+  const { data: mine } = await db.rpc('my_groups'); const mem = {}; (mine || []).forEach(g => mem[g.id] = g.members);
+  host.innerHTML = `<div class="cx-head" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><p class="meta" style="margin:0">Small groups of students from this course who work together: they can post, chat and share resources. Students don’t need to be in the same time group.</p>
+      <a class="btn btn-red" href="groups.html?new=1&course=${c.id}">+ Create a study group</a></div>
+    ${(gs || []).length ? `<div class="hub-list" style="margin-top:12px">${gs.map(g => `<div class="hub-row"><span class="hub-ic">🧩</span><div><b>${esc(g.name)}</b><span class="meta">${esc([g.description, mem[g.id] != null ? mem[g.id] + ' members' : ''].filter(Boolean).join(' · '))}</span></div><span></span><a class="btn btn-white outline" href="group.html?id=${g.id}">Open</a></div>`).join('')}</div>`
+      : '<p class="empty" style="margin-top:12px">No study groups for this course yet.</p>'}`;
+}
+// ----- Course page: report cards for each group -----
+async function courseReportsTab(c) {
+  const host = document.getElementById('reports-host'); if (!host) return;
+  const { data: gs } = await db.from('study_groups').select('id, name, slot').eq('course_id', c.id).eq('kind', 'class').order('name');
+  host.innerHTML = (gs || []).length ? `<p class="meta">Write and share report cards for the students in each group. Parents see them in their child’s Reports.</p>
+    <div class="hub-list">${gs.map(g => `<div class="hub-row"><span class="hub-ic">📝</span><div><b>${esc(g.name)}</b><span class="meta">${esc(g.slot || '')}</span></div><span></span><a class="btn btn-red" href="group.html?id=${g.id}#t-rc">Open report cards</a></div>`).join('')}</div>`
+    : '<div class="empty-box"><p>📝 Report cards appear here once students have a confirmed place, as they are written for each group of the course.</p></div>';
+}
+
 // What still needs filling in before a course can be published
 function coursePublishGaps(c, p) {
   const gaps = [];
@@ -426,6 +446,8 @@ async function startTeacherCourse() {
   document.querySelectorAll('[data-tab]').forEach(t => t.addEventListener('click', () => {
     document.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-selected', x === t));
     document.querySelectorAll('.tab-panel').forEach(p => p.hidden = p.id !== t.dataset.tab);
+    if (t.dataset.tab === 't-sgroups') courseStudyGroupsTab(c);
+    if (t.dataset.tab === 't-reports') courseReportsTab(c);
     if (t.dataset.tab === 't-att' && typeof courseAttendanceTab === 'function') { attDone = true; courseAttendanceTab(document.getElementById('att-host'), c); }
     else if (t.dataset.tab === 't-att' && !attDone && typeof attendancePanel === 'function') { attDone = true; attendancePanel(document.getElementById('att-host'), { cid: id }); }
   }));
