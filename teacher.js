@@ -198,10 +198,58 @@ const toLocalInput = iso => { if (!iso) return ''; const d = new Date(iso); d.se
 
 const slotsOf = c => String((c && c.class_schedule) || '').split('\n').map(s => s.trim()).filter(Boolean);
 
+// ----- Course picture: choose a ready-made picture or upload your own -----
+const COURSE_COVERS = [['Science', '🔬', '#2E9E83', '#7ED9B8'], ['Maths', '➗', '#E2675C', '#FFB199'], ['English', '📖', '#3E4B94', '#8C9BEA'], ['Arabic', 'أ ب', '#D99A1E', '#FFD978'],
+  ['Coding', '💻', '#5B3E94', '#B39CF0'], ['Art', '🎨', '#C2457A', '#F7A7C9'], ['Music', '🎵', '#2C6FB0', '#93C8F5'], ['Wellbeing', '🌿', '#3D8B4F', '#A8E0A1'],
+  ['Critical thinking', '🧠', '#8A4FB0', '#E0B6F7'], ['Languages', '🌍', '#1F8A9E', '#8FE0EC'], ['Revision', '📝', '#9E5B1F', '#F2C48F'], ['Workshop', '✨', '#F27A6F', '#FFD6A5']];
+function courseCoverUrl([name, ic, a, b]) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="340" viewBox="0 0 600 340"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="600" height="340" fill="url(#g)"/><circle cx="520" cy="60" r="90" fill="#fff" opacity=".12"/><circle cx="70" cy="300" r="110" fill="#fff" opacity=".1"/><text x="300" y="170" font-size="110" text-anchor="middle" font-family="Segoe UI Emoji,Apple Color Emoji,Noto Color Emoji,Arial" fill="#fff">${ic}</text><text x="300" y="275" font-size="40" font-weight="700" text-anchor="middle" font-family="Raleway,Arial,sans-serif" fill="#fff">${name}</text></svg>`;
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+function coursePicturePicker(f) {
+  const inp = f && f.image_url; if (!inp || f.querySelector('.cpic')) return null;
+  inp.type = 'text'; // ready-made pictures use short links like images/… that a "url" box would refuse
+  const photos = (typeof PHOTOS !== 'undefined' ? PHOTOS : []).concat(['tn-course-1', 'tn-course-2', 'tn-course-3', 'tn-course-4', 'tn-code-kids']).map(n => 'images/' + n + '.png');
+  const all = COURSE_COVERS.map(courseCoverUrl).concat(photos);
+  const box = document.createElement('div'); box.className = 'cpic';
+  box.innerHTML = `<style>.cpic{grid-column:1/-1;margin:6px 0 10px}.cpic b{display:block;margin:0 0 6px}.cpic-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}.cpic-grid button{padding:0;border:3px solid transparent;border-radius:10px;overflow:hidden;cursor:pointer;background:#eee;aspect-ratio:16/9}.cpic-grid button img{width:100%;height:100%;object-fit:cover;display:block}.cpic-grid button[aria-pressed=true]{border-color:#F27A6F}.cpic-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:10px}.cpic-prev{width:120px;aspect-ratio:16/9;border-radius:10px;object-fit:cover;background:#eee}</style>
+    <b>Course picture</b><p class="meta" style="margin:0 0 8px">Choose a picture, or upload your own. Students see it on the course card.</p>
+    <div class="cpic-grid" role="group" aria-label="Choose a course picture">${all.map((u, i) => `<button type="button" data-cpic="${i}" aria-pressed="false" aria-label="Picture ${i + 1}"><img src="${u}" alt="" loading="lazy"></button>`).join('')}</div>
+    <div class="cpic-row"><img class="cpic-prev" alt="Chosen picture" hidden><label class="pill pill-soft" style="cursor:pointer">📤 Upload my own picture<input type="file" accept="image/png,image/jpeg,image/webp" hidden data-cpic-file></label><button type="button" class="link-btn" data-cpic-clear>Use the automatic picture</button><span class="meta" data-cpic-msg></span></div>`;
+  const lab = inp.closest('label'); (lab || inp).after(box);
+  if (lab) { lab.firstChild.textContent = 'Or paste a picture link '; }
+  const prev = box.querySelector('.cpic-prev'), msg = box.querySelector('[data-cpic-msg]');
+  const sync = () => {
+    const v = inp.value.trim();
+    box.querySelectorAll('[data-cpic]').forEach(b => b.setAttribute('aria-pressed', String(all[Number(b.dataset.cpic)] === v)));
+    prev.hidden = !v; if (v) prev.src = v;
+  };
+  box.addEventListener('click', e => {
+    const b = e.target.closest('[data-cpic]'); if (b) { inp.value = all[Number(b.dataset.cpic)]; msg.textContent = ''; sync(); }
+    if (e.target.closest('[data-cpic-clear]')) { inp.value = ''; msg.textContent = ''; sync(); }
+  });
+  inp.addEventListener('input', sync);
+  box.querySelector('[data-cpic-file]').addEventListener('change', async e => {
+    const file = e.target.files[0]; e.target.value = ''; if (!file) return;
+    if (file.size > 3 * 1024 * 1024) { msg.textContent = 'Please choose a picture smaller than 3 MB.'; return; }
+    msg.textContent = 'Uploading…';
+    try {
+      const { data: { session } } = await db.auth.getSession();
+      const path = `${session.user.id}/${Date.now()}-${file.name.replace(/[^\w.\-]+/g, '_')}`;
+      const up = await db.storage.from('course-images').upload(path, file, { contentType: file.type, upsert: false });
+      if (up.error) { msg.textContent = /bucket|not found/i.test(up.error.message || '') ? 'Uploading needs a Supabase update first (course_images.sql).' : '⚠️ ' + (up.error.message || 'Upload failed'); return; }
+      inp.value = db.storage.from('course-images').getPublicUrl(path).data.publicUrl; msg.textContent = '✅ Uploaded'; sync();
+    } catch (x) { msg.textContent = '⚠️ Upload failed. Please try again.'; }
+  });
+  sync();
+  return sync;
+}
+
 function courseDialog(onSaved) {
   const dlg = document.getElementById('course-dialog'), f = document.getElementById('course-form'), err = document.getElementById('course-error');
   let editing = null, teacher = null;
   addCourseInfoFields(f, err);
+  const syncPic = coursePicturePicker(f);
   // "All curricula" and "All grades": general courses (wellbeing, skills, critical thinking) show for every student
   if (f.curriculum && f.curriculum.tagName === 'SELECT' && ![...f.curriculum.options].some(o => o.value === 'all')) {
     const o = new Option('All curricula (any student)', 'all'); const first = [...f.curriculum.options].find(x => x.value); f.curriculum.insertBefore(o, first || null);
@@ -245,6 +293,7 @@ function courseDialog(onSaved) {
       else { if (f.time_zone) f.time_zone.value = 'UAE time (GMT+4)'; if (f.price) f.price.value = 'Free'; }
       showError(err, ''); dlg.showModal();
       if (typeof syncCourseForm === 'function') syncCourseForm(course);
+      if (syncPic) syncPic();
     }
   };
 }
