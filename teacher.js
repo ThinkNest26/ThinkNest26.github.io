@@ -422,6 +422,10 @@ async function startTeacherCourse() {
       + (done.length ? `<details class="hubreq-done"><summary>Answered (${done.length})</summary>${done.map(r => `<div class="pending-row"><b>${esc((r.details || {}).student_name || 'Student')}</b><span class="meta">${{ approved: '✅ Approved', declined: '❌ Declined' + (r.decline_reason ? ': ' + esc(r.decline_reason) : ''), cancelled: 'Cancelled by the student' }[r.status] || r.status}</span></div>`).join('')}</details>` : '');
   }
   loadRequests();
+  // keep the registrations up to date: when the page comes back into view, every minute, and when a notification opens this tab
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) loadRequests(); });
+  setInterval(() => { if (!document.hidden) loadRequests(); }, 60000);
+  window.addEventListener('hashchange', () => { if (location.hash === '#t-reqs') { const rt = document.querySelector('[data-tab="t-reqs"]'); if (rt) rt.click(); loadRequests(); } });
   document.getElementById('reqs') && document.getElementById('reqs').addEventListener('click', async e => {
     if (e.target.id === 'rq-all') { document.querySelectorAll('.rq-pick').forEach(x => x.checked = e.target.checked); return; }
     if (e.target.id === 'rq-bulk') {
