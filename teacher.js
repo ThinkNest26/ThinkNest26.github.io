@@ -419,7 +419,7 @@ async function startTeacherCourse() {
     box.innerHTML = `<h3>Waiting for you <span class="count">${waiting.length}</span></h3>` + (waiting.length > 1 ? '<p class="meta"><label class="remember" style="display:inline-flex"><input type="checkbox" id="rq-all"> Select all</label> <button type="button" class="pill pill-live" id="rq-bulk">✅ Approve selected</button></p>' : '') + (waiting.length ? waiting.map(r => `<article class="panel person" data-rq="${r.id}">${waiting.length > 1 ? `<input type="checkbox" class="rq-pick" value="${r.id}" aria-label="Select" style="width:20px;height:20px;margin-inline-end:8px">` : ''}${info(r)}
         <div class="person-actions"><button class="pill pill-live" data-rq-ok>✅ Approve</button><button class="pill pill-soft danger" data-rq-no>Decline</button></div></article>`).join('') : '<p class="meta">No requests waiting. 🎉</p>')
       + (parent.length ? `<h3>Waiting for a parent to agree <span class="count">${parent.length}</span></h3>` + parent.map(r => `<article class="panel person" data-rq="${r.id}">${info(r)}<div class="person-actions"><button class="link-btn" data-rq-ok>Approve without waiting</button></div></article>`).join('') : '')
-      + (done.length ? `<details class="hubreq-done"><summary>Answered (${done.length})</summary>${done.map(r => `<div class="pending-row"><b>${esc((r.details || {}).student_name || 'Student')}</b><span class="meta">${{ approved: '✅ Approved', declined: '❌ Declined' + (r.decline_reason ? ': ' + esc(r.decline_reason) : ''), cancelled: 'Cancelled by the student' }[r.status] || r.status}</span></div>`).join('')}</details>` : '');
+      + (done.length ? `<details class="hubreq-done"><summary>Answered (${done.length})</summary>${done.map(r => `<div class="pending-row"><b>${esc((r.details || {}).student_name || 'Student')}</b><span class="meta">${{ approved: '✅ Approved', declined: '❌ Declined' + (r.decline_reason ? ': ' + esc(r.decline_reason) : ''), cancelled: 'Cancelled by the student' }[r.status] || r.status}${r.status === 'declined' && (r.details || {}).notes ? ' · Note from them: ' + esc(r.details.notes) : ''}</span>${r.status === 'declined' ? `<button type="button" class="pill pill-soft" data-rq-reopen="${r.id}">↩️ Accept after all</button>` : ''}</div>`).join('')}</details>` : '');
   }
   loadRequests();
   // keep the registrations up to date: when the page comes back into view, every minute, and when a notification opens this tab
@@ -436,6 +436,17 @@ async function startTeacherCourse() {
       say('✅ Approved ' + ok + (full ? '. ' + full + ' couldn’t be approved because their class time is full.' : '.')); loadRequests(); loadGroups(); if (typeof loadStudents === 'function') loadStudents(); return;
     }
     if (e.target.classList.contains('rq-pick')) return;
+    // a student who was declined and asked again: accept them after all
+    const ro = e.target.closest('[data-rq-reopen]');
+    if (ro) {
+      if (!confirm('Accept this student after all? They’ll be told straight away.')) return;
+      ro.disabled = true; const rid = Number(ro.dataset.rqReopen);
+      const { error: e1 } = await db.rpc('teacher_reopen_request', { rid });
+      if (e1) { ro.disabled = false; return say(/function|does not exist|schema cache/i.test(e1.message || '') ? 'Please run the latest Supabase update (accept_after_decline.sql) first.' : friendly(e1)); }
+      const { error: e2 } = await db.rpc('teacher_decide_request', { rid, ok: true, reason: null });
+      if (e2) { loadRequests(); return say(/COURSE_FULL/.test(e2.message || '') ? 'That class time is full, so they can’t be accepted yet. Their request is back under “Waiting for you”.' : friendly(e2)); }
+      say('✅ Accepted. The student has been told.'); loadRequests(); loadGroups(); if (typeof loadStudents === 'function') loadStudents(); return;
+    }
     const row = e.target.closest('[data-rq]'); if (!row) return;
     const ok = !!e.target.closest('[data-rq-ok]'), no = !!e.target.closest('[data-rq-no]'); if (!ok && !no) return;
     let reason = null;
