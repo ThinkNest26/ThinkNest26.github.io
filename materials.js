@@ -523,16 +523,30 @@ async function initStudentItems(lessons, isEnrolled, onDone) {
     if (typeof say === 'function') say('Preparing your PDF…');
     try { await loadPdfLib(); } catch (_) { if (typeof say === 'function') say('Could not prepare the PDF. Check your connection and try again.'); return; }
     const sheet = makeSheet([{ el: part, title }]);
-    sheet.style.width = '180mm'; sheet.style.padding = '2mm';
+    // put the sheet on the page (behind everything) so the PDF tool can see it, and draw from the top of the page
+    const holder = document.createElement('div');
+    holder.style.cssText = 'position:fixed;left:0;top:0;width:794px;z-index:-1;background:#fff;pointer-events:none;';
+    sheet.style.width = '760px'; sheet.style.padding = '16px';
+    holder.appendChild(sheet); document.body.appendChild(holder);
     const name = String(title || 'Worksheet').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-') || 'Worksheet';
-    await html2pdf().set({
-      margin: 12, filename: name + '.pdf',
-      image: { type: 'jpeg', quality: 0.95 },
-      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak: { mode: ['css', 'legacy'], avoid: ['.quiz-q', '.act-card', '.sc-box', '.writing-prompt'] }
-    }).from(sheet).save();
+    const sx = window.scrollX, sy = window.scrollY;
+    window.scrollTo(0, 0);
+    try {
+      const img = sheet.querySelector('img'); if (img && !img.complete) await new Promise(r => { img.onload = img.onerror = r; });
+      await html2pdf().set({
+        margin: 10, filename: name + '.pdf',
+        image: { type: 'jpeg', quality: 0.95 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, windowWidth: 794 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'], avoid: ['.quiz-q', '.act-card', '.sc-box', '.writing-prompt'] }
+      }).from(sheet).save();
+    } catch (_) {
+      if (typeof say === 'function') say('Could not make the PDF. Try the Print button and choose “Save as PDF”.');
+    } finally {
+      holder.remove(); window.scrollTo(sx, sy);
+    }
   };
+
 
   function cleanup() {
     document.body.classList.remove('tn-printing', 'tn-print-plain');
