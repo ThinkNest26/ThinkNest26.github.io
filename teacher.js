@@ -82,7 +82,7 @@ function addCourseInfoFields(f, err) {
   const html = `<details class="ci-more" open style="margin:6px 0 4px">
     <summary style="font-weight:700;cursor:pointer;padding:6px 0">Details for parents (needed before you can publish)</summary>
     <div style="display:grid;gap:12px;padding-top:8px">
-      <label>Demo lesson video, about 3 minutes (optional)<input name="intro_video_url" type="url" placeholder="Paste a YouTube, Vimeo or Google Drive link"></label>
+      <label>Demo lesson video, about 3 minutes (needed to publish)<input name="intro_video_url" type="url" placeholder="Paste a YouTube, Vimeo or Google Drive link"></label>
       <p class="meta" style="margin:-6px 0 0">Tip: upload to YouTube as “Unlisted”. Your own introduction video goes in 👤 My teacher profile and shows on all your courses.</p>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
         <label>Start date<input name="start_date" type="date"></label>
@@ -166,6 +166,7 @@ function coursePublishGaps(c, p) {
   if (!String(c.description || '').trim()) gaps.push('a short description');
   if (!c.start_date) gaps.push('the start date');
   if (!String(c.class_schedule || '').trim()) gaps.push('the class days and times');
+  if ((c.audience || 'students') === 'students' && !String(c.intro_video_url || '').trim()) gaps.push('a demo lesson video (about 3 minutes) for students and parents to watch');
   if (!c.lesson_minutes) gaps.push('how long each lesson is');
   if (!String(c.age_range || '').trim()) gaps.push('the age range');
   if (!String(c.course_language || '').trim()) gaps.push('the language it’s taught in');
