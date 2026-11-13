@@ -351,10 +351,10 @@ function itemViewHtml(item, resp) {
     case 'link': return due + instr + `<p><a class="btn btn-red" href="${esc(d.url)}" target="_blank" rel="noopener">Open ${esc(d.tool && d.tool !== 'Other' ? d.tool : 'the activity')} ↗</a></p>` + done + handInBox(item, resp, { label: resp ? 'Done ✅' : 'I’ve finished ✅' });
     case 'video': return due + instr + `<div class="video-box"><iframe src="https://www.youtube-nocookie.com/embed/${matYt(d.url)}" title="${esc(item.title)}" allowfullscreen loading="lazy"></iframe></div>` + done + ((d.questions || []).length ? questionsForm(item, resp) : handInBox(item, resp, { label: resp ? 'Watched ✅' : 'I’ve watched it ✅' }));
     case 'quiz': case 'worksheet': case 'exit': return due + instr + sc + done + questionsForm(item, resp);
-    case 'writing': return due + `<div class="writing-prompt"><b>✍️ Your task</b><p>${esc(d.prompt || '').replace(/\n/g, '<br>')}</p></div>` + ((d.tips || []).length ? `<div class="sc-box tips"><b>Tips</b><ul>${d.tips.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>` : '') + sc + instr + done + handInBox(item, resp, { text: true, file: d.allow_upload !== false, target: d.word_target });
+    case 'writing': return due + `<div class="writing-prompt"><b>✍️ Your task</b><p>${esc(d.prompt || '').replace(/\n/g, '<br>')}</p></div>` + ((d.tips || []).length ? `<div class="sc-box tips"><b>Tips</b><ul>${d.tips.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>` : '') + sc + instr + done + handInBox(item, resp, { text: true, file: d.allow_upload !== false, target: d.word_target }) + `<div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-print>🖨️ Print</button></div>`;
     case 'flashcards': return instr + `<div class="fc" data-fc="${item.id}" data-i="0"><button type="button" class="fc-card" data-flip><span class="fc-face">${esc((d.cards[0] || {}).front || '')}</span><span class="meta">Tap to flip</span></button>
         <div class="fc-bar"><button type="button" class="pill pill-soft" data-fcprev>‹ Back</button><span class="meta fc-pos">1 / ${d.cards.length}</span><button type="button" class="pill pill-soft" data-fcshuffle>🔀 Shuffle</button><button type="button" class="pill pill-live" data-fcnext>Next ›</button></div></div>` + done + handInBox(item, resp, { label: resp ? 'Practised ✅' : 'I’ve practised these ✅' });
-    case 'activities': return due + instr + sc + `<div class="act-list">${(d.items || []).map((a, i) => `<article class="act-card"><div class="act-top"><span class="act-num">${i + 1}</span><div><h4>${esc(a.name || '')}</h4><span class="meta">${a.minutes ? esc(a.minutes) + ' min' : ''}</span></div></div>${a.materials ? `<p class="act-mat"><b>You need:</b> ${esc(a.materials)}</p>` : ''}<ol class="act-steps">${(a.steps || []).map(s => `<li>${esc(s)}</li>`).join('')}</ol></article>`).join('')}</div>` + done + handInBox(item, resp, { label: resp ? 'Done ✅' : 'I’ve finished ✅' });
+    case 'activities': return due + instr + sc + `<div class="act-list">${(d.items || []).map((a, i) => `<article class="act-card"><div class="act-top"><span class="act-num">${i + 1}</span><div><h4>${esc(a.name || '')}</h4><span class="meta">${a.minutes ? esc(a.minutes) + ' min' : ''}</span></div></div>${a.materials ? `<p class="act-mat"><b>You need:</b> ${esc(a.materials)}</p>` : ''}<ol class="act-steps">${(a.steps || []).map(s => `<li>${esc(s)}</li>`).join('')}</ol></article>`).join('')}</div><div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-print>🖨️ Print</button></div>` + done + handInBox(item, resp, { label: resp ? 'Done ✅' : 'I’ve finished ✅' });
   }
   return '';
 }
@@ -432,3 +432,99 @@ async function initStudentItems(lessons, isEnrolled, onDone) {
   const m = location.hash.match(/^#item-(\d+)$/);
   if (m && items.some(x => x.id === Number(m[1])) && isEnrolled()) { open(Number(m[1])); document.getElementById('item-' + m[1]).scrollIntoView({ behavior: 'smooth', block: 'center' }); }
 }
+
+
+// ===== Print just the quiz or worksheet (not the whole page) =====
+// Used by the 🖨️ Print buttons, and also when someone presses Ctrl+P / Cmd+P.
+(function () {
+  const st = document.createElement('style');
+  st.textContent = `
+    #tn-print-area { display: none; }
+    @media print {
+      @page { margin: 14mm; }
+      body.tn-printing { background: #fff !important; }
+      body.tn-printing > *:not(#tn-print-area) { display: none !important; }
+      body.tn-printing #tn-print-area { display: block; }
+      body.tn-print-plain .side, body.tn-print-plain .app-bar, body.tn-print-plain .app-footer,
+      body.tn-print-plain .side-shade, body.tn-print-plain .toast, body.tn-print-plain .back-link { display: none !important; }
+      body.tn-print-plain .app-main { margin: 0 !important; padding: 0 !important; }
+    }
+    #tn-print-area { font-family: Raleway, Arial, sans-serif; color: #222; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    #tn-print-area * { box-shadow: none !important; }
+    #tn-print-area .pr-head { display: flex; gap: 12px; align-items: center; border-bottom: 2px solid #3E4B94; padding-bottom: 8px; margin-bottom: 10px; }
+    #tn-print-area .pr-head img { height: 44px; }
+    #tn-print-area .pr-head h1 { font-size: 20px; margin: 0; color: #3E4B94; }
+    #tn-print-area .pr-head p { margin: 2px 0 0; font-size: 12px; color: #555; }
+    #tn-print-area .pr-name { display: flex; gap: 24px; margin: 6px 0 16px; font-size: 13px; }
+    #tn-print-area .pr-name span { flex: 1; border-bottom: 1px solid #999; padding-bottom: 2px; }
+    #tn-print-area .pr-part + h2, #tn-print-area .pr-part + .pr-part { margin-top: 24px; }
+    #tn-print-area .quiz-q { break-inside: avoid; border: 1px solid #ccc; border-radius: 6px; padding: 8px 12px; margin: 0 0 10px; }
+    #tn-print-area legend { font-weight: 700; font-size: 14px; padding: 0 4px; }
+    #tn-print-area label.remember { display: block; margin: 4px 0; font-size: 13px; }
+    #tn-print-area .pr-tick { display: inline-block; width: 18px; font-size: 14px; }
+    #tn-print-area .pr-answer { min-height: 22px; border-bottom: 1px solid #888; margin: 6px 0; padding: 2px 0; font-size: 13px; }
+    #tn-print-area .pr-long { min-height: 90px; border: 1px solid #888; border-radius: 4px; padding: 6px; white-space: pre-wrap; }
+    #tn-print-area .act-card, #tn-print-area .sc-box, #tn-print-area .writing-prompt { break-inside: avoid; }`;
+  document.head.appendChild(st);
+
+  let busy = false;
+  const area = () => document.getElementById('tn-print-area') || document.body.appendChild(Object.assign(document.createElement('div'), { id: 'tn-print-area' }));
+  const safe = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  // A clean copy: keeps the student's answers, drops buttons and screen-only bits
+  function printableCopy(part) {
+    const copy = part.cloneNode(true);
+    const src = part.querySelectorAll('input, textarea, select'), dst = copy.querySelectorAll('input, textarea, select');
+    src.forEach((el, i) => {
+      const c = dst[i]; if (!c || !copy.contains(c)) return;
+      if (el.type === 'radio' || el.type === 'checkbox') {
+        const t = document.createElement('span'); t.className = 'pr-tick'; t.textContent = el.checked ? '●' : '○'; c.replaceWith(t);
+      } else if (el.type === 'file' || el.type === 'hidden') {
+        (c.closest('label') || c).remove();
+      } else {
+        const b = document.createElement('div'); b.className = 'pr-answer' + (el.tagName === 'TEXTAREA' ? ' pr-long' : ''); b.textContent = el.value || ''; c.replaceWith(b);
+      }
+    });
+    copy.querySelectorAll('button, .step-buttons, iframe, .tries, .wordcount, .result-box, .file-open, a.btn, [hidden]').forEach(x => x.remove());
+    copy.removeAttribute('hidden'); copy.removeAttribute('id'); copy.classList.add('pr-part');
+    copy.querySelectorAll('[id]').forEach(x => x.removeAttribute('id'));
+    return copy;
+  }
+
+  function build(parts) {
+    const a = area(), course = document.querySelector('#course-hero h1, #course-hero h2');
+    const one = parts.length === 1, cname = course ? course.textContent.trim() : '';
+    a.innerHTML = `<header class="pr-head"><img src="images/tn-logo.png" alt=""><div><h1>${safe((one ? parts[0].title : cname) || 'Worksheet')}</h1>${one && cname ? `<p>${safe(cname)}</p>` : ''}</div></header><div class="pr-name"><span>Name:</span><span>Date:</span></div>`;
+    parts.forEach(p => {
+      if (!one) { const h = document.createElement('h2'); h.textContent = p.title || ''; h.style.cssText = 'font-size:16px;color:#3E4B94;margin:18px 0 8px'; a.appendChild(h); }
+      a.appendChild(printableCopy(p.el));
+    });
+    document.body.classList.add('tn-printing');
+  }
+
+  function cleanup() {
+    document.body.classList.remove('tn-printing', 'tn-print-plain');
+    const a = document.getElementById('tn-print-area'); if (a) a.innerHTML = '';
+    setTimeout(() => { busy = false; }, 300);
+  }
+
+  // 🖨️ Print button
+  window.tnPrintPart = function (part, title) {
+    if (busy) return; busy = true;
+    if (!part) { document.body.classList.add('tn-print-plain'); window.print(); return; }
+    build([{ el: part, title }]);
+    setTimeout(() => window.print(), 60);
+  };
+
+  // Ctrl+P / Cmd+P: print whatever quiz or worksheet is open; otherwise just the page content
+  window.addEventListener('beforeprint', () => {
+    if (busy) return; busy = true;
+    const open = [...document.querySelectorAll('[id^="iv-"]:not([hidden]), [id^="lm-"]:not([hidden])')].filter(el => el.innerHTML.trim());
+    if (!open.length) { document.body.classList.add('tn-print-plain'); return; }
+    build(open.map(el => {
+      const chip = el.id.startsWith('iv-') && el.previousElementSibling && el.previousElementSibling.querySelector('b');
+      return { el, title: chip ? chip.textContent.trim() : 'Worksheet' };
+    }));
+  });
+  window.addEventListener('afterprint', cleanup);
+})();
