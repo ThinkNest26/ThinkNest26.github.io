@@ -153,8 +153,10 @@ async function courseStudyGroupsTab(c) {
 async function courseReportsTab(c) {
   const host = document.getElementById('reports-host'); if (!host) return;
   const { data: gs } = await db.from('study_groups').select('id, name, slot').eq('course_id', c.id).eq('kind', 'class').order('name');
+  const endTerm = ('End-of-course report: ' + c.title + ' (' + new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) + ')').slice(0, 80);
   host.innerHTML = (gs || []).length ? `<p class="meta">Write and share report cards for the students in each group. Parents see them in their child’s Reports.</p>
-    <div class="hub-list">${gs.map(g => `<div class="hub-row"><span class="hub-ic">📝</span><div><b>${esc(g.name)}</b><span class="meta">${esc(g.slot || '')}</span></div><span></span><a class="btn btn-red" href="group.html?id=${g.id}#t-rc">Open report cards</a></div>`).join('')}</div>`
+    <div class="hub-list">${gs.map(g => `<div class="hub-row"><span class="hub-ic">📝</span><div><b>${esc(g.name)}</b><span class="meta">${esc(g.slot || '')}</span></div><span></span><span style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-red" href="group.html?id=${g.id}&rterm=${encodeURIComponent(endTerm)}#t-rc">🎓 End-of-course reports</a><a class="btn btn-white outline" href="group.html?id=${g.id}#t-rc">Open report cards</a></span></div>`).join('')}</div>
+    <p class="meta" style="margin-top:10px">🎓 <b>End-of-course reports</b> fill in each student’s course progress, attendance, scores by learning objective and certificate automatically. Add effort, behaviour and a comment (✨ Suggest a comment helps), then share them with students and parents.</p>`
     : '<div class="empty-box"><p>📝 Report cards appear here once students have a confirmed place, as they are written for each group of the course.</p></div>';
 }
 
@@ -425,8 +427,16 @@ async function startTeacherCourse() {
     const cur = { british: 'British Curriculum', ib: 'IB', american: 'American Curriculum', all: 'All curricula' }[c.curriculum] || '';
     hero.innerHTML = `<img src="${tImg(c)}" alt=""><div><span class="meta">${esc([cur, c.grade === 'all' ? 'All grades' : c.grade, c.subject].filter(Boolean).join(' · ') || 'Set the curriculum, grade and subject in Edit details')}</span><span class="meta">${esc(c.category || '')}${c.weeks ? ' · ' + c.weeks + ' weeks' : ''} · ${esc(c.level || '')}</span>
       <h1>${esc(c.title)} ${c.published === false ? '<span class="tag">📝 Draft</span>' : c.published === true ? '<span class="tag tag-now">✅ Published</span>' : ''}</h1><p>${esc(c.description || '')}</p>
-      <div class="row start">${c.published === false ? '<button class="pill pill-live big" id="pub-course">🚀 Publish</button>' : c.published === true ? '<button class="pill pill-soft big" id="pub-course">Unpublish</button>' : ''}<button class="pill pill-soft big" id="edit-course">Edit details</button>${c.published !== false ? '<button class="pill pill-live big" id="att-course">📋 Attendance</button>' : ''}<a class="pill pill-soft big" href="course-details.html?id=${c.id}" target="_blank" rel="noopener">👀 Preview as a parent</a><button class="pill pill-soft big danger" id="del-course">Delete course</button></div></div>`;
+      <div class="row start">${c.published === false ? '<button class="pill pill-live big" id="pub-course">🚀 Publish</button>' : c.published === true ? '<button class="pill pill-soft big" id="pub-course">Unpublish</button>' : ''}<button class="pill pill-soft big" id="edit-course">Edit details</button>${c.published !== false ? '<button class="pill pill-live big" id="att-course">📋 Attendance</button>' : ''}<a class="pill pill-soft big" href="course-details.html?id=${c.id}" target="_blank" rel="noopener">👀 Preview as a parent</a><button class="pill pill-soft big" id="dup-course">📄 Duplicate</button><button class="pill pill-soft big danger" id="del-course">Delete course</button></div></div>`;
     document.getElementById('edit-course').addEventListener('click', () => dlg.open(c, { id: user.id, full_name: profile.full_name }));
+    const db2 = document.getElementById('dup-course');
+    if (db2) db2.addEventListener('click', async () => {
+      if (!confirm('Make a copy of “' + c.title + '”?\n\nThe copy has all the lessons, worksheets, quizzes and answer keys, but no students, no dates and no recordings. It is saved as a draft, with every lesson as a draft, so you can update it for the new year and publish when ready.')) return;
+      db2.disabled = true; db2.textContent = 'Copying…';
+      const { data, error } = await db.rpc('duplicate_course', { cid: c.id });
+      if (error) { db2.disabled = false; db2.textContent = '📄 Duplicate'; return say(/function|schema cache/i.test(error.message || '') ? 'Please run the latest Supabase update (duplicate_course.sql) first.' : friendly(error)); }
+      say('✅ Copy made. Opening it now…'); setTimeout(() => { location.href = 'teacher-course.html?id=' + data; }, 700);
+    });
     const ab = document.getElementById('att-course');
     if (ab) ab.addEventListener('click', () => { const at = document.querySelector('[data-tab="t-att"]'); if (at) { at.hidden = false; at.click(); at.scrollIntoView({ behavior: 'smooth', block: 'center' }); } });
     { const at = document.querySelector('[data-tab="t-att"]'); if (at) at.hidden = c.published === false; }

@@ -16,7 +16,8 @@ function rcReportHtml(r) {
   return `<article class="rcp">
     <header class="rcp-head"><img src="images/tn-logo-dark.png" alt="Think Nest"><div><h1>Student report</h1><p>${rcE(r.term)}</p></div></header>
     <section class="rcp-who"><div><span>Student</span><b>${rcE(r.student_name || d.student || '')}</b></div><div><span>Class</span><b>${rcE(r.class_name || d.class || '')}</b></div><div><span>Teacher</span><b>${rcE(r.teacher_name || d.teacher || '')}</b></div><div><span>Date</span><b>${rcE(d.date || '')}</b></div></section>
-    <section class="rcp-boxes">${box('Average score', d.avg)}${box('Attendance', d.att)}${box('Work completed', d.done)}</section>
+    <section class="rcp-boxes" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr))">${box('Average score', d.avg)}${box('Attendance', d.att)}${box('Work completed', d.done)}${d.progress != null ? box('Course completed', d.progress) : ''}</section>
+    ${d.cert ? '<p class="rcp-text" style="text-align:center;font-weight:700">🏅 Certificate of completion awarded</p>' : ''}
     ${rows.length ? `<h2>Learning objectives</h2><table class="rcp-table"><thead><tr><th>Objective</th><th>Score</th><th>Level</th></tr></thead><tbody>
       ${rows.map(x => `<tr><td>${rcE(x.objective)}</td><td>${x.pct == null ? '–' : x.pct + '%'}</td><td class="lv-${rcE(x.level)}">${rcLabel(x.level)}</td></tr>`).join('')}</tbody></table>` : ''}
     <section class="rcp-two"><div><span>Effort</span><b>${rcE(d.effort || '–')}</b></div><div><span>Behaviour</span><b>${rcE(d.behaviour || '–')}</b></div></section>
@@ -45,7 +46,8 @@ async function rcClassInit() {
   tabs.insertAdjacentHTML('beforeend', '<button role="tab" aria-selected="false" data-tab="t-rc" id="tab-rc">📝 Report cards</button>');
   const sec = document.createElement('section'); sec.id = 't-rc'; sec.className = 'tab-panel rc'; sec.hidden = true;
   document.getElementById('t-mem').after(sec);
-  let term = '', ins = null, cards = [], editing = null; const pending = new Set();
+  let term = '', ins = null, cards = [], editing = null, prog = {}, certs = new Set(); const pending = new Set();
+  { const rt = new URLSearchParams(location.search).get('rterm'); if (rt) { term = rt.slice(0, 80); pending.add(term); } }
   let cycles = [];
   try { const { data: cy } = await db.rpc('my_report_cycles', { gid }); cycles = cy || []; } catch (_) {}
   const cycle = () => cycles.find(c => c.title === term) || null;
@@ -54,6 +56,11 @@ async function rcClassInit() {
   async function loadData() {
     const [{ data: i }, { data: c }] = await Promise.all([db.rpc('class_insights', { cid: null, gid }), db.from('report_cards').select('*').eq('group_id', gid)]);
     ins = i; cards = c || [];
+    prog = {}; certs = new Set();
+    if (g.course_id) {
+      try { const { data: en } = await db.from('enrollments').select('user_id, progress').eq('course_id', g.course_id); (en || []).forEach(e => prog[e.user_id] = e.progress); } catch (_) {}
+      try { const { data: ce } = await db.from('certificates').select('user_id').eq('course_id', g.course_id); (ce || []).forEach(x => certs.add(x.user_id)); } catch (_) {}
+    }
   }
   function studentFacts(sid) {
     const items = (ins && ins.items) || [], R = (ins && ins.responses) || [];
@@ -66,7 +73,8 @@ async function rcClassInit() {
     const rows = Object.entries(byObj).map(([o, ps]) => { const p = Math.round(ps.reduce((a, b) => a + b, 0) / ps.length); return { objective: o, pct: p, level: rcLevel(p) }; });
     const all = mine.map(pct).filter(x => x != null), att = ((ins && ins.attendance) || {})[sid];
     return { rows, avg: all.length ? Math.round(all.reduce((a, b) => a + b, 0) / all.length) : null,
-      att: att && att.total ? Math.round(100 * att.came / att.total) : null, done: items.length ? Math.round(100 * mine.length / items.length) : null };
+      att: att && att.total ? Math.round(100 * att.came / att.total) : null, done: items.length ? Math.round(100 * mine.length / items.length) : null,
+      progress: prog[sid] != null ? Number(prog[sid]) : null, cert: certs.has(sid) };
   }
   function suggest(name, f, effort) {
     const n = rcFirst(name), sec2 = f.rows.filter(r => ['exceeding', 'secure'].includes(r.level)).map(r => r.objective), dev = f.rows.filter(r => ['developing', 'emerging'].includes(r.level)).map(r => r.objective);
@@ -117,11 +125,11 @@ async function rcClassInit() {
     const S = (ins && ins.students) || [], s = S.find(x => x.id === sid); if (!s) return;
     const c = cards.find(x => x.term === term && x.student_id === sid), f = studentFacts(sid);
     const CY = cycle(), scale = (CY && CY.scale) || 'levels4';
-    const d = c && c.data && c.data.rows ? c.data : { rows: f.rows.map(r => ({ ...r, level: rcLevel(r.pct, scale) })), avg: f.avg, att: f.att, done: f.done, effort: '', behaviour: '', comment: '', next: '', extra: '' };
+    const d = c && c.data && c.data.rows ? c.data : { rows: f.rows.map(r => ({ ...r, level: rcLevel(r.pct, scale) })), avg: f.avg, att: f.att, done: f.done, progress: f.progress, cert: f.cert, effort: '', behaviour: '', comment: '', next: '', extra: '' };
     editing = { sid, id: c && c.id, d };
     const ed = document.getElementById('rc-editor');
     ed.innerHTML = `<section class="panel rc-ed"><div class="ca-top"><h2>📝 ${rcE(s.name)} · ${rcE(term)}</h2><button type="button" class="link-btn" data-rc="close" aria-label="Close">✕</button></div>
-      <div class="rc-facts"><span>🎯 Average <b>${d.avg ?? '–'}${d.avg != null ? '%' : ''}</b></span><span>📋 Attendance <b>${d.att ?? '–'}${d.att != null ? '%' : ''}</b></span><span>📚 Work completed <b>${d.done ?? '–'}${d.done != null ? '%' : ''}</b></span>
+      <div class="rc-facts"><span>🎯 Average <b>${d.avg ?? '–'}${d.avg != null ? '%' : ''}</b></span><span>📋 Attendance <b>${d.att ?? '–'}${d.att != null ? '%' : ''}</b></span><span>📚 Work completed <b>${d.done ?? '–'}${d.done != null ? '%' : ''}</b></span>${d.progress != null ? `<span>✅ Course completed <b>${d.progress}%</b></span>` : ''}${d.cert ? '<span>🏅 Certificate</span>' : ''}
         <button type="button" class="link-btn" data-rc="refresh">🔄 Refresh from latest data</button></div>
       ${d.rows.length ? `<table class="ac-table"><thead><tr><th>Learning objective</th><th>Score</th><th>Level</th></tr></thead><tbody>
         ${d.rows.map((r, i) => `<tr><td>${rcE(r.objective)}</td><td>${r.pct == null ? '–' : r.pct + '%'}</td><td><select data-row="${i}">${rcLevels(scale).map(([k, l]) => `<option value="${k}" ${r.level === k ? 'selected' : ''}>${l}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table>`
@@ -161,7 +169,7 @@ async function rcClassInit() {
     if (a === 'edit') return openEditor(row.dataset.sid);
     if (a === 'print') { const c = cards.find(x => x.term === term && x.student_id === row.dataset.sid); if (c) rcPrint([withNames(c)], term); return; }
     if (a === 'close') { document.getElementById('rc-editor').innerHTML = ''; editing = null; return; }
-    if (a === 'refresh') { const f = studentFacts(editing.sid); Object.assign(editing.d, { rows: f.rows, avg: f.avg, att: f.att, done: f.done }); const keep = collect(); openEditor(editing.sid); editing.d.comment = keep.comment; return; }
+    if (a === 'refresh') { const f = studentFacts(editing.sid); Object.assign(editing.d, { rows: f.rows, avg: f.avg, att: f.att, done: f.done, progress: f.progress, cert: f.cert }); const keep = collect(); openEditor(editing.sid); editing.d.comment = keep.comment; return; }
     if (a === 'suggest') {
       const s = ((ins && ins.students) || []).find(x => x.id === editing.sid), d = collect(), sg = suggest(s.name, d, d.effort);
       const t = document.getElementById('rc-comment'); if (t.value.trim() && !confirm('Replace your comment with a suggested one?')) return;
@@ -172,10 +180,10 @@ async function rcClassInit() {
     if (a === 'ready') return save('ready');
     if (a === 'submit') return save('submitted');
   });
+  if (location.hash === '#t-rc') setTimeout(() => { const t = document.getElementById('tab-rc'); if (t) t.click(); }, 300);
   document.getElementById('tab-rc').addEventListener('click', () => {
     document.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-selected', String(x.dataset.tab === 't-rc')));
     document.querySelectorAll('.tab-panel').forEach(p => { p.hidden = p.id !== 't-rc'; });
-  if (location.hash === '#t-rc') setTimeout(() => document.getElementById('tab-rc').click(), 300);
     draw();
   });
 }
