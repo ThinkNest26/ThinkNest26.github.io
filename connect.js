@@ -87,6 +87,7 @@ async function startConnect(sp) {
             ${m.details ? `<p>${E(m.details)}</p>` : ''}<span class="meta">Hosted by ${E(m.host_name || 'a member')}</span>
             <div class="cx-going">${go.slice(0, 8).map(r => `<span class="initials sm" title="${E(r.user_name)}">${E(ini(r.user_name))}</span>`).join('')}<span class="meta">${go.length} going${m.capacity ? ' · ' + Math.max(0, m.capacity - go.length) + ' spots left' : ''}</span></div></div>
           <div class="cx-meet-btns">${me ? `<button type="button" class="pill pill-soft" data-unrsvp="${m.id}">✓ You’re going · Cancel</button>${m.link ? `<a class="pill pill-live" href="${E(m.link)}" target="_blank" rel="noopener">Join link</a>` : ''}` : full ? '<span class="tag">Full</span>' : `<button type="button" class="btn btn-red" data-rsvp="${m.id}">I’m in! ☕</button>`}
+            ${ON.messages && m.host_id && m.host_id !== uid ? `<a class="pill pill-soft" href="messages.html?with=${m.host_id}">✉️ Ask the host</a>` : ''}
             ${m.host_id === uid || role === 'admin' ? `<button type="button" class="link-btn" data-mdel="${m.id}">Delete</button>` : ''}</div></article>`; }).join('')
         : '<div class="empty-box"><p>No meetups yet. Why not host the first one? ☕</p></div>'}</div>`;
   }
