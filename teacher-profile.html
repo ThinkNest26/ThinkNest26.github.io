@@ -167,6 +167,6 @@
     <section class="grid-cards">${mine.length ? mine.map((c, k) => `<article class="learn"><img src="${courseImg(c, k)}" alt=""><div class="learn-body"><span class="meta">${esc([c.subject, c.grade, c.age_range].filter(Boolean).join(' · '))}</span><h4>${esc(c.title)}</h4><p class="desc">${esc(c.description || '')}</p><div class="row"><a class="pill pill-live" href="course-details.html?id=${c.id}">View course details</a></div></div></article>`).join('') : '<p class="empty">No courses open right now.</p>'}</section>`;
 })();
 </script>
-  <script src="aichat.js?v=1" defer></script>
+  <script src="aichat.js?v=2" defer></script>
 </body>
 </html>

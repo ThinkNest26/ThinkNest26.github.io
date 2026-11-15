@@ -21,7 +21,7 @@
   const save = () => { try { sessionStorage.setItem('tn_ai_chat', JSON.stringify(hist.slice(-20))); } catch (_) {} };
 
   const css = `
-  .tn-ai-btn{position:fixed;inset-inline-end:18px;bottom:18px;z-index:60;border:0;border-radius:30px;background:#FA7571;color:#fff;font:inherit;font-weight:800;padding:12px 18px;box-shadow:0 8px 24px rgba(30,35,82,.3);cursor:pointer;display:flex;gap:8px;align-items:center}
+  .tn-ai-btn{position:fixed;inset-inline-end:18px;bottom:18px;z-index:60;border:0;border-radius:30px;background:#FA7571;color:#fff;font:inherit;font-weight:800;padding:7px 18px 7px 8px;box-shadow:0 8px 24px rgba(30,35,82,.3);cursor:pointer;display:flex;gap:8px;align-items:center}
   .tn-ai-btn:hover{background:#e8605c}.tn-ai-btn:focus-visible{outline:3px solid #3E4B94;outline-offset:2px}
   .tn-ai-box{position:fixed;inset-inline-end:18px;bottom:18px;z-index:61;width:min(380px,calc(100vw - 24px));height:min(560px,calc(100vh - 36px));background:#fff;border-radius:18px;box-shadow:0 18px 50px rgba(30,35,82,.35);display:flex;flex-direction:column;overflow:hidden;font-family:Raleway,system-ui,sans-serif}
   .tn-ai-box[hidden],.tn-ai-btn[hidden]{display:none}
@@ -39,7 +39,10 @@
   .tn-ai-form button:disabled{opacity:.6}
   .tn-ai-note{font-size:.72rem;color:#696984;padding:0 12px 10px;margin:0}.tn-ai-note a{color:#3E4B94}
   @media print{.tn-ai-btn,.tn-ai-box{display:none!important}}
-  @media(max-width:600px){.tn-ai-btn span{display:none}.tn-ai-btn{padding:13px 15px;font-size:1.2rem}}`;
+  .tn-ai-bird{flex:none;width:40px;height:40px;border-radius:50%;background:#fff;display:grid;place-items:center;font-style:normal;box-shadow:0 2px 6px rgba(30,35,82,.15)}.tn-ai-bird img{width:32px;height:32px;object-fit:contain;transform:scaleX(-1)}
+  .tn-ai-head .tn-ai-bird{width:34px;height:34px}.tn-ai-head .tn-ai-bird img{width:27px;height:27px}
+  [dir=rtl] .tn-ai-btn{padding:7px 8px 7px 18px}
+  @media(max-width:600px){.tn-ai-btn span{display:none}.tn-ai-btn,[dir=rtl] .tn-ai-btn{padding:7px}}`;
 
   function build() {
     if (document.getElementById('tn-ai-btn')) return;
@@ -48,9 +51,9 @@
     const box = document.createElement('section'); box.className = 'tn-ai-box'; box.hidden = true; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Think Nest helper');
     document.body.append(b, box);
     const paint = () => {
-      const t = T(); b.innerHTML = `💬 <span>${t.btn}</span>`; b.setAttribute('aria-label', t.btn);
+      const t = T(); b.innerHTML = `<i class="tn-ai-bird"><img src="images/tn-bird.png" alt=""></i><span>${t.btn}</span>`; b.setAttribute('aria-label', t.btn);
       box.dir = ar() ? 'rtl' : 'ltr';
-      box.innerHTML = `<div class="tn-ai-head"><span aria-hidden="true">🐦</span><b>${t.title}</b><button type="button" data-clear>${t.clear}</button><button type="button" class="x" data-close aria-label="${t.close}">✕</button></div>
+      box.innerHTML = `<div class="tn-ai-head"><i class="tn-ai-bird" aria-hidden="true"><img src="images/tn-bird.png" alt=""></i><b>${t.title}</b><button type="button" data-clear>${t.clear}</button><button type="button" class="x" data-close aria-label="${t.close}">✕</button></div>
         <div class="tn-ai-log" aria-live="polite"><div class="tn-ai-m bot">${t.hello}</div>${hist.length ? '' : `<div class="tn-ai-ex">${t.ex.map(q => `<button type="button" data-ex>${esc(q)}</button>`).join('')}</div>`}
           ${hist.map(m => `<div class="tn-ai-m ${m.role === 'user' ? 'me' : 'bot'}">${m.role === 'user' ? esc(m.text) : fmt(m.text)}</div>`).join('')}</div>
         <form class="tn-ai-form"><input type="text" maxlength="500" placeholder="${t.ph}" aria-label="${t.ph}"><button>${t.send}</button></form><p class="tn-ai-note">${t.note}</p>`;
