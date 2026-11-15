@@ -5,12 +5,12 @@
   const ar = () => (typeof tnLang === 'function' ? tnLang() === 'ar' : /^ar/i.test(document.documentElement.lang || ''));
   const T = () => ar() ? {
       btn: 'اسأل نستي', title: 'نستي · مساعد ثينك نست', hello: 'مرحبًا! 👋 أنا نستي، مساعد ثينك نست. اسألني عن الدورات أو التسجيل أو حسابك أو أي شيء في الموقع.',
-      ph: 'اكتب سؤالك…', send: 'إرسال', note: 'إجابات الذكاء الاصطناعي قد تخطئ. لا تشارك معلومات شخصية. لمساعدة أكثر: <a href="contact.html">اتصل بنا</a>.',
-      wait: 'أفكّر…', busy: 'الكثير من الأسئلة الآن. حاول مرة أخرى بعد دقيقة.', fail: 'عذرًا، لم أستطع الإجابة الآن. جرّب <a href="help.html">مركز المساعدة</a> أو <a href="contact.html">اتصل بنا</a>.',
+      ph: 'اكتب سؤالك…', send: 'إرسال', note: 'إجابات الذكاء الاصطناعي قد تخطئ. لا تشارك معلومات شخصية. لمساعدة أكثر: <a href="/contact.html">اتصل بنا</a>.',
+      wait: 'أفكّر…', busy: 'الكثير من الأسئلة الآن. حاول مرة أخرى بعد دقيقة.', fail: 'عذرًا، لم أستطع الإجابة الآن. جرّب <a href="/help.html">مركز المساعدة</a> أو <a href="/contact.html">اتصل بنا</a>.',
       close: 'إغلاق', clear: 'محادثة جديدة', ex: ['كيف أنضم إلى دورة؟', 'كيف أربط حساب طفلي؟', 'كيف أصبح معلّمًا في ثينك نست؟'] }
     : { btn: 'Ask Nesty', title: 'Nesty · Think Nest helper', hello: 'Hi! 👋 I’m Nesty, the Think Nest helper. Ask me about courses, signing up, your account or anything on the site.',
-      ph: 'Type your question…', send: 'Send', note: 'AI answers can be wrong. Please don’t share personal details. Need more help? <a href="contact.html">Contact us</a>.',
-      wait: 'Thinking…', busy: 'Lots of questions right now. Please try again in a minute.', fail: 'Sorry, I can’t answer right now. Try the <a href="help.html">Help Centre</a> or <a href="contact.html">Contact us</a>.',
+      ph: 'Type your question…', send: 'Send', note: 'AI answers can be wrong. Please don’t share personal details. Need more help? <a href="/contact.html">Contact us</a>.',
+      wait: 'Thinking…', busy: 'Lots of questions right now. Please try again in a minute.', fail: 'Sorry, I can’t answer right now. Try the <a href="/help.html">Help Centre</a> or <a href="/contact.html">Contact us</a>.',
       close: 'Close', clear: 'New chat', ex: ['How do I join a course?', 'How do I connect my child’s account?', 'How can I teach on Think Nest?'] };
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   // light formatting for answers: **bold**, line breaks, bullet lines, links to Think Nest pages
@@ -51,9 +51,9 @@
     const box = document.createElement('section'); box.className = 'tn-ai-box'; box.hidden = true; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Think Nest helper');
     document.body.append(b, box);
     const paint = () => {
-      const t = T(); b.innerHTML = `<i class="tn-ai-bird"><img src="images/tn-bird.png" alt=""></i><span>${t.btn}</span>`; b.setAttribute('aria-label', t.btn);
+      const t = T(); b.innerHTML = `<i class="tn-ai-bird"><img src="/images/tn-bird.png" alt=""></i><span>${t.btn}</span>`; b.setAttribute('aria-label', t.btn);
       box.dir = ar() ? 'rtl' : 'ltr';
-      box.innerHTML = `<div class="tn-ai-head"><i class="tn-ai-bird" aria-hidden="true"><img src="images/tn-bird.png" alt=""></i><b>${t.title}</b><button type="button" data-clear>${t.clear}</button><button type="button" class="x" data-close aria-label="${t.close}">✕</button></div>
+      box.innerHTML = `<div class="tn-ai-head"><i class="tn-ai-bird" aria-hidden="true"><img src="/images/tn-bird.png" alt=""></i><b>${t.title}</b><button type="button" data-clear>${t.clear}</button><button type="button" class="x" data-close aria-label="${t.close}">✕</button></div>
         <div class="tn-ai-log" aria-live="polite"><div class="tn-ai-m bot">${t.hello}</div>${hist.length ? '' : `<div class="tn-ai-ex">${t.ex.map(q => `<button type="button" data-ex>${esc(q)}</button>`).join('')}</div>`}
           ${hist.map(m => `<div class="tn-ai-m ${m.role === 'user' ? 'me' : 'bot'}">${m.role === 'user' ? esc(m.text) : fmt(m.text)}</div>`).join('')}</div>
         <form class="tn-ai-form"><input type="text" maxlength="500" placeholder="${t.ph}" aria-label="${t.ph}"><button>${t.send}</button></form><p class="tn-ai-note">${t.note}</p>`;

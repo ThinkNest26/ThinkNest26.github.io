@@ -3,3 +3,5 @@ Disallow: /admin-login.html
 Disallow: /admin.html
 Disallow: /admin-curriculum.html
 Disallow: /admin-founders.html
+
+Sitemap: https://thinknestonline.com/sitemap.xml
