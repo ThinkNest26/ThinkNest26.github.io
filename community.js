@@ -18,6 +18,8 @@ const SPACE = (document.body && document.body.dataset.space) || 'community';
 const CAFE = { teachers: { title: '☕ Teacher Café', who: ['teacher', 'school_leader', 'admin'], lead: 'Grab a coffee, pull up a chair. A private space just for teachers to swap hacks, share resources, ask the staffroom and celebrate each other.', ph: 'What’s brewing' }, parents: { title: '☕ Parent Café', who: ['parent', 'admin'], lead: 'Pull up a chair! A private space just for parents to swap tips, ask questions, share recommendations and cheer each other on.', ph: 'What’s on your mind' } }[SPACE];
 async function startCommunity() {
   const { user, profile: me } = await initShell();
+  // Safety: parents don’t join the student community. They have the Parent Café.
+  if (SPACE === 'community' && me.role === 'parent') { location.replace('parent-cafe.html'); return; }
   let SCHOOL = null;
   if (SPACE === 'school' || SPACE === 'staff') {
     const { data: scs } = await db.rpc('my_schools');

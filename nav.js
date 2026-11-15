@@ -32,7 +32,7 @@
       { ic: '🏠', label: 'My Children', dyn: 'kids', items: [['parent-dashboard.html', 'All my children'], ['add-child.html', '➕ Add a child']] },
       { ic: '📅', label: 'Family calendar', href: 'parent-calendar.html' },
       { ic: '📝', label: 'Reports', href: 'reports.html' },
-      { ic: '🌟', label: 'For me', items: [['parent-hub.html', 'Beyond the School Run workshops'], ['parent-hub.html#hub-done', '🏅 My certificates'], ['parent-cafe.html', '☕ Parent Café'], ['parent-connect.html', '🤝 Parent Connections'], ['community.html', 'Community']] }
+      { ic: '🌟', label: 'For me', items: [['parent-hub.html', 'Beyond the School Run workshops'], ['parent-hub.html#hub-done', '🏅 My certificates'], ['parent-cafe.html', '☕ Parent Café'], ['parent-connect.html', '🤝 Parent Connections']] }
     ]
   };
   MENUS.school_leader = [
