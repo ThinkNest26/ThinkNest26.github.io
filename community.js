@@ -192,10 +192,24 @@ async function startCommunity() {
     const i = posts.findIndex(p => p.id === id);
     if (data && i > -1) { posts[i] = data; const el = feed.querySelector(`[data-post="${id}"]`); const open = el && !el.querySelector('.comments').hidden; if (el) { el.outerHTML = postHtml(data); if (open) feed.querySelector(`[data-post="${id}"] .comments`).hidden = false; } }
   }
+  if (CAFE && !window.__tnPresence) {
+    window.__tnPresence = 1; window.__tnHere = new Map();
+    try {
+      const ch = db.channel('cafe-here-' + SPACE, { config: { presence: { key: user.id } } });
+      ch.on('presence', { event: 'sync' }, () => {
+        const m = new Map(); Object.values(ch.presenceState()).forEach(list => list.forEach(u => { if (u && u.id) m.set(u.id, u); }));
+        window.__tnHere = m; try { sideLists(); } catch (_) {}
+      }).subscribe(st => { if (st === 'SUBSCRIBED') ch.track({ id: user.id, name: me.full_name || 'Member', role: me.role }); });
+    } catch (_) {}
+  }
   function sideLists() {
     const seen = new Map();
     posts.forEach(p => { if (!seen.has(p.author_id)) seen.set(p.author_id, p); });
-    document.getElementById('active').innerHTML = [...seen.values()].slice(0, 6).map(p => `<div class="side-row"><span class="initials" data-av="${p.author_id}">${esc(iniOf(p.author_name))}</span><span>${esc(tnNameFor(p.author_name, p.author_role) || 'Member')} ${roleTag(p.author_role)}</span></div>`).join('') || '<p class="empty">No one yet.</p>';
+    // "In the café today": who's here right now (live), then who posted in the last day
+    const row = (id, name, role, live) => `<div class="side-row"><span class="initials" data-av="${id}">${esc(iniOf(name))}</span><span>${esc(tnNameFor(name, role) || 'Member')} ${roleTag(role)}${live ? ' <span class="meta" style="color:#2E9E5B">● here now</span>' : ''}</span></div>`;
+    const here = window.__tnHere || new Map();
+    const today = [...seen.values()].filter(p => !here.has(p.author_id) && Date.now() - new Date(p.created_at) < 864e5);
+    document.getElementById('active').innerHTML = ([...here.values()].map(u => row(u.id, u.name, u.role, true)).concat(today.map(p => row(p.author_id, p.author_name, p.author_role, false)))).slice(0, 10).join('') || '<p class="empty">No one yet.</p>';
     document.getElementById('recent').innerHTML = posts.slice(0, 6).map(p => `<a class="side-row" href="#" data-jump="${p.id}"><span class="recent-text">${esc(p.body.slice(0, 70))}${p.body.length > 70 ? '…' : ''}</span><span class="meta">${ago(p.created_at)}</span></a>`).join('') || '<p class="empty">No posts yet.</p>';
   }
   document.getElementById('recent').addEventListener('click', e => {
@@ -440,11 +454,21 @@ async function loadContactMessages() {
   if (error) { box.innerHTML = '<p class="empty">Run database update 35 to see website messages.</p>'; return; }
   const open = (data || []).filter(m => !m.handled), done = (data || []).filter(m => m.handled).slice(0, 20);
   document.getElementById('n-contact').textContent = open.length;
+  // Replies open Gmail in the Think Nest account (thinknest2026@gmail.com), so they come from Think Nest, not a personal email
+  const TN_MAIL = 'thinknest2026@gmail.com';
+  const isHost = m => /host a workshop/i.test(m.message || '');
+  const replyBody = m => {
+    const first = (m.name || '').trim().split(/\s+/)[0] || 'there';
+    if (isHost(m)) return `Dear ${first},\n\nThank you for offering to host a workshop on Think Nest. We’d love to hear more!\n\nNext steps:\n1. Reply to this email with:\n   • the workshop title and a short description (2–3 sentences)\n   • who it is for (teachers, parents or both)\n   • how long it is, and whether it is online or in person\n   • 2 or 3 dates and times that suit you\n2. Our team will review your idea and get back to you to confirm the details.\n3. Once it’s confirmed, we’ll add your workshop to Beyond the Bell or Beyond the School Run, and people can sign up straight away.\n\nIf you have any questions, just reply to this email.\n\nWarm wishes,\nThe Think Nest team\nthinknestonline.com`;
+    return `Dear ${first},\n\nThank you for contacting Think Nest.\n\n\n\nWarm wishes,\nThe Think Nest team\nthinknestonline.com`;
+  };
+  const gmail = m => 'https://mail.google.com/mail/?authuser=' + encodeURIComponent(TN_MAIL) + '&view=cm&fs=1&to=' + encodeURIComponent(m.email || '')
+    + '&su=' + encodeURIComponent(isHost(m) ? 'Hosting a workshop on Think Nest: next steps' : 'Re: ' + (m.topic || 'your message to Think Nest')) + '&body=' + encodeURIComponent(replyBody(m));
   const card = m => `<article class="panel msg-card ${m.handled ? 'done' : ''}" data-mid="${m.id}">
       <header><b>${esc(m.name)}</b> <span class="tag">${esc(m.who || '')}</span><span class="meta">${new Date(m.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</span></header>
-      <p class="meta"><b>${esc(m.topic || '')}</b> · <a href="mailto:${esc(m.email)}?subject=${encodeURIComponent('Re: ' + (m.topic || 'your message to Think Nest'))}">${esc(m.email)}</a></p>
+      <p class="meta"><b>${esc(m.topic || '')}</b> · ${esc(m.email)}</p>
       <p class="msg-body">${esc(m.message)}</p>
-      <div class="person-actions"><a class="pill pill-live" href="mailto:${esc(m.email)}?subject=${encodeURIComponent('Re: ' + (m.topic || 'your message to Think Nest'))}">↩ Reply by email</a>${m.attachment ? `<button class="pill pill-soft" data-mcv="${esc(m.attachment)}">📎 Open CV</button>` : ''}
+      <div class="person-actions"><a class="pill pill-live" href="${gmail(m)}" target="_blank" rel="noopener" title="Opens Gmail as ${TN_MAIL}">↩ Reply as Think Nest${isHost(m) ? ' (host next steps)' : ''}</a>${m.attachment ? `<button class="pill pill-soft" data-mcv="${esc(m.attachment)}">📎 Open CV</button>` : ''}
         ${m.handled ? '<button class="pill pill-soft" data-mopen>Mark as not done</button>' : '<button class="pill pill-soft" data-mdone>✓ Mark as done</button>'}<button class="link-btn" data-mdel>Delete</button></div></article>`;
   box.innerHTML = (open.length ? open.map(card).join('') : '<p class="empty">No new messages. 🎉</p>') + (done.length ? `<details class="hubreq-done"><summary>Done (${done.length})</summary>${done.map(card).join('')}</details>` : '');
   box.onclick = async e => {
