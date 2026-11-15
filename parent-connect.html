@@ -29,6 +29,14 @@
   <link rel="stylesheet" href="app.css?v=171">
   <link rel="stylesheet" href="rtl.css?v=171">
   <script src="i18n.js?v=190"></script>
+  <style>
+    .pg-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(240px,1fr);gap:18px;align-items:start}
+    .pg-grid .panel{margin-bottom:14px}
+    .pg-add{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:10px}
+    .pd-sec{margin-top:22px}.pd-search{width:100%;margin:16px 0 0}
+    .pd-inbox{border:2px solid #F4B400}
+    @media(max-width:800px){.pg-grid{grid-template-columns:1fr}}
+  </style>
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -72,7 +80,7 @@
   <script src="nav.js?v=187"></script>
   <script src="notify.js?v=171" defer></script>
   <script src="parent.js?v=172"></script>
-  <script src="connect.js?v=177"></script>
+  <script src="connect.js?v=178"></script>
   <script>startConnect('parents');</script>
   </body>
 </html>

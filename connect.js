@@ -37,10 +37,12 @@ async function startConnect(sp) {
   const ini = n => (n || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
   const when = d => new Date(d).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
   let tab = location.hash === '#meetups' && ON.meetups ? 'meetups' : location.hash === '#people' ? 'people' : ON.partners ? 'roulette' : ON.meetups ? 'meetups' : 'people';
+  if (P) tab = location.hash === '#meetups' && ON.meetups ? 'meetups' : location.hash === '#groups' ? 'groups' : 'people';
   box.innerHTML = `<section class="cx-hero"><span class="cx-cup">☕</span><div><span class="hub-kicker">${hubName}</span><h1>Coffee, Chats &amp; Connections</h1><p>${P ? 'A friendly, respectful space to swap ideas, learn from other parents and grow together, over a (virtual) cup of coffee.' : 'A professional space to swap ideas, learn from colleagues and grow together, over a (virtual) cup of coffee.'}</p></div></section>
     <div class="cx-tabs" role="tablist">${ON.partners ? `<button role="tab" data-cx="roulette">☕ ${W.partners}</button>` : ''}${ON.meetups ? '<button role="tab" data-cx="meetups">📅 Group meetups</button>' : ''}<button role="tab" data-cx="people">📇 ${W.directory}</button></div>
     <p class="cx-note">🛡️ Keep it professional: no personal invitations or contact details. <a href="#" id="cx-code-link">Code of conduct</a></p>
     <div id="cx-body"></div>`;
+  if (P) box.querySelector('.cx-tabs').innerHTML = '<button role="tab" data-cx="people">📇 Parent directory</button>' + (ON.meetups ? '<button role="tab" data-cx="meetups">📅 Group meetups</button>' : '') + '<button role="tab" data-cx="groups">👥 Parent groups</button>';
   const body = document.getElementById('cx-body');
   const cafePage = sp === 'teachers' ? 'teacher-cafe.html' : 'parent-cafe.html';
   const sayHi = (id, name) => `<div class="cx-contact">${ON.messages ? `<a class="btn btn-red cx-hi" href="messages.html?with=${id}">✉️ Message ${E((name || '').split(' ')[0] || 'them')}</a><a class="link-btn" href="${cafePage}?ask=${encodeURIComponent(name || '')}">or say hello in the café</a>` : `<a class="btn btn-red cx-hi" href="${cafePage}?ask=${encodeURIComponent(name || '')}">💬 Say hello in the café</a>`}</div>`;
@@ -100,10 +102,108 @@ async function startConnect(sp) {
         ${p.can_help ? `<p class="cx-tag help">🙋 Can help with: ${E(p.can_help)}</p>` : ''}${p.want_learn ? `<p class="cx-tag learn">🌱 Would love to learn: ${E(p.want_learn)}</p>` : ''}
         ${p.roulette ? `<span class="meta">☕ Open to ${W.partners}</span>` : ''}${sayHi(p.id, p.full_name)}</article>`).join('') : `<div class="empty-box"><p>You’re the first one here! Invite other ${W.colleagues} to join the hub. ☕</p></div>`}</div>`;
   }
+  // ===== Parents: one Directory page (interests, partners, open to pairing, other parents) =====
+  async function parentDir() {
+    const [{ data: mine }, { data: dir }, { data: ms }, { data: rq }, { data: gs }] = await Promise.all([
+      db.from('hub_profiles').select('*').eq('user_id', uid).eq('hub', sp).maybeSingle(),
+      db.rpc('cafe_directory', { sp }),
+      db.from('coffee_matches').select('user_a, user_b, week').eq('hub', sp).or(`user_a.eq.${uid},user_b.eq.${uid}`),
+      db.from('parent_msg_requests').select('*').or(`from_id.eq.${uid},to_id.eq.${uid}`),
+      db.from('parent_groups').select('id, name, owner_id')]);
+    const people = (dir || []).filter(p => p.id !== uid);
+    const partnerIds = new Set((ms || []).map(m => m.user_a === uid ? m.user_b : m.user_a));
+    const reqs = rq || [];
+    const incoming = reqs.filter(r => r.to_id === uid && r.status === 'pending');
+    const status = p => {
+      if (!ON.messages) return 'off';
+      if (partnerIds.has(p.id) || p.roulette) return 'ok';
+      if (reqs.some(r => r.from_id === p.id && r.to_id === uid && r.status === 'approved')) return 'ok';
+      const out = reqs.find(r => r.from_id === uid && r.to_id === p.id);
+      return out ? (out.status === 'approved' ? 'ok' : out.status) : 'ask';
+    };
+    const first = n => E((n || '').split(' ')[0] || 'them');
+    const btn = p => ({ ok: `<a class="btn btn-red cx-hi" href="messages.html?with=${p.id}">✉️ Message ${first(p.full_name)}</a>`,
+      ask: `<button type="button" class="btn btn-white cx-hi" data-pask="${p.id}">✉️ Ask to message ${first(p.full_name)}</button><span class="meta">${first(p.full_name)} will be asked to approve first.</span>`,
+      pending: '<span class="tag tag-wait">⏳ Message request sent</span>', declined: '<span class="tag">Not taking messages just now</span>',
+      off: `<a class="btn btn-white cx-hi" href="${cafePage}?ask=${encodeURIComponent(p.full_name || '')}">💬 Say hello in the café</a>` })[status(p)];
+    const groupsOf = p => (gs || []).filter(g => g.owner_id === p.id);
+    const card = p => `<article class="panel cx-person" data-text="${E([p.full_name, p.subject, p.can_help, p.want_learn].join(' ').toLowerCase())}">
+        <span class="initials big">${E(ini(p.full_name))}</span><b>${E(p.full_name)}</b>
+        ${p.can_help ? `<p class="cx-tag help">🙋 Can help with: ${E(p.can_help)}</p>` : ''}${p.want_learn ? `<p class="cx-tag learn">🌱 Would love to learn: ${E(p.want_learn)}</p>` : ''}
+        ${groupsOf(p).length ? `<p class="meta">👥 Groups by ${first(p.full_name)}: ${groupsOf(p).map(g => `<a href="parent-group.html?id=${g.id}">${E(g.name)}</a>`).join(' · ')}</p>` : ''}
+        <div class="cx-contact">${btn(p)}</div></article>`;
+    const section = (title, sub, list, empty) => `<section class="pd-sec"><h2 class="hub-h">${title} <span class="meta">(${list.length})</span></h2><p class="meta">${sub}</p>
+        <div class="cx-people">${list.length ? list.map(card).join('') : `<p class="empty">${empty}</p>`}</div></section>`;
+    const partners = people.filter(p => partnerIds.has(p.id)), open = people.filter(p => !partnerIds.has(p.id) && p.roulette), rest = people.filter(p => !partnerIds.has(p.id) && !p.roulette);
+    const nameOf = id => ((people.find(p => p.id === id) || {}).full_name) || 'A parent';
+    body.innerHTML = (incoming.length ? `<section class="panel pd-inbox"><h3>✉️ Message requests</h3>${incoming.map(r => `<div class="pending-row"><span class="initials">${E(ini(nameOf(r.from_id)))}</span><div><b>${E(nameOf(r.from_id))}</b><span class="meta">would like to send you messages</span></div>
+        <span class="req-actions"><button class="pill pill-live" data-pok="${r.id}">Approve</button><button class="pill pill-soft" data-pno="${r.id}">Decline</button></span></div>`).join('')}</section>` : '')
+      + `<section class="panel cx-me"><h3>🌱 My interests</h3><p class="meta">Parents with similar interests can find you in the directory. Keep it to parenting, learning and growth topics, please.</p>
+        <label>I can help with <input type="text" id="pd-help" maxlength="200" value="${E(mine && mine.can_help)}" placeholder="For example, healthy lunchboxes, budgeting, Arabic"></label>
+        <label>I’d love to learn <input type="text" id="pd-learn" maxlength="200" value="${E(mine && mine.want_learn)}" placeholder="For example, photography, yoga, starting a small business"></label>
+        <label class="switch-row"><input type="checkbox" id="pd-open" ${mine && mine.roulette ? 'checked' : ''}> I’m open to pairing (other parents can message me without asking first)</label>
+        <div class="btns"><button type="button" class="btn btn-red" id="pd-save">Save</button>${ON.partners ? '<button type="button" class="btn btn-white" id="pd-match">☕ Find me a parent partner</button>' : ''}</div></section>
+      <input type="search" id="cx-search" placeholder="Search by name or interest, for example: yoga" class="cx-search pd-search">`
+      + section('🤝 ThinkNest Parent Partners', 'Parents you have been paired with.', partners, 'No partners yet. Tick “open to pairing” and tap “Find me a parent partner”.')
+      + section('☕ ThinkNest Parents Open to Pairing', 'You can message these parents straight away.', open, 'No one else is open to pairing yet.')
+      + section('👪 ThinkNest Parents', 'These parents are asked to approve before you can message them.', rest, 'No other parents yet.');
+  }
+
+  // ===== Parents: Parent Groups =====
+  async function parentGroups() {
+    const [{ data: gs }, { data: mm }] = await Promise.all([
+      db.from('parent_groups').select('*').order('created_at', { ascending: false }),
+      db.from('parent_group_members').select('group_id, status').eq('user_id', uid)]);
+    const st = {}; (mm || []).forEach(m => st[m.group_id] = m.status);
+    const all = gs || [], mineG = all.filter(g => st[g.id] === 'active'), other = all.filter(g => st[g.id] !== 'active');
+    const tile = g => `<article class="panel cx-person pg-tile" data-text="${E([g.name, g.about, g.owner_name].join(' ').toLowerCase())}"><span class="initials big">${E(ini(g.name))}</span><b>${E(g.name)}</b>
+        <span class="meta">Started by ${E(g.owner_name || 'a parent')}</span>${g.about ? `<p>${E(g.about)}</p>` : ''}
+        <div class="cx-contact">${st[g.id] === 'active' ? `<a class="btn btn-red" href="parent-group.html?id=${g.id}">Open group →</a>` : st[g.id] === 'pending' ? '<span class="tag tag-wait">⏳ Waiting for the host to approve</span>' : `<button type="button" class="btn btn-white" data-pjoin="${g.id}">Ask to join</button>`}</div></article>`;
+    body.innerHTML = `<div class="cx-head"><h2>👥 Parent groups</h2><button type="button" class="btn btn-red" id="pg-new">+ Create a group</button></div>
+      <p class="meta">Keep the conversation going after a meetup or workshop, or start a group for parents who share an interest. The person who starts a group approves who joins.</p>
+      <form class="panel auth-form" id="pg-form" hidden>
+        <label>Group name <input name="name" maxlength="80" required placeholder="For example, Reading together: Year 2 parents"></label>
+        <label>What’s it about? (optional) <textarea name="about" rows="2" maxlength="600" placeholder="For example, for parents who came to the Sunday reading workshop"></textarea></label>
+        <div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" id="pg-cancel">Cancel</button><button class="btn btn-red auth-btn">Create group</button></div></form>
+      <h2 class="hub-h">My groups</h2><div class="cx-people">${mineG.length ? mineG.map(tile).join('') : '<p class="empty">You’re not in a group yet.</p>'}</div>
+      <h2 class="hub-h">Groups you can join</h2><input type="search" id="cx-search" placeholder="Search groups" class="cx-search pd-search">
+      <div class="cx-people">${other.length ? other.map(tile).join('') : '<p class="empty">No other groups yet. Why not start one?</p>'}</div>`;
+  }
+
+  if (P) box.addEventListener('click', async e => {
+    const t = e.target;
+    if (t.id === 'pd-save' || t.id === 'pd-match') {
+      const help = document.getElementById('pd-help').value.trim(), learn = document.getElementById('pd-learn').value.trim(), open = document.getElementById('pd-open').checked;
+      if (!help && !learn) return say('Write at least one thing you can help with or would love to learn.');
+      const { error } = await db.from('hub_profiles').upsert({ user_id: uid, hub: sp, can_help: help, want_learn: learn, roulette: open || t.id === 'pd-match', updated_at: new Date().toISOString() });
+      if (error) return say(friendly(error));
+      if (t.id === 'pd-save') { say('Saved. ☕'); return draw(); }
+      t.disabled = true; t.textContent = 'Finding a parent partner…';
+      const { data, error: er } = await db.rpc('coffee_match_me', { sp });
+      if (er) { t.disabled = false; t.textContent = '☕ Find me a parent partner'; return say(friendly(er)); }
+      say((data || []).length ? '🎉 You have a new parent partner! They’re under ThinkNest Parent Partners.' : 'No one is free to pair just now. You’re on the list, so you’ll be paired when another parent joins in. ☕');
+      return draw();
+    }
+    const a = t.closest('[data-pask]');
+    if (a) { a.disabled = true; const { error } = await db.from('parent_msg_requests').insert({ to_id: a.dataset.pask }); if (error) { a.disabled = false; return say(/relation|does not exist/i.test(error.message || '') ? 'Please run the latest Supabase update (parent_connections.sql) first.' : friendly(error)); } say('Request sent. You’ll get a notification when they say yes.'); return draw(); }
+    const ok = t.closest('[data-pok], [data-pno]');
+    if (ok) { const yes = !!ok.dataset.pok; const { error } = await db.from('parent_msg_requests').update({ status: yes ? 'approved' : 'declined' }).eq('id', Number(ok.dataset.pok || ok.dataset.pno)); if (error) return say(friendly(error)); say(yes ? 'Approved. They can message you now.' : 'Request declined.'); return draw(); }
+    if (t.id === 'pg-new') { document.getElementById('pg-form').hidden = false; return; }
+    if (t.id === 'pg-cancel') { document.getElementById('pg-form').hidden = true; return; }
+    const j = t.closest('[data-pjoin]');
+    if (j) { j.disabled = true; const { error } = await db.from('parent_group_members').insert({ group_id: Number(j.dataset.pjoin), user_id: uid }); if (error) { j.disabled = false; return say(friendly(error)); } say('Request sent. The host will approve you.'); return draw(); }
+  });
+  if (P) box.addEventListener('submit', async e => {
+    if (e.target.id !== 'pg-form') return; e.preventDefault();
+    const f = e.target, name = f.name.value.trim(); if (name.length < 2) return say('Give your group a name.');
+    const { data, error } = await db.from('parent_groups').insert({ name, about: f.about.value.trim() || null }).select('id').single();
+    if (error) return say(/relation|does not exist/i.test(error.message || '') ? 'Please run the latest Supabase update (parent_connections.sql) first.' : friendly(error));
+    location.href = 'parent-group.html?id=' + data.id;
+  });
   async function draw() {
     document.querySelectorAll('[data-cx]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.cx === tab)));
     body.innerHTML = '<p class="empty">Loading…</p>';
-    await ({ roulette, meetups, people })[tab]();
+    await ({ roulette, meetups, people: P ? parentDir : people, groups: parentGroups })[tab]();
   }
   box.addEventListener('click', async e => {
     if (e.target.id === 'cx-code-link') { e.preventDefault(); alert('Code of conduct\n\n• Keep it professional and respectful.\n• No personal, romantic or private invitations, and no comments about appearance.\n• Don’t share personal contact details or social media.\n• Meet in groups, online or in a public place. Never at home.\n• Messages may be reviewed by Think Nest.\n• Report anything that makes you uncomfortable.'); return; }

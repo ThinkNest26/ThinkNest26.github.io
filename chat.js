@@ -175,7 +175,11 @@ async function startChat() {
   }
 
   await loadList();
-  if (params.get('with')) { const { data, error } = await db.rpc('open_adult_chat', { other: params.get('with') }); if (error) say(friendly(error)); else { await loadList(); open(data); } }
+  if (params.get('with')) {
+    // parents who aren't open to pairing approve before other parents can message them
+    try { const { data: can, error: ce } = await db.rpc('parent_can_message', { other: params.get('with') });
+      if (!ce && can && can !== 'ok') { say(can === 'pending' ? 'Your message request is waiting for their approval.' : can === 'declined' ? 'This parent isn’t taking messages just now.' : 'This parent approves messages first. Ask them from the Parent directory.'); setTimeout(() => location.href = 'parent-connect.html#people', 1800); return; } } catch (_) {}
+    const { data, error } = await db.rpc('open_adult_chat', { other: params.get('with') }); if (error) say(friendly(error)); else { await loadList(); open(data); } }
   else if (params.get('friend')) openFriend(params.get('friend'));
   else if (params.get('group')) { location.replace('group.html?id=' + Number(params.get('group'))); return; }   // old group-chat links open the group's feed
   else if (params.get('c')) open(Number(params.get('c')));
