@@ -51,11 +51,11 @@
       <div class="pending narrow-box" id="pending"></div>
       <details class="code-way narrow-box">
         <summary>Have a family code instead?</summary>
-        <p>Your child can find their family code in <b>Account Settings</b>. A code connects you straight away.</p>
+        <p>Your child can find their family code in <b>Account Settings</b>. For your child’s safety, they will still need to log in and tap <b>Approve</b> before you are connected.</p>
         <form class="auth-form" id="link-form" novalidate>
           <label>Family code <input type="text" name="code" class="code-input" maxlength="12" placeholder="For example, 4F7A2C9B" autocomplete="off" required></label>
           <p class="form-error" id="link-error" role="alert" hidden></p>
-          <button class="btn btn-red auth-btn">Add with code</button>
+          <button class="btn btn-red auth-btn">Send request</button>
         </form>
       </details>
     </div>
@@ -64,7 +64,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script src="supabase-config.js?v=171"></script>
   <script src="app.js?v=183"></script>
-  <script src="parent.js?v=171"></script>
+  <script src="parent.js?v=172"></script>
   <script>startAddChild();</script>
 </body>
 </html>

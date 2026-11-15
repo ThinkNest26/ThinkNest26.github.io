@@ -222,10 +222,12 @@ async function startAddChild() {
   lf.addEventListener('submit', async e => {
     e.preventDefault(); showError(lerr, '');
     const btn = lf.querySelector('button'); btn.disabled = true;
-    const { data, error } = await db.rpc('link_child', { code: lf.code.value });
+    const { data, error } = await db.rpc('request_child_by_code', { code: lf.code.value.trim() });
     btn.disabled = false;
-    if (error) return showError(lerr, friendly(error));
-    say((data || 'Your child') + ' has been added.'); setTimeout(() => location.href = 'parent-dashboard.html', 1200);
+    if (error) return showError(lerr, /NO_SUCH_CODE/.test(error.message || '') ? 'We couldn’t find that family code. Check it with your child and try again.' : friendly(error));
+    lf.reset();
+    say(data === 'linked' ? 'This child is already linked to your account.' : 'Request sent. Ask your child to log in and tap Approve.');
+    pendingRequests(box);
   });
 }
 
