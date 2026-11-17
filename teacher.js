@@ -181,8 +181,12 @@ async function copyLessonDialog(l, c) {
   d.innerHTML = `<form class="auth-form" style="display:grid;gap:12px;min-width:min(460px,88vw)"><h2 style="margin:0">📄 Copy “${esc(l.title)}”</h2>
     <p class="meta" style="margin:0">The copy includes everything in the lesson: worksheets, quizzes and their answers. It’s added at the end of the course as a draft, so you can check it before students see it.</p>
     <label>Copy to <select name="to">${(cs || []).map(x => `<option value="${x.id}" ${x.id === c.id ? 'selected' : ''}>${esc(x.title)}${x.id === c.id ? ' (this course)' : ''}${x.published === false ? ' · draft' : ''}</option>`).join('')}</select></label>
+    <label class="cl-for">For which class? (optional) <select name="forg"><option value="">I’ll choose later</option></select></label>
     <div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-x>Cancel</button><button class="btn btn-red auth-btn">Copy the lesson</button></div></form>`;
   const f = d.querySelector('form'); d.querySelector('[data-x]').onclick = () => d.close();
+  let cgs = []; try { const { data: cg } = await db.rpc('course_groups', { cid: c.id }); cgs = (cg || []).filter(g => g.slot); } catch (_) {}
+  f.forg.innerHTML += cgs.map(g => `<option value="${g.id}">${esc(g.slot)}</option>`).join('');
+  const syncFor = () => { d.querySelector('.cl-for').hidden = Number(f.to.value) !== c.id || cgs.length < 2; }; f.to.onchange = syncFor; syncFor();
   f.onsubmit = async e => {
     e.preventDefault(); const b = f.querySelector('.btn-red'); b.disabled = true; b.textContent = 'Copying…';
     const to = Number(f.to.value);
@@ -190,7 +194,14 @@ async function copyLessonDialog(l, c) {
     b.disabled = false; b.textContent = 'Copy the lesson';
     if (error) return say(/function|schema cache/i.test(error.message || '') ? 'Please run the latest Supabase update (copy_lesson.sql) first.' : friendly(error));
     d.close();
-    if (to === c.id) { say('✅ Copied. The copy is at the end of the list, as a draft.'); setTimeout(() => location.reload(), 600); }
+    if (to === c.id) {
+      const gid = Number(f.forg.value || 0), g = cgs.find(x => x.id === gid);
+      if (g) {
+        const { data: nl } = await db.from('lessons').select('*').eq('course_id', c.id).order('id', { ascending: false }).limit(1).maybeSingle();
+        if (nl && nl.id !== l.id) { await db.from('lessons').update({ title: (l.title + ' · ' + g.slot).slice(0, 200) }).eq('id', nl.id); d.close(); say('✅ Copied for ' + g.slot + '. Now choose when that class gets it.'); if (window.tnReloadLessons) await window.tnReloadLessons(); if (window.tnPublishToClasses) return window.tnPublishToClasses(Object.assign({}, nl, { title: (l.title + ' · ' + g.slot).slice(0, 200) }), gid); setTimeout(() => location.reload(), 900); return; }
+      }
+      say('✅ Copied. The copy is at the end of the list, as a draft.'); setTimeout(() => location.reload(), 600);
+    }
     else { say('✅ Copied. Opening that course…'); setTimeout(() => { location.href = 'teacher-course.html?id=' + to; }, 700); }
   };
   d.showModal();
@@ -656,7 +667,7 @@ async function startTeacherCourse() {
         ${l.material_kind && l.material_kind !== 'activities' ? `<button class="pill pill-live" data-results="${l.id}">Results</button>` : ''}
         <button class="pill pill-soft" data-up="${l.id}" ${k === 0 ? 'disabled' : ''} aria-label="Move up">↑</button>
         <button class="pill pill-soft" data-down="${l.id}" ${k === lessons.length - 1 ? 'disabled' : ''} aria-label="Move down">↓</button>
-        ${lessonState(l) !== 'live' && !(groupDates[l.id] || []).length ? `<button class="pill pill-live" data-pub-lesson="${l.id}">Publish now</button>` : ''}<button class="pill pill-soft" data-edit-lesson="${l.id}">Edit</button><button class="pill pill-soft" data-copy-lesson="${l.id}" title="Copy this lesson to another course">📄 Copy to…</button>
+        ${lessonState(l) !== 'live' && !(groupDates[l.id] || []).length ? `<button class="pill pill-live" data-pub-lesson="${l.id}">Publish now</button>` : ''}${lessonState(l) === 'live' || (groupDates[l.id] || []).length ? `<button class="pill pill-soft" data-classes-lesson="${l.id}" title="Choose which classes get this lesson, and when">👥 Classes</button>` : ''}<button class="pill pill-soft" data-edit-lesson="${l.id}">Edit</button><button class="pill pill-soft" data-copy-lesson="${l.id}" title="Copy this lesson to another course">📄 Copy to…</button>
         <button class="pill pill-soft" data-del-lesson="${l.id}">Delete</button></div>`).join('')
       : '<p class="empty">No lessons yet. Add the first one below.</p>';
     if (typeof loadTeacherItems === 'function') loadTeacherItems(lessons, c);
@@ -669,7 +680,7 @@ async function startTeacherCourse() {
     if (!lf.title.value.trim()) return say('Give the lesson a title.');
     const extra = builder ? builder.payload() : { objective_id: null, objective_text: null, material_kind: null, material: null, key: null };
     if (!extra) return;
-    const when = whenFromForm(lf.when ? lf.when.value : 'now', lf.publish_at ? lf.publish_at.value : '');
+    const when = lf.when && lf.when.value === 'classes' ? { ok: true, v: null } : whenFromForm(lf.when ? lf.when.value : 'now', lf.publish_at ? lf.publish_at.value : '');
     if (!when.ok) return say(when.msg);
     const btn = lf.querySelector(':scope > button.btn-red'); if (btn) btn.disabled = true;
     const row = { course_id: id, position: lessons.length + 1, title: lf.title.value.trim(), video_url: lf.video_url.value.trim() || null, resource_url: lf.resource_url.value.trim() || null,
@@ -681,9 +692,53 @@ async function startTeacherCourse() {
     if (error) return say(friendly(error));
     const wv = lf.when ? lf.when.value : 'now';
     lf.reset(); lf.querySelector('.lesson-at') && (lf.querySelector('.lesson-at').hidden = true); if (builder) builder.reset();
+    if (wv === 'classes') { say('Lesson saved. Now choose its classes and dates.'); await loadLessons(); return publishToClasses(lessons.find(x => x.id === nl.id)); }
     say(wv === 'draft' ? 'Saved as a draft. Only you can see it. Press “Publish now” when it’s ready.' : wv === 'later' ? 'Saved. Students will see it on the date you chose.' : 'Lesson published. Students in this course can see it now.'); loadLessons();
   });
   if (lf.when) lf.when.addEventListener('change', () => { lf.querySelector('.lesson-at').hidden = lf.when.value !== 'later'; });
+
+  // publish a lesson to chosen classes, each on its own date (courses with more than one class time)
+  async function courseClasses() { try { const { data: cg } = await db.rpc('course_groups', { cid: id }); return (cg || []).filter(g => g.slot); } catch (_) { return []; } }
+  async function publishToClasses(l, onlyGroup) {
+    if (!l) return;
+    const groups = await courseClasses();
+    if (groups.length < 2 && !onlyGroup) {
+      const { error } = await db.from('lessons').update({ publish_at: new Date().toISOString() }).eq('id', l.id);
+      if (error) return say(friendly(error)); say('Published. Students in this course have been told.'); return loadLessons();
+    }
+    const gd0 = groupDates[l.id] || [];
+    let d = document.getElementById('pub-classes');
+    if (!d) { d = document.createElement('dialog'); d.id = 'pub-classes'; d.className = 'dlg'; document.body.appendChild(d); }
+    const nowIn = toLocalInput(new Date().toISOString());
+    d.innerHTML = `<form class="auth-form" style="padding:22px;display:grid;gap:12px;min-width:min(540px,90vw)">
+      <h2 style="margin:0">🚀 Publish “${esc(l.title)}”</h2>
+      <p class="meta" style="margin:0">Tick the classes that get this lesson, and when. Classes you don’t tick won’t see it. Each class is told on its own date.</p>
+      ${groups.map(g => { const r = gd0.find(x => x.group_id === g.id), on = onlyGroup ? g.id === onlyGroup : (gd0.length ? !!r : true);
+        return `<label style="display:grid;grid-template-columns:auto minmax(0,1fr) 210px;gap:10px;align-items:center"><input type="checkbox" data-pc="${g.id}" ${on ? 'checked' : ''}>
+          <span><b>${esc(g.slot)}</b><span class="meta" style="display:block">${g.members} student${g.members === 1 ? '' : 's'}</span></span>
+          <input type="datetime-local" data-pt="${g.id}" value="${r ? toLocalInput(r.publish_at) : nowIn}" aria-label="When ${esc(g.slot)} gets it"></label>`; }).join('')}
+      <div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-x>Cancel</button><button class="btn btn-red auth-btn">Publish to chosen classes</button></div></form>`;
+    const f = d.querySelector('form'); d.querySelector('[data-x]').onclick = () => d.close();
+    f.onsubmit = async e => {
+      e.preventDefault();
+      const dates = groups.filter(g => d.querySelector(`[data-pc="${g.id}"]`).checked).map(g => { const v = d.querySelector(`[data-pt="${g.id}"]`).value; return { group_id: g.id, at: (v ? new Date(v) : new Date()).toISOString() }; });
+      if (!dates.length) return say('Tick at least one class.');
+      const b = f.querySelector('.btn-red'); b.disabled = true; b.textContent = 'Publishing…';
+      const everyoneNow = dates.length === groups.length && dates.every(x => new Date(x.at) <= new Date(Date.now() + 60e3));
+      const up = { publish_at: new Date().toISOString() }; if (!everyoneNow) up.announced = true;
+      const { error } = await db.from('lessons').update(up).eq('id', l.id);
+      if (error) { b.disabled = false; b.textContent = 'Publish to chosen classes'; return say(friendly(error)); }
+      const { error: ge } = await db.rpc('set_lesson_group_dates', { lid: l.id, dates: everyoneNow ? [] : dates });
+      b.disabled = false; b.textContent = 'Publish to chosen classes';
+      if (ge) return say(friendly(ge));
+      d.close();
+      say(everyoneNow ? 'Published to all classes. Students have been told.' : 'Published. Each class gets it on its own date and is told then.');
+      loadLessons();
+    };
+    d.showModal();
+  }
+  window.tnPublishToClasses = publishToClasses;
+  window.tnReloadLessons = loadLessons;
 
   // edit a lesson: title, objectives and when students can see it
   async function editLesson(l) {
@@ -738,7 +793,8 @@ async function startTeacherCourse() {
     const cp = e.target.closest('[data-copy-lesson]');
     if (cp) return copyLessonDialog(lessons.find(l => l.id === Number(cp.dataset.copyLesson)), c);
     const pub = e.target.closest('[data-pub-lesson]');
-    if (pub) { const { error } = await db.from('lessons').update({ publish_at: new Date().toISOString() }).eq('id', Number(pub.dataset.pubLesson)); if (error) return say(friendly(error)); say('Published. Students in this course have been told.'); return loadLessons(); }
+    if (pub) return publishToClasses(lessons.find(l => l.id === Number(pub.dataset.pubLesson)));
+    const pcl = e.target.closest('[data-classes-lesson]'); if (pcl) return publishToClasses(lessons.find(l => l.id === Number(pcl.dataset.classesLesson)));
     if (del) {
       if (!confirm('Delete this lesson?')) return;
       const { error } = await db.from('lessons').delete().eq('id', Number(del.dataset.delLesson));

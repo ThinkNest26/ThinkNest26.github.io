@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="style.css?v=182">
   <link rel="stylesheet" href="app.css?v=171">
   <link rel="stylesheet" href="rtl.css?v=171">
-  <script src="i18n.js?v=194"></script>
+  <script src="i18n.js?v=195"></script>
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -66,7 +66,7 @@
           <h3>Add a lesson</h3>
           <label>Lesson title <input type="text" name="title" required></label>
           <div class="two lesson-when"><label>When can students see it?
-            <select name="when"><option value="now">Publish now</option><option value="draft">Save as a draft (only you can see it)</option><option value="later">Publish on a date…</option></select></label>
+            <select name="when"><option value="now">Publish now</option><option value="draft">Save as a draft (only you can see it)</option><option value="later">Publish on a date…</option><option value="classes">Choose classes and dates…</option></select></label>
             <label class="lesson-at" hidden>Publish on <input type="datetime-local" name="publish_at"></label></div>
           <label hidden>Video link (YouTube, optional) <input type="url" name="video_url" placeholder="https://youtube.com/..."></label>
           <label hidden>Worksheet link (optional) <input type="url" name="resource_url" placeholder="https://..."></label>
@@ -174,7 +174,7 @@
   <script src="hubs.js?v=178"></script>
   <script src="courseform.js?v=171"></script>
   <script src="attendance.js?v=185"></script>
-  <script src="teacher.js?v=195"></script>
+  <script src="teacher.js?v=196"></script>
   <script>startTeacherCourse();</script>
   <script src="aichat.js?v=3" defer></script>
 </body>
