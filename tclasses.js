@@ -115,13 +115,18 @@ async function startMyClasses() {
     box.innerHTML = `<div class="mc-table"><div class="mc-row mc-th"><span>Student</span><span>Progress</span><span>Attendance</span><span></span></div>
       ${k.students.map(s => { const a = attOf(s), p = a && typeof attPct === 'function' ? attPct(a) : null, pa = parents[s.user_id] || [];
         const contact = pa.length ? `<a class="link-btn" href="messages.html?with=${pa[0]}">✉️ Parent</a>` : s.parent_email ? `<a class="link-btn" href="mailto:${esc(s.parent_email)}">✉️ Parent</a>` : '';
-        return `<div class="mc-row"><span class="mc-who"><span class="initials" data-av="${s.user_id}">${esc(ini(nameOf(s)))}</span><span><b>${esc(nameOf(s))}</b>${s.profiles && s.profiles.grade ? `<span class="meta" style="display:block">${esc(s.profiles.grade)}</span>` : ''}</span></span>
+        return `<div class="mc-row"><span class="mc-who"><input type="checkbox" data-pick="${s.user_id}" aria-label="Choose ${esc(nameOf(s))}"><span class="initials" data-av="${s.user_id}">${esc(ini(nameOf(s)))}</span><span><b>${esc(nameOf(s))}</b>${s.profiles && s.profiles.grade ? `<span class="meta" style="display:block">${esc(s.profiles.grade)}</span>` : ''}</span></span>
           <span><span class="bar small"><i style="width:${Number(s.progress) || 0}%"></i></span> ${Number(s.progress) || 0}%</span>
           <span class="att-pct ${p == null ? '' : p >= 90 ? 'good' : p >= 75 ? 'ok' : 'low'}">${p == null ? '–' : p + '%'}</span>
           <span class="mc-links">${contact}<a class="link-btn" href="teacher-certificates.html?course=${k.course.id}&student=${s.user_id}">🏅 Certificate</a></span></div>`; }).join('')}</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center"><button type="button" class="pill pill-soft" id="mc-pick-all">Tick everyone</button><button type="button" class="btn btn-red" id="mc-send">📤 Send a resource to ticked students</button></div>
       <p class="meta" style="margin-top:10px">Attendance counts present and late. 90%+ green, 75–89% amber, below 75% red.</p>`;
   }
 
+  document.addEventListener('click', e => {
+    if (e.target.id === 'mc-pick-all') document.querySelectorAll('[data-pick]').forEach(c => c.checked = true);
+    if (e.target.id === 'mc-send') { const ids = [...document.querySelectorAll('[data-pick]:checked')].map(c => c.dataset.pick); if (!ids.length) return say('Tick one or more students first.'); location.href = 'teacher-resources.html?students=' + ids.join(','); }
+  });
   drawList();
   open(classes.find(k => k.key === pick) || classes.find(k => k.today) || classes[0]);
 }

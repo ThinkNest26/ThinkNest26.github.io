@@ -28,7 +28,13 @@
   <link rel="stylesheet" href="style.css?v=182">
   <link rel="stylesheet" href="app.css?v=171">
   <link rel="stylesheet" href="rtl.css?v=171">
-  <script src="i18n.js?v=195"></script>
+  <script src="i18n.js?v=196"></script>
+  <style>
+    .tr-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid #EEF0F6}
+    .tr-row:first-of-type{border-top:0}.tr-ic{font-size:1.6rem}.tr-info{display:grid;gap:2px}.tr-acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+    .tr-head{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:14px}.tr-head .cx-search{flex:1;min-width:200px}
+    @media(max-width:700px){.tr-row{grid-template-columns:auto minmax(0,1fr)}.tr-acts{grid-column:1/-1;justify-content:flex-start}}
+  </style>
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -59,6 +65,7 @@
         <label class="btn btn-red upload-btn">Upload a file<input type="file" id="upload" multiple hidden></label></div>
       <p class="hint">Your files are private: only you can see them. Up to 10 MB per file.</p>
       <section class="file-list panel" id="list"><p class="empty">Loading…</p></section>
+      <section class="panel" id="from-teacher" style="margin-top:18px"></section>
     </main>
 
     <footer class="footer app-footer">
@@ -80,10 +87,12 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script src="supabase-config.js?v=171"></script>
   <script src="app.js?v=183"></script>
-  <script src="nav.js?v=188"></script>
+  <script src="nav.js?v=189"></script>
   <script src="notify.js?v=171" defer></script>
   <script src="student.js?v=183"></script>
   <script>startFiles();</script>
+  <script src="resources.js?v=1"></script>
+  <script>db.auth.getSession().then(({ data }) => { if (data.session) tnSharedResources(document.getElementById('from-teacher'), data.session.user.id, false); });</script>
   <script src="aichat.js?v=3" defer></script>
 </body>
 </html>
