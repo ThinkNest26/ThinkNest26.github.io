@@ -415,36 +415,90 @@ function courseDialog(onSaved) {
 // ---------- Dashboard ----------
 async function startTeacherDashboard() {
   const { user, profile } = await initTeacher();
-  document.getElementById('me-name').textContent = 'Welcome, ' + (profile.full_name || 'teacher');
-  document.getElementById('me-sub').textContent = [profile.subject, profile.school].filter(Boolean).join(' · ') || 'Teacher';
-  const { data: courses } = await db.from('courses').select('id, title').eq('teacher_id', user.id);
-  const ids = (courses || []).map(c => c.id);
+  const hr = new Date().getHours(), first = (profile.full_name || '').split(' ')[0];
+  document.getElementById('me-name').textContent = (hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening') + (first ? ', ' + first : '') + ' 👋';
+  document.getElementById('me-sub').textContent = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) + ' · here’s what needs you today';
+  const { data: courses } = await db.from('courses').select('*').eq('teacher_id', user.id).order('title');
+  const cs = courses || [], ids = cs.map(c => c.id), titleOf = id => (cs.find(c => c.id === id) || {}).title || 'your course';
   document.getElementById('st-courses').textContent = ids.length;
   teacherChecklist(user, profile);
-  const { data: myMentor } = await db.from('mentors').select('id').eq('teacher_id', user.id).maybeSingle();
-  if (myMentor) {
+  const todo = [];   // [icon, title, sub, href, button]
+  const add = (ic, t, sub, href, go) => todo.push({ ic, t, sub, href, go });
+  const safe = async f => { try { return await f(); } catch (_) { return null; } };
+
+  // 1:1 session requests
+  await safe(async () => {
+    const { data: myMentor } = await db.from('mentors').select('id').eq('teacher_id', user.id).maybeSingle();
+    if (!myMentor) return;
     const { data: pend } = await db.from('bookings').select('id').eq('mentor_id', myMentor.id).eq('status', 'pending');
     const n = (pend || []).length;
-    if (n) document.getElementById('req-box').innerHTML = `<a class="panel req-banner" href="teacher-requests.html"><span class="req-ic" aria-hidden="true">🙋</span><span><b>${n} session request${n === 1 ? '' : 's'}</b> waiting for your answer</span><span class="pill pill-live">Review →</span></a>`;
-  }
+    if (n) add('🙋', `${n} session request${n === 1 ? '' : 's'}`, 'Families asking for a 1:1 session', 'teacher-requests.html', 'Answer');
+  });
+
   if (!ids.length) {
+    document.getElementById('td-next-box').innerHTML = '';
     document.getElementById('events').innerHTML = '<div class="empty-box"><p>Start by creating your first course.</p><a class="btn btn-red" href="teacher-courses.html">Create a course</a></div>';
-    return;
+    add('📘', 'Create your first course', 'Then add class times and lessons', 'teacher-courses.html', 'Start');
+    return drawTodo(todo);
   }
-  const [en, ses] = await Promise.all([
-    db.from('enrollments').select('user_id, progress').in('course_id', ids),
-    db.from('sessions').select('*, courses(title)').in('course_id', ids).gte('starts_at', new Date(Date.now() - 3600000).toISOString()).order('starts_at').limit(8)
+
+  const [en, ses, rq, wl, ct] = await Promise.all([
+    db.from('enrollments').select('user_id, course_id, progress').in('course_id', ids),
+    db.from('sessions').select('*, courses(title)').in('course_id', ids).gte('starts_at', new Date(Date.now() - 3600000).toISOString()).order('starts_at').limit(8),
+    safe(() => db.from('course_requests').select('course_id').eq('status', 'teacher').in('course_id', ids)),
+    safe(() => db.from('course_waitlist').select('course_id').in('course_id', ids)),
+    safe(() => db.from('certificates').select('user_id, course_id').in('course_id', ids))
   ]);
   const enr = en.data || [];
   document.getElementById('st-students').textContent = new Set(enr.map(e => e.user_id)).size;
-  document.getElementById('st-avg').textContent = enr.length ? Math.round(enr.reduce((s, e) => s + e.progress, 0) / enr.length) + '%' : '0%';
+  document.getElementById('st-avg').textContent = enr.length ? Math.round(enr.reduce((t, e) => t + (Number(e.progress) || 0), 0) / enr.length) + '%' : '0%';
   const list = ses.data || [];
   document.getElementById('st-classes').textContent = list.length;
+
+  // next live class, big
+  const n = list[0], box = document.getElementById('td-next-box');
+  if (n) {
+    const live = new Date(n.starts_at) - Date.now() < 15 * 60e3;
+    box.innerHTML = `<div class="td-next ${live ? 'live' : ''}"><div><span class="meta">${live ? '🔴 Live now or very soon' : '🎥 Your next live class'}</span><h2>${esc(n.title || titleOf(n.course_id))}</h2>
+      <span class="meta">${esc(n.courses ? n.courses.title : '')} · ${esc(when(n.starts_at))}</span></div>
+      ${n.meeting_link ? `<a class="btn btn-red" href="${esc(n.meeting_link)}" target="_blank" rel="noopener">${live ? '▶ Start class' : 'Open class link'}</a>` : `<a class="btn btn-white outline" href="teacher-calendar.html">Add the class link</a>`}</div>`;
+  } else box.innerHTML = `<div class="td-next"><div><span class="meta">🎥 Live classes</span><h2>No live class coming up</h2><span class="meta">Schedule your next class so students get a reminder.</span></div><a class="btn btn-white outline" href="teacher-calendar.html">Schedule a class</a></div>`;
   document.getElementById('events').innerHTML = list.length ? list.map(s => {
     const [rel, live] = relative(s.starts_at);
     return `<article class="event"><div><h4>${esc(s.title)}</h4><span class="meta">${esc(s.courses ? s.courses.title : '')}</span><span class="when">${esc(when(s.starts_at))}</span></div>
       <div class="event-actions"><span class="tag ${live ? 'tag-now' : ''}">${rel}</span>${s.meeting_link ? `<a class="pill pill-live" href="${esc(s.meeting_link)}" target="_blank" rel="noopener">Start</a>` : ''}</div></article>`;
   }).join('') : '<p class="empty">No live classes scheduled.</p>';
+
+  // work to mark
+  await safe(async () => {
+    const { data: ls } = await db.from('lessons').select('id').in('course_id', ids); if (!(ls || []).length) return;
+    const { data: its } = await db.from('lesson_items').select('id').in('lesson_id', ls.map(l => l.id)); if (!(its || []).length) return;
+    const { count } = await db.from('item_responses').select('item_id', { count: 'exact', head: true }).in('item_id', its.map(i => i.id)).eq('needs_marking', true);
+    if (count) add('📝', `${count} piece${count === 1 ? '' : 's'} of work to mark`, 'Homework and answers waiting for your score and feedback', 'teacher-classes.html', 'Mark');
+  });
+  // registrations and waiting lists, per course
+  const per = rows => { const m = {}; ((rows && rows.data) || []).forEach(r => m[r.course_id] = (m[r.course_id] || 0) + 1); return m; };
+  const regs = per(rq), wait = per(wl);
+  Object.entries(regs).forEach(([cid, k]) => add('📥', `${k} registration${k === 1 ? '' : 's'} to answer`, titleOf(Number(cid)), `teacher-course.html?id=${cid}#t-reqs`, 'Answer'));
+  Object.entries(wait).forEach(([cid, k]) => add('⏳', `${k} on the waiting list`, titleOf(Number(cid)) + ' · add places or another class time', `teacher-course.html?id=${cid}#edit`, 'Manage'));
+  // certificates ready
+  const got = new Set(((ct && ct.data) || []).map(c => c.course_id + '|' + c.user_id));
+  const ready = enr.filter(e => (Number(e.progress) || 0) >= 100 && !got.has(e.course_id + '|' + e.user_id)).length;
+  if (ready) add('🏅', `${ready} student${ready === 1 ? '' : 's'} ready for a certificate`, 'They finished every lesson', 'teacher-classes.html', 'Give');
+  // courses not published yet
+  const drafts = cs.filter(c => c.published === false);
+  if (drafts.length > 2) add('🚀', `${drafts.length} courses are still drafts`, 'Finish and publish the ones you want families to find', 'teacher-courses.html', 'Open');
+  else drafts.forEach(c => { const gaps = typeof coursePublishGaps === 'function' ? coursePublishGaps(c) : [];
+    add('🚀', `“${c.title}” is still a draft`, gaps.length ? 'Still needed: ' + gaps.slice(0, 3).join(', ') : 'Ready to publish', gaps.length ? `teacher-course.html?id=${c.id}#edit` : 'teacher-courses.html', gaps.length ? 'Finish' : 'Publish'); });
+  // unread messages
+  await safe(async () => { const { data: cv } = await db.rpc('my_conversations'); const u = (cv || []).filter(c => c.kind !== 'group').reduce((t, c) => t + Number(c.unread || 0), 0);
+    if (u) add('💬', `${u} unread message${u === 1 ? '' : 's'}`, 'From parents, students and colleagues', 'messages.html', 'Read'); });
+  drawTodo(todo);
+}
+function drawTodo(todo) {
+  const box = document.getElementById('td-todo'); if (!box) return;
+  box.innerHTML = todo.length ? todo.map(x => `<a class="td-row" href="${x.href}"><span class="td-ic" aria-hidden="true">${x.ic}</span><span><b>${esc(x.t)}</b><span class="meta">${esc(x.sub || '')}</span></span><span class="td-go">${esc(x.go)} →</span></a>`).join('')
+    : '<p class="td-done">🎉 Nothing waiting for you right now. Enjoy your day!</p>';
 }
 
 // ---------- My courses ----------

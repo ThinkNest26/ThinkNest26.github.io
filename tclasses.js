@@ -109,7 +109,7 @@ async function startMyClasses() {
         ${big('📤', 'Send a resource', 'To chosen students', 'id="mc-send-big"')}
       </div>
       <nav class="mc-tabs"><button type="button" class="on" data-mt="students">👩‍🎓 Students</button><button type="button" data-mt="work">📝 Work to mark${k.toMark ? ' (' + k.toMark + ')' : ''}<span id="mc-work-n" hidden></span></button><button type="button" data-mt="certs">🏅 Certificates</button><button type="button" data-mt="settings">⚙️ Settings</button>
-        <span class="mc-more">More: <a href="teacher-course.html?id=${c.id}#t-reqs">Registrations</a> · <a href="teacher-course.html?id=${c.id}#t-groups">Group</a> · <a href="teacher-course.html?id=${c.id}#t-reports">Reports</a> · <a href="teacher-insights.html">Insights</a></span></nav>
+        <span class="mc-more">More: <a href="teacher-course.html?id=${c.id}#t-reqs">Registrations</a> · <a href="teacher-course.html?id=${c.id}#t-groups">Group</a> · <a href="teacher-course.html?id=${c.id}#t-reports">Reports</a> · <a href="teacher-course.html?id=${c.id}#t-sgroups">Study groups</a> · <a href="teacher-course.html?id=${c.id}#t-recs">Recordings</a> · <a href="teacher-insights.html">Insights</a></span></nav>
       <section class="panel"><div id="mc-students"><p class="empty">Loading…</p></div><div id="mc-work" hidden></div><div id="mc-certs" hidden></div><div id="mc-settings" hidden></div></section>`;
     $('mc-back').onclick = showTiles;
     $('mc-class').querySelector('.mc-tabs').onclick = e => {
