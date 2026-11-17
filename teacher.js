@@ -220,7 +220,7 @@ async function publishCourse(c, p, on) {
           ${det ? '<button type="button" class="btn btn-red" data-go="details">✏️ Add the course details</button>' : ''}
           ${prof ? '<a class="btn btn-white outline" href="teacher-settings.html#tprofile-form">👤 Complete my teacher profile</a>' : ''}
           <button class="btn btn-white outline" value="close">Not now</button></div></form>`;
-      dlg.querySelector('[data-go="details"]')?.addEventListener('click', () => { dlg.close(); const ed = document.getElementById('edit-course'); if (ed) { ed.click(); setTimeout(() => { const m = document.querySelector('#course-form .ci-more'); if (m) { m.open = true; m.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }, 150); } });
+      dlg.querySelector('[data-go="details"]')?.addEventListener('click', () => { dlg.close(); const ed = document.getElementById('edit-course') || document.querySelector(`[data-edit="${c.id}"]`); if (!ed) { location.href = 'teacher-course.html?id=' + c.id; return; } if (ed) { ed.click(); setTimeout(() => { const m = document.querySelector('#course-form .ci-more'); if (m) { m.open = true; m.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }, 150); } });
       dlg.showModal();
       return false;
     }
