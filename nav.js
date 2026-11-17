@@ -24,7 +24,7 @@
       { ic: '🏠', label: 'Today', href: 'teacher-dashboard.html' },
       { ic: '🏫', label: 'My classes', href: 'teacher-classes.html' },
       { ic: '📘', label: 'My courses', items: [['teacher-courses.html', 'All my courses'], ['teacher-objectives.html', '🎯 Objectives & activities']] },
-      { ic: '📅', label: 'Calendar', items: [['teacher-my-calendar.html', '📅 My calendar'], ['teacher-calendar.html', '🎥 Live classes'], ['teacher-requests.html', '🙋 Session requests']] },
+      { ic: '📅', label: 'Calendar', href: 'teacher-my-calendar.html' },
       { ic: '💬', label: 'Messages', href: 'messages.html' },
       { ic: '👤', label: 'Me', items: [['teacher-settings.html#tprofile-form', '👤 My teacher profile'], ['teacher-resources.html', '📚 My resources'], ['teacher-hub.html', '🔔 My workshops (Beyond the Bell)'], ['teacher-hub.html#hub-done', '🏅 My certificates'], ['teacher-cafe.html', '☕ Teacher Café'], ['teacher-connect.html', '🤝 Coffee & Connections'], ['community.html', '🌍 Community'], ['revision.html', '📖 Revision Hub'], ['curriculum.html', '🗺️ Curriculum guide']] }
     ],
@@ -117,7 +117,7 @@
   MENUS.admin = [{ ic: '🛡️', label: 'Admin', items: [['admin.html', 'Admin dashboard'], ['admin-curriculum.html', 'Curriculum editor'], ['admin-founders.html', 'Founders page']] }].concat(MENUS.teacher);
   const SETTINGS = { student: 'settings.html', teacher: 'teacher-settings.html', admin: 'teacher-settings.html', parent: 'parent-settings.html', school_leader: 'teacher-settings.html', school_teacher: 'teacher-settings.html', school_student: 'settings.html', school_parent: 'parent-settings.html' };
   // pages that aren't in the menu, and which menu item they belong to
-  const ALIAS = { 'teacher-attendance.html': 'teacher-classes.html', 'teacher-insights.html': 'teacher-classes.html', 'teacher-certificates.html': 'teacher-classes.html', 'course-details.html': 'all-courses.html', 'teacher-profile.html': 'all-courses.html', 'course.html': 'my-courses.html', 'teacher-course.html': 'teacher-courses.html', 'group.html': 'groups.html', 'child.html': 'parent-dashboard.html' };
+  const ALIAS = { 'teacher-calendar.html': 'teacher-my-calendar.html', 'teacher-requests.html': 'teacher-my-calendar.html', 'teacher-attendance.html': 'teacher-classes.html', 'teacher-insights.html': 'teacher-classes.html', 'teacher-certificates.html': 'teacher-classes.html', 'course-details.html': 'all-courses.html', 'teacher-profile.html': 'all-courses.html', 'course.html': 'my-courses.html', 'teacher-course.html': 'teacher-courses.html', 'group.html': 'groups.html', 'child.html': 'parent-dashboard.html' };
   const PARENT_PAGES = ['parent-dashboard.html', 'add-child.html', 'parent-hub.html', 'parent-cafe.html', 'parent-connect.html', 'child.html', 'parent-settings.html', 'parent-calendar.html', 'reports.html'];
 
   async function roleNow() {

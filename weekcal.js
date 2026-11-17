@@ -82,11 +82,25 @@ async function weekForTeacher(host, uid, opts = {}) {
     me ? safe(db.from('bookings').select('*, profiles(full_name)').eq('mentor_id', me.id).in('status', ['booked', 'accepted'])) : { data: [] },
     safe(db.from('meetup_rsvps').select('meetup_id, cafe_meetups(id, title, starts_at, hub, meeting_link)').eq('user_id', uid))
   ]);
+  // lessons opening for students (whole course, or per class on its own date)
+  let les = [];
+  if (own.length) {
+    const { data: ls } = await safe(db.from('lessons').select('id, title, course_id, publish_at, courses(title)').in('course_id', own));
+    const lmap = {}; (ls || []).forEach(l => lmap[l.id] = l);
+    const { data: gd } = (ls || []).length ? await safe(db.from('lesson_group_dates').select('lesson_id, group_id, publish_at').in('lesson_id', (ls || []).map(l => l.id))) : { data: [] };
+    const per = new Set((gd || []).map(r => r.lesson_id)), soon = new Date(Date.now() - 3600e3);
+    const gids = [...new Set((gd || []).map(r => r.group_id))], slot = {};
+    if (gids.length) { const { data: gs } = await safe(db.from('study_groups').select('id, slot').in('id', gids)); (gs || []).forEach(g => slot[g.id] = g.slot); }
+    const mk = (l, at, cls) => { const st = new Date(at); return { start: st, end: new Date(st.getTime() + 30 * 60e3), title: '📘 ' + l.title, color: '#D4A017', sub: 'Lesson opens for ' + (cls || 'all students') + (l.courses ? ' · ' + l.courses.title : ''), page: 'teacher-course.html?id=' + l.course_id }; };
+    (ls || []).forEach(l => { if (l.publish_at && !per.has(l.id) && new Date(l.publish_at) > soon) les.push(mk(l, l.publish_at)); });
+    (gd || []).forEach(r => { const l = lmap[r.lesson_id]; if (l && r.publish_at && new Date(r.publish_at) > soon) les.push(mk(l, r.publish_at, slot[r.group_id] ? 'class ' + slot[r.group_id] : 'one class')); });
+  }
   const ev = (ses || []).map(s => wcSession(s, { page: 'teacher-course.html?id=' + s.course_id }))
+    .concat(les)
     .concat((jses || []).map(s => wcSession(s, { color: '#8A5CF6', sub: '🔔 My workshop: ' + (s.courses ? s.courses.title : ''), page: 'course.html?id=' + s.course_id })))
     .concat((bk || []).map(b => ({ start: new Date(b.starts_at), end: new Date(new Date(b.starts_at).getTime() + 30 * 60e3), title: 'Mentor session' + (b.profiles && b.profiles.full_name ? ': ' + b.profiles.full_name : ''), color: '#2FA08A', sub: 'Mentor session', page: 'teacher-requests.html' })))
     .concat((rs || []).map(r => r.cafe_meetups).filter(Boolean).map(m => ({ start: new Date(m.starts_at), end: new Date(new Date(m.starts_at).getTime() + 60 * 60e3), title: '☕ ' + m.title, color: '#F27A6F', sub: 'Café meetup', link: m.meeting_link, page: m.hub === 'parents' ? 'parent-connect.html#meetups' : 'teacher-connect.html#meetups' })));
-  weekCalendar(host, ev, { legend: [['My live classes', '#3E4B94'], ['My workshops', '#8A5CF6'], ['Mentor sessions', '#2FA08A'], ['Café meetups', '#F27A6F']] });
+  weekCalendar(host, ev, { legend: [['My live classes', '#3E4B94'], ['Lessons opening', '#D4A017'], ['My workshops', '#8A5CF6'], ['Mentor sessions', '#2FA08A'], ['Café meetups', '#F27A6F']] });
   if (opts.upcoming) {
     const next = ev.filter(e => e.end > new Date()).sort((a, b) => a.start - b.start).slice(0, 12);
     opts.upcoming.innerHTML = next.length ? next.map(e => `<div class="pending-row"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${e.color}"></span><div><b>${wcEsc(e.title)}</b><span class="meta">${e.start.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })} · ${wcTime(e.start)}${e.sub ? ' · ' + wcEsc(e.sub) : ''}</span></div>${e.page ? `<a class="pill pill-soft" href="${wcEsc(e.page)}">Open</a>` : ''}</div>`).join('')
