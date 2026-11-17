@@ -89,11 +89,19 @@ async function startMyClasses() {
         <span class="meta" style="display:block">${n ? (live ? '🔴 Live class now or very soon' : '📅 Next live class: ' + esc(when(n.starts_at))) : 'No live class scheduled'}</span></div>
       <div class="mc-acts">${n && n.meeting_link ? `<a class="btn ${live ? 'btn-red' : 'btn-white outline'}" href="${esc(n.meeting_link)}" target="_blank" rel="noopener">🎥 Start live class</a>` : `<a class="btn btn-white outline" href="teacher-course.html?id=${c.id}">🎥 Schedule live classes</a>`}
         <button type="button" class="btn ${k.today ? 'btn-red' : 'btn-white outline'}" id="mc-att">📋 Take attendance</button></div></div>
-      <nav class="mc-tabs"><span class="on">👩‍🎓 Students</span>
+      <nav class="mc-tabs"><button type="button" class="on" data-mt="students">👩‍🎓 Students</button><button type="button" data-mt="work">📝 Work to mark<span id="mc-work-n"></span></button><button type="button" data-mt="certs">🏅 Certificates</button>
         <a href="teacher-course.html?id=${c.id}">📚 Lessons</a><a href="teacher-course.html?id=${c.id}#t-reqs">📝 Registrations</a>
         <a href="teacher-course.html?id=${c.id}#t-groups">👥 Group</a><a href="teacher-course.html?id=${c.id}#t-reports">📄 Reports</a>
         <a href="teacher-insights.html">📊 Insights</a></nav>
-      <div id="mc-students"><p class="empty">Loading…</p></div>`;
+      <div id="mc-students"><p class="empty">Loading…</p></div><div id="mc-work" hidden></div><div id="mc-certs" hidden></div>`;
+    $('mc-main').querySelector('.mc-tabs').onclick = e => {
+      const b = e.target.closest('[data-mt]'); if (!b) return;
+      $('mc-main').querySelectorAll('[data-mt]').forEach(x => x.classList.toggle('on', x === b));
+      ['students', 'work', 'certs'].forEach(n => { $('mc-' + n).hidden = n !== b.dataset.mt; });
+      if (b.dataset.mt === 'work') drawWork(k);
+      if (b.dataset.mt === 'certs') drawCerts(k);
+    };
+    countWork(k);
     $('mc-att').onclick = () => {
       if (k.loose) return say('These students need a class time first. Choose one for each student on the course page.');
       openAttendanceDialog(k.group ? { gid: k.group.id, title } : { cid: c.id, title });
@@ -121,6 +129,66 @@ async function startMyClasses() {
           <span class="mc-links">${contact}<a class="link-btn" href="teacher-certificates.html?course=${k.course.id}&student=${s.user_id}">🏅 Certificate</a></span></div>`; }).join('')}</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center"><button type="button" class="pill pill-soft" id="mc-pick-all">Tick everyone</button><button type="button" class="btn btn-red" id="mc-send">📤 Send a resource to ticked students</button></div>
       <p class="meta" style="margin-top:10px">Attendance counts present and late. 90%+ green, 75–89% amber, below 75% red.</p>`;
+  }
+
+  // ---- Work to mark: hand-ins from THIS class only
+  async function workFor(k) {
+    const sids = k.students.map(s => s.user_id); if (!sids.length) return { rows: [], items: [], lessons: [] };
+    const { data: ls } = await db.from('lessons').select('id, title').eq('course_id', k.course.id);
+    const lids = (ls || []).map(l => l.id); if (!lids.length) return { rows: [], items: [], lessons: ls || [] };
+    const { data: its } = await db.from('lesson_items').select('id, lesson_id, title, kind, data').in('lesson_id', lids);
+    const iids = (its || []).map(i => i.id); if (!iids.length) return { rows: [], items: its || [], lessons: ls };
+    const { data: rs } = await db.from('item_responses').select('*').in('item_id', iids).in('student_id', sids).order('submitted_at', { ascending: false });
+    return { rows: rs || [], items: its || [], lessons: ls || [] };
+  }
+  async function countWork(k) {
+    try { const { rows } = await workFor(k); const n = rows.filter(r => r.needs_marking).length; const el = $('mc-work-n'); if (el) el.textContent = n ? ' (' + n + ')' : ''; } catch (_) {}
+  }
+  async function drawWork(k) {
+    const box = $('mc-work'); box.innerHTML = '<p class="empty">Loading…</p>';
+    let w; try { w = await workFor(k); } catch (x) { box.innerHTML = '<p class="empty">' + esc(friendly(x)) + '</p>'; return; }
+    const nameOf = sid => { const s = k.students.find(x => x.user_id === sid); return s ? (s.student_name || (s.profiles && s.profiles.full_name) || 'Student') : 'Student'; };
+    const itemOf = id => w.items.find(i => i.id === id) || {}, lessonOf = id => (w.lessons.find(l => l.id === id) || {}).title || '';
+    const todo = w.rows.filter(r => r.needs_marking), done = w.rows.filter(r => !r.needs_marking);
+    const card = r => { const it = itemOf(r.item_id);
+      return `<article class="panel mc-hand" data-iid="${r.item_id}" data-sid="${r.student_id}">
+        <header style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><span><b>${esc(nameOf(r.student_id))}</b> · ${esc(it.title || 'Task')}<span class="meta" style="display:block">${esc(lessonOf(it.lesson_id))} · handed in ${new Date(r.submitted_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}${r.attempts > 1 ? ' · 🔁 ' + r.attempts + ' times' : ''}</span></span>
+          <span class="tag ${r.needs_marking ? 'tag-wait' : ''}">${r.needs_marking ? '⏳ To mark' : '✅ Marked' + (r.teacher_score != null ? ' · ' + r.teacher_score : '')}</span></header>
+        ${r.auto_total ? `<p class="meta">Auto-marked: <b>${r.auto_score ?? 0} / ${r.auto_total}</b></p>` : ''}
+        ${r.text_answer ? `<div class="written">${esc(r.text_answer).replace(/\n/g, '<br>')}</div>` : ''}
+        ${r.file_path ? `<button type="button" class="pill pill-soft" data-handin="${esc(r.file_path)}">📎 ${esc(r.file_name || 'Open their work')}</button>` : ''}
+        <div class="two"><label>Score <input type="number" name="score" min="0" step="0.5" value="${r.teacher_score ?? (r.auto_total ? r.auto_score ?? '' : '')}"></label><label>Feedback for the student <input type="text" name="comment" maxlength="500" value="${esc(r.teacher_comment || '')}"></label></div>
+        <button type="button" class="btn btn-red" data-save-mark>Save mark and feedback</button></article>`; };
+    box.innerHTML = (todo.length ? `<h3>⏳ To mark (${todo.length})</h3>` + todo.map(card).join('') : '<div class="empty-box"><p>🎉 Nothing to mark for this class right now.</p></div>')
+      + (done.length ? `<details class="hubreq-done" style="margin-top:14px"><summary>✅ Already marked (${done.length})</summary>${done.map(card).join('')}</details>` : '');
+    box.onclick = async e => {
+      const h = e.target.closest('[data-handin]');
+      if (h) { const { data, error } = await db.storage.from('hand-ins').createSignedUrl(h.dataset.handin, 600); if (error) return say(friendly(error)); return window.open(data.signedUrl, '_blank', 'noopener'); }
+      const b = e.target.closest('[data-save-mark]'); if (!b) return;
+      const cardEl = b.closest('[data-iid]'), score = cardEl.querySelector('[name=score]').value;
+      b.disabled = true;
+      const { error } = await db.from('item_responses').update({ teacher_score: score === '' ? null : Number(score), teacher_comment: cardEl.querySelector('[name=comment]').value.trim() || null, needs_marking: false })
+        .eq('item_id', Number(cardEl.dataset.iid)).eq('student_id', cardEl.dataset.sid);
+      b.disabled = false;
+      if (error) return say(friendly(error));
+      say('Saved. The student has been told.'); drawWork(k); countWork(k);
+    };
+  }
+
+  // ---- Certificates for this class
+  async function drawCerts(k) {
+    const box = $('mc-certs'); box.innerHTML = '<p class="empty">Loading…</p>';
+    if (!k.students.length) { box.innerHTML = '<div class="empty-box"><p>No students in this class yet.</p></div>'; return; }
+    let certs = [];
+    try { const { data } = await db.from('certificates').select('user_id, title').eq('course_id', k.course.id).in('user_id', k.students.map(s => s.user_id)); certs = data || []; } catch (_) {}
+    const nameOf = s => s.student_name || (s.profiles && s.profiles.full_name) || 'Student';
+    const ready = k.students.filter(s => (Number(s.progress) || 0) >= 100 && !certs.some(c => c.user_id === s.user_id)).length;
+    box.innerHTML = `${ready ? `<p class="note big-note">🎓 ${ready} student${ready === 1 ? ' has' : 's have'} finished every lesson and ${ready === 1 ? 'doesn’t' : 'don’t'} have a certificate yet.</p>` : ''}
+      <div class="mc-table">${k.students.map(s => { const got = certs.filter(c => c.user_id === s.user_id);
+        return `<div class="mc-row"><span class="mc-who"><span class="initials">${esc(ini(nameOf(s)))}</span><b>${esc(nameOf(s))}</b></span>
+          <span><span class="bar small"><i style="width:${Number(s.progress) || 0}%"></i></span> ${Number(s.progress) || 0}%</span>
+          <span>${got.length ? '✅ ' + got.length : '–'}</span>
+          <span class="mc-links">${got.map(c => `<span class="meta">🏅 ${esc(c.title)}</span>`).join('')}<a class="pill ${(Number(s.progress) || 0) >= 100 && !got.length ? 'pill-live' : 'pill-soft'}" href="teacher-certificates.html?course=${k.course.id}&student=${s.user_id}">🏅 Give certificate</a></span></div>`; }).join('')}</div>`;
   }
 
   document.addEventListener('click', e => {
