@@ -419,6 +419,7 @@ async function startTeacherCourses() {
           <h4>${esc(c.title)}</h4><p class="desc">${esc(c.description || '')}</p>
           ${waiting[c.id] ? `<a class="tag tag-now" href="teacher-course.html?id=${c.id}#t-reqs">📝 ${waiting[c.id]} registration${waiting[c.id] === 1 ? '' : 's'} to answer</a>` : ''}
           <div class="row"><button class="pill pill-soft" data-edit="${c.id}">Edit details</button><button class="pill pill-soft" data-dup="${c.id}" title="Copy this course with all its lessons and resources">📄 Duplicate</button>${c.published === false ? `<button class="pill pill-live" data-pub="${c.id}">🚀 Publish</button>` : ''}<a class="pill pill-live" href="teacher-course.html?id=${c.id}">Open</a></div>
+          <button type="button" class="link-btn danger" data-del="${c.id}" style="margin-top:8px">🗑️ Delete course</button>
         </div></article>`;
     const drafts = courses.filter(c => c.published === false), live = courses.filter(c => c.published !== false);
     list.innerHTML = courses.length
@@ -441,6 +442,20 @@ async function startTeacherCourses() {
   list.addEventListener('click', async e => {
     const b = e.target.closest('[data-edit]'); if (b) return dlg.open(courses.find(c => c.id === Number(b.dataset.edit)), { id: user.id, full_name: profile.full_name });
     const p = e.target.closest('[data-pub]'); if (p && await publishCourse(courses.find(c => c.id === Number(p.dataset.pub)), profile, true)) load();
+    const dl = e.target.closest('[data-del]');
+    if (dl) {
+      const c = courses.find(x => x.id === Number(dl.dataset.del)); if (!c) return;
+      const n = c.enrollments && c.enrollments[0] ? c.enrollments[0].count : 0;
+      if (n > 0) {
+        const typed = prompt(`“${c.title}” has ${n} student${n === 1 ? '' : 's'}. Deleting it removes its lessons, live classes and recordings, and the students lose their progress. This can’t be undone.\n\nTip: “Unpublish” hides it without losing anything.\n\nTo delete it anyway, type the course name:`);
+        if (typed === null) return;
+        if (typed.trim().toLowerCase() !== String(c.title).trim().toLowerCase()) return say('The name didn’t match, so nothing was deleted.');
+      } else if (!confirm(`Delete “${c.title}”? Its lessons, live classes and recordings will be deleted too. This can’t be undone.`)) return;
+      dl.disabled = true; dl.textContent = 'Deleting…';
+      const { error } = await db.from('courses').delete().eq('id', c.id);
+      if (error) { dl.disabled = false; dl.textContent = '🗑️ Delete course'; return say(friendly(error)); }
+      say('Deleted “' + c.title + '”.'); return load();
+    }
     const du = e.target.closest('[data-dup]');
     if (du) {
       const src = courses.find(c => c.id === Number(du.dataset.dup));
