@@ -44,6 +44,7 @@ async function startMyClasses() {
   classes.forEach(k => {
     const days = typeof tnSlotDays === 'function' ? tnSlotDays(k.slot || k.course.class_schedule) : new Set();
     k.today = !k.loose && days.size > 0 && days.has(todayIdx);
+    { const v = (k.course.slot_caps || {})[k.slot]; k.cap = k.loose ? null : (v != null && v !== '' ? Number(v) : (k.course.max_students || null)); }
     k.days = days;
     k.next = (sess || []).find(s => s.course_id === k.course.id && (!k.group || !s.group_id || s.group_id === k.group.id)) || null;
   });
@@ -73,7 +74,7 @@ async function startMyClasses() {
   const pick = new URLSearchParams(location.search).get('class');
   function drawList() {
     $('mc-list').innerHTML = classes.map(k => `<button type="button" class="mc-class ${current === k ? 'on' : ''}" data-k="${esc(k.key)}">
-        <b>${esc(k.course.title)}</b><span class="meta">${esc(k.slot || 'One class time')} · ${k.students.length} student${k.students.length === 1 ? '' : 's'}</span>
+        <b>${esc(k.course.title)}</b><span class="meta">${esc(k.slot || 'One class time')} · ${k.students.length}${k.cap ? ' of ' + k.cap : ''} student${k.students.length === 1 && !k.cap ? '' : 's'}${k.cap && k.students.length >= k.cap ? ' · full' : ''}</span>
         ${k.today ? '<span class="mc-today">⏰ Class today</span>' : k.loose ? '<span class="mc-warn">⚠️ Needs a class time</span>' : ''}</button>`).join('');
   }
   $('mc-list').addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return; open(classes.find(k => k.key === b.dataset.k)); });

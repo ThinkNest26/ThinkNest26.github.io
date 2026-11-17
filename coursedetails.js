@@ -62,9 +62,11 @@ async function startCourseDetails() {
   const initials = (teacher.full_name || 'T').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
   const today = new Date().toISOString().slice(0, 10);
   const closed = course.registration_deadline && course.registration_deadline < today;
-  const slotLeft = sl => course.max_students ? Math.max(course.max_students - (slotTaken[sl || ''] || 0), 0) : null;
-  const full = () => !!course.max_students && (multi ? slots.every(sl => slotLeft(sl) === 0) : (taken !== null && taken >= course.max_students));
-  const placesText = () => !course.max_students ? '' : multi ? slots.map(sl => slotLeft(sl) + ' left: ' + sl).join(' · ') : (taken !== null ? Math.max(course.max_students - taken, 0) + ' of ' + course.max_students + ' places left' : '');
+  // each class time can have its own maximum (slot_caps); otherwise the course maximum is used
+  const capOf = sl => { const v = (course.slot_caps || {})[sl || '']; return v != null && v !== '' ? Number(v) : (course.max_students || null); };
+  const slotLeft = sl => capOf(sl) ? Math.max(capOf(sl) - (slotTaken[sl || ''] || 0), 0) : null;
+  const full = () => multi ? slots.every(sl => slotLeft(sl) === 0) : (slots.length ? slotLeft(slots[0]) === 0 : (!!course.max_students && taken !== null && taken >= course.max_students));
+  const placesText = () => multi ? slots.filter(sl => capOf(sl)).map(sl => (slotLeft(sl) ? slotLeft(sl) + ' left: ' : 'Full: ') + sl).join(' · ') : !capOf(slots[0]) ? '' : slots.length ? (slotLeft(slots[0]) + ' of ' + capOf(slots[0]) + ' places left') : (taken !== null ? Math.max(course.max_students - taken, 0) + ' of ' + course.max_students + ' places left' : '');
   const video = cdVideoEmbed(course.intro_video_url);
   const goals = cdLines(course.learning_goals);
   const timeLine = slots.length ? (multi ? 'choose one of ' + slots.join(' | ') : slots[0]) + (course.time_zone ? ' (' + course.time_zone + ')' : '') : '';
@@ -85,7 +87,7 @@ async function startCourseDetails() {
     if (role === 'parent' || (role !== 'student' && kids.length)) {
       if (!kids.length) return '<p class="cd-wait">To ask for a place, first link your child to your account.</p><a class="btn btn-red" href="add-child.html">Add a child</a>';
       if (closed) return `<p class="cd-closed">Registration closed on ${cdDate(course.registration_deadline)}.</p>`;
-      if (full()) return `<p class="cd-closed">This course is full.</p>`;
+      if (full()) return `<p class="cd-closed">This course is full${multi ? ' at every class time' : ''}. Your child can join the waiting list from their own account, and we’ll tell you both when a place opens.</p>`;
       // parents choose the class time too, with places left for each time
       const pSlots = slots.length ? `<fieldset class="reg-slots-p"><legend>${multi ? 'Choose a class time' : 'Class time'}${course.time_zone ? ' (' + esc(course.time_zone) + ')' : ''}</legend>${slots.map(sl => { const left = slotLeft(sl), off = left === 0;
         return `<label class="reg-slot ${off ? 'off' : ''}"><input type="radio" name="p_time_slot" value="${esc(sl)}" ${off ? 'disabled' : ''} ${!multi && !off ? 'checked' : ''}> <span>${esc(sl)}${left !== null ? ` <small>${off ? 'full' : left + (left === 1 ? ' place left' : ' places left')}</small>` : ''}</span></label>`; }).join('')}</fieldset>` : '';
@@ -220,7 +222,7 @@ async function startCourseDetails() {
     slotBox.hidden = !slots.length;
     slotBox.innerHTML = slots.length ? `<legend>${multi ? 'Choose a class time' : 'Class time'}${course.time_zone ? ' (' + esc(course.time_zone) + ')' : ''}</legend>` + slots.map((sl, i) => {
       const left = slotLeft(sl), off = left === 0;
-      return `<label class="reg-slot ${off ? 'off' : ''}"><input type="radio" name="time_slot" value="${esc(sl)}" ${off ? 'disabled' : ''} ${!multi && !off ? 'checked' : ''}> <span>${esc(sl)}${left !== null ? ` <small>${off ? 'full' : left + ' places left'}</small>` : ''}</span></label>`;
+      return `<label class="reg-slot ${off ? 'off' : ''}"><input type="radio" name="time_slot" value="${esc(sl)}" ${!multi ? 'checked' : ''}> <span>${esc(sl)}${left !== null ? ` <small>${off ? 'full · join its waiting list' : left + (left === 1 ? ' place left' : ' places left')}</small>` : ''}</span></label>`;
     }).join('') : '';
   }
   let waitMode = false;
@@ -292,19 +294,25 @@ async function startCourseDetails() {
     row.time_slot = ts ? ts.value : null;
     const sb = f.querySelector('button[type=submit]'); sb.disabled = true; sb.textContent = 'Sending…';
     const details = Object.assign({}, row); delete details.user_id; delete details.course_id;
-    if (waitMode) {
+    const slotIsFull = !!(ts && multi && slotLeft(ts.value) === 0);
+    if (waitMode || slotIsFull) {
       const { data: wp, error: we } = await db.rpc('join_course_waitlist', { cid: id, d: details });
       sb.disabled = false; sb.textContent = 'Send my request';
       if (we) return showError(err, '⚠️ ' + (we.message || friendly(we)));
       dlg.close(); onWait = { slot: details.time_slot, place: wp }; redraw();
-      return say('You’re on the waiting list. If a place opens, your request goes to the teacher automatically.');
+      return say(slotIsFull ? ('That class time is full, so you’re on its waiting list' + (wp ? ' (number ' + wp + ')' : '') + '. If a place opens, your request goes to the teacher automatically. You can also choose another time with places.') : 'You’re on the waiting list. If a place opens, your request goes to the teacher automatically.');
     }
     const { data, error } = await db.rpc('request_course', { cid: id, d: details });
     sb.disabled = false; sb.textContent = 'Send my request';
     if (error) {
       const m = String(error.message || '');
       if (m.includes('duplicate')) { dlg.close(); say('You’re already registered for this course.'); return; }
-      if (m.includes('COURSE_FULL')) { dlg.close(); say(multi ? 'Sorry, that class time has just become full. Choose another, or join the waiting list.' : 'Sorry, this course has just become full. You can join the waiting list.'); return; }
+      if (m.includes('COURSE_FULL')) {
+        const jw = await db.rpc('join_course_waitlist', { cid: id, d: details });
+        dlg.close();
+        if (!jw.error) { onWait = { slot: details.time_slot, place: jw.data }; redraw(); return say((multi ? 'Sorry, that class time has just become full' : 'Sorry, this course has just become full') + ', so we put you on the waiting list' + (jw.data ? ' (number ' + jw.data + ')' : '') + '. If a place opens, your request goes to the teacher automatically.'); }
+        say(multi ? 'Sorry, that class time has just become full. Choose another, or join the waiting list.' : 'Sorry, this course has just become full. You can join the waiting list.'); return;
+      }
       if (m.includes('REGISTRATION_CLOSED')) { dlg.close(); say('Registration for this course has closed.'); return; }
       return showError(err, '⚠️ The registration couldn’t be saved: ' + (m || friendly(error)));
     }

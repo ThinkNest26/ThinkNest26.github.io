@@ -92,10 +92,11 @@ function addCourseInfoFields(f, err) {
       <label>Class days and times (one option per line: students choose one)<textarea name="class_schedule" rows="3" placeholder="e.g.
 Sun and Wed, 5–7 pm
 Mon and Thu, 6–8 pm"></textarea></label>
+      <div class="slot-caps" data-slot-caps hidden style="background:#F6F7FB;border:1px solid #E3E6F0;border-radius:12px;padding:10px 12px"></div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
         <label>Time zone<input name="time_zone" placeholder="e.g. UAE time (GMT+4)"></label>
         <label>Lesson length (minutes)<input name="lesson_minutes" type="number" min="5" max="300"></label>
-        <label>Maximum students (for each time option)<input name="max_students" type="number" min="1" max="500"></label>
+        <label>Maximum students (used for any class time without its own number)<input name="max_students" type="number" min="1" max="500"></label>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
         <label>Age range<input name="age_range" placeholder="e.g. 7–8 years"></label>
@@ -115,6 +116,38 @@ Mon and Thu, 6–8 pm"></textarea></label>
       <label>Cancelling or switching courses<textarea name="cancel_policy" rows="2" placeholder="e.g. Parents can cancel or switch to another course in the first 2 weeks"></textarea></label>
     </div></details>`;
   if (err) err.insertAdjacentHTML('beforebegin', html); else f.insertAdjacentHTML('beforeend', html);
+}
+
+// "Class times and places": one row per class time, each with its own maximum
+async function drawSlotCaps(f, course) {
+  const box = f && f.querySelector('[data-slot-caps]'); if (!box || !f.class_schedule) return;
+  let used = {};
+  if (course && course.id) { try { const { data } = await db.rpc('course_slot_places', { cid: course.id }); (data || []).forEach(r => used[r.slot || ''] = r); } catch (_) {} }
+  const caps = Object.assign({}, (course && course.slot_caps) || {});
+  const draw = () => {
+    box.querySelectorAll('[data-cap]').forEach(i => { if (i.value !== '') caps[i.dataset.cap] = Number(i.value); else delete caps[i.dataset.cap]; });
+    const lines = f.class_schedule.value.split(/\n+/).map(x => x.trim()).filter(Boolean);
+    box.hidden = !lines.length;
+    if (!lines.length) { box.innerHTML = ''; return; }
+    const def = f.max_students && f.max_students.value ? Number(f.max_students.value) : null;
+    box.innerHTML = `<b>Places for each class time</b><span class="meta" style="display:block;margin-bottom:6px">Give each time its own maximum, or leave it empty to use the course maximum below. When a time is full, families can choose another time or join its waiting list.</span>
+      <div class="slot-cap-rows">${lines.map(l => { const u = used[l] || {}, cap = caps[l] != null ? caps[l] : def, t = u.taken || 0;
+        return `<label class="slot-cap-row" style="display:grid;grid-template-columns:minmax(0,1.4fr) 100px minmax(0,1.2fr);gap:10px;align-items:center;margin:4px 0"><span>${esc(l)}</span><input type="number" min="1" max="500" data-cap="${esc(l)}" value="${caps[l] != null ? caps[l] : ''}" placeholder="${def || 'Max'}" aria-label="Maximum students for ${esc(l)}">
+          <span class="meta">${t}${cap ? ' of ' + cap : ''} taken${cap && t >= cap ? ' · <b style="color:#C0392B">full</b>' : ''}${u.waiting ? ' · ' + u.waiting + ' waiting' : ''}</span></label>`; }).join('')}</div>`;
+  };
+  draw();
+  if (!f.__slotCapsBound) {
+    f.__slotCapsBound = true;
+    f.class_schedule.addEventListener('input', () => draw());
+    if (f.max_students) f.max_students.addEventListener('input', () => draw());
+  }
+  f.__slotCapsDraw = draw;
+}
+function readSlotCaps(f) {
+  const box = f && f.querySelector('[data-slot-caps]'); if (!box || !f.class_schedule) return undefined;
+  const lines = f.class_schedule.value.split(/\n+/).map(x => x.trim()).filter(Boolean), caps = {};
+  box.querySelectorAll('[data-cap]').forEach(i => { if (i.value !== '' && lines.includes(i.dataset.cap)) caps[i.dataset.cap] = Math.max(1, Number(i.value)); });
+  return caps;
 }
 
 function readCourseInfo(f) {
@@ -195,9 +228,9 @@ async function fillCopiedCourse(srcId, newId) {
       db.from('courses').select('*').eq('id', newId).maybeSingle()]);
     if (!a || !b) return;
     const keep = ['start_date', 'end_date', 'registration_deadline'];
-    const keys = ['description', 'category', 'level', 'weeks', 'image_url', 'curriculum', 'grade', 'subject', 'audience', 'format'].concat(CI_FIELDS).filter(k => !keep.includes(k));
+    const keys = ['description', 'category', 'level', 'weeks', 'image_url', 'curriculum', 'grade', 'subject', 'audience', 'format', 'slot_caps'].concat(CI_FIELDS).filter(k => !keep.includes(k));
     const row = {};
-    keys.forEach(k => { if (k in a && a[k] != null && a[k] !== '' && (b[k] == null || b[k] === '')) row[k] = a[k]; });
+    keys.forEach(k => { if (k in a && a[k] != null && a[k] !== '' && (b[k] == null || b[k] === '' || (typeof b[k] === 'object' && !Object.keys(b[k]).length))) row[k] = a[k]; });
     if (Object.keys(row).length) await db.from('courses').update(row).eq('id', newId);
   } catch (_) {}
 }
@@ -214,7 +247,7 @@ function coursePublishGaps(c, p) {
   if (!String(c.course_language || '').trim()) gaps.push('the language it’s taught in');
   if (!String(c.learning_goals || '').trim()) gaps.push('what students will be able to do by the end');
   if (!String(c.requirements || '').trim()) gaps.push('what students need');
-  if ((c.audience || 'students') === 'students' && !c.max_students) gaps.push('the maximum number of students');
+  if ((c.audience || 'students') === 'students' && !c.max_students) { const ls = String(c.class_schedule || '').split(/\n+/).map(x => x.trim()).filter(Boolean), sc = c.slot_caps || {}; if (!ls.length || ls.some(l => !sc[l])) gaps.push('the maximum number of students'); }
   if (p) {
     if (!String(p.bio || '').trim()) gaps.push('your teacher profile: a short bio');
     if (!String(p.education_degree || '').trim()) gaps.push('your teacher profile: your qualification');
@@ -330,6 +363,7 @@ function courseDialog(onSaved) {
                   weeks: f.weeks.value ? Number(f.weeks.value) : null, image_url: f.image_url.value.trim() || null,
                   curriculum: f.curriculum ? f.curriculum.value || null : null, audience: f.audience ? f.audience.value || 'students' : 'students', format: f.format ? f.format.value.trim() || null : null, grade: f.grade ? f.grade.value || null : null, subject: f.subject ? f.subject.value.trim() || null : null };
     Object.assign(row, readCourseInfo(f));
+    { const sc = readSlotCaps(f); if (sc !== undefined) row.slot_caps = sc; }
     if (row.intro_video_url && !courseVideoEmbed(row.intro_video_url)) return showError(err, 'The sample lesson video link doesn’t work. Paste a YouTube or Vimeo link, like https://youtu.be/…');
     const forStudents = !f.audience || f.audience.value === 'students';
     if (!forStudents && !f.category.value) return showError(err, 'Choose a hub topic.');
@@ -346,6 +380,7 @@ function courseDialog(onSaved) {
         res = await db.from('courses').insert({ ...row, teacher_id: teacher.id, teacher_name: teacher.full_name, published: false }).select().single();
         if (res.error && /published/.test(res.error.message || '')) res = await db.from('courses').insert({ ...row, teacher_id: teacher.id, teacher_name: teacher.full_name }).select().single();
       }
+      if (res && res.error && /slot_caps/.test(res.error.message || '')) { delete row.slot_caps; res = editing ? await db.from('courses').update(row).eq('id', editing.id).select().single() : await db.from('courses').insert({ ...row, teacher_id: teacher.id, teacher_name: teacher.full_name, published: false }).select().single(); if (!res.error) say('Saved. Places for each class time need the latest Supabase update (step_a_class_places.sql).'); }
     } catch (x) { res = { error: x }; }
     if (sb) { sb.disabled = false; sb.textContent = sbText; }
     if (res.error) return showError(err, '⚠️ The course couldn’t be saved: ' + (res.error.message || friendly(res.error)));
@@ -359,6 +394,7 @@ function courseDialog(onSaved) {
       if (course) ['title', 'description', 'category', 'level', 'weeks', 'image_url', 'curriculum', 'grade', 'subject', 'audience', 'format'].concat(CI_FIELDS).forEach(k => { if (f[k]) f[k].value = course[k] ?? ''; });
       else { if (f.time_zone) f.time_zone.value = 'UAE time (GMT+4)'; if (f.price) f.price.value = 'Free'; }
       showError(err, ''); dlg.showModal();
+      drawSlotCaps(f, course);
       if (typeof syncCourseForm === 'function') syncCourseForm(course);
       if (syncPic) syncPic();
     }
