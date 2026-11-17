@@ -188,7 +188,10 @@ async function attendanceHub(hostId, opts = {}) {
   const courses = (courses0 || []).filter(c => c.published !== false && (c.audience || 'students') === 'students');
   const cById = {}; courses.forEach(c => cById[c.id] = c);
   const members = {}; (groups || []).forEach(g => members[g.id] = g.members);
-  const cgroups = (cgs || []).filter(g => g.course_id && cById[g.course_id]);
+  // a course gets one register, unless it has several class times: then one register per class-time group.
+  // Older classes that were linked to a course (from before My Classes was merged) are not shown.
+  const slotsOf = c => String(c.class_schedule || '').split(/\n+/).map(x => x.trim()).filter(Boolean);
+  const cgroups = (cgs || []).filter(g => { const c = g.course_id && cById[g.course_id]; if (!c || !g.slot) return false; const sl = slotsOf(c); return sl.length > 1 && sl.includes(String(g.slot).trim()); });
   const grouped = new Set(cgroups.map(g => g.course_id));
   const count = (k, v) => (marks || []).filter(m => m[k] === v);
   const regs = courses.filter(c => !grouped.has(c.id)).map(c => ({ type: 'course', id: c.id, title: c.title, sub: ['Course', c.grade === 'all' ? 'All grades' : c.grade, c.subject].filter(Boolean).join(' · '), days: tnSlotDays(c.class_schedule) }))
