@@ -185,6 +185,23 @@ async function courseReportsTab(c) {
     : '<div class="empty-box"><p>📝 Report cards appear here once students have a confirmed place, as they are written for each group of the course.</p></div>';
 }
 
+// After "Duplicate": copy the course details (description, demo video, timings…) into the copy too,
+// so it isn't blocked from publishing. Dates are left empty on purpose, for the new run.
+async function fillCopiedCourse(srcId, newId) {
+  try {
+    if (!srcId || !newId) return;
+    const [{ data: a }, { data: b }] = await Promise.all([
+      db.from('courses').select('*').eq('id', srcId).maybeSingle(),
+      db.from('courses').select('*').eq('id', newId).maybeSingle()]);
+    if (!a || !b) return;
+    const keep = ['start_date', 'end_date', 'registration_deadline'];
+    const keys = ['description', 'category', 'level', 'weeks', 'image_url', 'curriculum', 'grade', 'subject', 'audience', 'format'].concat(CI_FIELDS).filter(k => !keep.includes(k));
+    const row = {};
+    keys.forEach(k => { if (k in a && a[k] != null && a[k] !== '' && (b[k] == null || b[k] === '')) row[k] = a[k]; });
+    if (Object.keys(row).length) await db.from('courses').update(row).eq('id', newId);
+  } catch (_) {}
+}
+
 // What still needs filling in before a course can be published
 function coursePublishGaps(c, p) {
   const gaps = [];
@@ -432,7 +449,7 @@ async function startTeacherCourses() {
       du.disabled = true; du.textContent = 'Copying…';
       const { data: nid, error } = await db.rpc('duplicate_course', { cid: src.id, new_title: name.trim() || src.title + ' (copy)' });
       if (error) { du.disabled = false; du.textContent = '📄 Duplicate'; return say(/duplicate_course/.test(error.message || '') ? 'Please run the latest database update (Batch 3 Part B) first.' : friendly(error)); }
-      say('Copied! Change the dates and times, then publish it when it’s ready.'); location.href = 'teacher-course.html?id=' + nid;
+      await fillCopiedCourse(src.id, nid); say('Copied! Change the dates and times, then publish it when it’s ready.'); location.href = 'teacher-course.html?id=' + nid;
     }
   });
   load();
@@ -461,7 +478,7 @@ async function startTeacherCourse() {
       db2.disabled = true; db2.textContent = 'Copying…';
       const { data, error } = await db.rpc('duplicate_course', { cid: c.id });
       if (error) { db2.disabled = false; db2.textContent = '📄 Duplicate'; return say(/function|schema cache/i.test(error.message || '') ? 'Please run the latest Supabase update (duplicate_course.sql) first.' : friendly(error)); }
-      say('✅ Copy made. Opening it now…'); setTimeout(() => { location.href = 'teacher-course.html?id=' + data; }, 700);
+      await fillCopiedCourse(c.id, data); say('✅ Copy made. Opening it now…'); setTimeout(() => { location.href = 'teacher-course.html?id=' + data; }, 700);
     });
     const ab = document.getElementById('att-course');
     if (ab) ab.addEventListener('click', () => { const at = document.querySelector('[data-tab="t-att"]'); if (at) { at.hidden = false; at.click(); at.scrollIntoView({ behavior: 'smooth', block: 'center' }); } });
