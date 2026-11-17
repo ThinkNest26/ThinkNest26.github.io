@@ -15,7 +15,7 @@ async function startMyClasses() {
   const courses = (cs0 || []).filter(c => c.published !== false && (c.audience || 'students') === 'students');
   const ids = courses.map(c => c.id);
   if (!ids.length) {
-    $('mc-page').innerHTML = '<div class="empty-box"><p>🏫 Your classes appear here once you publish a course for students.</p><a class="btn btn-red" href="teacher-courses.html">Go to My courses</a></div>';
+    $('mc-home').innerHTML = '<div class="empty-box"><p>🏫 Your classes appear here once you publish a course for students.</p><a class="btn btn-red" href="teacher-courses.html">Go to My courses</a></div>';
     return;
   }
   const [{ data: groups }, { data: enr }, { data: sess }, { data: reqs }] = await Promise.all([
@@ -50,63 +50,80 @@ async function startMyClasses() {
   });
   classes.sort((a, b) => (b.today - a.today) || a.course.title.localeCompare(b.course.title) || String(a.slot).localeCompare(String(b.slot)));
 
-  // ---- summary numbers
+  // ---- work to mark for every class (counted once), and the summary numbers
+  const markBy = {};   // course_id|student -> count
   let toMark = 0;
   try {
-    const { data: ls } = await db.from('lessons').select('id').in('course_id', ids);
-    const lids = (ls || []).map(l => l.id);
-    if (lids.length) {
-      const { data: its } = await db.from('lesson_items').select('id').in('lesson_id', lids);
-      const iids = (its || []).map(i => i.id);
-      if (iids.length) { const { count } = await db.from('item_responses').select('id', { count: 'exact', head: true }).in('item_id', iids).eq('needs_marking', true); toMark = count || 0; }
+    const { data: ls } = await db.from('lessons').select('id, course_id').in('course_id', ids);
+    const lc = {}; (ls || []).forEach(l => lc[l.id] = l.course_id);
+    if ((ls || []).length) {
+      const { data: its } = await db.from('lesson_items').select('id, lesson_id').in('lesson_id', ls.map(l => l.id));
+      const ic = {}; (its || []).forEach(i => ic[i.id] = lc[i.lesson_id]);
+      if ((its || []).length) {
+        const { data: rs } = await db.from('item_responses').select('item_id, student_id').in('item_id', its.map(i => i.id)).eq('needs_marking', true);
+        (rs || []).forEach(r => { const key = ic[r.item_id] + '|' + r.student_id; markBy[key] = (markBy[key] || 0) + 1; toMark++; });
+      }
     }
   } catch (_) {}
+  classes.forEach(k => { k.toMark = k.students.reduce((t, s) => t + (markBy[k.course.id + '|' + s.user_id] || 0), 0); });
   let unread = 0;
   try { const { data: cv } = await db.rpc('my_conversations'); unread = (cv || []).filter(c => c.kind !== 'group').reduce((t, c) => t + Number(c.unread || 0), 0); } catch (_) {}
-  const stat = (n, label, href) => `<a class="mc-stat" href="${href}"><span>${label}</span><b>${n}</b></a>`;
-  $('mc-stats').innerHTML = stat(classes.filter(k => k.today).length, 'Classes today', '#mc-list')
-    + stat(toMark, 'Work to mark', 'teacher-courses.html')
-    + stat((reqs || []).length, 'New registrations', 'teacher-courses.html')
-    + stat(unread, 'Unread messages', 'messages.html');
+  const stat = (n, label, ic) => `<div class="mc-stat"><span>${ic} ${label}</span><b>${n}</b></div>`;
+  $('mc-stats').innerHTML = stat(classes.filter(k => k.today).length, 'Classes today', '⏰') + stat(toMark, 'Work to mark', '📝')
+    + stat((reqs || []).length, 'New registrations', '🙋') + stat(unread, 'Unread messages', '💬');
 
-  // ---- class list
-  let current = null;
-  const pick = new URLSearchParams(location.search).get('class');
-  function drawList() {
-    $('mc-list').innerHTML = classes.map(k => `<button type="button" class="mc-class ${current === k ? 'on' : ''}" data-k="${esc(k.key)}">
-        <b>${esc(k.course.title)}</b><span class="meta">${esc(k.slot || 'One class time')} · ${k.students.length}${k.cap ? ' of ' + k.cap : ''} student${k.students.length === 1 && !k.cap ? '' : 's'}${k.cap && k.students.length >= k.cap ? ' · full' : ''}</span>
-        ${k.today ? '<span class="mc-today">⏰ Class today</span>' : k.loose ? '<span class="mc-warn">⚠️ Needs a class time</span>' : ''}</button>`).join('');
+  // ---- the class tiles (one colour per course, so classes of the same course match)
+  const PAL = [['#E6F1FB', '#0C447C', '#185FA5'], ['#E1F5EE', '#085041', '#0F6E56'], ['#FAECE7', '#712B13', '#993C1D'], ['#EEEDFE', '#3C3489', '#534AB7'], ['#FAEEDA', '#633806', '#854F0B'], ['#FBEAF0', '#72243E', '#993556']];
+  const colourOf = {}; courses.forEach((c, i) => colourOf[c.id] = PAL[i % PAL.length]);
+  const nextText = n => { if (!n) return ''; const d = new Date(n.starts_at), t = d.toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit' });
+    return (d.toDateString() === new Date().toDateString() ? 'Today ' : d.toLocaleDateString('en-GB', { weekday: 'short' }) + ' ') + t; };
+  function drawTiles() {
+    $('mc-tiles').innerHTML = classes.map(k => { const [bg, fg, ac] = colourOf[k.course.id], full = k.cap && k.students.length >= k.cap;
+      return `<button type="button" class="mc-tile" data-k="${esc(k.key)}" style="background:${bg};color:${fg}">
+        <span class="mc-t-course">${esc(k.course.title)}</span>
+        <span class="mc-t-time">${esc(k.loose ? '⚠️ No class time yet' : k.slot || 'All students')}</span>
+        <span class="mc-t-count">👩‍🎓 ${k.students.length}${k.cap ? ' of ' + k.cap : ''} student${k.students.length === 1 && !k.cap ? '' : 's'}${full ? ' · <b>full</b>' : ''}</span>
+        <span class="mc-t-chips">${k.today ? `<i style="background:${ac};color:#fff">⏰ Class today</i>` : ''}<i>${k.toMark ? '📝 ' + k.toMark + ' to mark' : '✅ All marked'}</i>${k.next ? `<i>🎥 ${esc(nextText(k.next))}</i>` : ''}</span></button>`; }).join('');
   }
-  $('mc-list').addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return; open(classes.find(k => k.key === b.dataset.k)); });
+  $('mc-tiles').addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return; open(classes.find(k => k.key === b.dataset.k)); });
+  function showTiles() {
+    $('mc-home').hidden = false; $('mc-class').hidden = true;
+    history.replaceState(null, '', location.pathname); window.scrollTo(0, 0);
+  }
 
-  // ---- one class
+  // ---- one class, full page: big actions first, then tabs
   async function open(k) {
-    current = k; drawList();
+    $('mc-home').hidden = true; $('mc-class').hidden = false; window.scrollTo(0, 0);
     history.replaceState(null, '', '?class=' + encodeURIComponent(k.key));
-    const c = k.course, title = c.title + (k.slot && !k.loose ? ' · ' + k.slot : '');
+    const c = k.course, title = c.title + (k.slot && !k.loose ? ' · ' + k.slot : ''), [bg, fg] = colourOf[c.id];
     const n = k.next, live = n && new Date(n.starts_at) - Date.now() < 15 * 60e3;
-    $('mc-main').innerHTML = `<div class="mc-head"><div><h2>${esc(c.title)}</h2><span class="meta">${esc(k.loose ? 'Students who haven’t chosen a class time yet' : k.slot || 'One class time')}</span>
-        <span class="meta" style="display:block">${n ? (live ? '🔴 Live class now or very soon' : '📅 Next live class: ' + esc(when(n.starts_at))) : 'No live class scheduled'}</span></div>
-      <div class="mc-acts">${n && n.meeting_link ? `<a class="btn ${live ? 'btn-red' : 'btn-white outline'}" href="${esc(n.meeting_link)}" target="_blank" rel="noopener">🎥 Start live class</a>` : `<a class="btn btn-white outline" href="teacher-course.html?id=${c.id}">🎥 Schedule live classes</a>`}
-        <button type="button" class="btn ${k.today ? 'btn-red' : 'btn-white outline'}" id="mc-att">📋 Take attendance</button></div></div>
-      <nav class="mc-tabs"><button type="button" class="on" data-mt="students">👩‍🎓 Students</button><button type="button" data-mt="work">📝 Work to mark<span id="mc-work-n"></span></button><button type="button" data-mt="certs">🏅 Certificates</button>
-        <a href="teacher-course.html?id=${c.id}">📚 Lessons</a><a href="teacher-course.html?id=${c.id}#t-reqs">📝 Registrations</a>
-        <a href="teacher-course.html?id=${c.id}#t-groups">👥 Group</a><a href="teacher-course.html?id=${c.id}#t-reports">📄 Reports</a>
-        <a href="teacher-insights.html">📊 Insights</a></nav>
-      <div id="mc-students"><p class="empty">Loading…</p></div><div id="mc-work" hidden></div><div id="mc-certs" hidden></div>`;
-    $('mc-main').querySelector('.mc-tabs').onclick = e => {
+    const big = (ic, label, sub, attrs, hot) => `<${attrs.startsWith('href') ? 'a' : 'button type="button"'} class="mc-big ${hot ? 'hot' : ''}" ${attrs}><span class="mc-big-ic">${ic}</span><b>${label}</b><span>${sub}</span></${attrs.startsWith('href') ? 'a' : 'button'}>`;
+    $('mc-class').innerHTML = `<button type="button" class="link-btn" id="mc-back">‹ All my classes</button>
+      <header class="mc-class-head" style="background:${bg};color:${fg}"><div><span class="mc-t-course">${esc(c.title)}</span><h2>${esc(k.loose ? 'Students without a class time' : k.slot || 'All students')}</h2>
+        <span>👩‍🎓 ${k.students.length}${k.cap ? ' of ' + k.cap : ''} students · ${n ? (live ? '🔴 Live class now or very soon' : '🎥 Next class: ' + esc(when(n.starts_at))) : 'No live class scheduled'}</span></div></header>
+      <div class="mc-bigs">
+        ${n && n.meeting_link ? big('🎥', 'Start class', live ? 'It’s time!' : esc(nextText(n)), `href="${esc(n.meeting_link)}" target="_blank" rel="noopener"`, live) : big('🎥', 'Schedule classes', 'Set up live classes', `href="teacher-course.html?id=${c.id}"`)}
+        ${big('📋', 'Take attendance', k.today ? 'Class today' : 'Open the register', 'id="mc-att"', k.today)}
+        ${big('➕', 'Add a lesson', 'Lessons, homework, quizzes', `href="teacher-course.html?id=${c.id}"`)}
+        ${big('📤', 'Send a resource', 'To chosen students', 'id="mc-send-big"')}
+      </div>
+      <nav class="mc-tabs"><button type="button" class="on" data-mt="students">👩‍🎓 Students</button><button type="button" data-mt="work">📝 Work to mark${k.toMark ? ' (' + k.toMark + ')' : ''}<span id="mc-work-n" hidden></span></button><button type="button" data-mt="certs">🏅 Certificates</button>
+        <span class="mc-more">More: <a href="teacher-course.html?id=${c.id}#t-reqs">Registrations</a> · <a href="teacher-course.html?id=${c.id}#t-groups">Group</a> · <a href="teacher-course.html?id=${c.id}#t-reports">Reports</a> · <a href="teacher-insights.html">Insights</a></span></nav>
+      <section class="panel"><div id="mc-students"><p class="empty">Loading…</p></div><div id="mc-work" hidden></div><div id="mc-certs" hidden></div></section>`;
+    $('mc-back').onclick = showTiles;
+    $('mc-class').querySelector('.mc-tabs').onclick = e => {
       const b = e.target.closest('[data-mt]'); if (!b) return;
-      $('mc-main').querySelectorAll('[data-mt]').forEach(x => x.classList.toggle('on', x === b));
-      ['students', 'work', 'certs'].forEach(n => { $('mc-' + n).hidden = n !== b.dataset.mt; });
+      $('mc-class').querySelectorAll('[data-mt]').forEach(x => x.classList.toggle('on', x === b));
+      ['students', 'work', 'certs'].forEach(nm => { $('mc-' + nm).hidden = nm !== b.dataset.mt; });
       if (b.dataset.mt === 'work') drawWork(k);
       if (b.dataset.mt === 'certs') drawCerts(k);
     };
-    countWork(k);
     $('mc-att').onclick = () => {
       if (k.loose) return say('These students need a class time first. Choose one for each student on the course page.');
       openAttendanceDialog(k.group ? { gid: k.group.id, title } : { cid: c.id, title });
       document.getElementById('att-dialog').addEventListener('close', () => drawStudents(k), { once: true });
     };
+    $('mc-send-big').onclick = () => { const ids = k.students.map(s => s.user_id); location.href = 'teacher-resources.html' + (ids.length ? '?students=' + ids.join(',') : ''); };
     drawStudents(k);
   }
 
@@ -195,6 +212,7 @@ async function startMyClasses() {
     if (e.target.id === 'mc-pick-all') document.querySelectorAll('[data-pick]').forEach(c => c.checked = true);
     if (e.target.id === 'mc-send') { const ids = [...document.querySelectorAll('[data-pick]:checked')].map(c => c.dataset.pick); if (!ids.length) return say('Tick one or more students first.'); location.href = 'teacher-resources.html?students=' + ids.join(','); }
   });
-  drawList();
-  open(classes.find(k => k.key === pick) || classes.find(k => k.today) || classes[0]);
+  drawTiles();
+  const pick = new URLSearchParams(location.search).get('class');
+  const pk = classes.find(k => k.key === pick); if (pk) open(pk);
 }
