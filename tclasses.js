@@ -105,7 +105,7 @@ async function startMyClasses() {
       <div class="mc-bigs">
         ${n && n.meeting_link ? big('🎥', 'Start class', live ? 'It’s time!' : esc(nextText(n)), `href="${esc(n.meeting_link)}" target="_blank" rel="noopener"`, live) : big('🎥', 'Schedule classes', 'Set up live classes', `href="teacher-course.html?id=${c.id}"`)}
         ${big('📋', 'Take attendance', k.today ? 'Class today' : 'Open the register', 'id="mc-att"', k.today)}
-        ${big('➕', 'Add a lesson', 'Lessons, homework, quizzes', `href="teacher-course.html?id=${c.id}"`)}
+        ${big('➕', 'Add a lesson', 'For this class', `href="teacher-course.html?id=${c.id}${k.group ? '&cls=' + k.group.id : ''}#add-lesson"`)}
         ${big('📤', 'Send a resource', 'To chosen students', 'id="mc-send-big"')}
       </div>
       <nav class="mc-tabs"><button type="button" class="on" data-mt="students">👩‍🎓 Students</button><button type="button" data-mt="work">📝 Work to mark${k.toMark ? ' (' + k.toMark + ')' : ''}<span id="mc-work-n" hidden></span></button><button type="button" data-mt="certs">🏅 Certificates</button><button type="button" data-mt="settings">⚙️ Settings</button>

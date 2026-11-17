@@ -693,10 +693,25 @@ async function startTeacherCourse() {
     if (error) return say(friendly(error));
     const wv = lf.when ? lf.when.value : 'now';
     lf.reset(); lf.querySelector('.lesson-at') && (lf.querySelector('.lesson-at').hidden = true); if (builder) builder.reset();
-    if (wv === 'classes') { say('Lesson saved. Now choose its classes and dates.'); await loadLessons(); return publishToClasses(lessons.find(x => x.id === nl.id)); }
+    if (wv === 'classes') { say('Lesson saved. Now choose its classes and dates.'); await loadLessons(); return publishToClasses(lessons.find(x => x.id === nl.id), forCls && document.getElementById('lf-for-cls') ? forCls : undefined); }
     say(wv === 'draft' ? 'Saved as a draft. Only you can see it. Press “Publish now” when it’s ready.' : wv === 'later' ? 'Saved. Students will see it on the date you chose.' : 'Lesson published. Students in this course can see it now.'); loadLessons();
   });
   if (lf.when) lf.when.addEventListener('change', () => { lf.querySelector('.lesson-at').hidden = lf.when.value !== 'later'; });
+  // came from My classes → "Add a lesson": jump to the form, with that class chosen
+  const forCls = Number(new URLSearchParams(location.search).get('cls')) || null;
+  if (location.hash === '#add-lesson') {
+    const lt = document.querySelector('[data-tab="t-lessons"]'); if (lt) lt.click();
+    if (forCls) {
+      courseClasses().then(gs => {
+        const g = gs.find(x => x.id === forCls); if (!g || gs.length < 2) return;
+        lf.when.value = 'classes';
+        const note = document.createElement('p'); note.className = 'note'; note.id = 'lf-for-cls';
+        note.innerHTML = '🏫 This lesson is for the class <b>' + esc(g.slot) + '</b>. After you save, choose its date (you can tick other classes too).';
+        lf.querySelector('h3').after(note);
+      });
+    }
+    setTimeout(() => { lf.scrollIntoView({ behavior: 'smooth', block: 'start' }); lf.title.focus({ preventScroll: true }); lf.classList.add('flash'); setTimeout(() => lf.classList.remove('flash'), 1800); }, 300);
+  }
 
   // publish a lesson to chosen classes, each on its own date (courses with more than one class time)
   async function courseClasses() { try { const { data: cg } = await db.rpc('course_groups', { cid: id }); return (cg || []).filter(g => g.slot); } catch (_) { return []; } }

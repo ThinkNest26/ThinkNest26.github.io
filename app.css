@@ -2232,3 +2232,4 @@ body.guest .app-bar { justify-content: space-between; }
 .getting-started { margin: 16px 0; }
 #sched-dlg { position: fixed; inset: 0; margin: auto; height: fit-content; width: min(600px, 94vw); max-height: 92vh; overflow-y: auto; }
 body.app.guest { grid-template-columns: 1fr; display: block; }
+.inline-form.flash { animation: an-flash 0.9s ease 2; }
