@@ -99,22 +99,24 @@ async function startMyClasses() {
     const n = k.next, live = n && new Date(n.starts_at) - Date.now() < 15 * 60e3;
     const big = (ic, label, sub, attrs, hot) => `<${attrs.startsWith('href') ? 'a' : 'button type="button"'} class="mc-big ${hot ? 'hot' : ''}" ${attrs}><span class="mc-big-ic">${ic}</span><b>${label}</b><span>${sub}</span></${attrs.startsWith('href') ? 'a' : 'button'}>`;
     $('mc-class').innerHTML = `<button type="button" class="link-btn" id="mc-back">‹ All my classes</button>
-      <header class="mc-class-head" style="background:${bg};color:${fg}"><div><span class="mc-t-course">${esc(c.title)}</span><h2>${esc(k.loose ? 'Students without a class time' : k.slot || 'All students')}</h2>
-        <span>👩‍🎓 ${k.students.length}${k.cap ? ' of ' + k.cap : ''} students · ${n ? (live ? '🔴 Live class now or very soon' : '🎥 Next class: ' + esc(when(n.starts_at))) : 'No live class scheduled'}</span></div></header>
+      <header class="mc-class-head" style="background:${bg};color:${fg};display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start"><div><span class="mc-t-course">${esc(c.title)}</span><h2>${esc(k.loose ? 'Students without a class time' : k.slot || 'All students')}</h2>
+        <span>👩‍🎓 ${k.students.length}${k.cap ? ' of ' + k.cap : ''} students · ${n ? (live ? '🔴 Live class now or very soon' : '🎥 Next class: ' + esc(when(n.starts_at))) : 'No live class scheduled'}</span></div>
+        <a class="btn btn-white" href="teacher-course.html?id=${c.id}#edit" title="Class times, places for each time, days, description and more">⚙️ Class settings</a></header>
       <div class="mc-bigs">
         ${n && n.meeting_link ? big('🎥', 'Start class', live ? 'It’s time!' : esc(nextText(n)), `href="${esc(n.meeting_link)}" target="_blank" rel="noopener"`, live) : big('🎥', 'Schedule classes', 'Set up live classes', `href="teacher-course.html?id=${c.id}"`)}
         ${big('📋', 'Take attendance', k.today ? 'Class today' : 'Open the register', 'id="mc-att"', k.today)}
         ${big('➕', 'Add a lesson', 'Lessons, homework, quizzes', `href="teacher-course.html?id=${c.id}"`)}
         ${big('📤', 'Send a resource', 'To chosen students', 'id="mc-send-big"')}
       </div>
-      <nav class="mc-tabs"><button type="button" class="on" data-mt="students">👩‍🎓 Students</button><button type="button" data-mt="work">📝 Work to mark${k.toMark ? ' (' + k.toMark + ')' : ''}<span id="mc-work-n" hidden></span></button><button type="button" data-mt="certs">🏅 Certificates</button>
+      <nav class="mc-tabs"><button type="button" class="on" data-mt="students">👩‍🎓 Students</button><button type="button" data-mt="work">📝 Work to mark${k.toMark ? ' (' + k.toMark + ')' : ''}<span id="mc-work-n" hidden></span></button><button type="button" data-mt="certs">🏅 Certificates</button><button type="button" data-mt="settings">⚙️ Settings</button>
         <span class="mc-more">More: <a href="teacher-course.html?id=${c.id}#t-reqs">Registrations</a> · <a href="teacher-course.html?id=${c.id}#t-groups">Group</a> · <a href="teacher-course.html?id=${c.id}#t-reports">Reports</a> · <a href="teacher-insights.html">Insights</a></span></nav>
-      <section class="panel"><div id="mc-students"><p class="empty">Loading…</p></div><div id="mc-work" hidden></div><div id="mc-certs" hidden></div></section>`;
+      <section class="panel"><div id="mc-students"><p class="empty">Loading…</p></div><div id="mc-work" hidden></div><div id="mc-certs" hidden></div><div id="mc-settings" hidden></div></section>`;
     $('mc-back').onclick = showTiles;
     $('mc-class').querySelector('.mc-tabs').onclick = e => {
       const b = e.target.closest('[data-mt]'); if (!b) return;
       $('mc-class').querySelectorAll('[data-mt]').forEach(x => x.classList.toggle('on', x === b));
-      ['students', 'work', 'certs'].forEach(nm => { $('mc-' + nm).hidden = nm !== b.dataset.mt; });
+      ['students', 'work', 'certs', 'settings'].forEach(nm => { $('mc-' + nm).hidden = nm !== b.dataset.mt; });
+      if (b.dataset.mt === 'settings') drawSettings(k);
       if (b.dataset.mt === 'work') drawWork(k);
       if (b.dataset.mt === 'certs') drawCerts(k);
     };
@@ -189,6 +191,49 @@ async function startMyClasses() {
       b.disabled = false;
       if (error) return say(friendly(error));
       say('Saved. The student has been told.'); drawWork(k); countWork(k);
+    };
+  }
+
+  // ---- Settings for this class
+  function drawSettings(k) {
+    const box = $('mc-settings'), c = k.course, sl = slotsOf(c), hasTime = !!k.slot && !k.loose;
+    const capOwn = (c.slot_caps || {})[k.slot];
+    if (k.loose) { box.innerHTML = '<div class="empty-box"><p>These students registered before a class time was chosen. Move each one to a class time from the course page (Students tab).</p><a class="btn btn-red" href="teacher-course.html?id=' + c.id + '#t-students">Open the Students tab</a></div>'; return; }
+    box.innerHTML = `<div class="mc-set">
+      ${hasTime ? `<form class="mc-set-card" id="mcs-time"><h3>🕒 Class time</h3><p class="meta">Families see this when they register, and it shows on calendars. Students in this class stay in it.</p>
+        <label>Days and time <input name="slot" maxlength="80" value="${esc(k.slot)}" placeholder="For example, Mon and Thu, 5–7 pm"></label><button class="btn btn-red">Save class time</button></form>`
+      : `<div class="mc-set-card"><h3>🕒 Class time</h3><p class="meta">This course doesn’t have class times yet, so all students are in one class. Add times (for example, a Monday class and a Wednesday class) in the course settings, and students choose one when they register.</p><a class="btn btn-white outline" href="teacher-course.html?id=${c.id}#edit">Add class times</a></div>`}
+      <form class="mc-set-card" id="mcs-cap"><h3>👩‍🎓 Places in this class</h3><p class="meta">${k.students.length} student${k.students.length === 1 ? '' : 's'} now. When it’s full, families can choose another time or join this class’s waiting list.</p>
+        <label>Maximum students <input type="number" name="cap" min="1" max="500" value="${hasTime ? (capOwn != null ? capOwn : '') : (c.max_students || '')}" placeholder="${c.max_students || 'No limit'}"></label>
+        ${hasTime ? `<p class="meta">Leave it empty to use the course maximum${c.max_students ? ' (' + c.max_students + ')' : ''}.</p>` : ''}<button class="btn btn-red">Save places</button></form>
+      <div class="mc-set-card"><h3>📘 Course settings</h3><p class="meta">Description, dates, demo video, lesson length, other class times and more. These are shared by all classes of “${esc(c.title)}”.</p><a class="btn btn-white outline" href="teacher-course.html?id=${c.id}#edit">Open course settings</a></div>
+      ${hasTime && sl.length > 1 ? `<div class="mc-set-card"><h3>🗑️ Remove this class time</h3><p class="meta">Only possible when the class has no students, requests or waiting list. Other class times aren’t affected.</p><button type="button" class="btn btn-white outline" id="mcs-remove" ${k.students.length ? 'disabled' : ''}>${k.students.length ? 'Move the students first' : 'Remove this class time'}</button></div>` : ''}
+    </div>`;
+    const tf = $('mcs-time');
+    if (tf) tf.onsubmit = async e => {
+      e.preventDefault(); const nv = tf.slot.value.trim(); if (!nv) return say('Write the days and time.'); if (nv === k.slot) return say('Nothing changed.');
+      const { error } = await db.rpc('rename_class_time', { cid: c.id, old_slot: k.slot, new_slot: nv });
+      if (error) return say(/rename_class_time|schema cache/i.test(error.message || '') ? 'Please run the latest Supabase update (class_settings.sql) first.' : (error.message || friendly(error)));
+      say('Class time saved. Students in this class have been moved with it.'); setTimeout(() => location.href = location.pathname + '?class=' + encodeURIComponent(c.id + '|' + nv), 700);
+    };
+    const cf = $('mcs-cap');
+    cf.onsubmit = async e => {
+      e.preventDefault(); const v = cf.cap.value === '' ? null : Math.max(1, Number(cf.cap.value));
+      if (v != null && v < k.students.length && !confirm(`This class already has ${k.students.length} students. Nobody will be removed, but no new students can join until there are fewer than ${v}. Save anyway?`)) return;
+      let up;
+      if (hasTime) { const caps = Object.assign({}, c.slot_caps || {}); if (v == null) delete caps[k.slot]; else caps[k.slot] = v; up = { slot_caps: caps }; }
+      else up = { max_students: v };
+      const { error } = await db.from('courses').update(up).eq('id', c.id);
+      if (error) return say(/slot_caps/.test(error.message || '') ? 'Please run the latest Supabase update (step_a_class_places.sql) first.' : friendly(error));
+      Object.assign(c, up); k.cap = hasTime ? (v != null ? v : c.max_students || null) : v;
+      say('Places saved.'); drawTiles();
+    };
+    const rm = $('mcs-remove');
+    if (rm) rm.onclick = async () => {
+      if (!confirm(`Remove the class time “${k.slot}”? Families won’t be able to choose it any more.`)) return;
+      const { error } = await db.rpc('remove_class_time', { cid: c.id, slot: k.slot });
+      if (error) { const m = error.message || ''; return say(/CLASS_HAS_STUDENTS/.test(m) ? 'This class still has students. Move them to another time first.' : /CLASS_HAS_REQUESTS/.test(m) ? 'Some families have asked for this time or are on its waiting list. Answer them first.' : /remove_class_time|schema cache/i.test(m) ? 'Please run the latest Supabase update (class_settings.sql) first.' : friendly(error)); }
+      say('Class time removed.'); setTimeout(() => location.href = location.pathname, 700);
     };
   }
 
