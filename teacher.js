@@ -547,6 +547,7 @@ async function startTeacherCourse() {
     const sc = e.target.closest('[data-sched]'); if (sc) scheduleGroupClasses(c, Number(sc.dataset.sched), sc.dataset.slot, sc.dataset.name);
   });
   if (location.hash === '#t-groups') { const gt = document.querySelector('[data-tab="t-groups"]'); if (gt) gt.click(); }
+  if (/^#t-(reports|recs|students|sgroups|lessons)$/.test(location.hash)) { const ht = document.querySelector(`[data-tab="${location.hash.slice(1)}"]`); if (ht) ht.click(); }
 
   // registration requests
   async function loadRequests() {
