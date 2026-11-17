@@ -28,7 +28,7 @@
   <link rel="stylesheet" href="style.css?v=182">
   <link rel="stylesheet" href="app.css?v=172">
   <link rel="stylesheet" href="rtl.css?v=171">
-  <script src="i18n.js?v=203"></script>
+  <script src="i18n.js?v=204"></script>
 </head>
 <body class="app loading">
   <aside class="side" id="side">
@@ -50,7 +50,9 @@
 
     <main class="dash">
       <h1 class="title">Account settings</h1>
-      <p class="hint">Manage your teaching profile, mentor sessions and password.</p>
+      <p class="hint">Manage your teaching profile, 1:1 sessions, verification and password.</p>
+      <nav class="set-jump" aria-label="Jump to"><a href="teacher-me.html">‹ Me</a><a href="#tprofile-form">👤 Profile</a><a href="#mentor-form">🙋 1:1 sessions</a><a href="#verify-box">✅ Verification</a><a href="#email-pref">✉️ Emails</a><a href="#mfa-box">🔐 Two-step log-in</a><a href="#pw-form">🔑 Password</a></nav>
+      <style>.set-jump{position:sticky;top:0;z-index:5;display:flex;gap:8px;flex-wrap:wrap;padding:10px 0;margin-bottom:8px;background:var(--bg,#FAF8FD)}.set-jump a{padding:8px 14px;border-radius:999px;background:#fff;border:1px solid #E3DAF3;text-decoration:none;color:inherit;font-weight:600;font-size:.92rem}.set-jump a:hover{border-color:#C9BDE0}#tprofile-form,#mentor-form,#verify-box,#email-pref,#mfa-box,#pw-form{scroll-margin-top:70px}</style>
       <section class="panel auth-form wide dual-role" id="dual-role"></section>
       <section class="panel auth-form wide dual-role" id="email-pref"></section>
       <div class="settings-grid">
@@ -126,7 +128,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script src="supabase-config.js?v=171"></script>
   <script src="app.js?v=183"></script>
-  <script src="nav.js?v=191"></script>
+  <script src="nav.js?v=192"></script>
   <script src="notify.js?v=171" defer></script>
   <script src="teacher.js?v=199"></script>
   <script src="roles.js?v=171"></script>
