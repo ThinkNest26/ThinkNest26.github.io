@@ -519,7 +519,7 @@ async function startTeacherCourses() {
           <span class="meta">${c.published === false ? '📝 Draft · ' : ''}${esc(c.category || '')}${c.weeks ? ' · ' + c.weeks + ' weeks' : ''} · ${(c.enrollments && c.enrollments[0] ? c.enrollments[0].count : 0)} students</span>
           <h4>${esc(c.title)}</h4><p class="desc">${esc(c.description || '')}</p>
           ${waiting[c.id] ? `<a class="tag tag-now" href="teacher-course.html?id=${c.id}#t-reqs">📝 ${waiting[c.id]} registration${waiting[c.id] === 1 ? '' : 's'} to answer</a>` : ''}
-          <div class="row"><button class="pill pill-soft" data-edit="${c.id}">Edit details</button><button class="pill pill-soft" data-dup="${c.id}" title="Copy this course with all its lessons and resources">📄 Duplicate</button>${c.published === false ? `<button class="pill pill-live" data-pub="${c.id}">🚀 Publish</button>` : ''}<a class="pill pill-live" href="teacher-course.html?id=${c.id}">Open</a></div>
+          <div class="row tc-actions"><button class="pill pill-soft" data-edit="${c.id}">Edit details</button><button class="pill pill-soft" data-dup="${c.id}" title="Copy this course with all its lessons and resources">📄 Duplicate</button>${c.published === false ? `<button class="pill pill-live" data-pub="${c.id}">🚀 Publish</button>` : ''}<a class="pill pill-live" href="teacher-course.html?id=${c.id}">Open</a></div>
           <button type="button" class="link-btn danger" data-del="${c.id}" style="margin-top:8px">🗑️ Delete course</button>
         </div></article>`;
     const drafts = courses.filter(c => c.published === false), live = courses.filter(c => c.published !== false);
