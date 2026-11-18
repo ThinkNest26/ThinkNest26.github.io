@@ -287,7 +287,7 @@ async function publishCourse(c, p, on) {
     if (Object.keys(auto).length) { const { error } = await db.from('courses').update(auto).eq('id', c.id); if (!error) Object.assign(c, auto); }
   }
   if (on) {
-    const gaps = coursePublishGaps(c, p);
+    const gaps = []; // teachers can publish whatever details the course has
     if (gaps.length) {
       const prof = gaps.some(g => g.startsWith('your teacher profile')), det = gaps.some(g => !g.startsWith('your teacher profile'));
       let dlg = document.getElementById('pub-gaps');
@@ -405,14 +405,14 @@ function courseDialog(onSaved) {
     try {
       if (editing) res = await db.from('courses').update(row).eq('id', editing.id).select().single();
       else {
-        res = await db.from('courses').insert({ ...row, teacher_id: teacher.id, teacher_name: teacher.full_name, published: false }).select().single();
+        res = await db.from('courses').insert({ ...row, teacher_id: teacher.id, teacher_name: teacher.full_name, published: true }).select().single();
         if (res.error && /published/.test(res.error.message || '')) res = await db.from('courses').insert({ ...row, teacher_id: teacher.id, teacher_name: teacher.full_name }).select().single();
       }
-      if (res && res.error && /slot_caps/.test(res.error.message || '')) { delete row.slot_caps; res = editing ? await db.from('courses').update(row).eq('id', editing.id).select().single() : await db.from('courses').insert({ ...row, teacher_id: teacher.id, teacher_name: teacher.full_name, published: false }).select().single(); if (!res.error) say('Saved. Places for each class time need the latest Supabase update (step_a_class_places.sql).'); }
+      if (res && res.error && /slot_caps/.test(res.error.message || '')) { delete row.slot_caps; res = editing ? await db.from('courses').update(row).eq('id', editing.id).select().single() : await db.from('courses').insert({ ...row, teacher_id: teacher.id, teacher_name: teacher.full_name, published: true }).select().single(); if (!res.error) say('Saved. Places for each class time need the latest Supabase update (step_a_class_places.sql).'); }
     } catch (x) { res = { error: x }; }
     if (sb) { sb.disabled = false; sb.textContent = sbText; }
     if (res.error) return showError(err, '⚠️ The course couldn’t be saved: ' + (res.error.message || friendly(res.error)));
-    dlg.close(); say(editing ? 'Course saved.' : 'Saved as a draft. Add the details and lessons, then press Publish when it’s ready.'); onSaved(res.data);
+    dlg.close(); say(editing ? 'Course saved.' : '🎉 Course created and published! Students can now find it.'); onSaved(res.data);
   });
   return {
     open(course, me) {
@@ -551,10 +551,6 @@ async function startTeacherCourses() {
   }
   const dlg = courseDialog(() => load());
   document.getElementById('new-course').addEventListener('click', () => {
-    if (!teacherProfileReady(profile)) {
-      if (confirm('Before creating a course, please complete your teacher profile: a profile picture, an introduction video, a short bio, your qualification and your years of experience. Parents see it on every course you teach.\n\nOpen your teacher profile now?')) location.href = 'teacher-settings.html#tprofile-form';
-      return;
-    }
     dlg.open(null, { id: user.id, full_name: profile.full_name });
   });
   list.addEventListener('click', async e => {
