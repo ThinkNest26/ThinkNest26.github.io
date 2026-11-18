@@ -268,7 +268,24 @@ function coursePublishGaps(c, p) {
   }
   return gaps;
 }
+// Age range and language can be worked out from the grade and subject, so teachers don't have to type them
+function courseAutoInfo(c) {
+  const out = {}, g = String(c.grade || '').trim(); let m;
+  if (!String(c.age_range || '').trim()) {
+    if (g === 'KG1') out.age_range = '4–5 years';
+    else if (g === 'KG2') out.age_range = '5–6 years';
+    else if ((m = g.match(/^Grade (\d+)$/))) { const n = Number(m[1]); out.age_range = (n + 5) + '–' + (n + 6) + ' years'; }
+  }
+  if (!String(c.course_language || '').trim() && (c.audience || 'students') === 'students' && c.subject) {
+    out.course_language = /arabic/i.test(c.subject) || /^arabic/.test(c.curriculum || '') ? 'Arabic' : 'English';
+  }
+  return out;
+}
 async function publishCourse(c, p, on) {
+  if (on) {
+    const auto = courseAutoInfo(c);
+    if (Object.keys(auto).length) { const { error } = await db.from('courses').update(auto).eq('id', c.id); if (!error) Object.assign(c, auto); }
+  }
   if (on) {
     const gaps = coursePublishGaps(c, p);
     if (gaps.length) {

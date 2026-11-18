@@ -25,6 +25,12 @@ function cfDraw() {
   if (f.curriculum.value && !curs.some(c => c[0] === f.curriculum.value)) f.curriculum.value = '';
   f.querySelector('[data-cf=curriculum]').innerHTML = curs.map(([k, n]) => `<button type="button" class="chip ${f.curriculum.value === k ? 'on' : ''}" data-v="${k}">${n}</button>`).join('');
   f.querySelector('[data-cf=grade]').innerHTML = CF_GRADES.map(g => `<button type="button" class="chip ${f.grade.value === g ? 'on' : ''}" data-v="${g}">${g}</button>`).join('');
+  // fill in age range and language from the grade and subject (only if empty or still our own suggestion)
+  if (typeof courseAutoInfo === 'function') {
+    ['age_range', 'course_language'].forEach(k => { const i = f[k]; if (i && i.dataset.auto && i.value === i.dataset.auto) i.value = ''; });
+    const auto = courseAutoInfo({ grade: f.grade.value, subject: subj, curriculum: f.curriculum.value, audience: aud, age_range: f.age_range ? f.age_range.value : '', course_language: f.course_language ? f.course_language.value : '' });
+    ['age_range', 'course_language'].forEach(k => { const i = f[k]; if (i && auto[k]) { i.value = auto[k]; i.dataset.auto = auto[k]; } });
+  }
   // suggest a name
   const hubTopic = isHub && typeof hubCat === 'function' ? hubCat(aud, f.category.value) : null;
   const suggestion = hubTopic ? hubTopic[2] + ' workshop' : subj && f.grade.value ? `${f.grade.value} ${subj}${f.curriculum.value ? ' (' + CF_CUR_SHORT[f.curriculum.value] + ')' : ''}` : '';
