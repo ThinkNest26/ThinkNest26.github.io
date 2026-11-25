@@ -15,15 +15,14 @@ async function startChat() {
   const params = new URLSearchParams(location.search);
   const isStudent = me.role === 'student', isAdult = !isStudent;
   if (isAdult) document.getElementById('safety').textContent = me.role === 'parent'
-    ? 'You can read your child’s chats here. Only the children in a chat can write in it.'
+    ? '🔒 Your chats are private between you and the person you’re chatting with. You can chat with your children, their teachers, and parents who joined Parent Connections.'
     : 'Private messages with other teachers. Students can only chat privately with their student friends. For a class or study group, post in its community feed instead.';
-  document.getElementById('new-chat').hidden = !isStudent;
+  document.getElementById('new-chat').hidden = !(isStudent || me.role === 'parent' || me.also_parent);
 
   let current = null, channel = null, convs = [];
   const box = document.querySelector('.chat-page');
 
   async function loadList() {
-    if (me.role === 'parent') { document.getElementById('convs').innerHTML = '<p class="empty">Open a chat from your child’s profile page.</p>'; return; }
     const { data, error } = await db.rpc('my_conversations');
     if (error) return say(friendly(error));
     // group and class chats were the same as each group's own feed, so Messages now holds private chats only
@@ -77,7 +76,7 @@ async function startChat() {
     pro.innerHTML = '🛡️ <b>Professional chat.</b> Keep it about teaching and learning. Please don’t share personal contact details or make personal invitations. Think Nest may review chats to keep everyone safe. Use <b>Report</b> on any message that isn’t right.';
     const ro = document.getElementById('chat-ro');
     ro.hidden = c.can_post;
-    ro.textContent = me.role === 'parent' ? 'You’re reading this chat as a parent. Only the children in it can write.' : me.role === 'admin' ? 'Admin view (read only).' : 'You can’t send messages in this chat right now.';
+    ro.textContent = me.role === 'admin' ? 'Admin view (read only).' : 'You can’t send messages in this chat right now.';
     const { data: msgs } = await db.from('messages').select('*').eq('conversation_id', cid).order('created_at', { ascending: true }).limit(200);
     msgsEl.innerHTML = (msgs || []).length ? msgs.map(msgHtml).join('') : '<p class="empty center">No messages yet. Say hello! 👋</p>';
     scrollDown(); fillImages();
@@ -158,13 +157,20 @@ async function startChat() {
   const dlg = document.getElementById('pick-dialog');
   dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
   document.getElementById('new-chat').addEventListener('click', async () => {
-    const { data } = await db.rpc('my_friends');
-    const fr = (data || []).filter(f => f.relation === 'friend');
-    document.getElementById('pick-list').innerHTML = fr.length ? fr.map(f => `<button class="pending-row pick" data-friend="${f.id}"><span class="initials">${esc(cIni(f.full_name))}</span><div><b>${esc(f.full_name)}</b><span class="meta">${esc(f.grade || '')}</span></div><span class="pill pill-live">Chat</span></button>`).join('')
-      : '<p class="empty">Add friends first on <a href="friends.html">My Friends</a>.</p>';
+    const [fr0, fam0] = await Promise.all([isStudent ? db.rpc('my_friends') : Promise.resolve({ data: [] }), db.rpc('family_chat_people')]);
+    const fr = (fr0.data || []).filter(f => f.relation === 'friend'), fam = fam0.error ? [] : (fam0.data || []);
+    const groups = {}; fam.forEach(p => (groups[p.grp] = groups[p.grp] || []).push(p));
+    const row = (id, name, info, attr) => `<button class="pending-row pick" ${attr}="${id}"><span class="initials">${esc(cIni(name))}</span><div><b>${esc(name)}</b><span class="meta">${esc(info || '')}</span></div><span class="pill pill-live">Chat</span></button>`;
+    const order = ['My parents', 'My children', 'Teachers', 'Other parents'];
+    let html = order.filter(g => groups[g]).map(g => `<h3 style="margin:12px 0 6px">${g}</h3>` + groups[g].sort((a, b) => (a.name || '').localeCompare(b.name || '')).map(p => row(p.id, p.name, p.info, 'data-fam')).join('')).join('');
+    if (isStudent) html += '<h3 style="margin:12px 0 6px">My friends</h3>' + (fr.length ? fr.map(f => row(f.id, f.full_name, f.grade, 'data-friend')).join('') : '<p class="empty">Add friends first on <a href="friends.html">My Friends</a>.</p>');
+    if (!html) html = me.role === 'parent' ? '<p class="empty">No one to chat with yet. Add your child, and once they join a course you can chat with their teachers. Join <a href="parent-connect.html">Parent Connections</a> to chat with other parents.</p>' : '<p class="empty">No one to chat with yet.</p>';
+    document.getElementById('pick-list').innerHTML = '<p class="meta">🔒 Chats are private between the two of you.</p>' + html;
     dlg.showModal();
   });
   document.getElementById('pick-list').addEventListener('click', async e => {
+    const fm = e.target.closest('[data-fam]');
+    if (fm) { dlg.close(); const { data, error } = await db.rpc('open_family_chat', { other: fm.dataset.fam }); if (error) return say(friendly(error)); await loadList(); return open(data); }
     const b = e.target.closest('[data-friend]'); if (!b) return;
     dlg.close(); openFriend(b.dataset.friend);
   });
@@ -179,7 +185,9 @@ async function startChat() {
     // parents who aren't open to pairing approve before other parents can message them
     try { const { data: can, error: ce } = await db.rpc('parent_can_message', { other: params.get('with') });
       if (!ce && can && can !== 'ok') { say(can === 'pending' ? 'Your message request is waiting for their approval.' : can === 'declined' ? 'This parent isn’t taking messages just now.' : 'This parent approves messages first. Ask them from the Parent directory.'); setTimeout(() => location.href = 'parent-connect.html#people', 1800); return; } } catch (_) {}
-    const { data, error } = await db.rpc('open_adult_chat', { other: params.get('with') }); if (error) say(friendly(error)); else { await loadList(); open(data); } }
+    let { data, error } = await db.rpc('open_family_chat', { other: params.get('with') });
+    if (error) ({ data, error } = await db.rpc('open_adult_chat', { other: params.get('with') }));
+    if (error) say(friendly(error)); else { await loadList(); open(data); } }
   else if (params.get('friend')) openFriend(params.get('friend'));
   else if (params.get('group')) { location.replace('group.html?id=' + Number(params.get('group'))); return; }   // old group-chat links open the group's feed
   else if (params.get('c')) open(Number(params.get('c')));
