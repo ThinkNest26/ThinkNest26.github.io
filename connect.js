@@ -3,6 +3,10 @@ async function startConnect(sp) {
   const ctx = sp === 'parents' ? await initParent() : await initTeacher();
   const uid = (ctx.user || {}).id || (await db.auth.getSession()).data.session.user.id;
   const box = document.getElementById('cx-page');
+  // white buttons on this page: white with dark red writing, so they're easy to read
+  if (!document.getElementById('cx-btn-css')) { const st = document.createElement('style'); st.id = 'cx-btn-css';
+    st.textContent = '#cx-page .btn-white{background:#fff!important;color:#8A2D3B!important;border:2px solid #8A2D3B!important;box-shadow:none!important}#cx-page .btn-white:hover{background:#FBEFF0!important}';
+    document.head.appendChild(st); }
   const hubPage = sp === 'teachers' ? 'teacher-hub.html' : 'parent-hub.html', hubName = sp === 'teachers' ? 'Beyond the Bell' : 'Beyond the School Run';
   const role = ((ctx.profile || ctx.me || {}).role);
   if (role !== 'admin') {
