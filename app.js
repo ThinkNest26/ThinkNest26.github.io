@@ -679,16 +679,21 @@ async function studentToDo(uid, myEnr, p) {
   let parentLinked = false;
   try { const { data: l } = await db.from('parent_links').select('parent_id').eq('student_id', uid).limit(1); parentLinked = !!(l || []).length; } catch (_) {}
   // not linked to a parent yet: let the child join their parent's family with the parent's family code
-  if (fs && !document.getElementById('join-fam-box')) {
+  // shown until the child is linked to a parent (adding another parent is in Account settings)
+  if (fs && !parentLinked && !document.getElementById('join-fam-box')) {
     const jb = document.createElement('section'); jb.id = 'join-fam-box'; jb.className = 'panel';
     jb.innerHTML = `<h2 class="dash-h" style="margin-top:0">👪 ${parentLinked ? 'My family' : 'Join your parent’s family'}</h2>
       <p class="meta">${parentLinked ? '✅ You’re linked to a parent. Want to add another parent or guardian? Type their family code (it starts with <b>FAM-</b>). They’ll confirm before they’re linked.' : 'Did your parent give you their family code (it starts with <b>FAM-</b>)? Type it here. Your parent then confirms, so no one can join the wrong family by mistake.'}</p>
       <form class="join-fam-inline" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><input name="code" maxlength="16" placeholder="FAM-XXXX-XXXX" autocomplete="off" autocapitalize="characters" style="flex:1 1 200px" aria-label="Parent’s family code"><button class="btn btn-red">Join family</button></form>
       <p class="meta" style="margin-top:8px">No code? Ask your parent to sign up as a parent on Think Nest. Their code is on their dashboard. See who’s linked in <a href="settings.html">Account settings</a>.</p>`;
     fs.parentNode.insertBefore(jb, fs);
+    let asked = null; try { asked = localStorage.getItem('tn_fam_asked_' + uid); } catch (_) {}
+    if (asked) jb.insertAdjacentHTML('afterbegin', '<p class="note" style="margin:0 0 10px">⏳ You’ve already sent a request. Your parent needs to confirm it. If they don’t see it, check the code with them and try again.</p>');
     jb.querySelector('form').addEventListener('submit', async e => {
       e.preventDefault(); const b = e.target.querySelector('button'); b.disabled = true;
       const r = await tnJoinFamily(e.target.code.value); b.disabled = false;
+      if (r === 'requested') { try { localStorage.setItem('tn_fam_asked_' + uid, '1'); } catch (_) {} }
+      if (r === 'linked') jb.remove();
       if (r === 'requested') jb.innerHTML = '<p style="margin:0">⏳ Request sent. Your parent will be asked to confirm you’re their child. You’ll get a message when they do.</p>';
     });
   }

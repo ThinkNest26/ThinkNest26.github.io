@@ -10,6 +10,32 @@ async function startConnect(sp) {
     if (!ok) { box.innerHTML = `<div class="empty-box"><p>☕ Coffee, Chats &amp; Connections is for members of <b>${hubName}</b>. Ask to join the hub, and you’ll be in as soon as Think Nest approves you.</p><a class="btn btn-red" href="${hubPage}">Go to ${hubName}</a></div>`; return; }
   }
   const P0 = sp === 'parents';
+  // Parent Connections is opt-in: only parents who choose to join are listed and can be contacted
+  if (P0) {
+    const { data: me0 } = await db.from('hub_profiles').select('listed, agreed_code, opted_out_at').eq('user_id', uid).eq('hub', sp).maybeSingle();
+    if (!me0 || !me0.listed) {
+      const said = me0 && me0.opted_out_at;
+      box.innerHTML = `<section class="cx-hero"><span class="cx-cup">☕</span><div><span class="hub-kicker">${hubName}</span><h1>Coffee, Chats &amp; Connections</h1><p>An optional space where parents who want to can find each other, pair up, join parent groups and meet up.</p></div></section>
+        <section class="panel cx-code"><h2>${said ? '🔒 You’re not in Parent Connections' : 'Would you like to join Parent Connections?'}</h2>
+          <p>${said ? 'Other parents can’t see you in the directory or contact you through it. You can join any time.' : 'It’s completely optional. Choose what feels right for you.'}</p>
+          <ul><li>✅ <b>Yes, join:</b> you’re listed in the parent directory, and other parents who have joined can ask to message you, pair with you and invite you to groups and meetups.</li>
+            <li>🔒 <b>No thanks:</b> you aren’t listed anywhere, and no one can contact you through Parent Connections. The Parent Café and everything else stay the same.</li></ul>
+          <div class="btns"><button type="button" class="btn btn-red" id="cx-join">Yes, I welcome other parents to contact me</button>${said ? '' : '<button type="button" class="btn btn-white" id="cx-no">No thanks, I don’t want to join</button>'}</div></section>`;
+      box.querySelector('#cx-join').addEventListener('click', async () => {
+        const row = { user_id: uid, hub: sp, listed: true, opted_out_at: null, updated_at: new Date().toISOString() };
+        const { error } = await db.from('hub_profiles').upsert(row);
+        if (error) return say(/listed|column/i.test(error.message || '') ? 'Please run the latest Supabase update (Parent Connections) first.' : friendly(error));
+        location.reload();
+      });
+      const no = box.querySelector('#cx-no');
+      if (no) no.addEventListener('click', async () => {
+        const { error } = await db.from('hub_profiles').upsert({ user_id: uid, hub: sp, listed: false, roulette: false, opted_out_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+        if (error) return say(/opted_out|column/i.test(error.message || '') ? 'Please run the latest Supabase update (Parent Connections) first.' : friendly(error));
+        say('Done. You’re not listed, and no one can contact you through Parent Connections.'); location.reload();
+      });
+      return;
+    }
+  }
   const [{ data: sP }, { data: sM }, { data: sD }, { data: agreed }] = await Promise.all(['partners', 'meetups', 'messages'].map(k => db.rpc('connect_setting', { k })).concat([db.rpc('agreed_code', { sp })]));
   const ON = { partners: sP !== false, meetups: sM !== false, messages: sD !== false };
   if (!agreed) {
@@ -142,7 +168,7 @@ async function startConnect(sp) {
         <label>I can help with <input type="text" id="pd-help" maxlength="200" value="${E(mine && mine.can_help)}" placeholder="For example, healthy lunchboxes, budgeting, Arabic"></label>
         <label>I’d love to learn <input type="text" id="pd-learn" maxlength="200" value="${E(mine && mine.want_learn)}" placeholder="For example, photography, yoga, starting a small business"></label>
         <label class="switch-row"><input type="checkbox" id="pd-open" ${mine && mine.roulette ? 'checked' : ''}> I’m open to pairing (other parents can message me without asking first)</label>
-        <div class="btns"><button type="button" class="btn btn-red" id="pd-save">Save</button>${ON.partners ? '<button type="button" class="btn btn-white" id="pd-match">☕ Find me a parent partner</button>' : ''}</div></section>
+        <div class="btns"><button type="button" class="btn btn-red" id="pd-save">Save</button>${ON.partners ? '<button type="button" class="btn btn-white" id="pd-match">☕ Find me a parent partner</button>' : ''}</div><p class="meta" style="margin-top:10px">Don’t want to be contacted any more? <button type="button" class="link-btn" id="pd-leave">Leave Parent Connections</button></p></section>
       <input type="search" id="cx-search" placeholder="Search by name or interest, for example: yoga" class="cx-search pd-search">`
       + section('🤝 ThinkNest Parent Partners', 'Parents you have been paired with.', partners, 'No partners yet. Tick “open to pairing” and tap “Find me a parent partner”.')
       + section('☕ ThinkNest Parents Open to Pairing', 'You can message these parents straight away.', open, 'No one else is open to pairing yet.')
@@ -172,6 +198,12 @@ async function startConnect(sp) {
 
   if (P) box.addEventListener('click', async e => {
     const t = e.target;
+    if (t.id === 'pd-leave') {
+      if (!confirm('Leave Parent Connections? You’ll be taken out of the directory, pairing will stop, and other parents won’t be able to contact you through it. You can join again any time.')) return;
+      const { error } = await db.from('hub_profiles').upsert({ user_id: uid, hub: sp, listed: false, roulette: false, opted_out_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+      if (error) return say(friendly(error));
+      say('You’ve left Parent Connections.'); return location.reload();
+    }
     if (t.id === 'pd-save' || t.id === 'pd-match') {
       const help = document.getElementById('pd-help').value.trim(), learn = document.getElementById('pd-learn').value.trim(), open = document.getElementById('pd-open').checked;
       if (!help && !learn) return say('Write at least one thing you can help with or would love to learn.');
