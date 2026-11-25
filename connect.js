@@ -20,7 +20,7 @@ async function startConnect(sp) {
           <p>${said ? 'Other parents can’t see you in the directory or contact you through it. You can join any time.' : 'It’s completely optional. Choose what feels right for you.'}</p>
           <ul><li>✅ <b>Yes, join:</b> you’re listed in the parent directory, and other parents who have joined can ask to message you, pair with you and invite you to groups and meetups.</li>
             <li>🔒 <b>No thanks:</b> you aren’t listed anywhere, and no one can contact you through Parent Connections. The Parent Café and everything else stay the same.</li></ul>
-          <div class="btns"><button type="button" class="btn btn-red" id="cx-join">Yes, I welcome other parents to contact me</button>${said ? '' : '<button type="button" class="btn btn-white" id="cx-no">No thanks, I don’t want to join</button>'}</div></section>`;
+          <div class="btns"><button type="button" class="btn btn-red" id="cx-join">Yes, I welcome other parents to contact me</button>${said ? '' : '<button type="button" class="btn" id="cx-no" style="background:#fff;color:#8A2D3B;border:2px solid #8A2D3B;box-shadow:none">No thanks, I don’t want to join</button>'}</div></section>`;
       box.querySelector('#cx-join').addEventListener('click', async () => {
         const row = { user_id: uid, hub: sp, listed: true, opted_out_at: null, updated_at: new Date().toISOString() };
         const { error } = await db.from('hub_profiles').upsert(row);
