@@ -679,6 +679,15 @@ async function studentToDo(uid, myEnr, p) {
   let parentLinked = false;
   try { const { data: l } = await db.from('parent_links').select('parent_id').eq('student_id', uid).limit(1); parentLinked = !!(l || []).length; } catch (_) {}
   // not linked to a parent yet: let the child join their parent's family with the parent's family code
+  // linked: one small line showing who, with a link to manage it
+  if (fs && parentLinked && !document.getElementById('fam-line')) {
+    const fl = document.createElement('p'); fl.id = 'fam-line'; fl.className = 'meta panel'; fl.style.cssText = 'padding:12px 16px;margin:0 0 16px';
+    fs.parentNode.insertBefore(fl, fs);
+    db.rpc('my_parents').then(({ data: ps }) => {
+      const names = (ps || []).map(p => esc(p.name || 'a parent')).join(' and ');
+      fl.innerHTML = `👪 Linked to <b>${names || 'your parent'}</b> · <a href="settings.html">Manage in Account settings</a>`;
+    });
+  }
   // shown until the child is linked to a parent (adding another parent is in Account settings)
   if (fs && !parentLinked && !document.getElementById('join-fam-box')) {
     const jb = document.createElement('section'); jb.id = 'join-fam-box'; jb.className = 'panel';
