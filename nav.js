@@ -36,6 +36,7 @@
   const MENUS = {
     student: [
       { ic: '🏠', label: 'Home', href: 'student-dashboard.html' },
+      { ic: '🏡', label: 'Family wall', href: 'family-wall.html' },
       { ic: '📘', label: 'Online Courses', items: [['my-courses.html', 'My courses'], ['all-courses.html', 'Find a course'], ['calendar.html', 'My calendar'], ['recordings.html', 'Recordings'], ['mentors.html', 'Mentors'], ['files.html', 'My files']] },
       { ic: '🏆', label: 'My Progress', items: [['rewards.html', 'My rewards'], ['certificates.html', 'My certificates'], ['reports.html', 'My reports']] },
       { ic: '💬', label: 'Friends & Community', items: [['community.html', 'Community'], ['friends.html', 'My friends'], ['groups.html', 'Study groups'], ['messages.html', 'Messages']] },
@@ -51,6 +52,7 @@
     ],
     parent: [
       { ic: '🏠', label: 'My Children', dyn: 'kids', items: [['parent-dashboard.html', 'All my children'], ['add-child.html', '➕ Add a child']] },
+      { ic: '🏡', label: 'Family wall', href: 'family-wall.html' },
       { ic: '📚', label: 'Classes for my children', href: 'parent-courses.html' },
       { ic: '📅', label: 'Family calendar', href: 'parent-calendar.html' },
       { ic: '📝', label: 'Reports', href: 'reports.html' },
