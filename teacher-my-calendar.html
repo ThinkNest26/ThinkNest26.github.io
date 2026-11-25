@@ -65,7 +65,7 @@
   <script src="nav.js?v=200"></script>
   <script src="notify.js?v=171" defer></script>
   <script src="teacher.js?v=203"></script>
-  <script src="weekcal.js?v=187"></script>
+  <script src="weekcal.js?v=188"></script>
   <script>initTeacher().then(async ({ user }) => {
     weekForTeacher(document.getElementById('week-cal'), user.id, { upcoming: document.getElementById('up-list') });
     try { const { data: m } = await db.from('mentors').select('id').eq('teacher_id', user.id).maybeSingle(); if (!m) return;

@@ -93,7 +93,7 @@
   <script src="nav.js?v=200"></script>
   <script src="notify.js?v=171" defer></script>
   <script src="student.js?v=185"></script>
-  <script src="weekcal.js?v=187"></script>
+  <script src="weekcal.js?v=188"></script>
   <script>startCalendar();
     db.auth.getSession().then(({ data }) => data.session && weekForStudent(document.getElementById('week-cal'), data.session.user.id));
     document.querySelector('.wc-switch').addEventListener('click', e => { const b = e.target.closest('[data-view]'); if (!b) return;

@@ -107,19 +107,54 @@ async function weekForTeacher(host, uid, opts = {}) {
       : '<p class="empty">Nothing coming up. Add a live class from your course, or join a workshop in Beyond the Bell.</p>';
   }
 }
+// weekly class times written like "Sunday 6-8" or "Tue 4:30pm - 5:30pm" → one event a week
+function wcWeekly(slotText, from, to) {
+  const DAYS = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 }, out = [];
+  String(slotText || '').split(/\n|;|,(?=\s*[A-Za-z])/).forEach(line => {
+    const m = /(sun|mon|tue|wed|thu|fri|sat)[a-z]*\.?\s+(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?\s*(?:-|–|to)\s*(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?/i.exec(line);
+    if (!m) return;
+    let h1 = +m[2], m1 = +(m[3] || 0), h2 = +m[5], m2 = +(m[6] || 0);
+    const p1 = (m[4] || m[7] || '').toLowerCase(), p2 = (m[7] || '').toLowerCase();
+    if (p1 === 'pm' && h1 < 12) h1 += 12; else if (!p1 && h1 >= 1 && h1 <= 7) h1 += 12;
+    if (p2 === 'pm' && h2 < 12) h2 += 12; else if (p2 === 'am' && h2 === 12) h2 = 0; else if (!p2 && h2 * 60 + m2 <= h1 * 60 + m1 && h2 < 12) h2 += 12;
+    const d = new Date(from); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + ((DAYS[m[1].toLowerCase().slice(0, 3)] - d.getDay() + 7) % 7));
+    for (; d <= to; d.setDate(d.getDate() + 7)) {
+      const st = new Date(d); st.setHours(h1, m1, 0, 0); const en = new Date(d); en.setHours(h2, m2, 0, 0);
+      out.push([st, en > st ? en : new Date(st.getTime() + 60 * 60e3), line.trim()]);
+    }
+  });
+  return out;
+}
 async function startFamilyCalendar() {
-  const { user } = await initParent();
+  const { user, me } = await initParent();
   const host = document.getElementById('week-cal');
   const { data: links } = await db.from('parent_links').select('student_id').eq('parent_id', user.id);
   const kidIds = (links || []).map(l => l.student_id);
-  if (!kidIds.length) { host.innerHTML = '<div class="empty-box"><p>Link your children to see their live classes here.</p><a class="btn btn-red" href="parent-dashboard.html">My children</a></div>'; return; }
-  const [{ data: kids }, { data: en }] = await Promise.all([db.from('profiles').select('id, full_name').in('id', kidIds), db.from('enrollments').select('user_id, course_id').in('user_id', kidIds)]);
-  const name = id => ((kids || []).find(k => k.id === id) || {}).full_name || 'My child', first = id => name(id).split(' ')[0];
-  const colour = id => WC_KID[kidIds.indexOf(id) % WC_KID.length];
-  const cids = [...new Set((en || []).map(e => e.course_id))];
-  const { data: ses } = cids.length ? await db.from('sessions').select('*, courses(title, subject)').in('course_id', cids) : { data: [] };
+  const { data: kids } = kidIds.length ? await db.from('profiles').select('id, full_name').in('id', kidIds) : { data: [] };
+  const name = id => id === user.id ? 'Me' : (((kids || []).find(k => k.id === id) || {}).full_name || 'My child').split(' ')[0];
+  const ME = '#C0694A', colour = id => id === user.id ? ME : WC_KID[kidIds.indexOf(id) % WC_KID.length];
+  const page = (who, cid) => cid ? (who === user.id ? 'course.html?id=' + cid : 'child.html?id=' + who) : '';
   const ev = [];
-  const seen = new Set();
-  (ses || []).forEach(s => (en || []).filter(e => e.course_id === s.course_id && !seen.has(s.id + '-' + e.user_id) && seen.add(s.id + '-' + e.user_id)).forEach(e => ev.push(wcSession(s, { who: first(e.user_id), color: colour(e.user_id), page: 'child.html?id=' + e.user_id }))));
-  weekCalendar(host, ev, { legend: kidIds.map(id => [first(id), colour(id)]) });
+  const { data: items, error } = await db.rpc('family_calendar_items');
+  if (error) {
+    // the database update hasn't been run yet: show the children's live classes the old way
+    const { data: en } = kidIds.length ? await db.from('enrollments').select('user_id, course_id').in('user_id', kidIds) : { data: [] };
+    const cids = [...new Set((en || []).map(e => e.course_id))];
+    const { data: ses } = cids.length ? await db.from('sessions').select('*, courses(title, subject)').in('course_id', cids) : { data: [] };
+    (ses || []).forEach(s => (en || []).filter(e => e.course_id === s.course_id).forEach(e => ev.push(wcSession(s, { who: name(e.user_id), color: colour(e.user_id), page: page(e.user_id, s.course_id) }))));
+  } else {
+    const from = new Date(Date.now() - 120 * 864e5), to = new Date(Date.now() + 240 * 864e5);
+    (items || []).forEach(it => {
+      const base = { who: name(it.who), color: colour(it.who), link: it.link, page: page(it.who, it.course_id) };
+      if (it.kind === 'weekly') {
+        const f = it.course_start && new Date(it.course_start) > from ? new Date(it.course_start) : from, t = it.course_end && new Date(it.course_end + 'T23:59') < to ? new Date(it.course_end + 'T23:59') : to;
+        wcWeekly(it.slot, f, t).forEach(([st, en, line]) => ev.push(Object.assign({}, base, { start: st, end: en, title: it.title, sub: it.sub + ' · every week: ' + line })));
+      } else {
+        const st = new Date(it.starts_at);
+        ev.push(Object.assign({}, base, { start: st, end: it.ends_at ? new Date(it.ends_at) : new Date(st.getTime() + 60 * 60e3), title: it.title, sub: it.sub || '' }));
+      }
+    });
+  }
+  if (!ev.length && !kidIds.length) { host.innerHTML = '<div class="empty-box"><p>Your workshops and your children’s classes will show here. Add your child, or join a parent workshop to get started.</p><a class="btn btn-red" href="add-child.html">Add a child</a> <a class="btn btn-white outline" href="parent-hub.html">Parent workshops</a></div>'; return; }
+  weekCalendar(host, ev, { legend: [['Me (my workshops)', ME]].concat(kidIds.map(id => [name(id), colour(id)])) });
 }
