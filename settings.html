@@ -85,6 +85,13 @@
           <p class="code" id="family-code">…</p>
           <p class="meta" id="family-parents"></p>
           <button class="pill pill-soft big" id="new-code" type="button">Make a new code</button>
+          <div id="my-parents"></div>
+          <h3 style="margin-top:18px">Join your parent’s family</h3>
+          <p class="meta">Did your parent give you their family code (it starts with <b>FAM-</b>)? Type it here to join their family.</p>
+          <form class="auth-form" id="join-family" novalidate style="margin:0">
+            <label>Parent’s family code <input type="text" name="code" class="code-input" maxlength="12" placeholder="For example, FAM-7K3Q9A" autocomplete="off" required></label>
+            <button class="btn btn-red auth-btn">Join family</button>
+          </form>
         </section>
       </div>
       <section class="panel auth-form wide dual-role delete-req" id="delete-req"></section>
@@ -111,7 +118,7 @@
   <script src="app.js?v=183"></script>
   <script src="nav.js?v=193"></script>
   <script src="notify.js?v=171" defer></script>
-  <script src="student.js?v=183"></script>
+  <script src="student.js?v=184"></script>
   <script>startSettings().then(() => showParentRequests());</script>
   <script src="emailpref.js?v=171"></script>
   <script src="characters.js?v=178"></script>

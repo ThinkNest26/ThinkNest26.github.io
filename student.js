@@ -571,6 +571,34 @@ async function startSettings() {
       if (error) return say(friendly(error));
       fc.textContent = data; say('New family code made.');
     });
+    // who is linked, with a way to remove someone who isn't your parent
+    const mp = document.getElementById('my-parents');
+    const showParents = async () => {
+      if (!mp) return;
+      const { data: ps, error: pe } = await db.rpc('my_parents'); if (pe) return;
+      document.getElementById('family-parents').textContent = (ps || []).length ? '' : 'No parent linked yet.';
+      mp.innerHTML = (ps || []).length ? '<h3 style="margin-top:14px">Linked to your account</h3>' + ps.map(p => `<div class="pending-row" data-par="${p.id}"><span class="initials">${esc((p.name || "?").split(/\s+/).filter(Boolean).map(w => w[0]).slice(0, 2).join("").toUpperCase())}</span><div><b>${esc(p.name || 'Parent')}</b><span class="meta">${esc(p.email || '')} · since ${new Date(p.since).toLocaleDateString('en-GB')}</span></div><button type="button" class="pill pill-soft danger" data-rm-par>Not my parent – remove</button></div>`).join('') + '<p class="meta">These people can see your courses, progress, classes and certificates. If you don’t know someone, remove them and tell your teacher.</p>' : '';
+    };
+    showParents();
+    if (mp) mp.addEventListener('click', async e => {
+      const b = e.target.closest('[data-rm-par]'); if (!b) return;
+      const row = b.closest('[data-par]'); const nm = row.querySelector('b').textContent;
+      if (!confirm(`Remove ${nm}? They will no longer see your work.`)) return;
+      b.disabled = true;
+      const { error: er } = await db.rpc('remove_my_parent', { par: row.dataset.par });
+      if (er) { b.disabled = false; return say(/function|schema cache/i.test(er.message || '') ? 'Please run the latest Supabase update (family safety) first.' : friendly(er)); }
+      say('Removed. ' + nm + ' can no longer see your work.'); showParents();
+    });
+    const jf = document.getElementById('join-family');
+    if (jf) jf.addEventListener('submit', async e => {
+      e.preventDefault(); const code = jf.code.value.trim(); if (!code) return say('Type your parent’s family code first.');
+      const b = jf.querySelector('button'); b.disabled = true;
+      const { data: r, error: er } = await db.rpc('join_family', { code });
+      b.disabled = false;
+      if (er) return say(/function|schema cache/i.test(er.message || '') ? 'Please run the latest Supabase update (family safety) first.' : friendly(er));
+      if (r === 'NO_SUCH_CODE') return say('We couldn’t find that family code. Check it with your parent and try again.');
+      jf.reset(); say(r === 'linked' ? 'You’re already in this family.' : '✅ You joined ' + r + '’s family.'); showParents();
+    });
   }
   const pf = document.getElementById('pw-form'), err = document.getElementById('pw-error');
   pf.addEventListener('submit', async e => {

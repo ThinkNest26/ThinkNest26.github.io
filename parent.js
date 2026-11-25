@@ -73,6 +73,24 @@ async function pendingRequests(box) {
       <span class="tag ${r.status === 'declined' ? '' : 'tag-wait'}">${r.status === 'declined' ? 'Declined' : 'Waiting'}</span></div>`).join('') : '';
 }
 
+// ---------- The parent's own family code (a child types it to join the family) ----------
+async function parentFamilyCode(box) {
+  if (!box) return;
+  const { data: code, error } = await db.rpc('my_parent_family_code', { renew: false });
+  if (error) { box.hidden = true; return; }
+  box.hidden = false;
+  box.innerHTML = `<div class="panel family" style="margin-top:14px"><h3 style="margin:0 0 6px">👪 Your family code</h3>
+      <p class="code" data-fcode>${esc(code)}</p>
+      <p class="meta">Give this code to your child. They log in, go to <b>Account Settings</b> and type it under <b>Join your parent’s family</b>. Only share it with your own children.</p>
+      <button type="button" class="pill pill-soft" data-fnew>Make a new code</button></div>`;
+  box.querySelector('[data-fnew]').onclick = async () => {
+    if (!confirm('Make a new code? The old code will stop working. Children already linked stay linked.')) return;
+    const { data: c2, error: e2 } = await db.rpc('my_parent_family_code', { renew: true });
+    if (e2) return say(friendly(e2));
+    box.querySelector('[data-fcode]').textContent = c2; say('New family code made.');
+  };
+}
+
 // ---------- Dashboard: children cards + Add New Child ----------
 async function startParentDashboard() {
   const { user, me } = await initParent();
@@ -90,6 +108,7 @@ async function startParentDashboard() {
       <span><b>${esc(k.full_name || 'Student')}</b><span>${esc(k.curriculum || k.grade || 'Student')}</span></span></a>`).join('')
     + `<a class="kid-card kc-add" href="add-child.html"><span class="plus" aria-hidden="true">+</span><span><b>Add New Child</b></span></a>`;
   pendingRequests(document.getElementById('pending'));
+  parentFamilyCode(document.getElementById('parent-fcode'));
 
   // This week, for all children
   if (!kids.length) return;
@@ -206,6 +225,7 @@ async function startAddChild() {
   await initParent();
   const box = document.getElementById('pending');
   pendingRequests(box);
+  parentFamilyCode(document.getElementById('parent-fcode'));
   const ef = document.getElementById('email-form'), eerr = document.getElementById('email-error');
   ef.addEventListener('submit', async e => {
     e.preventDefault(); showError(eerr, '');
