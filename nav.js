@@ -51,7 +51,8 @@
       { ic: '👤', label: 'Me', href: 'teacher-me.html' }
     ],
     parent: [
-      { ic: '🏠', label: 'My Children', dyn: 'kids', items: [['parent-dashboard.html', 'All my children'], ['add-child.html', '➕ Add a child']] },
+      { ic: '🏠', label: 'My dashboard', href: 'parent-dashboard.html' },
+      { ic: '👧', label: 'My Children', dyn: 'kids', items: [['parent-dashboard.html#kids', 'All my children'], ['add-child.html', '➕ Add a child']] },
       { ic: '🏡', label: 'Family wall', href: 'family-wall.html' },
       { ic: '📚', label: 'Classes for my children', href: 'parent-courses.html' },
       { ic: '💬', label: 'Messages', href: 'messages.html' },
