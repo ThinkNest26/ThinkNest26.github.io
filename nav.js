@@ -4,7 +4,7 @@
   // safety features on every signed-in page
   if (!document.getElementById('tn-safety-js')) { const sj = document.createElement('script'); sj.id = 'tn-safety-js'; sj.src = 'safety.js?v=171'; document.body.appendChild(sj); }
   // Hide the old built-in menu until the right one is ready (stops the sidebar changing on every click)
-  setTimeout(() => { const n0 = document.querySelector('.side nav'); if (n0) n0.classList.add('nav-ready'); }, 3000);
+  setTimeout(() => { const n0 = document.querySelector('.side nav'); if (n0) n0.classList.add('nav-ready'); }, 8000);
   // Help, contact and reference pages open in a new tab, so people don't lose their place
   document.addEventListener('click', e => {
     const a = e.target.closest('a[href]'); if (!a || a.target) return;
@@ -401,9 +401,13 @@
   window.TN_ROLE = null;
   document.addEventListener('DOMContentLoaded', async () => {
     if (!document.querySelector('.side nav') || typeof db === 'undefined') return;
+    // draw the menu straight away from the last visit, then check it once the account has loaded
+    let cached = null; try { cached = localStorage.getItem('tn_nav_role'); const sc = sessionStorage.getItem('tn_school_ctx'); if (sc && !window.TN_SCHOOL) window.TN_SCHOOL = JSON.parse(sc); } catch (_) {}
+    if (cached) { window.TN_ROLE = cached; try { build(cached); } catch (_) {} }
     const role = await roleNow();
     window.TN_ROLE = role;
-    build(role);
+    try { localStorage.setItem('tn_nav_role', role); } catch (_) {}
+    if (role !== cached || !document.querySelector('.side nav.nav2 .nav2-top')) build(role);
     if (keepInSchool(role)) return;
     if (!window.TN_SCHOOL) setTimeout(() => welcomeTour(role), 900);
     // other scripts may redraw the menu while the page loads; put ours back
