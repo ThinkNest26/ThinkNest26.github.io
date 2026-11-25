@@ -679,13 +679,17 @@ async function studentToDo(uid, myEnr, p) {
   let parentLinked = false;
   try { const { data: l } = await db.from('parent_links').select('parent_id').eq('student_id', uid).limit(1); parentLinked = !!(l || []).length; } catch (_) {}
   // not linked to a parent yet: let the child join their parent's family with the parent's family code
-  // linked: one small line showing who, with a link to manage it
+  // linked: a family card with each parent and quick buttons
   if (fs && parentLinked && !document.getElementById('fam-line')) {
-    const fl = document.createElement('p'); fl.id = 'fam-line'; fl.className = 'meta panel'; fl.style.cssText = 'padding:12px 16px;margin:0 0 16px';
+    const fl = document.createElement('section'); fl.id = 'fam-line'; fl.className = 'panel'; fl.style.cssText = 'margin:0 0 16px';
     fs.parentNode.insertBefore(fl, fs);
     db.rpc('my_parents').then(({ data: ps }) => {
-      const names = (ps || []).map(p => esc(p.name || 'a parent')).join(' and ');
-      fl.innerHTML = `👪 Linked to <b>${names || 'your parent'}</b> · <a href="settings.html">Manage in Account settings</a>`;
+      const list = ps || [];
+      fl.innerHTML = `<h2 class="dash-h" style="margin:0 0 10px">👪 My family</h2>
+        <div style="display:grid;gap:10px">${list.map(p => `<div class="pending-row"><span class="initials">${esc((p.name || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</span>
+          <div><b>${esc(p.name || 'My parent')}</b><span class="meta">Linked since ${new Date(p.since).toLocaleDateString('en-GB')}</span></div>
+          <a class="pill pill-live" href="messages.html?with=${encodeURIComponent(p.id)}">💬 Message</a></div>`).join('') || '<p class="meta">Linked to your parent.</p>'}</div>
+        <p style="margin:12px 0 0;display:flex;gap:10px;flex-wrap:wrap"><a class="btn btn-red" href="family-wall.html">🏡 Family wall</a><a class="btn btn-white outline" href="calendar.html">📅 My calendar</a><a class="link-btn" href="settings.html" style="align-self:center">Manage my family in Account settings</a></p>`;
     });
   }
   // shown until the child is linked to a parent (adding another parent is in Account settings)
