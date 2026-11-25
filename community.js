@@ -110,6 +110,7 @@ async function startCommunity() {
     if (b.dataset.ctab === 'groups') groupTab(studyGroups, 'ct-groups', me.role === 'student' ? 'You’re not in a study group yet. Create one and invite your friends!' : 'No study groups yet.');
     if (b.dataset.ctab === 'classes') groupTab(classes, 'ct-classes', ['teacher', 'school_leader', 'admin'].includes(me.role) ? 'Your courses’ communities appear here once students join your courses.' : 'You’re not on a course yet. Find a course and ask for a place, and its community will appear here.');
   });
+  if (location.hash === '#classes') { const ct = document.querySelector('[data-ctab="classes"]'); if (ct) setTimeout(() => ct.click(), 300); }
 
   const feed = document.getElementById('feed'), more = document.getElementById('more');
   let posts = [], oldest = null;

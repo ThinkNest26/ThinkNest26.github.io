@@ -39,6 +39,7 @@
       { ic: '🏡', label: 'Family wall', href: 'family-wall.html' },
       { ic: '📘', label: 'Online Courses', items: [['my-courses.html', 'My courses'], ['all-courses.html', 'Find a course'], ['calendar.html', 'My calendar'], ['recordings.html', 'Recordings'], ['mentors.html', 'Mentors'], ['files.html', 'My files']] },
       { ic: '🏆', label: 'My Progress', items: [['rewards.html', 'My rewards'], ['certificates.html', 'My certificates'], ['reports.html', 'My reports']] },
+      { ic: '🏫', label: 'My class communities', dyn: 'classes', items: [['community.html#classes', 'All my classes']] },
       { ic: '💬', label: 'Friends & Community', items: [['community.html', 'Community'], ['friends.html', 'My friends'], ['groups.html', 'Study groups'], ['messages.html', 'Messages']] },
       { ic: '🧰', label: 'Revision Hub', href: 'revision.html' }
     ],
