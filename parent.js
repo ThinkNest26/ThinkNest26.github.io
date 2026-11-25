@@ -81,7 +81,7 @@ async function parentFamilyCode(box) {
   box.hidden = false;
   box.innerHTML = `<div class="panel family" style="margin-top:14px"><h3 style="margin:0 0 6px">👪 Your family code</h3>
       <p class="code" data-fcode>${esc(code)}</p>
-      <p class="meta">Give this code to your child. They log in, go to <b>Account Settings</b> and type it under <b>Join your parent’s family</b>. Only share it with your own children.</p>
+      <p class="meta">Give this code to your child. They type it when they <b>sign up</b> (Sign up → Student), or later in <b>Account Settings → Join your parent’s family</b>. They’re linked to you straight away. Only share it with your own children.</p>
       <button type="button" class="pill pill-soft" data-fnew>Make a new code</button></div>`;
   box.querySelector('[data-fnew]').onclick = async () => {
     if (!confirm('Make a new code? The old code will stop working. Children already linked stay linked.')) return;

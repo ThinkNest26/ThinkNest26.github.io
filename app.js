@@ -260,12 +260,35 @@ function startSignupPage() {
   // Children under 13 need a parent to create their account (unless they came from their parent's invite link)
   const ageSel = document.getElementById('age'), stop = document.getElementById('age-stop');
   const invited = () => new URLSearchParams(location.search).has('parent_email');
-  const under13 = () => ageSel && ageSel.value && Number(ageSel.value) < 13 && !invited();
+  // a family code from the parent: the parent has agreed, so the child can join (and is linked) straight away
+  const codeIn = document.getElementById('fam-code'), codeMsg = document.getElementById('fam-code-msg');
+  let codeOk = false, codeT = null;
+  const parentStep = () => {
+    const st = steps.find(x => x.contains(form.parent_email)); if (!st) return;
+    st.querySelectorAll('label').forEach(l => { l.hidden = codeOk; const inp = l.querySelector('input'); if (inp) inp.required = !codeOk; });
+    const n = document.getElementById('fam-code-note'); if (n) n.hidden = !codeOk;
+    st.querySelectorAll(':scope > p.note:not(#fam-code-note)').forEach(p => p.hidden = codeOk);
+  };
+  const checkCode = async () => {
+    const v = codeIn.value.trim(); codeOk = false;
+    if (!v) { codeMsg.hidden = true; parentStep(); ageCheck(); return; }
+    const { data, error } = await db.rpc('family_code_ok', { code: v });
+    if (v !== codeIn.value.trim()) return;
+    codeOk = !error && data === true;
+    codeMsg.hidden = false;
+    codeMsg.textContent = error ? 'We couldn’t check the code just now. Please try again.' : codeOk ? '✅ Family code found. You’ll join your parent’s family.' : '❌ We couldn’t find that family code. Check it with your parent.';
+    parentStep(); ageCheck();
+  };
+  if (codeIn) {
+    codeIn.addEventListener('input', () => { clearTimeout(codeT); codeT = setTimeout(checkCode, 600); });
+    const pc = new URLSearchParams(location.search).get('family_code'); if (pc) { codeIn.value = pc; checkCode(); }
+  }
+  const under13 = () => ageSel && ageSel.value && Number(ageSel.value) < 13 && !invited() && !codeOk;
   const ageCheck = () => {
     if (!ageSel) return false;
     const block = under13();
     stop.hidden = !block;
-    steps[0].querySelectorAll('label').forEach(l => { if (!l.contains(ageSel)) l.hidden = block; });
+    steps[0].querySelectorAll('label').forEach(l => { if (!l.contains(ageSel) && !(codeIn && l.contains(codeIn))) l.hidden = block; });
     next.hidden = block;
     return block;
   };
@@ -287,7 +310,7 @@ function startSignupPage() {
     const f = form;
     if (f.password2 && f.password.value !== f.password2.value) { show(steps.findIndex(s => s.contains(f.password2))); f.password2.focus(); return showError(document.getElementById('signup-error') || err, 'The two passwords don’t match.'); }
     if (f.agree_terms && !f.agree_terms.checked) { f.agree_terms.focus(); return showError(document.getElementById('signup-error') || err, 'Please tick the box to agree to the Terms of use.'); }
-    if (f.age && Number(f.age.value) < 13 && !new URLSearchParams(location.search).has('parent_email')) { show(0); ageCheck(); return; }
+    if (f.age && Number(f.age.value) < 13 && !new URLSearchParams(location.search).has('parent_email') && !codeOk) { show(0); ageCheck(); return; }
     if (typeof captchaMissing === 'function' && captchaMissing()) { return showError(document.getElementById('signup-error'), CAPTCHA_MSG); }
     create.disabled = true; create.textContent = 'Creating account…';
     const { data, error } = await db.auth.signUp({
@@ -297,7 +320,7 @@ function startSignupPage() {
         full_name: f.full_name.value.trim(), role: 'student', age: f.age ? f.age.value : '', agreed_terms: true, lang: (typeof tnLang === 'function' ? tnLang() : 'en'),
         grade: f.grade.value, curriculum: f.curriculum.value, school: f.school.value.trim(),
         parent_name: f.parent_name.value.trim(), parent_email: f.parent_email.value.trim(),
-        parent_consent: f.parent_consent.checked
+        parent_consent: f.parent_consent.checked || codeOk, family_code: codeOk && f.family_code ? f.family_code.value.trim() : ''
       } }
     });
     if (typeof captchaReset === 'function') captchaReset();
