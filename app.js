@@ -658,12 +658,12 @@ async function studentToDo(uid, myEnr, p) {
   let parentLinked = false;
   try { const { data: l } = await db.from('parent_links').select('parent_id').eq('student_id', uid).limit(1); parentLinked = !!(l || []).length; } catch (_) {}
   // not linked to a parent yet: let the child join their parent's family with the parent's family code
-  if (fs && !parentLinked && !document.getElementById('join-fam-box')) {
+  if (fs && !document.getElementById('join-fam-box')) {
     const jb = document.createElement('section'); jb.id = 'join-fam-box'; jb.className = 'panel';
-    jb.innerHTML = `<h2 class="dash-h" style="margin-top:0">👪 Join your parent’s family</h2>
-      <p class="meta">Did your parent give you their family code (it starts with <b>FAM-</b>)? Type it here so they can follow your learning.</p>
+    jb.innerHTML = `<h2 class="dash-h" style="margin-top:0">👪 ${parentLinked ? 'My family' : 'Join your parent’s family'}</h2>
+      <p class="meta">${parentLinked ? '✅ You’re linked to a parent. Want to add another parent or guardian? Type their family code (it starts with <b>FAM-</b>).' : 'Did your parent give you their family code (it starts with <b>FAM-</b>)? Type it here so they can follow your learning.'}</p>
       <form class="join-fam-inline" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><input name="code" maxlength="12" placeholder="For example, FAM-7K3Q9A" autocomplete="off" autocapitalize="characters" style="flex:1 1 200px" aria-label="Parent’s family code"><button class="btn btn-red">Join family</button></form>
-      <p class="meta" style="margin-top:8px">No code? Ask your parent to sign up as a parent on Think Nest. Their code is on their dashboard.</p>`;
+      <p class="meta" style="margin-top:8px">No code? Ask your parent to sign up as a parent on Think Nest. Their code is on their dashboard. See who’s linked in <a href="settings.html">Account settings</a>.</p>`;
     fs.parentNode.insertBefore(jb, fs);
     jb.querySelector('form').addEventListener('submit', async e => {
       e.preventDefault(); const code = e.target.code.value.trim(); if (!code) return say('Type your parent’s family code first.');
