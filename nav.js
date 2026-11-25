@@ -5,6 +5,27 @@
   if (!document.getElementById('tn-safety-js')) { const sj = document.createElement('script'); sj.id = 'tn-safety-js'; sj.src = 'safety.js?v=171'; document.body.appendChild(sj); }
   // Hide the old built-in menu until the right one is ready (stops the sidebar changing on every click)
   setTimeout(() => { const n0 = document.querySelector('.side nav'); if (n0) n0.classList.add('nav-ready'); }, 8000);
+  // A Back button at the top of every inner page (not on the home pages)
+  document.addEventListener('DOMContentLoaded', () => {
+    const page = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+    const HOMES = ['student-dashboard.html', 'teacher-dashboard.html', 'parent-dashboard.html', 'school.html', 'school-teacher.html', 'admin.html', 'index.html'];
+    const bar = document.querySelector('.app-bar');
+    if (!bar || HOMES.includes(page) || bar.querySelector('.tn-back')) return;
+    if (!document.getElementById('tn-back-css')) { const st = document.createElement('style'); st.id = 'tn-back-css';
+      st.textContent = '.tn-back{display:inline-flex;align-items:center;gap:6px;border:1px solid #D9DCEB;background:#fff;color:#3E4B94;font:inherit;font-weight:700;font-size:15px;padding:8px 14px;border-radius:999px;cursor:pointer;margin-right:12px;white-space:nowrap}.tn-back:hover{background:#F1F3FB}.tn-back:focus-visible{outline:3px solid #9AA3D6;outline-offset:2px}@media(max-width:600px){.tn-back{padding:7px 10px;font-size:14px;margin-right:6px}.tn-back .tn-back-t{display:none}}';
+      document.head.appendChild(st); }
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'tn-back'; b.setAttribute('aria-label', 'Go back');
+    b.innerHTML = '<span aria-hidden="true">‹</span><span class="tn-back-t">Back</span>';
+    b.addEventListener('click', () => {
+      let same = false; try { same = !!document.referrer && new URL(document.referrer).origin === location.origin && new URL(document.referrer).pathname !== location.pathname; } catch (_) {}
+      if (same && history.length > 1) return history.back();
+      const r = window.TN_ROLE || '';
+      location.href = /teacher|school_leader|admin/.test(r) || page.startsWith('teacher-') ? 'teacher-dashboard.html'
+        : /parent/.test(r) || page.startsWith('parent-') || page === 'child.html' ? 'parent-dashboard.html' : 'student-dashboard.html';
+    });
+    const tog = bar.querySelector('.side-toggle');
+    if (tog) tog.insertAdjacentElement('afterend', b); else bar.insertBefore(b, bar.firstChild);
+  });
   // Help, contact and reference pages open in a new tab, so people don't lose their place
   document.addEventListener('click', e => {
     const a = e.target.closest('a[href]'); if (!a || a.target) return;
