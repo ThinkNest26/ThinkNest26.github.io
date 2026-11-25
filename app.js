@@ -653,14 +653,34 @@ async function tnDownloadMyData() {
 // ----- Student dashboard: first steps for new students, and a To do list across all courses -----
 async function studentToDo(uid, myEnr, p) {
   const fs = document.getElementById('first-steps'), td = document.getElementById('todo');
+  let parentLinked = false;
+  try { const { data: l } = await db.from('parent_links').select('parent_id').eq('student_id', uid).limit(1); parentLinked = !!(l || []).length; } catch (_) {}
+  // not linked to a parent yet: let the child join their parent's family with the parent's family code
+  if (fs && !parentLinked && !document.getElementById('join-fam-box')) {
+    const jb = document.createElement('section'); jb.id = 'join-fam-box'; jb.className = 'panel';
+    jb.innerHTML = `<h2 class="dash-h" style="margin-top:0">👪 Join your parent’s family</h2>
+      <p class="meta">Did your parent give you their family code (it starts with <b>FAM-</b>)? Type it here so they can follow your learning.</p>
+      <form class="join-fam-inline" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><input name="code" maxlength="12" placeholder="For example, FAM-7K3Q9A" autocomplete="off" autocapitalize="characters" style="flex:1 1 200px" aria-label="Parent’s family code"><button class="btn btn-red">Join family</button></form>
+      <p class="meta" style="margin-top:8px">No code? Ask your parent to sign up as a parent on Think Nest. Their code is on their dashboard.</p>`;
+    fs.parentNode.insertBefore(jb, fs);
+    jb.querySelector('form').addEventListener('submit', async e => {
+      e.preventDefault(); const code = e.target.code.value.trim(); if (!code) return say('Type your parent’s family code first.');
+      const b = e.target.querySelector('button'); b.disabled = true;
+      const { data: r, error } = await db.rpc('join_family', { code });
+      b.disabled = false;
+      if (error) return say(/function|schema cache/i.test(error.message || '') ? 'Please run the latest Supabase update (family safety) first.' : friendly(error));
+      if (r === 'NO_SUCH_CODE') return say('We couldn’t find that family code. Check it with your parent and try again.');
+      jb.innerHTML = `<p style="margin:0">✅ You joined <b>${esc(r === 'linked' ? 'your parent' : r)}</b>’s family. They can now follow your learning.</p>`;
+      const st = fs.querySelector('li:nth-child(2)'); if (st) { st.classList.add('done'); st.innerHTML = '<b>Link your parent</b> so they can follow your progress and agree to courses. ✅ Done.'; }
+    });
+  }
   if (fs && !myEnr.length) {
-    let waiting = 0, parentLinked = false;
+    let waiting = 0;
     try { const { data: r } = await db.from('course_requests').select('id').eq('student_id', uid).in('status', ['parent', 'teacher']); waiting = (r || []).length; } catch (_) {}
-    try { const { data: l } = await db.from('parent_links').select('parent_id').eq('student_id', uid).limit(1); parentLinked = !!(l || []).length; } catch (_) {}
     fs.hidden = false;
     fs.innerHTML = `<h2 class="dash-h">👋 Your first steps</h2><ol class="steps-list">
       <li class="${waiting ? 'done' : ''}"><b>Find a course</b> for your curriculum and grade, and ask for a place. ${waiting ? '✅ You’ve asked: waiting for an answer.' : '<a class="pill pill-live" href="all-courses.html">Find a course</a>'}</li>
-      <li class="${parentLinked ? 'done' : ''}"><b>Link your parent</b> so they can follow your progress and agree to courses. ${parentLinked ? '✅ Done.' : 'Give them your family code from <a href="settings.html">Account settings</a>.'}</li>
+      <li class="${parentLinked ? 'done' : ''}"><b>Link your parent</b> so they can follow your progress and agree to courses. ${parentLinked ? '✅ Done.' : 'Type their family code in the box above, or give them your own code from <a href="settings.html">Account settings</a>.'}</li>
       <li><b>Say hello</b> in the <a href="community.html">Community</a> once you’re in a course.</li></ol>`;
   }
   if (!td || !myEnr.length) return;
