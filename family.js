@@ -29,7 +29,7 @@ function famCollect(loose) {
 }
 function famValidate() {
   const pressed = document.querySelector('#fam-count [aria-pressed=true]');
-  if (!pressed) return 'Please choose how many children you would like to enrol.';
+  if (document.getElementById('fam-count') && !pressed) return 'Please choose how many children you would like to enrol.';
   const kids = famCollect(true);
   if (kids.some(k => !k.name)) return 'Please type each child’s full name.';
   if (kids.some(k => !k.grade)) return 'Please choose a grade for each child.';
