@@ -497,7 +497,7 @@ async function startTeacherDashboard() {
   const per = rows => { const m = {}; ((rows && rows.data) || []).forEach(r => m[r.course_id] = (m[r.course_id] || 0) + 1); return m; };
   const regs = per(rq), wait = per(wl);
   Object.entries(regs).forEach(([cid, k]) => add('📥', `${k} registration${k === 1 ? '' : 's'} to answer`, titleOf(Number(cid)), `teacher-course.html?id=${cid}#t-reqs`, 'Answer'));
-  Object.entries(wait).forEach(([cid, k]) => add('⏳', `${k} on the waiting list`, titleOf(Number(cid)) + ' · add places or another class time', `teacher-course.html?id=${cid}#edit`, 'Manage'));
+  Object.entries(wait).forEach(([cid, k]) => add('⏳', `${k} on the waiting list`, titleOf(Number(cid)) + ' · accept them or decline with a reason', `teacher-course.html?id=${cid}#t-reqs`, 'Answer'));
   // certificates ready
   const got = new Set(((ct && ct.data) || []).map(c => c.course_id + '|' + c.user_id));
   const ready = enr.filter(e => (Number(e.progress) || 0) >= 100 && !got.has(e.course_id + '|' + e.user_id)).length;
@@ -670,7 +670,12 @@ async function startTeacherCourse() {
     const { data, error } = await db.from('course_requests').select('*').eq('course_id', id).order('created_at', { ascending: false });
     if (error) { box.innerHTML = '<p class="empty">Run the latest database update (Batch 3) to see registration requests.</p>'; return; }
     const rows = data || [], waiting = rows.filter(r => r.status === 'teacher'), parent = rows.filter(r => r.status === 'parent'), done = rows.filter(r => !['teacher', 'parent'].includes(r.status)).slice(0, 30);
-    const n = document.getElementById('reqs-n'); if (n) { n.hidden = !waiting.length; n.textContent = waiting.length; }
+    // the waiting list: children who asked when the class time was full
+    let wl = []; const enrN = {};
+    try { const { data: w } = await db.from('course_waitlist').select('*').eq('course_id', id).order('created_at'); wl = w || []; } catch (_) {}
+    if (wl.length) { try { const { data: en } = await db.from('enrollments').select('time_slot').eq('course_id', id); (en || []).forEach(x => enrN[x.time_slot || ''] = (enrN[x.time_slot || ''] || 0) + 1); } catch (_) {} }
+    const capOfSlot = sl => { const v = (c.slot_caps || {})[sl || '']; return v != null && v !== '' ? Number(v) : (c.max_students || null); };
+    const n = document.getElementById('reqs-n'); if (n) { n.hidden = !(waiting.length + wl.length); n.textContent = waiting.length + wl.length; }
     const info = r => { const d = r.details || {}; return `<div class="person-info"><h4>${esc(d.student_name || 'Student')}${d.registered_by_parent ? ' <span class="tag">👪 By parent</span>' : ''}</h4>
         <span class="meta">${esc([d.student_age ? 'Age ' + d.student_age : '', d.student_grade, d.student_curriculum, d.student_country].filter(Boolean).join(' · '))}</span>
         ${d.student_language ? `<span class="meta">Main language: ${esc(d.student_language)}</span>` : ''}
@@ -679,6 +684,11 @@ async function startTeacherCourse() {
         ${d.notes ? `<span class="meta">Note: ${esc(d.notes)}</span>` : ''}<span class="meta">Asked ${new Date(r.created_at).toLocaleDateString('en-GB')}</span></div>`; };
     box.innerHTML = `<h3>Waiting for you <span class="count">${waiting.length}</span></h3>` + (waiting.length > 1 ? '<p class="meta"><label class="remember" style="display:inline-flex"><input type="checkbox" id="rq-all"> Select all</label> <button type="button" class="pill pill-live" id="rq-bulk">✅ Approve selected</button></p>' : '') + (waiting.length ? waiting.map(r => `<article class="panel person" data-rq="${r.id}">${waiting.length > 1 ? `<input type="checkbox" class="rq-pick" value="${r.id}" aria-label="Select" style="width:20px;height:20px;margin-inline-end:8px">` : ''}${info(r)}
         <div class="person-actions"><button class="pill pill-live" data-rq-ok>✅ Approve</button><button class="pill pill-soft danger" data-rq-no>Decline</button></div></article>`).join('') : '<p class="meta">No requests waiting. 🎉</p>')
+      + (wl.length ? `<h3>📋 Waiting list <span class="count">${wl.length}</span></h3><p class="meta">These children asked for a place when the class time was full. Accept to give them a place, or decline and tell them why.</p>` + wl.map(w => {
+          const place = wl.filter(x => (x.slot || '') === (w.slot || '') && x.created_at <= w.created_at).length, cap = capOfSlot(w.slot), have = enrN[w.slot || ''] || 0, full = cap != null && have >= cap;
+          return `<article class="panel person" data-wl="${w.id}" data-full="${full ? have + ' of ' + cap : ''}" data-name="${esc((w.details || {}).student_name || 'this student')}">${info({ details: w.details || {}, time_slot: w.slot, created_at: w.created_at })}
+            <span class="meta">📋 Number ${place} on the waiting list${w.slot ? ' for ' + esc(w.slot) : ''} · ${full ? `class time full (${have} of ${cap})` : 'a place is free now'}</span>
+            <div class="person-actions"><button class="pill pill-live" data-wl-ok>✅ Accept</button><button class="pill pill-soft danger" data-wl-no>Decline</button></div></article>`; }).join('') : '')
       + (parent.length ? `<h3>Waiting for a parent to agree <span class="count">${parent.length}</span></h3>` + parent.map(r => `<article class="panel person" data-rq="${r.id}">${info(r)}<div class="person-actions"><button class="link-btn" data-rq-ok>Approve without waiting</button></div></article>`).join('') : '')
       + (done.length ? `<details class="hubreq-done"><summary>Answered (${done.length})</summary>${done.map(r => `<div class="pending-row"><b>${esc((r.details || {}).student_name || 'Student')}</b><span class="meta">${{ approved: '✅ Approved', declined: '❌ Declined' + (r.decline_reason ? ': ' + esc(r.decline_reason) : ''), cancelled: 'Cancelled by the student' }[r.status] || r.status}${r.status === 'declined' && (r.details || {}).notes ? ' · Note from them: ' + esc(r.details.notes) : ''}</span>${r.status === 'declined' ? `<button type="button" class="pill pill-soft" data-rq-reopen="${r.id}">↩️ Accept after all</button>` : ''}</div>`).join('')}</details>` : '');
   }
@@ -707,6 +717,19 @@ async function startTeacherCourse() {
       const { error: e2 } = await db.rpc('teacher_decide_request', { rid, ok: true, reason: null });
       if (e2) { loadRequests(); return say(/COURSE_FULL/.test(e2.message || '') ? 'That class time is full, so they can’t be accepted yet. Their request is back under “Waiting for you”.' : friendly(e2)); }
       say('✅ Accepted. The student has been told.'); loadRequests(); loadGroups(); if (typeof loadStudents === 'function') loadStudents(); return;
+    }
+    const wrow = e.target.closest('[data-wl]');
+    if (wrow) {
+      const wok = !!e.target.closest('[data-wl-ok]'), wno = !!e.target.closest('[data-wl-no]'); if (!wok && !wno) return;
+      const nm = wrow.dataset.name || 'this student'; let wreason = null;
+      if (wok) { if (!confirm(wrow.dataset.full ? `This class time is full (${wrow.dataset.full}). Accepting gives it one extra place.\n\nAccept ${nm}? They'll be told straight away.` : `Accept ${nm}? They'll be told straight away.`)) return; }
+      else { wreason = prompt(`Why can't ${nm} join? They and their parent will see your reason.\n\nFor example: "This group is for Cambridge students" or "We'll open a new class time in January."`, ''); if (wreason === null) return; }
+      const bs = wrow.querySelectorAll('button'); bs.forEach(b => b.disabled = true);
+      const { error: we } = await db.rpc('teacher_waitlist_decide', { wid: Number(wrow.dataset.wl), ok: wok, reason: wreason });
+      if (we) { bs.forEach(b => b.disabled = false); return say(/function|does not exist|schema cache/i.test(we.message || '') ? 'Please run the latest Supabase update (waiting list) first.' : friendly(we)); }
+      if (wok) { try { const { data: cc } = await db.from('courses').select('max_students, slot_caps').eq('id', id).maybeSingle(); if (cc) Object.assign(c, cc); } catch (_) {} }
+      say(wok ? '✅ Accepted. The student and their parent have been told.' : 'Declined. The student and their parent have been told why.');
+      loadRequests(); loadGroups(); if (typeof loadStudents === 'function') loadStudents(); return;
     }
     const row = e.target.closest('[data-rq]'); if (!row) return;
     const ok = !!e.target.closest('[data-rq-ok]'), no = !!e.target.closest('[data-rq-no]'); if (!ok && !no) return;
