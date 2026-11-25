@@ -43,8 +43,8 @@
       <p class="auth-sub">New to Think Nest? Create your child’s login here. It’s linked to you straight away.</p>
       <form class="auth-form" id="new-kid-form" novalidate>
         <label>Child’s full name <input type="text" name="name" maxlength="120" required></label>
-        <div class="two"><label>Grade <select name="grade" required><option value="">Choose</option></select></label>
-        <label>Curriculum <select name="curriculum"><option value="">Choose</option></select></label></div>
+        <div class="two"><label>Grade <select name="grade" required><option value="">Choose</option><option value="KG1">KG1</option><option value="KG2">KG2</option><option value="Grade 1">Grade 1</option><option value="Grade 2">Grade 2</option><option value="Grade 3">Grade 3</option><option value="Grade 4">Grade 4</option><option value="Grade 5">Grade 5</option><option value="Grade 6">Grade 6</option><option value="Grade 7">Grade 7</option><option value="Grade 8">Grade 8</option><option value="Grade 9">Grade 9</option><option value="Grade 10">Grade 10</option><option value="Grade 11">Grade 11</option><option value="Grade 12">Grade 12</option></select></label>
+        <label>Curriculum <select name="curriculum"><option value="">Choose</option><option value="British Curriculum (England / IGCSE)">British Curriculum (England / IGCSE)</option><option value="American Curriculum">American Curriculum</option><option value="International Baccalaureate (IB)">International Baccalaureate (IB)</option><option value="Montessori">Montessori</option><option value="UAE MOE">UAE MOE</option><option value="Other">Other</option></select></label></div>
         <p class="note">Next, you choose a username and password for your child. No email is needed.</p>
         <button class="btn btn-red auth-btn">Create my child’s login</button>
       </form>
@@ -75,7 +75,7 @@
   <script src="supabase-config.js?v=172"></script>
   <script src="app.js?v=189"></script>
   <script src="family.js?v=192"></script>
-  <script src="parent.js?v=176"></script>
+  <script src="parent.js?v=177"></script>
   <script>startAddChild();</script>
   <script src="aichat.js?v=3" defer></script>
 </body>

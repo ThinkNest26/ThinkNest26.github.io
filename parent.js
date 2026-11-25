@@ -249,8 +249,6 @@ async function startAddChild() {
   // a brand-new child: add them to the family, then make their username login
   const nk = document.getElementById('new-kid-form');
   if (nk && typeof FAM_GRADES !== 'undefined') {
-    nk.grade.innerHTML += FAM_GRADES.map(g => `<option>${g}</option>`).join('');
-    nk.curriculum.innerHTML += FAM_CURR.map(c => `<option>${esc(c)}</option>`).join('');
     nk.addEventListener('submit', async e => {
       e.preventDefault();
       const name = nk.name.value.trim();
