@@ -352,6 +352,8 @@ async function startDashboard() {
   if (!session) { location.href = 'login.html'; return; }
   const { data: gp } = await db.from('profiles').select('role, account_status').eq('id', session.user.id).maybeSingle();
   gateApproval(gp);
+  // parents have their own home page
+  if (gp && gp.role === 'parent') { location.replace('parent-dashboard.html'); return; }
   document.body.classList.remove('loading');
   const uid = session.user.id;
 
