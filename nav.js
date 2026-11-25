@@ -45,7 +45,7 @@
     ],
     teacher: [
       { ic: '🏠', label: 'Today', href: 'teacher-dashboard.html' },
-      { ic: '🏫', label: 'My classes', href: 'teacher-classes.html' },
+      { ic: '🏫', label: 'My classes', items: [['teacher-classes.html', 'All my classes'], ['teacher-accounts.html', '👥 Student accounts']] },
       { ic: '📘', label: 'My courses', items: [['teacher-courses.html', 'All my courses'], ['teacher-objectives.html', '🎯 Objectives & activities']] },
       { ic: '📅', label: 'Calendar', href: 'teacher-my-calendar.html' },
       { ic: '💬', label: 'Messages', href: 'messages.html' },

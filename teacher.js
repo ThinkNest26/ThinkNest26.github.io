@@ -683,14 +683,14 @@ async function startTeacherCourse() {
         <span class="meta">Parent: ${esc([d.parent_name, d.parent_email, d.parent_phone].filter(Boolean).join(', ') || 'not given')}</span>
         ${d.notes ? `<span class="meta">Note: ${esc(d.notes)}</span>` : ''}<span class="meta">Asked ${new Date(r.created_at).toLocaleDateString('en-GB')}</span></div>`; };
     box.innerHTML = `<h3>Waiting for you <span class="count">${waiting.length}</span></h3>` + (waiting.length > 1 ? '<p class="meta"><label class="remember" style="display:inline-flex"><input type="checkbox" id="rq-all"> Select all</label> <button type="button" class="pill pill-live" id="rq-bulk">✅ Approve selected</button></p>' : '') + (waiting.length ? waiting.map(r => `<article class="panel person" data-rq="${r.id}">${waiting.length > 1 ? `<input type="checkbox" class="rq-pick" value="${r.id}" aria-label="Select" style="width:20px;height:20px;margin-inline-end:8px">` : ''}${info(r)}
-        <div class="person-actions"><button class="pill pill-live" data-rq-ok>✅ Approve</button><button class="pill pill-soft danger" data-rq-no>Decline</button></div></article>`).join('') : '<p class="meta">No requests waiting. 🎉</p>')
+        <div class="person-actions"><button class="pill pill-live" data-rq-ok>✅ Approve</button><button class="pill pill-soft danger" data-rq-no>Decline</button><button type="button" class="link-btn" data-rq-del="${r.id}" title="Remove a duplicate or test request without telling the student">🗑 Remove</button></div></article>`).join('') : '<p class="meta">No requests waiting. 🎉</p>')
       + (wl.length ? `<h3>📋 Waiting list <span class="count">${wl.length}</span></h3><p class="meta">These children asked for a place when the class time was full. Accept to give them a place, or decline and tell them why.</p>` + wl.map(w => {
           const place = wl.filter(x => (x.slot || '') === (w.slot || '') && x.created_at <= w.created_at).length, cap = capOfSlot(w.slot), have = enrN[w.slot || ''] || 0, full = cap != null && have >= cap;
           return `<article class="panel person" data-wl="${w.id}" data-full="${full ? have + ' of ' + cap : ''}" data-name="${esc((w.details || {}).student_name || 'this student')}">${info({ details: w.details || {}, time_slot: w.slot, created_at: w.created_at })}
             <span class="meta">📋 Number ${place} on the waiting list${w.slot ? ' for ' + esc(w.slot) : ''} · ${full ? `class time full (${have} of ${cap})` : 'a place is free now'}</span>
             <div class="person-actions"><button class="pill pill-live" data-wl-ok>✅ Accept</button><button class="pill pill-soft danger" data-wl-no>Decline</button></div></article>`; }).join('') : '')
       + (parent.length ? `<h3>Waiting for a parent to agree <span class="count">${parent.length}</span></h3>` + parent.map(r => `<article class="panel person" data-rq="${r.id}">${info(r)}<div class="person-actions"><button class="link-btn" data-rq-ok>Approve without waiting</button></div></article>`).join('') : '')
-      + (done.length ? `<details class="hubreq-done"><summary>Answered (${done.length})</summary>${done.map(r => `<div class="pending-row"><b>${esc((r.details || {}).student_name || 'Student')}</b><span class="meta">${{ approved: '✅ Approved', declined: '❌ Declined' + (r.decline_reason ? ': ' + esc(r.decline_reason) : ''), cancelled: 'Cancelled by the student' }[r.status] || r.status}${r.status === 'declined' && (r.details || {}).notes ? ' · Note from them: ' + esc(r.details.notes) : ''}</span>${r.status === 'declined' ? `<button type="button" class="pill pill-soft" data-rq-reopen="${r.id}">↩️ Accept after all</button>` : ''}</div>`).join('')}</details>` : '');
+      + (done.length ? `<details class="hubreq-done"><summary>Answered (${done.length})</summary>${done.map(r => `<div class="pending-row"><b>${esc((r.details || {}).student_name || 'Student')}</b><span class="meta">${{ approved: '✅ Approved', declined: '❌ Declined' + (r.decline_reason ? ': ' + esc(r.decline_reason) : ''), cancelled: 'Cancelled by the student' }[r.status] || r.status}${r.status === 'declined' && (r.details || {}).notes ? ' · Note from them: ' + esc(r.details.notes) : ''}</span>${r.status === 'declined' ? `<button type="button" class="pill pill-soft" data-rq-reopen="${r.id}">↩️ Accept after all</button>` : ''}<button type="button" class="link-btn" data-rq-del="${r.id}">🗑 Remove</button></div>`).join('')}</details>` : '');
   }
   loadRequests();
   // keep the registrations up to date: when the page comes back into view, every minute, and when a notification opens this tab
@@ -730,6 +730,15 @@ async function startTeacherCourse() {
       if (wok) { try { const { data: cc } = await db.from('courses').select('max_students, slot_caps').eq('id', id).maybeSingle(); if (cc) Object.assign(c, cc); } catch (_) {} }
       say(wok ? '✅ Accepted. The student and their parent have been told.' : 'Declined. The student and their parent have been told why.');
       loadRequests(); loadGroups(); if (typeof loadStudents === 'function') loadStudents(); return;
+    }
+    const del = e.target.closest('[data-rq-del]');
+    if (del) {
+      const waitingRow = del.closest('[data-rq]');
+      if (!confirm(waitingRow ? 'Remove this request? Use it for duplicates or test requests. The student is NOT told. To tell them, use Decline instead.' : 'Remove this answered request from the list?')) return;
+      del.disabled = true;
+      const { error: de } = await db.rpc('teacher_remove_request', { rid: Number(del.dataset.rqDel) });
+      if (de) { del.disabled = false; return say(/function|schema cache/i.test(de.message || '') ? 'Please run the latest Supabase update (remove requests) first.' : friendly(de)); }
+      say('Removed.'); return loadRequests();
     }
     const row = e.target.closest('[data-rq]'); if (!row) return;
     const ok = !!e.target.closest('[data-rq-ok]'), no = !!e.target.closest('[data-rq-no]'); if (!ok && !no) return;

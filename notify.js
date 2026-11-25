@@ -18,7 +18,7 @@
   const panel = document.createElement('div');
   panel.className = 'notif-panel'; panel.hidden = true;
   panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Notifications');
-  panel.innerHTML = '<div class="notif-head"><b>Notifications</b><button class="link-btn" id="notif-all">Mark all as read</button></div><div class="notif-list" id="notif-list"><p class="empty">Loading…</p></div>';
+  panel.innerHTML = '<div class="notif-head"><b>Notifications</b><span><button class="link-btn" id="notif-all">Mark all as read</button> · <button class="link-btn" id="notif-clear">Clear read</button></span></div><div class="notif-list" id="notif-list"><p class="empty">Loading…</p></div>';
   bar.style.position = 'relative';
   bar.appendChild(panel);
 
@@ -34,7 +34,7 @@
     const { data } = await db.from('notifications').select('*').eq('user_id', uid).order('created_at', { ascending: false }).limit(30);
     const list = document.getElementById('notif-list');
     list.innerHTML = (data || []).length ? data.map(n => `<a class="notif ${n.read ? '' : 'unread'}" href="${esc((n.kind === 'approval' || /waiting for approval/i.test(n.title || '')) && /^community\.html$/.test(n.link || '') ? 'community.html#pending' : (n.link || '#'))}" data-nid="${n.id}">
-        <span class="notif-ic" aria-hidden="true">${icon(n.kind)}</span><span class="notif-text">${esc(n.title)}<span class="meta">${ago(n.created_at)}</span></span></a>`).join('')
+        <span class="notif-ic" aria-hidden="true">${icon(n.kind)}</span><span class="notif-text">${esc(n.title)}<span class="meta">${ago(n.created_at)}</span></span><button type="button" class="notif-del" data-ndel="${n.id}" aria-label="Delete this notification" title="Delete" style="margin-inline-start:auto;border:0;background:none;color:#8A8FA3;font-size:16px;cursor:pointer;padding:2px 6px">✕</button></a>`).join('')
       : '<p class="empty">You’re all caught up. 🎉</p>';
   }
   bell.addEventListener('click', async e => {
@@ -46,6 +46,9 @@
   document.addEventListener('click', e => { if (!panel.hidden && !panel.contains(e.target)) { panel.hidden = true; bell.setAttribute('aria-expanded', 'false'); } });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !panel.hidden) { panel.hidden = true; bell.focus(); } });
   panel.addEventListener('click', async e => {
+    const nd = e.target.closest('[data-ndel]');
+    if (nd) { e.preventDefault(); e.stopPropagation(); const { error } = await db.from('notifications').delete().eq('id', Number(nd.dataset.ndel)); if (error) { if (typeof say === 'function') say(/policy|permission/i.test(error.message || '') ? 'Please run the latest Supabase update (delete notifications) first.' : error.message); return; } refreshCount(); return loadList(); }
+    if (e.target.id === 'notif-clear') { e.stopPropagation(); if (!confirm('Delete all the notifications you’ve already read?')) return; await db.from('notifications').delete().eq('user_id', uid).eq('read', true); refreshCount(); return loadList(); }
     const a = e.target.closest('[data-nid]');
     if (a) { await db.from('notifications').update({ read: true }).eq('id', Number(a.dataset.nid)); return; }
     if (e.target.id === 'notif-all') {
