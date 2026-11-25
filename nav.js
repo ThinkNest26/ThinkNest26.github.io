@@ -218,6 +218,8 @@
       try { saved[label] = open; localStorage.setItem('tn_nav_open', JSON.stringify(saved)); } catch (_) {}
     }));
     nav.querySelectorAll('.nav2-logout').forEach(a => a.addEventListener('click', async e => { e.preventDefault(); await db.auth.signOut(); location.href = 'index.html'; }));
+    // the Parent Café is only for parents: teachers who aren't parents don't see it
+    if (!['parent', 'admin'].includes(role) && !window.TN_ALSO_PARENT) nav.querySelectorAll('a[href^="parent-cafe.html"]').forEach(a => (a.closest('li') || a).remove());
     fillDynamic(view, page, qid);
     if (sc && role !== 'admin') schoolAnnouncements(view, page);
     profileMenu(view);

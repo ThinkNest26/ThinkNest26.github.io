@@ -36,7 +36,7 @@ async function startCommunity() {
       if (SPACE === 'staff') document.querySelectorAll('.comm-tabs').forEach(x => x.hidden = true);
     }
   }
-  if (CAFE && !(CAFE.who.includes(me.role) || (SPACE === 'parents' && me.also_parent))) { document.querySelector('main').innerHTML = `<div class="empty-box"><p>${CAFE.title} is a private space for ${SPACE}.</p><a class="btn btn-red" href="community.html">Go to the Community</a></div>`; return; }
+  if (CAFE && !(CAFE.who.includes(me.role) || (SPACE === 'parents' && me.also_parent))) { document.querySelector('main').innerHTML = `<div class="empty-box"><p>🔒 ${CAFE.title} is a private space ${SPACE === 'parents' ? 'just for parents. Teachers who aren’t parents can’t see it, so parents can talk freely.' : 'for ' + SPACE + '.'}</p><a class="btn btn-red" href="${SPACE === 'parents' ? 'teacher-dashboard.html' : 'community.html'}">${SPACE === 'parents' ? 'Back to my home page' : 'Go to the Community'}</a></div>`; return; }
   if (CAFE && me.role !== 'admin') {
     const { data: ok } = await db.rpc('is_hub_member', { h: SPACE });
     if (!ok) { const hubPage = SPACE === 'teachers' ? 'teacher-hub.html' : 'parent-hub.html', hubName = SPACE === 'teachers' ? 'Beyond the Bell' : 'Beyond the School Run';
