@@ -57,7 +57,7 @@
       { ic: '💬', label: 'Messages', href: 'messages.html' },
       { ic: '📅', label: 'Family calendar', href: 'parent-calendar.html' },
       { ic: '📝', label: 'Reports', href: 'reports.html' },
-      { ic: '🌟', label: 'For me', items: [['parent-hub.html', 'Beyond the School Run workshops'], ['parent-hub.html#hub-done', '🏅 My certificates'], ['parent-cafe.html', '☕ Parent Café'], ['parent-connect.html', '🤝 Parent Connections']] }
+      { ic: '🌟', label: 'For me', items: [['parent-hub.html', '🎓 Parent workshops'], ['parent-hub.html#host', '🎤 Host a workshop'], ['parent-hub.html#hub-done', '🏅 My certificates'], ['parent-cafe.html', '☕ Parent Café'], ['parent-connect.html', '🤝 Parent Connections']] }
     ]
   };
   MENUS.school_leader = [

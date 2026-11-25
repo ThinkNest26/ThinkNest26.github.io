@@ -87,9 +87,47 @@ async function startHubInApp(aud) {
       <div class="hub-cats">${H.cats.map(([k, ic, n, d]) => ['cafe', 'circles'].includes(k) ? `<a class="hub-cat hub-cat-cafe" href="${aud === 'teachers' ? 'teacher-cafe.html' : 'parent-cafe.html'}" style="--c:${H.color}"><span>${ic}</span><b>${n}</b><small>${d} · Open the café →</small></a>` : `<button type="button" class="hub-cat ${pick === k ? 'on' : ''}" data-hc="${k}" style="--c:${H.color}"><span>${ic}</span><b>${n}</b><small>${d}</small></button>`).join('')}</div>
       <h2 class="hub-h">${pick ? hubCat(aud, pick)[1] + ' ' + hubCat(aud, pick)[2] : 'What’s on'} ${pick ? '<button type="button" class="link-btn" data-hc="">Show all</button>' : ''}</h2>
       ${shown.length ? `<div class="hub-courses">${shown.map(card).join('')}</div>` : `<div class="hub-empty"><p>${pick ? 'Nothing in this topic yet.' : 'New workshops are being added.'} Tell us what you’d love to learn!</p><a class="btn btn-red" href="contact.html?topic=suggest">Suggest a workshop</a></div>`}
-      <section class="hub-host"><div><h2>Have a skill to share?</h2><p>Run a workshop for the ${H.name}: wellbeing, cooking, careers, crafts, anything people would love to learn.</p></div><a class="btn btn-red" href="contact.html?topic=host">Become a host</a></section>`;
+      <section class="hub-host" id="host"><div><h2>Have a skill to share?</h2><p>Run a workshop for the ${H.name}: wellbeing, cooking, careers, crafts, anything people would love to learn. Think Nest reviews every request.</p></div><button type="button" class="btn btn-red" data-host-open>🎤 Ask to host a workshop</button></section>
+      <div id="host-mine"></div>`;
+    hostMine();
+  }
+  // ---- asking to host a workshop (the admin approves) ----
+  async function hostMine() {
+    const el = document.getElementById('host-mine'); if (!el) return;
+    const { data, error } = await db.from('workshop_host_requests').select('*').eq('user_id', uid).eq('hub', aud).order('created_at', { ascending: false });
+    if (error || !(data || []).length) { el.innerHTML = ''; return; }
+    el.innerHTML = '<h2 class="hub-h">🎤 My hosting requests</h2>' + data.map(r => `<div class="pending-row"><span>🎤</span><div><b>${hubEsc(r.title)}</b><span class="meta">${r.status === 'pending' ? '⏳ Waiting for Think Nest to review' : r.status === 'approved' ? '✅ Approved. Think Nest will be in touch to set the date.' : '❌ Not approved this time' + (r.admin_note ? ': ' + hubEsc(r.admin_note) : '')} · sent ${new Date(r.created_at).toLocaleDateString('en-GB')}</span></div>${r.status === 'pending' ? `<button type="button" class="link-btn" data-host-cancel="${r.id}">Cancel</button>` : ''}</div>`).join('');
+  }
+  function hostForm() {
+    let d = document.getElementById('host-dlg');
+    if (!d) { d = document.createElement('dialog'); d.id = 'host-dlg'; d.className = 'dlg'; document.body.appendChild(d); }
+    const topics = (H.cats || []).filter(c => !['cafe', 'circles'].includes(c[0]));
+    d.innerHTML = `<form class="auth-form" style="display:grid;gap:12px;min-width:min(520px,90vw)"><h2 style="margin:0">🎤 Ask to host a workshop</h2>
+      <p class="meta" style="margin:0">Tell us about your idea. Think Nest reviews every request and will be in touch if it’s approved.</p>
+      <label>Workshop title <input name="title" maxlength="120" required placeholder="For example, Healthy lunchboxes in 10 minutes"></label>
+      <label>What will people learn? <textarea name="about" rows="4" maxlength="1500" required placeholder="A short description of the workshop and who it’s for"></textarea></label>
+      <div class="two"><label>Topic <select name="topic"><option value="">Choose</option>${topics.map(c => `<option value="${hubEsc(c[0])}">${c[1]} ${hubEsc(c[2])}</option>`).join('')}</select></label>
+      <label>Format <select name="format"><option>Online</option><option>In person</option><option>Online or in person</option></select></label></div>
+      <label>When could you run it? <input name="when_text" maxlength="200" placeholder="For example, weekday evenings in January"></label>
+      <label>Your experience with this topic <textarea name="experience" rows="2" maxlength="600" placeholder="Optional"></textarea></label>
+      <div class="step-buttons"><button type="button" class="btn btn-white auth-btn outline" data-x>Cancel</button><button class="btn btn-red auth-btn">Send request</button></div></form>`;
+    const f = d.querySelector('form'); d.querySelector('[data-x]').onclick = () => d.close();
+    f.onsubmit = async ev => {
+      ev.preventDefault();
+      if (f.title.value.trim().length < 3) return say('Give your workshop a title.');
+      if (f.about.value.trim().length < 10) return say('Tell us a little more about what people will learn.');
+      const b = f.querySelector('.btn-red'); b.disabled = true;
+      const { error } = await db.from('workshop_host_requests').insert({ hub: aud, title: f.title.value.trim(), about: f.about.value.trim(), topic: f.topic.value || null, format: f.format.value, when_text: f.when_text.value.trim() || null, experience: f.experience.value.trim() || null });
+      b.disabled = false;
+      if (error) return say(/relation|does not exist|schema cache/i.test(error.message || '') ? 'Please run the latest Supabase update (host a workshop) first.' : friendly(error));
+      d.close(); say('🎤 Request sent! Think Nest will review it and let you know.'); hostMine();
+    };
+    d.showModal();
   }
   box.addEventListener('click', async e => {
+    if (e.target.closest('[data-host-open]')) return hostForm();
+    const hc = e.target.closest('[data-host-cancel]');
+    if (hc) { if (!confirm('Cancel this request?')) return; const { error } = await db.from('workshop_host_requests').delete().eq('id', Number(hc.dataset.hostCancel)); if (error) return say(friendly(error)); return hostMine(); }
     const cf = e.target.closest('[data-hcert-file]');
     if (cf) { const { data, error } = await db.storage.from('certificates').createSignedUrl(cf.dataset.hcertFile, 600); if (error) return say(friendly(error)); return window.open(data.signedUrl, '_blank', 'noopener'); }
     const c = e.target.closest('[data-hc]'); if (c) { pick = c.dataset.hc; return draw(); }
@@ -114,6 +152,7 @@ async function startHubInApp(aud) {
   draw();
   const toDone = () => { if (location.hash === '#hub-done') { const d = document.getElementById('hub-done'); if (d) setTimeout(() => d.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100); } };
   toDone(); window.addEventListener('hashchange', toDone);
+  if (location.hash === '#host') setTimeout(() => { const h = document.getElementById('host'); if (h) h.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 300);
 }
 // Small banner for the dashboards
 function hubBanner(aud, hostId) {
