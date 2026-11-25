@@ -34,7 +34,7 @@ function famValidate() {
   if (kids.some(k => !k.name)) return 'Please type each child’s full name.';
   if (kids.some(k => !k.grade)) return 'Please choose a grade for each child.';
   if ([...document.querySelectorAll('#fam-kids .fam-child')].some(fs => (fs.querySelector('input[type=radio]:checked') || {}).value === 'yes' && !fs.querySelector('[data-k=email]').value.trim())) return 'Please type the Think Nest email for any child who already has an account.';
-  if (!document.querySelector('input[name=family_joined]:checked')) return 'Please choose whether you’d like a joined family account.';
+  if (document.querySelector('input[name=family_joined]') && !document.querySelector('input[name=family_joined]:checked')) return 'Please choose whether you’d like a joined family account.';
   return '';
 }
 
