@@ -67,10 +67,26 @@ async function loadChildren(uid) {
 async function pendingRequests(box) {
   const { data } = await db.rpc('my_child_requests');
   const rows = data || [];
-  box.innerHTML = rows.length ? '<h3>Requests waiting for your child</h3>' + rows.map(r => `<div class="pending-row">
+  const kidAsks = rows.filter(r => r.asked_by === 'child' && r.status === 'pending'), mine = rows.filter(r => r.asked_by !== 'child');
+  box.id = box.id || 'pending';
+  box.innerHTML = (kidAsks.length ? '<h3>👪 Children asking to join your family</h3><p class="meta">They used your family code. Only confirm children you know. Nothing about them is shared with you until you confirm.</p>' + kidAsks.map(r => `<div class="pending-row" data-kreq="${r.id}">
+      <span class="initials">${esc(ini(r.child_name))}</span>
+      <div><b>${esc(r.child_name || 'A child')}</b><span class="meta">${esc(r.child_info || '')}${r.child_info ? ' · ' : ''}asked ${new Date(r.created_at).toLocaleDateString('en-GB')}</span></div>
+      <div class="req-actions"><button class="pill pill-live" data-kok="1">Yes, this is my child</button><button class="pill pill-soft" data-kok="0">No, not my child</button></div></div>`).join('') : '')
+    + (mine.length ? '<h3>Requests waiting for your child</h3>' + mine.map(r => `<div class="pending-row">
       <span class="initials">${esc(ini(r.child_name))}</span>
       <div><b>${esc(r.child_name || 'Your child')}</b><span class="meta">${r.status === 'declined' ? 'Declined. Check with your child, then send again.' : 'Waiting for your child to approve. Sent ' + new Date(r.created_at).toLocaleDateString('en-GB') + '.'}</span></div>
-      <span class="tag ${r.status === 'declined' ? '' : 'tag-wait'}">${r.status === 'declined' ? 'Declined' : 'Waiting'}</span></div>`).join('') : '';
+      <span class="tag ${r.status === 'declined' ? '' : 'tag-wait'}">${r.status === 'declined' ? 'Declined' : 'Waiting'}</span></div>`).join('') : '');
+  box.onclick = async e => {
+    const b = e.target.closest('[data-kok]'); if (!b) return;
+    const row = b.closest('[data-kreq]'), yes = b.dataset.kok === '1', nm = row.querySelector('b').textContent;
+    if (yes && !confirm(`Confirm that ${nm} is your child? They'll be linked to your account and you'll see their courses and progress.`)) return;
+    row.querySelectorAll('button').forEach(x => x.disabled = true);
+    const { error } = await db.rpc('parent_answer_child', { req: Number(row.dataset.kreq), ok: yes });
+    if (error) { row.querySelectorAll('button').forEach(x => x.disabled = false); return say(/function|schema cache/i.test(error.message || '') ? 'Please run the latest Supabase update (family privacy) first.' : friendly(error)); }
+    say(yes ? '✅ ' + nm + ' is now linked to your account.' : 'Thanks. ' + nm + ' has been told to check the code.');
+    setTimeout(() => location.reload(), 900);
+  };
 }
 
 // ---------- The parent's own family code (a child types it to join the family) ----------
@@ -81,7 +97,7 @@ async function parentFamilyCode(box) {
   box.hidden = false;
   box.innerHTML = `<div class="panel family" style="margin-top:14px"><h3 style="margin:0 0 6px">👪 Your family code</h3>
       <p class="code" data-fcode>${esc(code)}</p>
-      <p class="meta">Give this code to your child. They type it when they <b>sign up</b> (Sign up → Student), or later in <b>Account Settings → Join your parent’s family</b>. They’re linked to you straight away. Only share it with your own children.</p>
+      <p class="meta">Give this code to your child. They type it when they <b>sign up</b> (Sign up → Student), or later in <b>Account Settings → Join your parent’s family</b>. You’ll then be asked to confirm it’s your child. Only share it with your own children.</p>
       <button type="button" class="pill pill-soft" data-fnew>Make a new code</button></div>`;
   box.querySelector('[data-fnew]').onclick = async () => {
     if (!confirm('Make a new code? The old code will stop working. Children already linked stay linked.')) return;
@@ -207,12 +223,15 @@ async function startChild() {
   document.getElementById('k-friends').innerHTML = friends.length ? friends.map(f => `<div class="panel friend"><span class="initials">${esc(ini(f.full_name))}</span><div><b>${esc(f.full_name)}</b><span class="meta">${esc([f.grade, f.school].filter(Boolean).join(' · '))}</span><span class="meta">Friends since ${new Date(f.since).toLocaleDateString('en-GB')}</span></div></div>`).join('') : '<p class="empty">No friends added yet.</p>';
   const gr = await db.rpc('child_groups', { kid: kidId });
   const gs = gr.data || [];
-  document.getElementById('k-groups').innerHTML = gs.length ? gs.map(g => `<a class="panel group-card" href="group.html?id=${g.id}"><b>${esc(g.name)}</b><span class="meta">${g.members} member${g.members === 1 ? '' : 's'} · view only</span></a>`).join('') : '<p class="empty">Not in any study groups yet.</p>';
+  document.getElementById('k-groups').innerHTML = gs.length ? gs.map(g => `<div class="panel group-card"><b>${esc(g.name)}</b><span class="meta">${g.members} member${g.members === 1 ? '' : 's'}</span></div>`).join('') : '<p class="empty">Not in any study groups yet.</p>';
   const cv = await db.rpc('child_conversations', { kid: kidId });
   const chats = cv.data || [];
-  document.getElementById('k-chats').innerHTML = chats.length ? chats.map(c => `<a class="pending-row" href="messages.html?c=${c.id}"><span class="initials">${c.kind === 'group' ? '👥' : esc(ini(c.title))}</span><div><b>${c.kind === 'group' ? 'Group chat: ' : 'Chat with '}${esc(c.title || '')}</b><span class="meta">${c.messages} message${c.messages === 1 ? '' : 's'}${c.last_at ? ' · last ' + new Date(c.last_at).toLocaleDateString('en-GB') : ''}</span></div><span class="pill pill-soft">Read</span></a>`).join('') : '<p class="empty">No chats yet.</p>';
+  document.getElementById('k-chats').innerHTML = (chats.length ? '<p class="meta">To keep every family’s privacy, you see who your child talks to and any messages that were reported, not the messages themselves. If you’re worried, use “Tell a trusted adult” or contact Think Nest.</p>' + chats.map(c => `<div class="pending-row"><span class="initials">${c.kind === 'group' ? '👥' : esc(ini(c.title))}</span><div><b>${c.kind === 'group' ? 'Group chat: ' : 'Chat with '}${esc(c.title || '')}</b><span class="meta">${c.messages} message${c.messages === 1 ? '' : 's'}${c.last_at ? ' · last ' + new Date(c.last_at).toLocaleDateString('en-GB') : ''}</span></div>${c.reported ? `<span class="tag">⚠️ ${c.reported} reported</span>` : '<span class="tag">No reports</span>'}</div>`).join('') : '<p class="empty">No chats yet.</p>');
   // mentor sessions, each with its shared thread (summaries from the mentor appear here)
   if (typeof childSessions === 'function') { let sh = document.getElementById('k-sessions'); if (!sh) { sh = document.createElement('section'); sh.id = 'k-sessions'; const kc = document.getElementById('k-chats'); (kc.closest('section') || kc.parentElement).after(sh); } childSessions(kidId, sh); }
+  { const ul = document.getElementById('unlink'); if (ul) { const hb = document.createElement('details'); hb.style.marginTop = '12px'; ul.before(hb);
+    db.rpc('my_family_history', { kid: kidId }).then(({ data: hs }) => { if (!(hs || []).length) { hb.remove(); return; }
+      hb.innerHTML = '<summary><b>Family history</b></summary><ul class="meta" style="margin:8px 0 0;padding-left:18px">' + hs.map(h => `<li>${new Date(h.at).toLocaleDateString('en-GB')}: ${esc(h.who || 'A parent')} ${h.event === 'linked' ? 'linked' : 'removed'} (by ${esc(h.by_whom)})</li>`).join('') + '</ul>'; }); } }
   document.getElementById('unlink').addEventListener('click', async () => {
     if (!confirm('Remove ' + (k.full_name || 'this child') + ' from your parent account? You can add them again later.')) return;
     const { error } = await db.from('parent_links').delete().eq('parent_id', user.id).eq('student_id', kidId);

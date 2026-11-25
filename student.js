@@ -591,14 +591,20 @@ async function startSettings() {
     });
     const jf = document.getElementById('join-family');
     if (jf) jf.addEventListener('submit', async e => {
-      e.preventDefault(); const code = jf.code.value.trim(); if (!code) return say('Type your parent’s family code first.');
-      const b = jf.querySelector('button'); b.disabled = true;
-      const { data: r, error: er } = await db.rpc('join_family', { code });
-      b.disabled = false;
-      if (er) return say(/function|schema cache/i.test(er.message || '') ? 'Please run the latest Supabase update (family safety) first.' : friendly(er));
-      if (r === 'NO_SUCH_CODE') return say('We couldn’t find that family code. Check it with your parent and try again.');
-      jf.reset(); say(r === 'linked' ? 'You’re already in this family.' : '✅ You joined ' + r + '’s family.'); showParents();
+      e.preventDefault(); const b = jf.querySelector('button'); b.disabled = true;
+      const r = await tnJoinFamily(jf.code.value); b.disabled = false;
+      if (r) { jf.reset(); showParents(); showHistory(); }
     });
+    // family history: who linked, when, and who removed whom
+    const showHistory = async () => {
+      let hb = document.getElementById('family-history');
+      if (!hb) { hb = document.createElement('details'); hb.id = 'family-history'; hb.style.marginTop = '14px'; (mp || fc).after(hb); }
+      const { data: hs, error: he } = await db.rpc('my_family_history', { kid: null });
+      if (he || !(hs || []).length) { hb.hidden = true; return; }
+      hb.hidden = false;
+      hb.innerHTML = '<summary><b>Family history</b></summary><ul class="meta" style="margin:8px 0 0;padding-left:18px">' + hs.map(h => `<li>${new Date(h.at).toLocaleDateString('en-GB')}: ${h.event === 'linked' ? 'Linked to' : 'Removed'} ${esc(h.who || 'a parent')} (by ${esc(h.by_whom)})</li>`).join('') + '</ul>';
+    };
+    showHistory();
   }
   const pf = document.getElementById('pw-form'), err = document.getElementById('pw-error');
   pf.addEventListener('submit', async e => {

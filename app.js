@@ -271,12 +271,15 @@ function startSignupPage() {
   };
   const checkCode = async () => {
     const v = codeIn.value.trim(); codeOk = false;
-    if (!v) { codeMsg.hidden = true; parentStep(); ageCheck(); return; }
-    const { data, error } = await db.rpc('family_code_ok', { code: v });
+    const tick = document.getElementById('fam-code-yes');
+    if (!v) { codeMsg.hidden = true; if (tick) tick.closest('label').hidden = true; parentStep(); ageCheck(); return; }
+    const { data, error } = await db.rpc('family_code_check', { code: v });
     if (v !== codeIn.value.trim()) return;
-    codeOk = !error && data === true;
     codeMsg.hidden = false;
-    codeMsg.textContent = error ? 'We couldn’t check the code just now. Please try again.' : codeOk ? '✅ Family code found. You’ll join your parent’s family.' : '❌ We couldn’t find that family code. Check it with your parent.';
+    const found = !error && !!data && data !== 'TYPO';
+    codeMsg.textContent = error ? (/too many/i.test(error.message || '') ? error.message : 'We couldn’t check the code just now. Please try again.')
+      : data === 'TYPO' ? 'That doesn’t look like a family code. They look like FAM-XXXX-XXXX.' : found ? '👪 This code belongs to ' + data + '.' : '❌ We couldn’t find that family code. Check it with your parent.';
+    if (tick) { tick.closest('label').hidden = !found; tick.checked = false; tick.onchange = () => { codeOk = found && tick.checked; parentStep(); ageCheck(); }; }
     parentStep(); ageCheck();
   };
   if (codeIn) {
@@ -288,7 +291,7 @@ function startSignupPage() {
     if (!ageSel) return false;
     const block = under13();
     stop.hidden = !block;
-    steps[0].querySelectorAll('label').forEach(l => { if (!l.contains(ageSel) && !(codeIn && l.contains(codeIn))) l.hidden = block; });
+    steps[0].querySelectorAll('label').forEach(l => { if (!l.contains(ageSel) && !(codeIn && l.contains(codeIn)) && !l.querySelector('#fam-code-yes')) l.hidden = block; });
     next.hidden = block;
     return block;
   };
@@ -652,6 +655,24 @@ async function tnDownloadMyData() {
   say('Your data has been downloaded.');
 }
 
+// ----- Joining a parent's family with their family code: check whose code it is, ask the child to confirm, then the parent confirms too -----
+async function tnJoinFamily(code) {
+  code = String(code || '').trim();
+  if (!code) { say('Type your parent’s family code first.'); return false; }
+  const { data: owner, error } = await db.rpc('family_code_check', { code });
+  if (error) { say(/function|schema cache/i.test(error.message || '') ? 'Please run the latest Supabase update (family privacy) first.' : friendly(error)); return false; }
+  if (owner === 'TYPO') { say('That code doesn’t look right. Family codes look like FAM-XXXX-XXXX. Check each letter with your parent.'); return false; }
+  if (!owner) { say('We couldn’t find that family code. Check it with your parent and try again.'); return false; }
+  if (!confirm('This family code belongs to:\n\n' + owner + '\n\nIs this your parent or guardian?')) { say('OK, nothing was sent. Check the code with your parent.'); return false; }
+  const { data: r, error: er } = await db.rpc('join_family', { code });
+  if (er) { say(friendly(er)); return false; }
+  if (r === 'NO_SUCH_CODE') { say('We couldn’t find that family code. Check it with your parent and try again.'); return false; }
+  if (r === 'LIMIT') { say('You already have 3 adults linked. Remove one in Account settings first.'); return false; }
+  if (r === 'linked') { say('You’re already in this family.'); return 'linked'; }
+  say('✅ Request sent. ' + owner.split(' (')[0] + ' needs to confirm you’re their child, then you’re linked.');
+  return 'requested';
+}
+
 // ----- Student dashboard: first steps for new students, and a To do list across all courses -----
 async function studentToDo(uid, myEnr, p) {
   const fs = document.getElementById('first-steps'), td = document.getElementById('todo');
@@ -661,19 +682,14 @@ async function studentToDo(uid, myEnr, p) {
   if (fs && !document.getElementById('join-fam-box')) {
     const jb = document.createElement('section'); jb.id = 'join-fam-box'; jb.className = 'panel';
     jb.innerHTML = `<h2 class="dash-h" style="margin-top:0">👪 ${parentLinked ? 'My family' : 'Join your parent’s family'}</h2>
-      <p class="meta">${parentLinked ? '✅ You’re linked to a parent. Want to add another parent or guardian? Type their family code (it starts with <b>FAM-</b>).' : 'Did your parent give you their family code (it starts with <b>FAM-</b>)? Type it here so they can follow your learning.'}</p>
-      <form class="join-fam-inline" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><input name="code" maxlength="12" placeholder="For example, FAM-7K3Q9A" autocomplete="off" autocapitalize="characters" style="flex:1 1 200px" aria-label="Parent’s family code"><button class="btn btn-red">Join family</button></form>
+      <p class="meta">${parentLinked ? '✅ You’re linked to a parent. Want to add another parent or guardian? Type their family code (it starts with <b>FAM-</b>). They’ll confirm before they’re linked.' : 'Did your parent give you their family code (it starts with <b>FAM-</b>)? Type it here. Your parent then confirms, so no one can join the wrong family by mistake.'}</p>
+      <form class="join-fam-inline" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><input name="code" maxlength="16" placeholder="FAM-XXXX-XXXX" autocomplete="off" autocapitalize="characters" style="flex:1 1 200px" aria-label="Parent’s family code"><button class="btn btn-red">Join family</button></form>
       <p class="meta" style="margin-top:8px">No code? Ask your parent to sign up as a parent on Think Nest. Their code is on their dashboard. See who’s linked in <a href="settings.html">Account settings</a>.</p>`;
     fs.parentNode.insertBefore(jb, fs);
     jb.querySelector('form').addEventListener('submit', async e => {
-      e.preventDefault(); const code = e.target.code.value.trim(); if (!code) return say('Type your parent’s family code first.');
-      const b = e.target.querySelector('button'); b.disabled = true;
-      const { data: r, error } = await db.rpc('join_family', { code });
-      b.disabled = false;
-      if (error) return say(/function|schema cache/i.test(error.message || '') ? 'Please run the latest Supabase update (family safety) first.' : friendly(error));
-      if (r === 'NO_SUCH_CODE') return say('We couldn’t find that family code. Check it with your parent and try again.');
-      jb.innerHTML = `<p style="margin:0">✅ You joined <b>${esc(r === 'linked' ? 'your parent' : r)}</b>’s family. They can now follow your learning.</p>`;
-      const st = fs.querySelector('li:nth-child(2)'); if (st) { st.classList.add('done'); st.innerHTML = '<b>Link your parent</b> so they can follow your progress and agree to courses. ✅ Done.'; }
+      e.preventDefault(); const b = e.target.querySelector('button'); b.disabled = true;
+      const r = await tnJoinFamily(e.target.code.value); b.disabled = false;
+      if (r === 'requested') jb.innerHTML = '<p style="margin:0">⏳ Request sent. Your parent will be asked to confirm you’re their child. You’ll get a message when they do.</p>';
     });
   }
   if (fs && !myEnr.length) {

@@ -54,8 +54,9 @@
             </select>
           </label>
           <label>Family code from your parent <span class="meta">(optional)</span>
-            <input type="text" name="family_code" id="fam-code" maxlength="12" placeholder="For example, FAM-7K3Q9A" autocomplete="off" autocapitalize="characters"></label>
+            <input type="text" name="family_code" id="fam-code" maxlength="16" placeholder="FAM-XXXX-XXXX" autocomplete="off" autocapitalize="characters"></label>
           <p class="meta" id="fam-code-msg" hidden aria-live="polite" style="margin:-6px 0 4px"></p>
+          <label class="remember agree-box" hidden><input type="checkbox" id="fam-code-yes"> <span>Yes, this is my parent or guardian</span></label>
           <div class="age-stop" id="age-stop" hidden role="alert">
             <div class="age-ic">👪</div>
             <b>Your parent must create your account for you.</b>
@@ -94,7 +95,7 @@
         </fieldset>
         <fieldset class="step" data-step="3" hidden>
           <legend class="sr">Step 3: parent permission</legend>
-          <p class="note big-note" id="fam-code-note" hidden>👪 You’re joining your parent’s family with their family code, so they’ve already agreed. You’ll be linked to them as soon as you sign up.</p>
+          <p class="note big-note" id="fam-code-note" hidden>👪 You’re joining your parent’s family with their family code. They’ll be asked to confirm you’re their child, and then you’re linked.</p>
           <p class="note">If you are under 18, a parent or guardian needs to agree before you use Think Nest. We’ll email them a link to confirm, and your account starts once they confirm and Think Nest checks it.</p>
           <label>Parent or guardian name <input type="text" name="parent_name" placeholder="Parent’s full name" required></label>
           <label>Parent or guardian email <input type="email" name="parent_email" placeholder="parent@example.com" required></label>
@@ -117,7 +118,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script src="supabase-config.js?v=172"></script>
-  <script src="app.js?v=186"></script>
+  <script src="app.js?v=187"></script>
   <script src="captcha.js?v=171"></script>
   <script src="curriculum.js?v=171"></script>
   <script>startSignupPage();</script>

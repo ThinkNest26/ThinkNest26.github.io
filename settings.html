@@ -87,9 +87,9 @@
           <button class="pill pill-soft big" id="new-code" type="button">Make a new code</button>
           <div id="my-parents"></div>
           <h3 style="margin-top:18px">Join your parent’s family</h3>
-          <p class="meta">Did your parent give you their family code (it starts with <b>FAM-</b>)? Type it here to join their family.</p>
+          <p class="meta">Did your parent give you their family code (it starts with <b>FAM-</b>)? Type it here. You’ll see whose code it is first, and your parent confirms before you’re linked.</p>
           <form class="auth-form" id="join-family" novalidate style="margin:0">
-            <label>Parent’s family code <input type="text" name="code" class="code-input" maxlength="12" placeholder="For example, FAM-7K3Q9A" autocomplete="off" required></label>
+            <label>Parent’s family code <input type="text" name="code" class="code-input" maxlength="16" placeholder="FAM-XXXX-XXXX" autocomplete="off" required></label>
             <button class="btn btn-red auth-btn">Join family</button>
           </form>
         </section>
@@ -115,10 +115,10 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script src="supabase-config.js?v=172"></script>
-  <script src="app.js?v=186"></script>
+  <script src="app.js?v=187"></script>
   <script src="nav.js?v=195"></script>
   <script src="notify.js?v=171" defer></script>
-  <script src="student.js?v=184"></script>
+  <script src="student.js?v=185"></script>
   <script>startSettings().then(() => showParentRequests());</script>
   <script src="emailpref.js?v=171"></script>
   <script src="characters.js?v=178"></script>
