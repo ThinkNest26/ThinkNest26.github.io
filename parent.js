@@ -107,6 +107,7 @@ async function startParentDashboard() {
       <span class="initials big2">${esc(ini(k.full_name))}</span>
       <span><b>${esc(k.full_name || 'Student')}</b><span>${esc(k.curriculum || k.grade || 'Student')}</span></span></a>`).join('')
     + `<a class="kid-card kc-add" href="add-child.html"><span class="plus" aria-hidden="true">+</span><span><b>Add New Child</b></span></a>`;
+  if (kids.length) document.getElementById('kid-cards').insertAdjacentHTML('afterend', '<p style="margin:10px 0 0"><a class="btn btn-red" href="parent-courses.html">📚 Find classes for my children</a></p>');
   pendingRequests(document.getElementById('pending'));
   parentFamilyCode(document.getElementById('parent-fcode'));
 
@@ -226,6 +227,27 @@ async function startAddChild() {
   const box = document.getElementById('pending');
   pendingRequests(box);
   parentFamilyCode(document.getElementById('parent-fcode'));
+  // a brand-new child: add them to the family, then make their username login
+  const nk = document.getElementById('new-kid-form');
+  if (nk && typeof FAM_GRADES !== 'undefined') {
+    nk.grade.innerHTML += FAM_GRADES.map(g => `<option>${g}</option>`).join('');
+    nk.curriculum.innerHTML += FAM_CURR.map(c => `<option>${esc(c)}</option>`).join('');
+    nk.addEventListener('submit', async e => {
+      e.preventDefault();
+      const name = nk.name.value.trim();
+      if (!name) return say('Type your child’s full name.');
+      if (!nk.grade.value) return say('Choose your child’s grade.');
+      const b = nk.querySelector('button'); b.disabled = true;
+      const { error } = await db.rpc('add_family_child', { cname: name, cgrade: nk.grade.value, ccurr: nk.curriculum.value, cemail: '' });
+      if (error) { b.disabled = false; return say(friendly(error)); }
+      const { data: { session } } = await db.auth.getSession();
+      const { data: fc } = await db.from('family_children').select('id').eq('parent_id', session.user.id).eq('full_name', name).is('student_id', null).order('id', { ascending: false }).limit(1).maybeSingle();
+      b.disabled = false;
+      if (!fc) return say('Added. Open My children to finish your child’s login.');
+      nk.reset();
+      famUsernameDialog(fc.id, name, () => { location.href = 'parent-courses.html'; });
+    });
+  }
   const ef = document.getElementById('email-form'), eerr = document.getElementById('email-error');
   ef.addEventListener('submit', async e => {
     e.preventDefault(); showError(eerr, '');
@@ -296,4 +318,51 @@ async function parentAttention(kids) {
   } catch (_) {}
   if (!items.length) return;
   host.insertAdjacentHTML('beforebegin', `<section class="panel attention" id="attention"><h2 class="dash-h">👀 Needs your attention <span class="count">${items.length}</span></h2><div class="approve-list">${items.join('')}</div></section>`);
+}
+
+
+// ---------- Classes for my children: the teachers' courses, matched to each child ----------
+async function startParentCourses() {
+  const { user } = await initParent();
+  const kids = await loadChildren(user.id);
+  const kbox = document.getElementById('pc-kids'), list = document.getElementById('pc-list'), mineBox = document.getElementById('pc-mine');
+  if (!kids.length) { kbox.innerHTML = '<div class="panel"><p>Add your child first, then you can choose classes for them.</p><a class="btn btn-red" href="add-child.html">➕ Add a child</a></div>'; return; }
+  const { data: cs, error } = await db.from('courses').select('*').eq('published', true).order('id');
+  if (error) { list.innerHTML = '<p class="empty">The classes couldn’t be loaded. Please try again.</p>'; return; }
+  const courses = (cs || []).filter(c => (c.audience || 'students') === 'students');
+  const ids = kids.map(k => k.id);
+  const [{ data: en }, rq] = await Promise.all([
+    db.from('enrollments').select('user_id, course_id, time_slot').in('user_id', ids),
+    db.from('course_requests').select('student_id, course_id, status').in('student_id', ids).in('status', ['parent', 'teacher'])
+  ]);
+  const has = (kid, cid) => (en || []).find(e => e.user_id === kid && e.course_id === cid);
+  const asked = (kid, cid) => ((rq && rq.data) || []).find(r => r.student_id === kid && r.course_id === cid);
+  const curOf = v => /british|igcse|england/i.test(v || '') ? 'british' : /american/i.test(v || '') ? 'american' : /\bib\b|baccalaureate/i.test(v || '') ? 'ib' : null;
+  const gradeLabel = (g, cur) => !g || g === 'all' ? 'All grades' : cur === 'british' && typeof tnYearLabel === 'function' ? tnYearLabel(g) : g;
+  const fits = (c, k) => (!c.curriculum || c.curriculum === 'all' || /^arabic_/.test(c.curriculum) || c.curriculum === curOf(k.curriculum)) && (!c.grade || c.grade === 'all' || c.grade === k.grade);
+  const pick = new URLSearchParams(location.search).get('kid');
+  let cur = kids.find(k => k.id === pick) || kids[0];
+  const q = document.getElementById('pc-q'), all = document.getElementById('pc-all');
+  document.getElementById('pc-filters').hidden = false;
+  const first = n => String(n || 'My child').split(' ')[0];
+  function draw() {
+    kbox.innerHTML = '<p class="meta" style="margin:0 0 6px">Classes for:</p>' + kids.map(k => `<button type="button" class="pill ${k.id === cur.id ? 'pill-live' : 'pill-soft'}" data-k="${k.id}">${esc(first(k.full_name))}${k.grade ? ' · ' + esc(gradeLabel(k.grade, curOf(k.curriculum))) : ''}</button>`).join(' ');
+    const mine = courses.filter(c => has(cur.id, c.id) || asked(cur.id, c.id));
+    mineBox.innerHTML = mine.length ? `<h2 class="dash-h">${esc(first(cur.full_name))}’s classes</h2><div class="pending">${mine.map(c => { const e = has(cur.id, c.id);
+      return `<div class="pending-row"><span class="initials">📚</span><div><b>${esc(c.title)}</b><span class="meta">${esc([c.teacher_name, e && e.time_slot].filter(Boolean).join(' · '))}</span></div><span class="tag ${e ? '' : 'tag-wait'}">${e ? '✅ Has a place' : '⏳ Waiting for the teacher'}</span></div>`; }).join('')}</div>` : '';
+    const t = q.value.trim().toLowerCase();
+    const shown = courses.filter(c => !mine.includes(c)).filter(c => all.checked || fits(c, cur))
+      .filter(c => !t || [c.title, c.description, c.subject, c.teacher_name, c.category].join(' ').toLowerCase().includes(t));
+    const noProfile = !cur.grade || !curOf(cur.curriculum);
+    list.innerHTML = `<h2 class="dash-h" style="grid-column:1/-1">${all.checked ? 'All classes' : 'Classes that fit ' + esc(first(cur.full_name))}</h2>`
+      + (noProfile && !all.checked ? `<p class="meta" style="grid-column:1/-1">We don’t know ${esc(first(cur.full_name))}’s grade or curriculum yet, so some classes may be missing. Tick “Show classes for every grade” to see them all.</p>` : '')
+      + (shown.length ? shown.map((c, i) => `<article class="learn"><img src="${c.image_url ? esc(c.image_url) : 'images/' + PHOTOS[(c.id ?? i) % PHOTOS.length] + '.png'}" alt="" loading="lazy">
+        <div class="learn-body"><span class="meta">${esc([c.subject || c.category, gradeLabel(c.grade, c.curriculum)].filter(Boolean).join(' · '))}</span><h4>${esc(c.title)}</h4>
+        <p class="desc">${esc(c.description || '')}</p>${c.teacher_name ? `<span class="meta">👩‍🏫 ${esc(c.teacher_name)}</span>` : ''}
+        <div class="row"><a class="pill pill-live" href="course-details.html?id=${c.id}&kid=${encodeURIComponent(cur.id)}">See class times &amp; ask for a place</a></div></div></article>`).join('')
+        : `<p class="empty" style="grid-column:1/-1">No classes ${all.checked ? 'match your search' : 'for this grade yet'}. ${all.checked ? '' : 'Tick “Show classes for every grade” to see the others.'}</p>`);
+  }
+  kbox.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return; cur = kids.find(k => k.id === b.dataset.k); history.replaceState(null, '', '?kid=' + cur.id); draw(); });
+  q.addEventListener('input', draw); all.addEventListener('change', draw);
+  draw();
 }

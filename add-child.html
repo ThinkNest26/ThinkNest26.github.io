@@ -39,8 +39,17 @@
     <div class="auth-card">
       <a href="parent-dashboard.html" class="not-me">‹ My children</a>
       <img src="images/tn-bird.png" alt="" class="bird">
-      <h1>Add New Child</h1>
-      <p class="auth-sub">Please enter your child’s Think Nest email to connect</p>
+      <h1>Add your child</h1>
+      <p class="auth-sub">New to Think Nest? Create your child’s login here. It’s linked to you straight away.</p>
+      <form class="auth-form" id="new-kid-form" novalidate>
+        <label>Child’s full name <input type="text" name="name" maxlength="120" required></label>
+        <div class="two"><label>Grade <select name="grade" required><option value="">Choose</option></select></label>
+        <label>Curriculum <select name="curriculum"><option value="">Choose</option></select></label></div>
+        <p class="note">Next, you choose a username and password for your child. No email is needed.</p>
+        <button class="btn btn-red auth-btn">Create my child’s login</button>
+      </form>
+      <h2 class="auth-sub" style="margin-top:28px"><b>Does your child already have a Think Nest account?</b></h2>
+      <p class="auth-sub">Enter the email they log in with to connect.</p>
       <form class="auth-form" id="email-form" novalidate>
         <label>Child email <input type="email" name="email" placeholder="The email your child logs in with" required></label>
         <p class="note">Your child will see your request when they log in, and taps <b>Approve</b> to connect.</p>
@@ -65,7 +74,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script src="supabase-config.js?v=172"></script>
   <script src="app.js?v=183"></script>
-  <script src="parent.js?v=173"></script>
+  <script src="family.js?v=191"></script>
+  <script src="parent.js?v=174"></script>
   <script>startAddChild();</script>
   <script src="aichat.js?v=3" defer></script>
 </body>
