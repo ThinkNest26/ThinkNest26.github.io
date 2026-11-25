@@ -15,7 +15,7 @@ function ago(ts) {
 const roleTag = r => r === 'parent' ? '<span class="role-tag parent">Parent</span>' : r === 'teacher' || r === 'school_leader' ? '<span class="role-tag">Teacher</span>' : r === 'admin' ? '<span class="role-tag admin">Think Nest</span>' : '';
 
 const SPACE = (document.body && document.body.dataset.space) || 'community';
-const CAFE = { teachers: { title: '☕ Teacher Café', who: ['teacher', 'school_leader', 'admin'], lead: 'Grab a coffee, pull up a chair. A private space just for teachers to swap hacks, share resources, ask the staffroom and celebrate each other.', ph: 'What’s brewing' }, parents: { title: '☕ Parent Café', who: ['parent', 'admin'], lead: 'Pull up a chair! A private space just for parents to swap tips, ask questions, share recommendations and cheer each other on.', ph: 'What’s on your mind' } }[SPACE];
+const CAFE = { teachers: { title: '☕ Teacher Café', who: ['teacher', 'school_leader', 'admin'], lead: 'Grab a coffee, pull up a chair. A private space just for teachers to swap hacks, share resources, ask the staffroom and celebrate each other.', ph: 'What’s brewing' }, parents: { title: '☕ Parent Café', who: ['parent', 'admin'], lead: 'Pull up a chair! A private space just for parents to swap tips, ask questions, share recommendations and cheer each other on.', ph: 'What’s on your mind' } , family: { title: '🏡 Family wall', who: ['parent', 'student'], lead: 'A private space just for your family: share news, photos, tips, wins and reminders, ask questions and cheer each other on.', ph: 'Share something with your family' } }[SPACE];
 async function startCommunity() {
   const { user, profile: me } = await initShell();
   // Safety: parents don’t join the student community. They have the Parent Café.
@@ -36,13 +36,20 @@ async function startCommunity() {
       if (SPACE === 'staff') document.querySelectorAll('.comm-tabs').forEach(x => x.hidden = true);
     }
   }
-  if (CAFE && !(CAFE.who.includes(me.role) || (SPACE === 'parents' && me.also_parent))) { document.querySelector('main').innerHTML = `<div class="empty-box"><p>🔒 ${CAFE.title} is a private space ${SPACE === 'parents' ? 'just for parents. Teachers who aren’t parents can’t see it, so parents can talk freely.' : 'for ' + SPACE + '.'}</p><a class="btn btn-red" href="${SPACE === 'parents' ? 'teacher-dashboard.html' : 'community.html'}">${SPACE === 'parents' ? 'Back to my home page' : 'Go to the Community'}</a></div>`; return; }
-  if (CAFE && me.role !== 'admin') {
+  if (CAFE && !(CAFE.who.includes(me.role) || ((SPACE === 'parents' || SPACE === 'family') && me.also_parent))) { document.querySelector('main').innerHTML = `<div class="empty-box"><p>🔒 ${CAFE.title} is a private space ${SPACE === 'parents' ? 'just for parents. Teachers who aren’t parents can’t see it, so parents can talk freely.' : 'for ' + SPACE + '.'}</p><a class="btn btn-red" href="${SPACE === 'parents' ? 'teacher-dashboard.html' : 'community.html'}">${SPACE === 'parents' ? 'Back to my home page' : 'Go to the Community'}</a></div>`; return; }
+  let FAMILY_PEOPLE = null;
+  if (SPACE === 'family') {
+    const { data: fp, error: fe } = await db.rpc('my_family_people');
+    if (fe) { document.querySelector('main').innerHTML = `<div class="empty-box"><p>${/function|schema cache/i.test(fe.message || '') ? 'Please run the latest Supabase update (Family wall) first.' : esc(friendly(fe))}</p></div>`; return; }
+    FAMILY_PEOPLE = (fp || []).filter(p => p.id !== user.id);
+    if (!FAMILY_PEOPLE.length) { document.querySelector('main').innerHTML = `<div class="empty-box"><p>🏡 Your Family wall opens once you’re linked to your family.</p>${me.role === 'student' ? '<a class="btn btn-red" href="settings.html">Join your parent’s family</a>' : '<a class="btn btn-red" href="add-child.html">Add your child</a>'}</div>`; return; }
+  }
+  if (CAFE && me.role !== 'admin' && SPACE !== 'family') {
     const { data: ok } = await db.rpc('is_hub_member', { h: SPACE });
     if (!ok) { const hubPage = SPACE === 'teachers' ? 'teacher-hub.html' : 'parent-hub.html', hubName = SPACE === 'teachers' ? 'Beyond the Bell' : 'Beyond the School Run';
       document.querySelector('main').innerHTML = `<div class="empty-box"><p>🔒 ${CAFE.title} is for members of <b>${hubName}</b>. Ask to join the hub, and you’ll get in as soon as Think Nest approves your request.</p><a class="btn btn-red" href="${hubPage}">Go to ${hubName}</a></div>`; return; }
   }
-  if (CAFE) { document.title = CAFE.title.replace('☕ ', '') + ' – Think Nest'; const h1 = document.querySelector('.comm-hero h1'); if (h1) h1.textContent = CAFE.title; const p = document.querySelector('.comm-hero-text p:not(.meta)'); if (p) p.textContent = CAFE.lead; document.querySelectorAll('.comm-tabs, #side-groups, #side-board').forEach(x => x.hidden = true); const r = document.querySelector('.comm-rules'); if (r) r.innerHTML = '🔒 Only ' + SPACE + ' can see this café. Be kind, keep it friendly, and use <b>Report</b> if something isn’t right.'; }
+  if (CAFE) { document.title = CAFE.title.replace('☕ ', '') + ' – Think Nest'; const h1 = document.querySelector('.comm-hero h1'); if (h1) h1.textContent = CAFE.title; const p = document.querySelector('.comm-hero-text p:not(.meta)'); if (p) p.textContent = CAFE.lead; document.querySelectorAll('.comm-tabs, #side-groups, #side-board').forEach(x => x.hidden = true); const r = document.querySelector('.comm-rules'); if (r) r.innerHTML = SPACE === 'family' ? '🔒 Only your family can see this wall: ' + FAMILY_PEOPLE.map(p => '<b>' + esc(p.name) + '</b>').join(', ') + ' and you. Teachers and other families can’t.' : '🔒 Only ' + SPACE + ' can see this café. Be kind, keep it friendly, and use <b>Report</b> if something isn’t right.'; }
   const isAdmin = me.role === 'admin';
   // Teachers and the admin get their own menu
   if (window.buildNav) window.buildNav(me.role);
@@ -125,9 +132,9 @@ async function startCommunity() {
       ? (isMod && !mine ? `<div class="mod-bar"><span>⏳ Waiting for approval</span><span class="mod-actions"><button class="pill pill-live" data-approve>Approve</button><button class="pill pill-soft danger" data-reject>Don’t approve</button></span></div>`
                         : '<div class="mod-bar"><span>⏳ Waiting for a teacher to approve. Only you and teachers can see it for now.</span></div>')
       : st === 'rejected' ? '<div class="mod-bar rejected"><span>This post wasn’t approved, so only you can see it. You can delete it.</span></div>' : '';
-    const PAR = SPACE === 'parents';
-    const PT = { question: ['❓', PAR ? 'Ask other parents' : CAFE ? 'Ask the staffroom' : 'Question'], idea: ['💡', 'Idea'], celebrate: ['🎉', PAR ? 'Family win' : CAFE ? 'Win of the week' : 'Celebration'], showcase: ['🏆', 'Showing my work'],
-      hack: ['💡', PAR ? 'Parent tip' : 'Teaching hack'], resource: ['📚', PAR ? 'Recommendation' : 'Resource'], help: ['🆘', PAR ? 'Need advice' : 'Need help'], funny: ['😂', PAR ? 'Parent life' : 'Teacher life'], shoutout: ['🙌', 'Shout-out'], poll: ['📊', 'Poll'] }[p.post_type];
+    const PAR = SPACE === 'parents' || SPACE === 'family', FAM = SPACE === 'family';
+    const PT = { question: ['❓', FAM ? 'Question' : PAR ? 'Ask other parents' : CAFE ? 'Ask the staffroom' : 'Question'], idea: ['💡', 'Idea'], celebrate: ['🎉', PAR ? 'Family win' : CAFE ? 'Win of the week' : 'Celebration'], showcase: ['🏆', 'Showing my work'],
+      hack: ['💡', FAM ? 'Tip' : PAR ? 'Parent tip' : 'Teaching hack'], resource: ['📚', PAR ? 'Recommendation' : 'Resource'], help: ['🆘', FAM ? 'Need help' : PAR ? 'Need advice' : 'Need help'], funny: ['😂', FAM ? 'Family fun' : PAR ? 'Parent life' : 'Teacher life'], shoutout: ['🙌', 'Shout-out'], poll: ['📊', 'Poll'] }[p.post_type];
     return `<article class="panel post ${st !== 'published' ? 'post-' + st : ''} ${p.post_type && p.post_type !== 'post' ? 'pt-' + p.post_type : ''}" data-post="${p.id}" id="post-${p.id}">${banner}${PT ? `<span class="pt-badge">${PT[0]} ${PT[1]}</span>` : ''}
       <header class="post-head"><span class="initials" data-av="${p.author_id}">${esc(iniOf(p.author_name))}</span>
         <div><b>${esc(tnNameFor(p.author_name, p.author_role) || 'Member')}</b> ${roleTag(p.author_role)}<span class="meta">${ago(p.created_at)}</span></div>
@@ -192,7 +199,7 @@ async function startCommunity() {
     const i = posts.findIndex(p => p.id === id);
     if (data && i > -1) { posts[i] = data; const el = feed.querySelector(`[data-post="${id}"]`); const open = el && !el.querySelector('.comments').hidden; if (el) { el.outerHTML = postHtml(data); if (open) feed.querySelector(`[data-post="${id}"] .comments`).hidden = false; } }
   }
-  if (CAFE && !window.__tnPresence) {
+  if (CAFE && SPACE !== 'family' && !window.__tnPresence) {
     window.__tnPresence = 1; window.__tnHere = new Map();
     try {
       const ch = db.channel('cafe-here-' + SPACE, { config: { presence: { key: user.id } } });
@@ -240,7 +247,7 @@ async function startCommunity() {
     const ptype = (form.querySelector('input[name=ptype]:checked') || {}).value || 'post';
     const extra = typeof cafeExtra === 'function' ? cafeExtra(ptype) : {};
     if (extra && extra.error) { btn.disabled = false; btn.textContent = 'Post'; return say(extra.error); }
-    if (await tnBlocked(body, SPACE === 'community' ? 'community post' : SPACE === 'school' ? 'school community post' : SPACE === 'staff' ? 'staff room post' : 'café post', null)) { if (typeof btn !== 'undefined' && btn) { btn.disabled = false; btn.textContent = 'Post'; } return; }
+    if (await tnBlocked(body, SPACE === 'community' ? 'community post' : SPACE === 'school' ? 'school community post' : SPACE === 'staff' ? 'staff room post' : SPACE === 'family' ? 'family wall post' : 'café post', null)) { if (typeof btn !== 'undefined' && btn) { btn.disabled = false; btn.textContent = 'Post'; } return; }
     let { data: np, error } = await db.from('posts').insert(Object.assign({ body, image_path, post_type: ptype, space: SPACE }, SCHOOL ? { school_id: SCHOOL.id } : {}, extra || {})).select('status').single();
     if (error && SPACE === 'community' && String(error.message).includes('column')) ({ data: np, error } = await db.from('posts').insert({ body, image_path }).select('status').single());
     btn.disabled = false; btn.textContent = 'Post';

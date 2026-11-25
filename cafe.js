@@ -105,11 +105,11 @@
     // Daily Brew
     const day = Math.floor((Date.now() + 4 * 3600e3) / 864e5), q = BREWS[day % BREWS.length];
     const brew = document.getElementById('cafe-brew');
-    if (brew) brew.innerHTML = `<h3>☕ The Daily Brew</h3><p class="brew-q">${esc2(q)}</p><button type="button" class="btn btn-red" data-brew="${esc2(q)}">Answer this</button><p class="meta">A new question every day.</p>`;
+    if (brew) brew.innerHTML = `<h3>${SPACE === 'family' ? '🏡 Family question of the day' : '☕ The Daily Brew'}</h3><p class="brew-q">${esc2(q)}</p><button type="button" class="btn btn-red" data-brew="${esc2(q)}">Answer this</button><p class="meta">A new question every day.</p>`;
     // colleagues for shout-outs
-    const { data: people } = await db.rpc('cafe_members', { sp: SPACE });
+    const { data: people } = SPACE === 'family' ? await db.rpc('my_family_people').then(r => ({ data: (r.data || []).filter(p => p.id !== me).map(p => ({ id: p.id, full_name: p.name })) })) : await db.rpc('cafe_members', { sp: SPACE });
     const sel = document.getElementById('cafe-mention');
-    if (sel) sel.innerHTML = '<option value="">Choose a colleague…</option>' + (people || []).map(p => `<option value="${p.id}">${esc2(p.full_name)}</option>`).join('');
+    if (sel) sel.innerHTML = '<option value="">' + (SPACE === 'family' ? 'Choose someone in your family…' : 'Choose a colleague…') + '</option>' + (people || []).map(p => `<option value="${p.id}">${esc2(p.full_name)}</option>`).join('');
     const feed = document.getElementById('feed');
     if (feed) new MutationObserver(() => enhance()).observe(feed, { childList: true, subtree: false });
     enhance(); toggleTools();
